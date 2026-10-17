@@ -78,6 +78,9 @@ test('names start MW:, descriptions are the first comment line after its prefix'
   assert.equal(m.record.description, 'record spoilboard height');
   assert.equal(m.restore.description, 'put back the Z0 saved in G59.2 Z');
   assert.equal(m.midX.description, 'lift to Safe Z, then move halfway to X0');
+  assert.equal(m.center.name, 'MW: Set XY0 to Midpoint');
+  assert.equal(m.center.description, 'set X0 Y0 halfway to here, no move');
+  assert.deepEqual(m.center.aliases, ['Center X0 Y0 here']);
   for (const k of Object.keys(m)) {
     assert.ok(m[k].name.startsWith('MW: '), k);
     assert.ok(m[k].description && !/Macro Wiz|[()]/.test(m[k].description), k + ': ' + m[k].description);

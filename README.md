@@ -28,7 +28,7 @@ optional extras.
      after changing it.
    - **Midpoint XY**: the same lift, then move halfway to X0 Y0, e.g. from the opposite corner of square
      stock.
-   - **Center X0 Y0 here**: put X0 Y0 halfway to the current spot without moving
+   - **Set XY0 to Midpoint**: put X0 Y0 halfway to the current spot without moving
      (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`).
    - **Save / restore X/Y**: save the work offset's X and Y (e.g. a fixture or jig) and put them back
      later. They're kept in the saved-Z0 slot's X/Y, which that slot doesn't otherwise use; restore

@@ -211,7 +211,7 @@
         <label class="mw-extra"><input type="checkbox" id="mw-x-midX" checked><span><strong>Midpoint X</strong><span>Move halfway back to X0, e.g. after touching both sides of round stock.</span></span></label>
         <label class="mw-extra"><input type="checkbox" id="mw-x-midY" checked><span><strong>Midpoint Y</strong><span>The same along Y.</span></span></label>
         <label class="mw-extra"><input type="checkbox" id="mw-x-midXY" checked><span><strong>Midpoint XY</strong><span>Move halfway to X0 Y0, e.g. from the opposite corner of square stock.</span></span></label>
-        <label class="mw-extra"><input type="checkbox" id="mw-x-center" checked><span><strong>Center X0 Y0 here</strong><span>Put X0 Y0 halfway to the current spot without moving.</span></span></label>
+        <label class="mw-extra"><input type="checkbox" id="mw-x-center" checked><span><strong>Set XY0 to Midpoint</strong><span>Put X0 Y0 halfway to the current spot without moving.</span></span></label>
         <label class="mw-extra"><input type="checkbox" id="mw-x-fixture" checked><span><strong>Save / restore X/Y</strong><span>Keep the work offset's X/Y for a fixture or jig, and bring it back later. Uses the saved-Z0 slot's X/Y.</span></span></label>
       </div>
       <p class="mw-hint" id="mw-safe-note">Midpoint moves first lift to ncSender&rsquo;s Safe Z. They use the active work offset.</p>
@@ -395,11 +395,13 @@
         'G10 L2 P' + o.wcs + ' X[' + cx + ' + [' + sx + ' - ' + cx + '] * ' + anySaved + '] Y[' + cy + ' + [' + sy + ' - ' + cy + '] * ' + anySaved + ']'
       ].concat(tail));
     }
-    if (x.center) m.center = macro('Center X0 Y0 here', [
-      '(Macro Wiz: X0 Y0 to halfway between)',
-      '(X0 Y0 and here, without moving)',
-      'G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]'
-    ]);
+    if (x.center) {
+      m.center = macro('Set XY0 to Midpoint', [
+        '(Macro Wiz: set X0 Y0 halfway to here, no move)',
+        'G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]'
+      ]);
+      m.center.aliases = ['Center X0 Y0 here'];  // its name before 0.2.7
+    }
     return m;
   }
 
@@ -737,15 +739,16 @@
       var done = [];
       for (var key of Object.keys(m)) {
         var mac = m[key];
-        // The same macro under its current or its old ("Macro Wiz: ") name.
-        var oldName = OLD_PREFIX + mac.name.slice(MACRO_PREFIX.length);
-        var prev = (existing || []).filter(function(x) {
-          var n = x.name != null ? x.name : x.Name;
-          return n === mac.name;
-        })[0] || (existing || []).filter(function(x) {
-          var n = x.name != null ? x.name : x.Name;
-          return n === oldName;
-        })[0];
+        // The same macro under its current name, or an older one: the
+        // "Macro Wiz: " prefix, or a name it had before (aliases).
+        var bare = [mac.name.slice(MACRO_PREFIX.length)].concat(mac.aliases || []);
+        var names = [mac.name].concat(bare.map(function(b) { return MACRO_PREFIX + b; }), bare.map(function(b) { return OLD_PREFIX + b; }));
+        var prev = null;
+        for (var ni = 0; ni < names.length && !prev; ni++) {
+          prev = (existing || []).filter(function(x) {
+            return (x.name != null ? x.name : x.Name) === names[ni];
+          })[0] || null;
+        }
         var prevId = prev && (prev.id != null ? prev.id : prev.Id);
         var res = await fetch(BASE_URL + '/api/m98-macros' + (prevId ? '/' + prevId : ''), {
           method: prevId ? 'PUT' : 'POST',
