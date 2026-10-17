@@ -72,6 +72,18 @@ test('record macro probes, then stores trigger + offset - block - TLO in the slo
   ]);
 });
 
+test('names start MW:, descriptions are the first comment line after its prefix', () => {
+  const m = buildMacros(Object.assign({}, base, { extras: allExtras }));
+  assert.equal(m.record.name, 'MW: Record spoilboard height');
+  assert.equal(m.record.description, 'record spoilboard height');
+  assert.equal(m.restore.description, 'put back the Z0 saved in G59.2 Z');
+  assert.equal(m.midX.description, 'move halfway to X0, at this Z');
+  for (const k of Object.keys(m)) {
+    assert.ok(m[k].name.startsWith('MW: '), k);
+    assert.ok(m[k].description && !/Macro Wiz|[()]/.test(m[k].description), k + ': ' + m[k].description);
+  }
+});
+
 test('macros: the core five always, extras only when ticked', () => {
   assert.deepEqual(Object.keys(buildMacros(base)), ['record', 'measure', 'set', 'stock', 'restore']);
   assert.deepEqual(Object.keys(buildMacros(Object.assign({}, base, { extras: allExtras }))),
@@ -154,7 +166,7 @@ test('other work offset and slots', () => {
   assert.match(m.record.body, /G10 L2 P8 Z\[#5063 \+ #5243 - 15\.000 - #5403\]/);
   assert.match(m.set.body, /^G10 L2 P2 Z\[#5363\]$/m);
   assert.match(m.set.body, /^G10 L2 P7 Z\[#5343 \+ \[#5243 - #5343\]/m);
-  assert.equal(m.set.name, 'Macro Wiz: G55 Z0 on spoilboard');
+  assert.equal(m.set.name, 'MW: G55 Z0 on spoilboard');
   const p = { 5363: -90, 5243: -70, 5343: 0 };
   run(m.set.body, p);
   assert.deepEqual([p[5243], p[5343]], [-90, -70]);

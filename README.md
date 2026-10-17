@@ -31,6 +31,9 @@ optional extras.
      later. They're kept in the saved-Z0 slot's X/Y, which that slot doesn't otherwise use; restore
      does nothing if nothing was saved.
 4. **Macros.** Creates the ncSender macros, or updates the ones it made before:
+   Their names start with **MW:**, and each description is the macro's first comment line (e.g.
+   "record spoilboard height"). Macros from earlier versions, named "Macro Wiz: …", are renamed in
+   place.
    - **Record spoilboard height**: probes down onto the block and stores the height.
    - **Measure stock thickness**: with the block on the stock, probes down and stores
      stock top minus the spoilboard height.
@@ -39,7 +42,7 @@ optional extras.
      spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
-   - **Delete Macro Wiz macros** removes every macro whose name starts with "Macro Wiz:" (for example
+   - **Delete Macro Wiz macros** removes every macro whose name starts with "MW:" or the older "Macro Wiz:" (for example
      ones left over from older settings or another work offset) and nothing else. The first press lists
      them and turns into **Confirm delete**; a second press within a few seconds deletes.
 5. **Try it once** with a paper feeler before trusting it.

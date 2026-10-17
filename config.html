@@ -271,6 +271,10 @@
   // BEGIN pure — read by tests/*.cjs, so keep this block free of DOM use.
 
   var MM_PER_INCH = 25.4;
+  // Macro names start with this. Earlier versions used "Macro Wiz: ",
+  // which saving renames and deleting still recognises.
+  var MACRO_PREFIX = 'MW: ';
+  var OLD_PREFIX = 'Macro Wiz: ';
 
   function fmt(v) { return (Math.round(v * 1000) / 1000).toFixed(3); }
 
@@ -314,7 +318,12 @@
     // 1 when the current Z0 is neither the spoilboard nor the stock top.
     var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001]';
     var saveLine = 'G10 L2 P' + o.backup + ' Z[' + saved + ' + [' + cur + ' - ' + saved + '] * [' + notOurs + ']]';
-    function macro(name, lines) { return { name: 'Macro Wiz: ' + name, body: lines.join('\n') }; }
+    // Named "MW: ..."; the description is the first comment line's text
+    // after its "Macro Wiz:" prefix, e.g. "record spoilboard height".
+    function macro(name, lines) {
+      var first = /^\((?:Macro Wiz|MW): ?(.*)\)$/.exec(lines[0]);
+      return { name: MACRO_PREFIX + name, description: first ? first[1] : '', body: lines.join('\n') };
+    }
     var m = {};
     m.record = macro('Record spoilboard height', [
       '(Macro Wiz: record spoilboard height)',
@@ -647,14 +656,15 @@
     }
   }
 
-  // Delete every macro this wizard made (name starts "Macro Wiz:"), e.g.
-  // ones left over from older settings. The first press only lists them
+  // Delete every macro this wizard made (name starts "MW:", or "Macro Wiz:"
+  // from earlier versions), e.g. ones left over from older settings or
+  // another work offset. The first press only lists them
   // and turns the button into "Confirm delete"; a second press within a
   // few seconds deletes. Other macros are never touched.
   var deleteArmed = null;
   function isOurs(mac) {
     var n = mac && (mac.name != null ? mac.name : mac.Name);
-    return typeof n === 'string' && n.indexOf('Macro Wiz:') === 0;
+    return typeof n === 'string' && (n.indexOf(MACRO_PREFIX) === 0 || n.indexOf(OLD_PREFIX) === 0);
   }
   function disarmDelete() {
     var btn = $('mw-delete');
@@ -681,7 +691,7 @@
         btn.classList.add('mw-btn-danger');
         status.setAttribute('data-state', 'bad');
         status.textContent = 'This deletes ' + mine.length + ' macro' + (mine.length === 1 ? '' : 's') + ': ' +
-          mine.map(function(m) { return 'P' + (m.id != null ? m.id : m.Id) + ' ' + (m.name || m.Name).replace(/^Macro Wiz: /, ''); }).join(', ') +
+          mine.map(function(m) { return 'P' + (m.id != null ? m.id : m.Id) + ' ' + (m.name || m.Name).replace(/^(MW|Macro Wiz): /, ''); }).join(', ') +
           '. Press Confirm delete to go ahead.';
       } catch (err) {
         status.setAttribute('data-state', 'bad');
@@ -723,15 +733,20 @@
       var done = [];
       for (var key of Object.keys(m)) {
         var mac = m[key];
+        // The same macro under its current or its old ("Macro Wiz: ") name.
+        var oldName = OLD_PREFIX + mac.name.slice(MACRO_PREFIX.length);
         var prev = (existing || []).filter(function(x) {
           var n = x.name != null ? x.name : x.Name;
           return n === mac.name;
+        })[0] || (existing || []).filter(function(x) {
+          var n = x.name != null ? x.name : x.Name;
+          return n === oldName;
         })[0];
         var prevId = prev && (prev.id != null ? prev.id : prev.Id);
         var res = await fetch(BASE_URL + '/api/m98-macros' + (prevId ? '/' + prevId : ''), {
           method: prevId ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: prevId || 0, name: mac.name, description: 'Made by the Macro Wiz plugin', body: mac.body })
+          body: JSON.stringify({ id: prevId || 0, name: mac.name, description: mac.description, body: mac.body })
         });
         if (!res.ok) throw new Error((prevId ? 'updating' : 'creating') + ' "' + mac.name + '" failed (' + res.status + ')');
         var saved = await res.json().catch(function() { return {}; });
