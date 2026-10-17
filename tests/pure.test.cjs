@@ -8,29 +8,40 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand };')();
 
-const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, stockMm: 0, wcs: 1, slot: 9, backup: 8, imperial: false };
+const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
+const allExtras = { midX: true, midY: true, midXY: true, center: true };
 const code = (body) => body.split('\n').filter(l => !l.startsWith('('));
 
 // A small stand-in for grblHAL running the macros' G10 L2 lines: work
 // offset Z values in #5203 + 20 * P, expressions with [ ], ABS, GT, NE,
 // AND (comparisons give 1 or 0), as in grblHAL's ngc_expr.c.
-function run(body, params) {
-  for (const line of code(body)) {
-    const m = /^G10 L2 P(\d) Z\[(.*)\]$/.exec(line);
-    if (!m) continue;
-    let js = m[2]
+function evalExpr(expr, params) {
+  let js = expr
+      .replace(/#<(_\w+)>/g, (_, n) => '(' + (params[n] || 0) + ')')
       .replace(/#(\d+)/g, (_, n) => '(' + (params[n] || 0) + ')')
       .replace(/ABS\[/g, 'Math.abs(')
       .replace(/\[/g, '(').replace(/\]/g, ')')
       .replace(/ GT /g, ' > ').replace(/ NE /g, ' != ').replace(/ AND /g, ' && ');
-    // Comparisons and AND evaluate to 1 or 0 in grblHAL.
-    js = js.replace(/\(([^()]*(?:>|!=|&&)[^()]*)\)/g, '(+($1))');
-    let value = Function('return ' + js)();
-    if (typeof value === 'boolean') value = +value;
-    params[offsetZParam(+m[1])] = Math.round(value * 1e6) / 1e6;
+  // Comparisons and AND evaluate to 1 or 0 in grblHAL.
+  js = js.replace(/\(([^()]*(?:>|!=|&&)[^()]*)\)/g, '(+($1))');
+  let value = Function('return ' + js)();
+  if (typeof value === 'boolean') value = +value;
+  return Math.round(value * 1e6) / 1e6;
+}
+// Runs G10 L2 Pn Z[...] (stored offsets), G0 X[...] Y[...] (moves, into
+// params._x/_y) and G10 L20 P0 X[...] Y[...] (records the asked-for values).
+function run(body, params) {
+  for (const line of code(body)) {
+    let m = /^G10 L2 P(\d) Z\[(.*)\]$/.exec(line);
+    if (m) { params[offsetZParam(+m[1])] = evalExpr(m[2], params); continue; }
+    m = /^(?:G90 )?(G0|G10 L20 P0) (.*)$/.exec(line);
+    if (!m) continue;
+    for (const [, axis, expr] of m[2].matchAll(/([XY])\[([^\]]*)\]/g)) {
+      params[(m[1] === 'G0' ? '_' : 'L20_') + axis.toLowerCase()] = evalExpr(expr, params);
+    }
   }
   return params;
 }
@@ -54,18 +65,28 @@ test('record macro probes, then stores trigger + offset - block - TLO in the slo
   ]);
 });
 
-test('no stock thickness: no stock-top macro; with one, it is made', () => {
-  assert.deepEqual(Object.keys(buildMacros(base)), ['record', 'set', 'restore']);
-  const m = buildMacros(Object.assign({}, base, { stockMm: 18 }));
-  assert.deepEqual(Object.keys(m), ['record', 'set', 'stock', 'restore']);
-  assert.equal(m.stock.name, 'Macro Wiz: G54 Z0 on stock top');
-  assert.match(m.stock.body, /G10 L2 P1 Z\[#5383 \+ 18\.000\]$/m);
+test('macros: the core five always, extras only when ticked', () => {
+  assert.deepEqual(Object.keys(buildMacros(base)), ['record', 'measure', 'set', 'stock', 'restore']);
+  assert.deepEqual(Object.keys(buildMacros(Object.assign({}, base, { extras: allExtras }))),
+    ['record', 'measure', 'set', 'stock', 'restore', 'midX', 'midY', 'midXY', 'center']);
+  assert.deepEqual(Object.keys(buildMacros(Object.assign({}, base, { extras: { midX: true } }))).slice(5), ['midX']);
+});
+
+test('measure stores stock top minus the spoilboard in the thickness slot', () => {
+  const m = buildMacros(base);
+  assert.match(m.measure.body, /^G10 L2 P7 Z\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\]$/m);
+  // G54 Z -77.5; tool with TLO 12; block (15) on 18 mm stock on a spoilboard at -95
+  // (zero-length tool): the tip touches the block at machine -95 + 18 + 15 + 12 = -50,
+  // which is -50 - (-77.5) = 27.5 in G54.
+  const p = { 5223: -77.5, 5383: -95, 5403: 12, 5063: 27.5 };
+  run(m.measure.body, p);
+  assert.equal(p[5343], 18);
 });
 
 test('switching: probed Z0 is saved once, survives repeats, and comes back', () => {
-  const m = buildMacros(Object.assign({}, base, { stockMm: 18 }));
-  // Spoilboard recorded at -95, probed top-of-stock Z0 at -77.5.
-  const p = { 5383: -95, 5223: -77.5, 5363: 0 };
+  const m = buildMacros(base);
+  // Spoilboard recorded at -95, 18 mm stored, probed top-of-stock Z0 at -77.5.
+  const p = { 5383: -95, 5343: 18, 5223: -77.5, 5363: 0 };
   run(m.set.body, p);
   assert.equal(p[5223], -95, 'Z0 on the spoilboard');
   assert.equal(p[5363], -77.5, 'probed Z0 saved');
@@ -82,6 +103,25 @@ test('switching: probed Z0 is saved once, survives repeats, and comes back', () 
   assert.equal(p[5363], -60);
 });
 
+test('midpoint moves and center origin use the current work position', () => {
+  const m = buildMacros(Object.assign({}, base, { extras: allExtras }));
+  let p = run(m.midX.body, { _x: 120, _y: 80 });
+  assert.deepEqual([p._x, p._y], [60, 80]);
+  p = run(m.midY.body, { _x: 120, _y: 80 });
+  assert.deepEqual([p._x, p._y], [120, 40]);
+  p = run(m.midXY.body, { _x: -30, _y: 50 });
+  assert.deepEqual([p._x, p._y], [-15, 25]);
+  // L20: the current spot reads as half, so X0 Y0 lands halfway.
+  p = run(m.center.body, { _x: 120, _y: 80 });
+  assert.deepEqual([p.L20_x, p.L20_y], [60, 40]);
+  // No unit switching: these work in whatever units the controller is in.
+  assert.ok(!/G2[01]/.test(m.midX.body + m.center.body));
+});
+
+test('typed thickness is stored with one G10 line', () => {
+  assert.equal(storeThicknessCommand(7, 18), 'G10 L2 P7 Z18.000');
+});
+
 test('restore with nothing saved leaves Z0 alone', () => {
   const p = { 5383: -95, 5223: -70, 5363: 0 };
   run(buildMacros(base).restore.body, p);
@@ -89,7 +129,7 @@ test('restore with nothing saved leaves Z0 alone', () => {
 });
 
 test('other work offset and slots', () => {
-  const m = buildMacros(Object.assign({}, base, { wcs: 2, slot: 8, backup: 7 }));
+  const m = buildMacros(Object.assign({}, base, { wcs: 2, slot: 8, backup: 7, thick: 9 }));
   assert.match(m.record.body, /^G55$/m);
   assert.match(m.record.body, /G10 L2 P8 Z\[#5063 \+ #5243 - 15\.000 - #5403\]/);
   assert.match(m.set.body, /^G10 L2 P2 Z\[#5363\]$/m);
@@ -100,11 +140,10 @@ test('other work offset and slots', () => {
   assert.deepEqual([p[5243], p[5343]], [-90, -70]);
 });
 
-test('imperial: values in mm, G21 first and G20 last in every macro', () => {
-  const m = buildMacros(Object.assign({}, base, { blockMm: 0.5 * 25.4, stockMm: 0.75 * 25.4, imperial: true }));
+test('imperial: values in mm, G21 first and G20 last in every Z macro', () => {
+  const m = buildMacros(Object.assign({}, base, { blockMm: 0.5 * 25.4, imperial: true, extras: allExtras }));
   assert.match(m.record.body, /- 12\.700 - #5403\]/);
-  assert.match(m.stock.body, /\+ 19\.050\]/);
-  for (const k of Object.keys(m)) {
+  for (const k of ['record', 'measure', 'set', 'stock', 'restore']) {
     const c = code(m[k].body);
     assert.ok(c.includes('G21'), k);
     assert.equal(c[c.length - 1], 'G20 (back to inches)', k);
@@ -112,7 +151,7 @@ test('imperial: values in mm, G21 first and G20 last in every macro', () => {
 });
 
 test('macro lines: no nested comments, and short enough for grblHAL', () => {
-  const m = buildMacros(Object.assign({}, base, { stockMm: 18 }));
+  const m = buildMacros(Object.assign({}, base, { extras: allExtras }));
   for (const k of Object.keys(m)) {
     for (const line of m[k].body.split('\n')) {
       assert.ok(!/\([^)]*\(/.test(line), 'nested: ' + line);

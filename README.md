@@ -6,24 +6,35 @@ An ncSender plugin with wizards that check your grblHAL setup and write ncSender
 
 Probe a block sitting on the spoilboard once, and the wizard's macros remember the spoilboard height
 for a zero-length tool. After that, with any tool whose length offset is measured (for example with a
-tool setter) and no probing, one macro puts work Z0 on the spoilboard, another on top of stock of a
-known thickness, and a third puts your own (probed) Z0 back.
+tool setter) and no probing, one macro puts work Z0 on the spoilboard, another on top of the stock
+(a stored or probed thickness), and a third puts your own (probed) Z0 back. Midpoint macros are
+optional extras.
 
 1. **Check the controller.** The wizard sends `$G`, `$#` and `#1=[1+1]` (nothing moves) and reports:
    - whether the controller accepts expressions (the macros need them);
    - whether a tool length offset is active (`G43.1` / `G43`, not `G49`) and its value;
    - whether the storage slot is already in use;
    - which work offset you're in.
-2. **Settings.** Probe block thickness, probe feed, max probe travel, retract, stock thickness, the
-   work offset to set (G54 to G59), where to keep the height, and where to save your old Z0 (two
-   different spare offsets: G59.3, G59.2 or G59.1 Z).
-3. **Macros.** Creates the ncSender macros, or updates the ones it made before:
+2. **Settings.** Probe block thickness, probe feed, max probe travel, retract, the work offset to set
+   (G54 to G59), and three different spare offsets (G59.3, G59.2, G59.1 Z) for the spoilboard height,
+   your saved Z0 and the stock thickness. **Store** writes a typed stock thickness (e.g. a sheet) to
+   the controller straight away.
+3. **Extras** (tick the ones you want):
+   - **Midpoint X** / **Midpoint Y**: move halfway back to X0 (or Y0) along that axis only, at the
+     current Z. For round stock: touch one side and zero X, touch the other side, run Midpoint X.
+   - **Midpoint XY**: move halfway to X0 Y0, e.g. from the opposite corner of square stock.
+   - **Center X0 Y0 here**: put X0 Y0 halfway to the current spot without moving
+     (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`).
+4. **Macros.** Creates the ncSender macros, or updates the ones it made before:
    - **Record spoilboard height**: probes down onto the block and stores the height.
+   - **Measure stock thickness**: with the block on the stock, probes down and stores
+     stock top minus the spoilboard height.
    - **G54 Z0 on spoilboard**: saves the current Z0, then sets Z0 on the spoilboard.
-   - **G54 Z0 on stock top** (only with a stock thickness): saves the current Z0, then sets Z0 that
-     far above the spoilboard.
+   - **G54 Z0 on stock top**: saves the current Z0, then sets Z0 the stored thickness above the
+     spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
-4. **Try it once** with a paper feeler before trusting it.
+   - The extras you ticked.
+5. **Try it once** with a paper feeler before trusting it.
 
 ### How it works
 
@@ -45,8 +56,9 @@ G10 L2 P9 Z[#5063 + #5223 - <block> - #5403]
   height as a zero-length tool would see it, so the stored number doesn't depend on which tool probed.
 - `G10 L2 P9` keeps it in G59.3's Z, which grblHAL saves in non-volatile storage.
 
-The spoilboard macro then sets `G10 L2 P1 Z[#5383]` (the stock-top one adds the thickness): grblHAL
-adds the loaded tool's length offset itself.
+The spoilboard macro then sets `G10 L2 P1 Z[#5383]` and the stock-top one `Z[#5383 + #5343]` (the
+thickness, in G59.1 Z): grblHAL adds the loaded tool's length offset itself. The measure macro probes
+the same way as the record macro and stores `trigger - block - TLO - #5383`, the stock thickness.
 
 ### Switching Z0 and back
 
@@ -55,7 +67,7 @@ Before setting Z0, the spoilboard and stock-top macros save the current G54 Z in
 them repeatedly can't overwrite your probed Z0:
 
 ```
-G10 L2 P8 Z[#5363 + [#5223 - #5363] * [[ABS[#5223 - #5383] GT 0.001] AND [ABS[#5223 - #5383 - 18.000] GT 0.001]]]
+G10 L2 P8 Z[#5363 + [#5223 - #5363] * [[ABS[#5223 - #5383] GT 0.001] AND [ABS[#5223 - #5383 - #5343] GT 0.001]]]
 ```
 
 A comparison is 1 or 0 in grblHAL, so this keeps the saved value or replaces it with plain arithmetic,
@@ -67,15 +79,17 @@ hard-code `G54` (most CAM output) use whichever Z0 you last set.
 ### Units
 
 grblHAL returns stored work offsets (`#5221`…) and the tool length offset (`#5403`) in mm whatever the
-units mode, but the probe result (`#5063`) and `G10` values in the current units. All the macros
-therefore switch to `G21` while they work, and imperial setups get `G20` back at the end.
+units mode, but the probe result (`#5063`) and `G10` values in the current units. The macros that
+read stored offsets therefore switch to `G21` while they work, and imperial setups get `G20` back at
+the end. The midpoint extras only use the current work position (`#<_x>`, `#<_y>`), which is already
+in the current units, so they don't switch.
 
 ### Requirements
 
 - grblHAL built with parameter and expression support (the check tells you).
 - Tool length offsets for every tool measured against the same reference tool, and active when you
   run either macro. A `G43.1` offset is cleared by a reset.
-- A spare work offset for storage.
+- Three spare work offsets for storage.
 
 ## Install
 

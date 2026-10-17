@@ -69,6 +69,14 @@
   }
   .mw-btn:hover { filter: brightness(1.08); }
   .mw-btn:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+  .mw-btn-small { padding: 8px 12px; }
+  .mw-inline-row { display: flex; gap: 8px; min-width: 0; }
+  .mw-inline-row .mw-input { flex: 1 1 auto; min-width: 0; }
+  .mw-extras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+  @media (max-width: 640px) { .mw-extras { grid-template-columns: minmax(0, 1fr); } }
+  .mw-extra { display: flex; gap: 8px; align-items: flex-start; line-height: 1.4; cursor: pointer; }
+  .mw-extra input { margin-top: 3px; }
+  .mw-extra span span { display: block; font-size: 0.8rem; color: var(--color-text-secondary); }
   .mw-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   .mw-check { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; line-height: 1.4; }
   .mw-badge {
@@ -104,8 +112,8 @@
     <p class="mw-intro">
       <strong>Z zero on the spoilboard.</strong> Probe a block on the spoilboard once and the wizard
       remembers the spoilboard height for a zero-length tool. After that, with any tool whose length offset
-      is measured and no probing, one macro puts work Z0 on the spoilboard, another on top of stock of a
-      known thickness, and a third puts your own Z0 back.
+      is measured and no probing, one macro puts work Z0 on the spoilboard, another on top of the stock
+      (a stored or measured thickness), and a third puts your own Z0 back. Midpoint macros are extras.
     </p>
 
     <section class="mw-card" aria-labelledby="mw-check-title">
@@ -138,7 +146,10 @@
         </div>
         <div class="mw-field">
           <label for="mw-stock">Stock Thickness (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="number" id="mw-stock" step="0.001" min="0" value="0" title="For the stock-top macro: Z0 goes this far above the spoilboard. 0 = no stock-top macro.">
+          <div class="mw-inline-row">
+            <input class="mw-input" type="number" id="mw-stock" step="0.001" min="0" value="18" title="A known stock thickness, e.g. a sheet. Store writes it to the controller for the stock-top macro; the measure macro writes a probed one.">
+            <button type="button" class="mw-btn mw-btn-small" id="mw-store-stock">Store</button>
+          </div>
         </div>
         <div class="mw-field">
           <label for="mw-wcs">Work Offset to Set</label>
@@ -167,18 +178,39 @@
             <option value="7">G59.1 Z</option>
           </select>
         </div>
+        <div class="mw-field">
+          <label for="mw-thick">Store Thickness In</label>
+          <select class="mw-select" id="mw-thick">
+            <option value="9">G59.3 Z</option>
+            <option value="8">G59.2 Z</option>
+            <option value="7" selected>G59.1 Z</option>
+          </select>
+        </div>
       </div>
+      <p class="mw-status" id="mw-store-status" role="status"></p>
       <p class="mw-hint">
-        The height and the saved Z0 are kept in two spare work offsets' Z, which the controller keeps
-        through power cycles; pick ones you don't use. <strong>Stock Thickness</strong> adds a macro that puts
-        Z0 that far above the spoilboard (0 leaves it out). The macros switch to mm (<code class="mw-inline">G21</code>) while they work,
+        The spoilboard height, your saved Z0 and the stock thickness are kept in three spare work offsets'
+        Z, which the controller keeps through power cycles; pick ones you don't use. The stock-top macro
+        uses whatever thickness is stored: press <strong>Store</strong> for a known thickness, or run the
+        measure macro. The macros switch to mm (<code class="mw-inline">G21</code>) while they work,
         because grblHAL reports stored offsets and tool lengths in mm whatever the units mode.
       </p>
     </section>
 
+    <section class="mw-card" aria-labelledby="mw-extras-title">
+      <h3 class="mw-card-title" id="mw-extras-title"><span class="mw-step">3</span>Extras</h3>
+      <div class="mw-extras">
+        <label class="mw-extra"><input type="checkbox" id="mw-x-midX" checked><span><strong>Midpoint X</strong><span>Move halfway back to X0, e.g. after touching both sides of round stock.</span></span></label>
+        <label class="mw-extra"><input type="checkbox" id="mw-x-midY" checked><span><strong>Midpoint Y</strong><span>The same along Y.</span></span></label>
+        <label class="mw-extra"><input type="checkbox" id="mw-x-midXY" checked><span><strong>Midpoint XY</strong><span>Move halfway to X0 Y0, e.g. from the opposite corner of square stock.</span></span></label>
+        <label class="mw-extra"><input type="checkbox" id="mw-x-center" checked><span><strong>Center X0 Y0 here</strong><span>Put X0 Y0 halfway to the current spot without moving.</span></span></label>
+      </div>
+      <p class="mw-hint">Midpoint moves run at the current Z, so raise the bit first. They use the active work offset.</p>
+    </section>
+
     <section class="mw-card" aria-labelledby="mw-macros-title">
       <div class="mw-card-head">
-        <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">3</span>Macros</h3>
+        <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">4</span>Macros</h3>
         <button type="button" class="mw-btn" id="mw-save">Create macros</button>
       </div>
       <div class="mw-macros" id="mw-macros"></div>
@@ -188,7 +220,7 @@
     </section>
 
     <section class="mw-card" aria-labelledby="mw-test-title">
-      <h3 class="mw-card-title" id="mw-test-title"><span class="mw-step">4</span>Try it once</h3>
+      <h3 class="mw-card-title" id="mw-test-title"><span class="mw-step">5</span>Try it once</h3>
       <ol class="mw-steps">
         <li>Set the probe block on the spoilboard and load a tool whose length offset is measured and active.</li>
         <li>Jog the bit just above the block, then run the <strong>record</strong> macro from the Macros tab. It probes down, stores the height, and backs off.</li>
@@ -196,6 +228,7 @@
         <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. If it doesn't, don't use the macros until it does.</li>
         <li>Run <strong>back to saved</strong>: work Z0 returns to where it was before step 3.</li>
         <li>Then change to another measured tool and run only the spoilboard (or stock-top) macro.</li>
+        <li>For the stock top, press <strong>Store</strong> for a known thickness, or put the block on the stock and run <strong>Measure stock thickness</strong>.</li>
       </ol>
       <p class="mw-hint">Re-run the record macro if the spoilboard is resurfaced or your reference tool changes.</p>
     </section>
@@ -232,70 +265,105 @@
   function offsetZParam(p) { return 5203 + 20 * p; }
   var WCS_NAMES = { 1: 'G54', 2: 'G55', 3: 'G56', 4: 'G57', 5: 'G58', 6: 'G59', 7: 'G59.1', 8: 'G59.2', 9: 'G59.3' };
 
-  // The macros, from settings in mm. All of them work in G21 because
-  // grblHAL returns stored offsets (#5223...) and the tool length offset
-  // (#5403) in mm, but a G10 value and the probe result (#5063) in the
-  // current units; `imperial` puts G20 back at the end.
+  // The macros, from settings in mm. The ones that read stored offsets
+  // work in G21 because grblHAL returns stored offsets (#5223...) and the
+  // tool length offset (#5403) in mm, but a G10 value and the probe result
+  // (#5063) in the current units; `imperial` puts G20 back at the end.
   //
-  // Record: probe the block; #5063 is the trigger point relative to the
+  // Probing (record, measure): #5063 is the trigger point relative to the
   // active work offset, so selecting `wcs` first and adding its Z makes it
-  // machine Z. Minus the block and the active tool length offset gives the
-  // spoilboard height for a zero-length tool, stored in `slot`'s Z.
-  // Spoilboard / stock top: `wcs` Z becomes that height (plus the stock
-  // thickness); grblHAL adds the loaded tool's length offset itself.
-  // Before that, the current Z0 is saved in `backup`'s Z so Restore can put
+  // machine Z; minus the block and the active tool length offset is the
+  // surface height as a zero-length tool sees it. Record stores that for
+  // the spoilboard in `slot` Z; measure stores the stock thickness (stock
+  // top minus that) in `thick` Z.
+  // Spoilboard / stock top: `wcs` Z becomes the spoilboard height (plus the
+  // stored thickness); grblHAL adds the loaded tool's length offset itself.
+  // Before that, the current Z0 is saved in `backup` Z so Restore can put
   // it back, but only when it isn't already one of the values these macros
   // set, so running them twice can't overwrite the saved Z0. The choice is
-  // made with arithmetic (a comparison is 1 or 0) rather than o-word
-  // flow control, which needs more of grblHAL.
+  // made with arithmetic (a comparison is 1 or 0) rather than o-word flow
+  // control, which needs more of grblHAL.
+  // Extras use the current work position (#<_x>, #<_y>, current units)
+  // and so need no unit switching.
   function buildMacros(o) {
-    var wcs = WCS_NAMES[o.wcs], slot = WCS_NAMES[o.slot], bak = WCS_NAMES[o.backup];
-    var cur = '#' + offsetZParam(o.wcs), spoil = '#' + offsetZParam(o.slot), saved = '#' + offsetZParam(o.backup);
-    var stock = o.stockMm > 0 ? fmt(o.stockMm) : null;
+    var wcs = WCS_NAMES[o.wcs], slot = WCS_NAMES[o.slot], bak = WCS_NAMES[o.backup], thk = WCS_NAMES[o.thick];
+    var cur = '#' + offsetZParam(o.wcs), spoil = '#' + offsetZParam(o.slot);
+    var saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
     var tail = o.imperial ? ['G20 (back to inches)'] : [];
-    // 1 when the current Z0 is neither the spoilboard nor the stock top.
-    var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001]' +
-      (stock ? ' AND [ABS[' + cur + ' - ' + spoil + ' - ' + stock + '] GT 0.001]' : '');
-    var saveLine = 'G10 L2 P' + o.backup + ' Z[' + saved + ' + [' + cur + ' - ' + saved + '] * [' + notOurs + ']]';
-    var macros = {};
-    macros.record = { name: 'Macro Wiz: Record spoilboard height', body: [
-      '(Macro Wiz: record spoilboard height)',
-      '(Probe block on the spoilboard, bit)',
-      '(just above it, tool offset active.)',
-      '(Height is stored in ' + slot + ' Z.)',
+    var probe = [
       'G21',
       wcs,
       'G91 G38.2 Z-' + fmt(o.travelMm) + ' F' + fmt(o.feedMm),
-      'G90',
-      'G10 L2 P' + o.slot + ' Z[#5063 + #' + offsetZParam(o.wcs) + ' - ' + fmt(o.blockMm) + ' - #5403]',
-      'G91 G0 Z' + fmt(o.retractMm),
       'G90'
-    ].concat(tail).join('\n') };
-    macros.set = { name: 'Macro Wiz: ' + wcs + ' Z0 on spoilboard', body: [
+    ];
+    var surface = '#5063 + ' + cur + ' - ' + fmt(o.blockMm) + ' - #5403';
+    var back = ['G91 G0 Z' + fmt(o.retractMm), 'G90'];
+    // 1 when the current Z0 is neither the spoilboard nor the stock top.
+    var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001]';
+    var saveLine = 'G10 L2 P' + o.backup + ' Z[' + saved + ' + [' + cur + ' - ' + saved + '] * [' + notOurs + ']]';
+    function macro(name, lines) { return { name: 'Macro Wiz: ' + name, body: lines.join('\n') }; }
+    var m = {};
+    m.record = macro('Record spoilboard height', [
+      '(Macro Wiz: record spoilboard height)',
+      '(Probe block on the spoilboard, bit)',
+      '(just above it, tool offset active.)',
+      '(Height is stored in ' + slot + ' Z.)'
+    ].concat(probe, ['G10 L2 P' + o.slot + ' Z[' + surface + ']'], back, tail));
+    m.measure = macro('Measure stock thickness', [
+      '(Macro Wiz: measure stock thickness)',
+      '(Probe block on the stock, bit just)',
+      '(above it, tool offset active. Needs)',
+      '(the spoilboard height recorded.)',
+      '(Thickness is stored in ' + thk + ' Z.)'
+    ].concat(probe, ['G10 L2 P' + o.thick + ' Z[' + surface + ' - ' + spoil + ']'], back, tail));
+    m.set = macro(wcs + ' Z0 on spoilboard', [
       '(Macro Wiz: work Z0 on spoilboard)',
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
       'G21',
       saveLine,
       'G10 L2 P' + o.wcs + ' Z[' + spoil + ']'
-    ].concat(tail).join('\n') };
-    if (stock) {
-      macros.stock = { name: 'Macro Wiz: ' + wcs + ' Z0 on stock top', body: [
-        '(Macro Wiz: work Z0 on top of ' + stock + ' mm stock)',
-        '(Tool length offset must be active.)',
-        '(Saves the current Z0 in ' + bak + ' Z.)',
-        'G21',
-        saveLine,
-        'G10 L2 P' + o.wcs + ' Z[' + spoil + ' + ' + stock + ']'
-      ].concat(tail).join('\n') };
-    }
-    macros.restore = { name: 'Macro Wiz: ' + wcs + ' Z0 back to saved', body: [
+    ].concat(tail));
+    m.stock = macro(wcs + ' Z0 on stock top', [
+      '(Macro Wiz: work Z0 on stock top)',
+      '(Uses the thickness in ' + thk + ' Z.)',
+      '(Tool length offset must be active.)',
+      '(Saves the current Z0 in ' + bak + ' Z.)',
+      'G21',
+      saveLine,
+      'G10 L2 P' + o.wcs + ' Z[' + spoil + ' + ' + thick + ']'
+    ].concat(tail));
+    m.restore = macro(wcs + ' Z0 back to saved', [
       '(Macro Wiz: put back the Z0 saved in ' + bak + ' Z)',
       '(Leaves Z0 alone if nothing was saved.)',
       'G21',
       'G10 L2 P' + o.wcs + ' Z[' + cur + ' + [' + saved + ' - ' + cur + '] * [' + saved + ' NE 0]]'
-    ].concat(tail).join('\n') };
-    return macros;
+    ].concat(tail));
+    var x = o.extras || {};
+    if (x.midX) m.midX = macro('Midpoint X', [
+      '(Macro Wiz: move halfway to X0, at this Z)',
+      'G90 G0 X[#<_x> / 2]'
+    ]);
+    if (x.midY) m.midY = macro('Midpoint Y', [
+      '(Macro Wiz: move halfway to Y0, at this Z)',
+      'G90 G0 Y[#<_y> / 2]'
+    ]);
+    if (x.midXY) m.midXY = macro('Midpoint XY', [
+      '(Macro Wiz: move halfway to X0 Y0, at this Z)',
+      'G90 G0 X[#<_x> / 2] Y[#<_y> / 2]'
+    ]);
+    if (x.center) m.center = macro('Center X0 Y0 here', [
+      '(Macro Wiz: X0 Y0 to halfway between)',
+      '(X0 Y0 and here, without moving)',
+      'G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]'
+    ]);
+    return m;
+  }
+
+  // `G10 L2` line that stores a typed stock thickness, in the units the
+  // controller is in (G10 values follow G20/G21; grblHAL keeps mm).
+  function storeThicknessCommand(thickSlot, value) {
+    return 'G10 L2 P' + thickSlot + ' Z' + fmt(value);
   }
 
   // `$#` lines: [G54:0.000,0.000,-80.000], [TLO:0.000,0.000,12.345,0.000]
@@ -331,6 +399,7 @@
   // END pure
 
   var state = { imperial: false, capturing: null };
+  var EXTRAS = ['midX', 'midY', 'midXY', 'center'];
 
   // Controller output reaches plugin dialogs as 'cnc-data' messages.
   function cncText(data) {
@@ -426,7 +495,7 @@
       }
       else addCheck(list, 'warn', 'No [TLO] line in $#', 'Couldn\'t read the tool length offset.');
 
-      [[+$('mw-slot').value, 'the spoilboard height'], [+$('mw-backup').value, 'the saved Z0']].forEach(function(pair) {
+      [[+$('mw-slot').value, 'the spoilboard height'], [+$('mw-backup').value, 'the saved Z0'], [+$('mw-thick').value, 'the stock thickness']].forEach(function(pair) {
         var name = WCS_NAMES[pair[0]], v = hash[name];
         if (!v) addCheck(list, 'warn', 'Couldn\'t read ' + name, 'Its current value is unknown.');
         else if (Math.abs(v[0]) + Math.abs(v[1]) > 1e-6) {
@@ -460,19 +529,21 @@
       feedMm: val('mw-feed') * k,
       travelMm: val('mw-travel') * k,
       retractMm: val('mw-retract') * k,
-      stockMm: 0,
       wcs: +$('mw-wcs').value,
       slot: +$('mw-slot').value,
       backup: +$('mw-backup').value,
+      thick: +$('mw-thick').value,
+      extras: {},
       imperial: state.imperial
     };
-    var stockEl = $('mw-stock'), stock = parseFloat(stockEl.value);
-    var stockOk = stockEl.value === '' || (isFinite(stock) && stock >= 0);
-    stockEl.classList.toggle('mw-invalid', !stockOk);
-    if (!stockOk) ok = false; else s.stockMm = (stock || 0) * k;
-    var clash = s.slot === s.backup;
-    $('mw-backup').classList.toggle('mw-invalid', clash);
-    if (clash) ok = false;
+    EXTRAS.forEach(function(k2) { s.extras[k2] = $('mw-x-' + k2).checked; });
+    // The three slots must be different.
+    var ids = { 'mw-slot': s.slot, 'mw-backup': s.backup, 'mw-thick': s.thick };
+    Object.keys(ids).forEach(function(id) {
+      var clash = Object.keys(ids).some(function(o2) { return o2 !== id && ids[o2] === ids[id]; });
+      $(id).classList.toggle('mw-invalid', clash);
+      if (clash) ok = false;
+    });
     return ok ? s : null;
   }
 
@@ -500,7 +571,8 @@
     var body = {
       block: $('mw-block').value, feed: $('mw-feed').value, travel: $('mw-travel').value,
       retract: $('mw-retract').value, stock: $('mw-stock').value, wcs: $('mw-wcs').value,
-      slot: $('mw-slot').value, backup: $('mw-backup').value,
+      slot: $('mw-slot').value, backup: $('mw-backup').value, thick: $('mw-thick').value,
+      extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       units: state.imperial ? 'imperial' : 'metric'
     };
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
@@ -508,7 +580,35 @@
     }).catch(function() {});
   }
 
-  // Create both macros, or update the ones made before (found by name).
+  // Write the typed stock thickness to the thickness slot now. Sent in mm
+  // (G21) since that's how it's converted; inch users get G20 back.
+  async function storeThickness() {
+    var status = $('mw-store-status'), btn = $('mw-store-stock');
+    var s = readSettings(), el = $('mw-stock'), v = parseFloat(el.value);
+    var good = isFinite(v) && v > 0;
+    el.classList.toggle('mw-invalid', !good);
+    if (!s || !good) { status.setAttribute('data-state', 'bad'); status.textContent = 'Enter a thickness above 0 (and three different slots) first.'; return; }
+    var mm = v * (state.imperial ? MM_PER_INCH : 1);
+    btn.disabled = true;
+    status.removeAttribute('data-state');
+    status.textContent = 'Storing…';
+    try {
+      var cmds = ['G21', storeThicknessCommand(s.thick, mm)].concat(state.imperial ? ['G20'] : []);
+      for (var i = 0; i < cmds.length; i++) {
+        var r = await sendCommand(cmds[i]);
+        if (!r.ok) throw new Error('the controller rejected ' + cmds[i]);
+      }
+      status.setAttribute('data-state', 'ok');
+      status.textContent = 'Stored ' + fmt(mm) + ' mm in ' + WCS_NAMES[s.thick] + ' Z. The stock-top macro uses it from now on.';
+    } catch (err) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Couldn\'t store the thickness: ' + err.message + '. Is the controller connected?';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Create the macros, or update the ones made before (found by name).
   async function saveMacros() {
     var status = $('mw-save-status'), btn = $('mw-save');
     var s = readSettings();
@@ -557,7 +657,7 @@
     ROOT.querySelectorAll('.mw-unit').forEach(function(el) { el.textContent = state.imperial ? 'in' : 'mm'; });
     var saved = initialConfig || {};
     var conv = state.imperial === (saved.units === 'imperial') ? 1 : (state.imperial ? 1 / MM_PER_INCH : MM_PER_INCH);
-    var defaults = state.imperial ? { block: 0.5906, feed: 4, travel: 1.25, retract: 0.2 } : {};
+    var defaults = state.imperial ? { block: 0.5906, feed: 4, travel: 1.25, retract: 0.2, stock: 0.75 } : {};
     ['block', 'feed', 'travel', 'retract', 'stock'].forEach(function(k) {
       var v = saved[k] != null ? parseFloat(saved[k]) * conv : defaults[k];
       if (isFinite(v)) $('mw-' + k).value = +v.toFixed(4);
@@ -565,7 +665,11 @@
     if (saved.wcs) $('mw-wcs').value = saved.wcs;
     if (saved.slot) $('mw-slot').value = saved.slot;
     if (saved.backup) $('mw-backup').value = saved.backup;
-    ['mw-block', 'mw-feed', 'mw-travel', 'mw-retract', 'mw-stock', 'mw-wcs', 'mw-slot', 'mw-backup'].forEach(function(id) {
+    if (saved.thick) $('mw-thick').value = saved.thick;
+    if (Array.isArray(saved.extras)) EXTRAS.forEach(function(k) { $('mw-x-' + k).checked = saved.extras.indexOf(k) >= 0; });
+    $('mw-store-stock').addEventListener('click', storeThickness);
+    EXTRAS.forEach(function(k) { $('mw-x-' + k).addEventListener('change', render); });
+    ['mw-block', 'mw-feed', 'mw-travel', 'mw-retract', 'mw-stock', 'mw-wcs', 'mw-slot', 'mw-backup', 'mw-thick'].forEach(function(id) {
       $(id).addEventListener('input', render);
       $(id).addEventListener('change', render);
     });

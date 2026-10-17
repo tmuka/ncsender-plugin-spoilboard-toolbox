@@ -1,7 +1,7 @@
 {
   "id": "com.tmuka.macrowiz",
   "name": "Macro Wiz",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "minAppVersion": "2.0.88",
   "configUi": "config.html",
   "author": "tmuka",
