@@ -1,6 +1,6 @@
 {
   "name": "ncsender-macro-wiz",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "ncSender plugin: wizards that check your grblHAL setup and write macros",
   "private": true,
   "scripts": {

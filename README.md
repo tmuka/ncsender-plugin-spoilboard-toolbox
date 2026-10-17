@@ -25,6 +25,9 @@ optional extras.
    - **Midpoint XY**: move halfway to X0 Y0, e.g. from the opposite corner of square stock.
    - **Center X0 Y0 here**: put X0 Y0 halfway to the current spot without moving
      (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`).
+   - **Save / restore X/Y**: save the work offset's X and Y (e.g. a fixture or jig) and put them back
+     later. They're kept in the saved-Z0 slot's X/Y, which that slot doesn't otherwise use; restore
+     does nothing if nothing was saved.
 4. **Macros.** Creates the ncSender macros, or updates the ones it made before:
    - **Record spoilboard height**: probes down onto the block and stores the height.
    - **Measure stock thickness**: with the block on the stock, probes down and stores
@@ -75,6 +78,12 @@ without `o`-word flow control. **Back to saved** is `G10 L2 P1 Z[#5223 + [#5363 
 which leaves Z0 alone if nothing was saved. Saved values stay valid across tool changes, because work
 offsets are relative to the reference tool. The work offset is changed in place, so programs that
 hard-code `G54` (most CAM output) use whichever Z0 you last set.
+
+### When to re-record
+
+The stored spoilboard height is only as current as the last recording. Run **Record spoilboard
+height** again after surfacing the spoilboard (for example with QuickCut's Wasteboard Surfacing),
+after moving or replacing it, or if your reference tool changes.
 
 ### Units
 

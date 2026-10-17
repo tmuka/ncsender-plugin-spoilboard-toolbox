@@ -204,6 +204,7 @@
         <label class="mw-extra"><input type="checkbox" id="mw-x-midY" checked><span><strong>Midpoint Y</strong><span>The same along Y.</span></span></label>
         <label class="mw-extra"><input type="checkbox" id="mw-x-midXY" checked><span><strong>Midpoint XY</strong><span>Move halfway to X0 Y0, e.g. from the opposite corner of square stock.</span></span></label>
         <label class="mw-extra"><input type="checkbox" id="mw-x-center" checked><span><strong>Center X0 Y0 here</strong><span>Put X0 Y0 halfway to the current spot without moving.</span></span></label>
+        <label class="mw-extra"><input type="checkbox" id="mw-x-fixture" checked><span><strong>Save / restore X/Y</strong><span>Keep the work offset's X/Y for a fixture or jig, and bring it back later. Uses the saved-Z0 slot's X/Y.</span></span></label>
       </div>
       <p class="mw-hint">Midpoint moves run at the current Z, so raise the bit first. They use the active work offset.</p>
     </section>
@@ -230,7 +231,8 @@
         <li>Then change to another measured tool and run only the spoilboard (or stock-top) macro.</li>
         <li>For the stock top, press <strong>Store</strong> for a known thickness, or put the block on the stock and run <strong>Measure stock thickness</strong>.</li>
       </ol>
-      <p class="mw-hint">Re-run the record macro if the spoilboard is resurfaced or your reference tool changes.</p>
+      <p class="mw-hint"><strong>Re-run the record macro</strong> after surfacing the spoilboard (e.g. QuickCut&rsquo;s Wasteboard
+        Surfacing), or if your reference tool changes: the stored height is only as current as the last recording.</p>
     </section>
   </div>
 </div>
@@ -352,6 +354,24 @@
       '(Macro Wiz: move halfway to X0 Y0, at this Z)',
       'G90 G0 X[#<_x> / 2] Y[#<_y> / 2]'
     ]);
+    if (x.fixture) {
+      // The saved-Z0 slot only uses Z, so its X and Y hold a saved X/Y.
+      var cx = '#' + (offsetZParam(o.wcs) - 2), cy = '#' + (offsetZParam(o.wcs) - 1);
+      var sx = '#' + (offsetZParam(o.backup) - 2), sy = '#' + (offsetZParam(o.backup) - 1);
+      var anySaved = '[[' + sx + ' NE 0] OR [' + sy + ' NE 0]]';
+      m.saveXY = macro('Save ' + wcs + ' X/Y', [
+        '(Macro Wiz: save ' + wcs + ' X/Y in ' + bak + ' X/Y)',
+        '(e.g. a fixture or jig you come back to)',
+        'G21',
+        'G10 L2 P' + o.backup + ' X[' + cx + '] Y[' + cy + ']'
+      ].concat(tail));
+      m.restoreXY = macro(wcs + ' X/Y back to saved', [
+        '(Macro Wiz: put back the X/Y saved in ' + bak + ')',
+        '(Leaves X/Y alone if nothing was saved.)',
+        'G21',
+        'G10 L2 P' + o.wcs + ' X[' + cx + ' + [' + sx + ' - ' + cx + '] * ' + anySaved + '] Y[' + cy + ' + [' + sy + ' - ' + cy + '] * ' + anySaved + ']'
+      ].concat(tail));
+    }
     if (x.center) m.center = macro('Center X0 Y0 here', [
       '(Macro Wiz: X0 Y0 to halfway between)',
       '(X0 Y0 and here, without moving)',
@@ -399,7 +419,7 @@
   // END pure
 
   var state = { imperial: false, capturing: null };
-  var EXTRAS = ['midX', 'midY', 'midXY', 'center'];
+  var EXTRAS = ['midX', 'midY', 'midXY', 'center', 'fixture'];
 
   // Controller output reaches plugin dialogs as 'cnc-data' messages.
   function cncText(data) {
@@ -495,10 +515,13 @@
       }
       else addCheck(list, 'warn', 'No [TLO] line in $#', 'Couldn\'t read the tool length offset.');
 
-      [[+$('mw-slot').value, 'the spoilboard height'], [+$('mw-backup').value, 'the saved Z0'], [+$('mw-thick').value, 'the stock thickness']].forEach(function(pair) {
+      [[+$('mw-slot').value, 'the spoilboard height'], [+$('mw-backup').value, 'the saved Z0 and X/Y'], [+$('mw-thick').value, 'the stock thickness']].forEach(function(pair) {
         var name = WCS_NAMES[pair[0]], v = hash[name];
+        var xyIsOurs = pair[0] === +$('mw-backup').value;
         if (!v) addCheck(list, 'warn', 'Couldn\'t read ' + name, 'Its current value is unknown.');
-        else if (Math.abs(v[0]) + Math.abs(v[1]) > 1e-6) {
+        else if (xyIsOurs && Math.abs(v[0]) + Math.abs(v[1]) + Math.abs(v[2]) > 1e-6) {
+          addCheck(list, 'ok', name + ': X ' + fmt(v[0]) + ', Y ' + fmt(v[1]) + ', Z ' + fmt(v[2]) + ' mm', 'Holds ' + pair[1] + ' from an earlier run, as long as you don\'t use ' + name + ' for work.');
+        } else if (Math.abs(v[0]) + Math.abs(v[1]) > 1e-6) {
           addCheck(list, 'warn', name + ' has X/Y values', 'It looks like a work offset in use. Pick another slot for ' + pair[1] + '.');
         } else if (Math.abs(v[2]) > 1e-6) {
           addCheck(list, 'ok', name + ' Z: ' + fmt(v[2]) + ' mm', 'Holds ' + pair[1] + ' from an earlier run, as long as you don\'t use ' + name + ' for work.');
