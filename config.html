@@ -214,7 +214,7 @@
         <label class="mw-extra"><input type="checkbox" id="mw-x-center" checked><span><strong>Center X0 Y0 here</strong><span>Put X0 Y0 halfway to the current spot without moving.</span></span></label>
         <label class="mw-extra"><input type="checkbox" id="mw-x-fixture" checked><span><strong>Save / restore X/Y</strong><span>Keep the work offset's X/Y for a fixture or jig, and bring it back later. Uses the saved-Z0 slot's X/Y.</span></span></label>
       </div>
-      <p class="mw-hint">Midpoint moves run at the current Z, so raise the bit first. They use the active work offset.</p>
+      <p class="mw-hint" id="mw-safe-note">Midpoint moves first lift to ncSender&rsquo;s Safe Z. They use the active work offset.</p>
     </section>
 
     <section class="mw-card" aria-labelledby="mw-macros-title">
@@ -300,8 +300,10 @@
   // set, so running them twice can't overwrite the saved Z0. The choice is
   // made with arithmetic (a comparison is 1 or 0) rather than o-word flow
   // control, which needs more of grblHAL.
-  // Extras use the current work position (#<_x>, #<_y>, current units)
-  // and so need no unit switching.
+  // Extras use the current work position (#<_x>, #<_y>). The midpoint
+  // moves first lift to ncSender's Safe Z (`safeZMm`, a machine Z in mm;
+  // machine Z0 when it isn't set) with G53, in G21 so the height is read
+  // as mm; #<_x> then also reads in mm, which keeps the move consistent.
   function buildMacros(o) {
     var wcs = WCS_NAMES[o.wcs], slot = WCS_NAMES[o.slot], bak = WCS_NAMES[o.backup], thk = WCS_NAMES[o.thick];
     var cur = '#' + offsetZParam(o.wcs), spoil = '#' + offsetZParam(o.slot);
@@ -362,18 +364,19 @@
       'G10 L2 P' + o.wcs + ' Z[' + cur + ' + [' + saved + ' - ' + cur + '] * [' + saved + ' NE 0]]'
     ].concat(tail));
     var x = o.extras || {};
-    if (x.midX) m.midX = macro('Midpoint X', [
-      '(Macro Wiz: move halfway to X0, at this Z)',
-      'G90 G0 X[#<_x> / 2]'
-    ]);
-    if (x.midY) m.midY = macro('Midpoint Y', [
-      '(Macro Wiz: move halfway to Y0, at this Z)',
-      'G90 G0 Y[#<_y> / 2]'
-    ]);
-    if (x.midXY) m.midXY = macro('Midpoint XY', [
-      '(Macro Wiz: move halfway to X0 Y0, at this Z)',
-      'G90 G0 X[#<_x> / 2] Y[#<_y> / 2]'
-    ]);
+    var safe = typeof o.safeZMm === 'number' && isFinite(o.safeZMm)
+      ? 'G53 G0 Z' + fmt(o.safeZMm) + ' (Safe Z)' : 'G53 G0 Z0 (machine Z0)';
+    function midpoint(name, what, move) {
+      return macro(name, [
+        '(Macro Wiz: lift to Safe Z, then move halfway to ' + what + ')',
+        'G21',
+        safe,
+        'G90 G0 ' + move
+      ].concat(tail));
+    }
+    if (x.midX) m.midX = midpoint('Midpoint X', 'X0', 'X[#<_x> / 2]');
+    if (x.midY) m.midY = midpoint('Midpoint Y', 'Y0', 'Y[#<_y> / 2]');
+    if (x.midXY) m.midXY = midpoint('Midpoint XY', 'X0 Y0', 'X[#<_x> / 2] Y[#<_y> / 2]');
     if (x.fixture) {
       // The saved-Z0 slot only uses Z, so its X and Y hold a saved X/Y.
       var cx = '#' + (offsetZParam(o.wcs) - 2), cy = '#' + (offsetZParam(o.wcs) - 1);
@@ -438,7 +441,7 @@
 
   // END pure
 
-  var state = { imperial: false, capturing: null };
+  var state = { imperial: false, capturing: null, safeZMm: null };
   var EXTRAS = ['midX', 'midY', 'midXY', 'center', 'fixture'];
 
   // Controller output reaches plugin dialogs as 'cnc-data' messages.
@@ -577,6 +580,7 @@
       backup: +$('mw-backup').value,
       thick: +$('mw-thick').value,
       extras: {},
+      safeZMm: state.safeZMm,
       imperial: state.imperial
     };
     EXTRAS.forEach(function(k2) { s.extras[k2] = $('mw-x-' + k2).checked; });
@@ -771,10 +775,15 @@
       var res = await fetch(BASE_URL + '/api/settings');
       var s = res.ok ? await res.json() : {};
       state.imperial = (s.unitsPreference || 'metric') === 'imperial';
+      var sz = Number(s.safeZHeight);
+      state.safeZMm = s.safeZHeight != null && s.safeZHeight !== '' && isFinite(sz) ? sz : null;
       var sb = s.probe && s.probe['standard-block'];
       if (sb && typeof sb.zThickness === 'number' && sb.zThickness > 0) probeBlockMm = sb.zThickness;
     } catch (e) { /* metric */ }
     ROOT.querySelectorAll('.mw-unit').forEach(function(el) { el.textContent = state.imperial ? 'in' : 'mm'; });
+    $('mw-safe-note').textContent = 'Midpoint moves first lift to ' + (state.safeZMm != null
+      ? 'ncSender\'s Safe Z (machine Z ' + fmt(state.safeZMm) + ' mm)'
+      : 'machine Z0, since no Safe Z is set in ncSender') + ', then move. They use the active work offset.';
     var saved = initialConfig || {};
     var conv = state.imperial === (saved.units === 'imperial') ? 1 : (state.imperial ? 1 / MM_PER_INCH : MM_PER_INCH);
     var defaults = state.imperial ? { block: 0.5906, feed: 4, travel: 1.25, retract: 0.2, stock: 0.75 } : {};

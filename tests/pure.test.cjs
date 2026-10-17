@@ -77,7 +77,7 @@ test('names start MW:, descriptions are the first comment line after its prefix'
   assert.equal(m.record.name, 'MW: Record spoilboard height');
   assert.equal(m.record.description, 'record spoilboard height');
   assert.equal(m.restore.description, 'put back the Z0 saved in G59.2 Z');
-  assert.equal(m.midX.description, 'move halfway to X0, at this Z');
+  assert.equal(m.midX.description, 'lift to Safe Z, then move halfway to X0');
   for (const k of Object.keys(m)) {
     assert.ok(m[k].name.startsWith('MW: '), k);
     assert.ok(m[k].description && !/Macro Wiz|[()]/.test(m[k].description), k + ': ' + m[k].description);
@@ -133,8 +133,15 @@ test('midpoint moves and center origin use the current work position', () => {
   // L20: the current spot reads as half, so X0 Y0 lands halfway.
   p = run(m.center.body, { _x: 120, _y: 80 });
   assert.deepEqual([p.L20_x, p.L20_y], [60, 40]);
-  // No unit switching: these work in whatever units the controller is in.
-  assert.ok(!/G2[01]/.test(m.midX.body + m.center.body));
+  // Every midpoint move lifts to Safe Z first, in mm; centre doesn't move.
+  for (const k of ['midX', 'midY', 'midXY']) {
+    const c = code(m[k].body);
+    assert.deepEqual(c.slice(0, 2), ['G21', 'G53 G0 Z0 (machine Z0)'], k);
+    assert.match(c[2], /^G90 G0 /, k);
+  }
+  assert.ok(!/G0|G53/.test(m.center.body));
+  const withSafe = buildMacros(Object.assign({}, base, { extras: allExtras, safeZMm: -5, imperial: true }));
+  assert.deepEqual(code(withSafe.midXY.body), ['G21', 'G53 G0 Z-5.000 (Safe Z)', 'G90 G0 X[#<_x> / 2] Y[#<_y> / 2]', 'G20 (back to inches)']);
 });
 
 test('save and restore X/Y: kept in the saved-Z0 slot, Z untouched, nothing saved = no change', () => {

@@ -22,9 +22,12 @@ optional extras.
    your saved Z0 and the stock thickness. **Store** writes a typed stock thickness (e.g. a sheet) to
    the controller straight away.
 3. **Extras** (tick the ones you want):
-   - **Midpoint X** / **Midpoint Y**: move halfway back to X0 (or Y0) along that axis only, at the
-     current Z. For round stock: touch one side and zero X, touch the other side, run Midpoint X.
-   - **Midpoint XY**: move halfway to X0 Y0, e.g. from the opposite corner of square stock.
+   - **Midpoint X** / **Midpoint Y**: lift to ncSender's Safe Z (machine Z0 if none is set), then move
+     halfway back to X0 (or Y0) along that axis only. For round stock: touch one side and zero X, touch
+     the other side, run Midpoint X. Safe Z is written into the macro, so re-run **Create macros**
+     after changing it.
+   - **Midpoint XY**: the same lift, then move halfway to X0 Y0, e.g. from the opposite corner of square
+     stock.
    - **Center X0 Y0 here**: put X0 Y0 halfway to the current spot without moving
      (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`).
    - **Save / restore X/Y**: save the work offset's X and Y (e.g. a fixture or jig) and put them back
@@ -98,8 +101,11 @@ after moving or replacing it, or if your reference tool changes.
 grblHAL returns stored work offsets (`#5221`…) and the tool length offset (`#5403`) in mm whatever the
 units mode, but the probe result (`#5063`) and `G10` values in the current units. The macros that
 read stored offsets therefore switch to `G21` while they work, and imperial setups get `G20` back at
-the end. The midpoint extras only use the current work position (`#<_x>`, `#<_y>`), which is already
-in the current units, so they don't switch.
+the end. The midpoint extras switch too, so the Safe Z height (`G53 G0 Z…`, a machine Z in mm) is
+read as mm; `#<_x>` / `#<_y>` are then also in mm, which keeps the move right.
+
+No macro moves sideways without lifting first: the midpoint moves lift to Safe Z, and the probing
+macros only move straight down from where you put the bit, then back off upward.
 
 ### Requirements
 
