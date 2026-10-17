@@ -1,0 +1,522 @@
+<style>
+  .mw-wrapper {
+    --mw-gap: 12px;
+    width: 760px;
+    max-width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font-size: 0.9rem;
+  }
+  .mw-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--mw-gap);
+    padding: 4px 20px 20px;
+  }
+  .mw-intro { margin: 0; color: var(--color-text-secondary); line-height: 1.45; }
+  .mw-card {
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-medium, 10px);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .mw-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .mw-card-title { margin: 0; font-size: 1rem; font-weight: 600; }
+  .mw-step {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; margin-right: 8px; border-radius: 50%;
+    font-size: 0.75rem; font-weight: 700;
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    color: var(--color-accent);
+  }
+  .mw-hint { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--color-text-secondary); }
+  .mw-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mw-gap); }
+  @media (max-width: 640px) { .mw-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .mw-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .mw-field label { font-size: 0.78rem; font-weight: 600; color: var(--color-text-secondary); }
+  .mw-input, .mw-select {
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font: inherit;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .mw-input { text-align: right; font-family: 'JetBrains Mono', monospace; }
+  .mw-input:focus, .mw-select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  }
+  .mw-input.mw-invalid { border-color: var(--color-danger, #d9534f); }
+  .mw-btn {
+    -webkit-appearance: none; appearance: none;
+    padding: 8px 16px; border-radius: 8px !important; border: none !important;
+    background: var(--color-accent) !important; color: #fff !important;
+    font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .mw-btn:hover { filter: brightness(1.08); }
+  .mw-btn:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+  .mw-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .mw-check { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; line-height: 1.4; }
+  .mw-badge {
+    width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700; color: #fff;
+    background: var(--color-text-secondary, #888);
+  }
+  .mw-check[data-state="ok"] .mw-badge { background: var(--color-success, #2e9e6b); }
+  .mw-check[data-state="warn"] .mw-badge { background: var(--color-warning, #d98c1a); }
+  .mw-check[data-state="bad"] .mw-badge { background: var(--color-danger, #d9534f); }
+  .mw-check strong { font-weight: 600; }
+  .mw-check .mw-detail { display: block; font-size: 0.8rem; color: var(--color-text-secondary); }
+  .mw-macros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--mw-gap); }
+  @media (max-width: 640px) { .mw-macros { grid-template-columns: minmax(0, 1fr); } }
+  .mw-macro { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .mw-macro h4 { margin: 0; font-size: 0.85rem; font-weight: 600; }
+  .mw-code {
+    margin: 0; padding: 10px 12px; min-height: 140px;
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.5;
+    white-space: pre; overflow-x: auto;
+  }
+  .mw-status { margin: 0; font-size: 0.85rem; }
+  .mw-status[data-state="ok"] { color: var(--color-success, #2e9e6b); }
+  .mw-status[data-state="bad"] { color: var(--color-danger, #d9534f); }
+  .mw-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.45; }
+  code.mw-inline { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
+</style>
+
+<div class="mw-wrapper">
+  <div class="mw-panel">
+    <p class="mw-intro">
+      <strong>Z zero on the spoilboard.</strong> Probe a block on the spoilboard once and the wizard
+      remembers the spoilboard height for a zero-length tool. After that, one macro puts work Z0 on the
+      spoilboard with any tool whose length offset is measured, with no probing.
+    </p>
+
+    <section class="mw-card" aria-labelledby="mw-check-title">
+      <div class="mw-card-head">
+        <h3 class="mw-card-title" id="mw-check-title"><span class="mw-step">1</span>Check the controller</h3>
+        <button type="button" class="mw-btn" id="mw-run-checks">Run checks</button>
+      </div>
+      <p class="mw-hint">Asks the controller for its state (<code class="mw-inline">$G</code>, <code class="mw-inline">$#</code>) and tries one harmless expression. Nothing moves.</p>
+      <ul class="mw-checks" id="mw-checks"></ul>
+    </section>
+
+    <section class="mw-card" aria-labelledby="mw-settings-title">
+      <h3 class="mw-card-title" id="mw-settings-title"><span class="mw-step">2</span>Settings</h3>
+      <div class="mw-row">
+        <div class="mw-field">
+          <label for="mw-block">Probe Block Thickness (<span class="mw-unit">mm</span>)</label>
+          <input class="mw-input" type="number" id="mw-block" step="0.001" min="0.001" value="15">
+        </div>
+        <div class="mw-field">
+          <label for="mw-feed">Probe Feed (<span class="mw-unit">mm</span>/min)</label>
+          <input class="mw-input" type="number" id="mw-feed" step="1" min="1" value="100">
+        </div>
+        <div class="mw-field">
+          <label for="mw-travel">Max Probe Travel (<span class="mw-unit">mm</span>)</label>
+          <input class="mw-input" type="number" id="mw-travel" step="1" min="1" value="30">
+        </div>
+        <div class="mw-field">
+          <label for="mw-retract">Retract After (<span class="mw-unit">mm</span>)</label>
+          <input class="mw-input" type="number" id="mw-retract" step="0.5" min="0.1" value="5">
+        </div>
+        <div class="mw-field">
+          <label for="mw-wcs">Work Offset to Set</label>
+          <select class="mw-select" id="mw-wcs">
+            <option value="1" selected>G54</option>
+            <option value="2">G55</option>
+            <option value="3">G56</option>
+            <option value="4">G57</option>
+            <option value="5">G58</option>
+            <option value="6">G59</option>
+          </select>
+        </div>
+        <div class="mw-field">
+          <label for="mw-slot">Store Height In</label>
+          <select class="mw-select" id="mw-slot">
+            <option value="9" selected>G59.3 Z</option>
+            <option value="8">G59.2 Z</option>
+            <option value="7">G59.1 Z</option>
+          </select>
+        </div>
+      </div>
+      <p class="mw-hint">
+        The height is kept in a spare work offset's Z, which the controller saves through power cycles.
+        Pick one you don't use. The macros switch to mm (<code class="mw-inline">G21</code>) while they work,
+        because grblHAL reports stored offsets and tool lengths in mm whatever the units mode.
+      </p>
+    </section>
+
+    <section class="mw-card" aria-labelledby="mw-macros-title">
+      <div class="mw-card-head">
+        <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">3</span>Macros</h3>
+        <button type="button" class="mw-btn" id="mw-save">Create macros</button>
+      </div>
+      <div class="mw-macros">
+        <div class="mw-macro">
+          <h4 id="mw-record-name"></h4>
+          <pre class="mw-code" id="mw-record-code"></pre>
+        </div>
+        <div class="mw-macro">
+          <h4 id="mw-set-name"></h4>
+          <pre class="mw-code" id="mw-set-code"></pre>
+        </div>
+      </div>
+      <p class="mw-status" id="mw-save-status" role="status"></p>
+    </section>
+
+    <section class="mw-card" aria-labelledby="mw-test-title">
+      <h3 class="mw-card-title" id="mw-test-title"><span class="mw-step">4</span>Try it once</h3>
+      <ol class="mw-steps">
+        <li>Set the probe block on the spoilboard and load a tool whose length offset is measured and active.</li>
+        <li>Jog the bit just above the block, then run the <strong>record</strong> macro from the Macros tab. It probes down, stores the height, and backs off.</li>
+        <li>Without changing tools, run the <strong>set</strong> macro.</li>
+        <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. If it doesn't, don't use the macros until it does.</li>
+        <li>Then change to another measured tool and run only the set macro.</li>
+      </ol>
+      <p class="mw-hint">Re-run the record macro if the spoilboard is resurfaced or your reference tool changes.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function() {
+  var FALLBACK_PORT = __SERVER_PORT__;
+  var initialConfig = __INITIAL_CONFIG__;
+  var PLUGIN_ID = 'com.tmuka.macrowiz';
+
+  var BASE_URL = (window.ncSender && typeof window.ncSender.getApiBaseUrl === 'function')
+    ? window.ncSender.getApiBaseUrl(FALLBACK_PORT) : '';
+  // ncSender runs this script inline in its own page, again on every open,
+  // so listeners check that this dialog is still on the page.
+  var ROOT = (function() {
+    var cs = document.currentScript;
+    var prev = cs && cs.previousElementSibling;
+    if (prev && prev.classList && prev.classList.contains('mw-wrapper')) return prev;
+    var all = document.querySelectorAll('.mw-wrapper');
+    return all[all.length - 1];
+  })();
+  function rootAlive() { return !!(ROOT && ROOT.isConnected); }
+  function $(id) { return ROOT.querySelector('#' + id); }
+
+  // BEGIN pure — read by tests/*.cjs, so keep this block free of DOM use.
+
+  var MM_PER_INCH = 25.4;
+
+  function fmt(v) { return (Math.round(v * 1000) / 1000).toFixed(3); }
+
+  // The Z parameter of a work offset: P1 (G54) is #5223, P9 (G59.3) #5383.
+  function offsetZParam(p) { return 5203 + 20 * p; }
+  var WCS_NAMES = { 1: 'G54', 2: 'G55', 3: 'G56', 4: 'G57', 5: 'G58', 6: 'G59', 7: 'G59.1', 8: 'G59.2', 9: 'G59.3' };
+
+  // The two macros, from settings in mm. Both work in G21 because grblHAL
+  // returns stored offsets (#5223...) and the tool length offset (#5403)
+  // in mm, but a G10 value and the probe result (#5063) in the current
+  // units; `imperial` puts G20 back at the end.
+  //
+  // Record: probe the block; #5063 is the trigger point relative to the
+  // active work offset, so selecting `wcs` first and adding its Z makes it
+  // machine Z. Minus the block and the active tool length offset gives the
+  // spoilboard height for a zero-length tool, stored in `slot`'s Z.
+  // Set: that height becomes `wcs` Z; grblHAL adds the current tool's
+  // length offset itself, so nothing is subtracted.
+  function buildMacros(o) {
+    var wcs = WCS_NAMES[o.wcs], slot = WCS_NAMES[o.slot];
+    var tail = o.imperial ? ['G20 (back to inches)'] : [];
+    var record = [
+      '(Macro Wiz: record spoilboard height)',
+      '(Probe block on the spoilboard, bit)',
+      '(just above it, tool offset active.)',
+      '(Height is stored in ' + slot + ' Z.)',
+      'G21',
+      wcs,
+      'G91 G38.2 Z-' + fmt(o.travelMm) + ' F' + fmt(o.feedMm),
+      'G90',
+      'G10 L2 P' + o.slot + ' Z[#5063 + #' + offsetZParam(o.wcs) + ' - ' + fmt(o.blockMm) + ' - #5403]',
+      'G91 G0 Z' + fmt(o.retractMm),
+      'G90'
+    ].concat(tail);
+    var set = [
+      '(Macro Wiz: work Z0 on spoilboard)',
+      '(Tool length offset must be active.)',
+      '(Sets ' + wcs + ' Z from ' + slot + ' Z.)',
+      'G21',
+      'G10 L2 P' + o.wcs + ' Z[#' + offsetZParam(o.slot) + ']'
+    ].concat(tail);
+    return {
+      record: { name: 'Macro Wiz: Record spoilboard height', body: record.join('\n') },
+      set: { name: 'Macro Wiz: ' + wcs + ' Z0 on spoilboard', body: set.join('\n') }
+    };
+  }
+
+  // `$#` lines: [G54:0.000,0.000,-80.000], [TLO:0.000,0.000,12.345,0.000]
+  // or [TLO:12.345] on older builds, [PRB:...:1]. Returns {G54: [x,y,z], ..., TLO: z}.
+  function parseHashReport(lines) {
+    var out = {};
+    lines.forEach(function(line) {
+      var m = /^\[(G5[4-9](?:\.[1-3])?|G28|G30|G92|TLO):([^\]]*)\]/.exec(String(line).trim());
+      if (!m) return;
+      var vals = m[2].split(':')[0].split(',').map(Number);
+      if (m[1] === 'TLO') out.TLO = vals.length > 1 ? vals[2] : vals[0];
+      else out[m[1]] = vals;
+    });
+    return out;
+  }
+
+  // `$G`: [GC:G0 G54 G17 G21 G90 G94 G49 ...]. The tool length offset is on
+  // unless G49 is listed.
+  function parseGcState(lines) {
+    for (var i = 0; i < lines.length; i++) {
+      var m = /^\[GC:([^\]]*)\]/.exec(String(lines[i]).trim());
+      if (!m) continue;
+      var words = m[1].split(/\s+/);
+      return {
+        imperial: words.indexOf('G20') >= 0,
+        tloActive: words.indexOf('G49') < 0 && words.some(function(w) { return /^G43(\.1|\.2)?$/.test(w); }),
+        wcs: words.filter(function(w) { return /^G5[4-9](\.[1-3])?$/.test(w); })[0] || null
+      };
+    }
+    return null;
+  }
+
+  // END pure
+
+  var state = { imperial: false, capturing: null };
+
+  // Controller output reaches plugin dialogs as 'cnc-data' messages.
+  function cncText(data) {
+    if (typeof data === 'string') return data;
+    if (data && typeof data === 'object') return String(data.data || data.line || data.message || data.response || '');
+    return '';
+  }
+  function onMessage(ev) {
+    if (!rootAlive()) { window.removeEventListener('message', onMessage); return; }
+    if (!ev.data || ev.data.type !== 'cnc-data' || !state.capturing) return;
+    cncText(ev.data.data).split(/\r?\n/).forEach(function(l) { if (l.trim()) state.capturing.push(l.trim()); });
+  }
+  window.addEventListener('message', onMessage);
+
+  async function sendCommand(command) {
+    var res = await fetch(BASE_URL + '/api/send-command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: command, meta: { sourceId: 'macro-wiz' } })
+    });
+    var body = res.ok ? await res.json().catch(function() { return {}; }) : {};
+    return { ok: res.ok && body.status !== 'error' && body.Status !== 'error', body: body };
+  }
+  // Send a command and collect the lines the controller answers with.
+  async function ask(command, waitMs) {
+    state.capturing = [];
+    var lines = state.capturing;
+    try {
+      var r = await sendCommand(command);
+      await new Promise(function(res) { setTimeout(res, waitMs || 600); });
+      return { ok: r.ok, body: r.body, lines: lines };
+    } finally {
+      state.capturing = null;
+    }
+  }
+
+  function addCheck(list, stateName, title, detail) {
+    var li = document.createElement('li');
+    li.className = 'mw-check';
+    li.setAttribute('data-state', stateName);
+    var badge = document.createElement('span');
+    badge.className = 'mw-badge';
+    badge.textContent = stateName === 'ok' ? '✓' : stateName === 'bad' ? '✕' : '!';
+    var text = document.createElement('span');
+    var t = document.createElement('strong');
+    t.textContent = title;
+    text.appendChild(t);
+    if (detail) {
+      var d = document.createElement('span');
+      d.className = 'mw-detail';
+      d.textContent = detail;
+      text.appendChild(d);
+    }
+    li.appendChild(badge);
+    li.appendChild(text);
+    list.appendChild(li);
+  }
+
+  async function runChecks() {
+    var list = $('mw-checks'), btn = $('mw-run-checks');
+    list.textContent = '';
+    btn.disabled = true;
+    try {
+      var connected = false;
+      try {
+        var sres = await fetch(BASE_URL + '/api/server-state');
+        var s = sres.ok ? await sres.json() : {};
+        var ms = s.machineState || {};
+        connected = ms.connected === true || (!!ms.status && ms.status !== 'Disconnected');
+      } catch (e) { /* treated as not connected */ }
+      if (!connected) {
+        addCheck(list, 'bad', 'Not connected', 'Connect to the controller, then run the checks again.');
+        return;
+      }
+      addCheck(list, 'ok', 'Connected');
+
+      var g = await ask('$G', 500);
+      var gc = parseGcState(g.lines);
+      var hash = parseHashReport((await ask('$#', 900)).lines);
+      var expr = await ask('#1=[1+1]', 300);
+
+      if (expr.ok) addCheck(list, 'ok', 'Expressions work', 'The controller accepted #1=[1+1], so the macros\' calculations will run.');
+      else addCheck(list, 'bad', 'Expressions not supported', 'The controller rejected #1=[1+1]. The macros need a grblHAL build with parameter and expression support.');
+
+      if (!gc) addCheck(list, 'warn', 'No answer to $G', 'Couldn\'t read the modal state, so the tool length offset state is unknown.');
+      else if (gc.tloActive) addCheck(list, 'ok', 'Tool length offset is active', 'Make sure every tool\'s offset is measured against the same reference tool.');
+      else addCheck(list, 'warn', 'No tool length offset active (G49)', 'Both macros assume the loaded tool\'s offset is active, e.g. after measuring it with the tool setter.');
+
+      if (hash.TLO != null) {
+        var tloOn = !gc || gc.tloActive;
+        addCheck(list, tloOn ? 'ok' : 'warn', 'Tool length offset: ' + fmt(hash.TLO) + ' mm',
+          tloOn ? 'From $#. 0 is right only for the reference tool.' : 'From $#, but not applied while G49 is in effect.');
+      }
+      else addCheck(list, 'warn', 'No [TLO] line in $#', 'Couldn\'t read the tool length offset.');
+
+      var slotName = WCS_NAMES[+$('mw-slot').value];
+      var slot = hash[slotName];
+      if (!slot) addCheck(list, 'warn', 'Couldn\'t read ' + slotName, 'The storage slot\'s current value is unknown.');
+      else if (Math.abs(slot[0]) + Math.abs(slot[1]) + Math.abs(slot[2]) > 1e-6) {
+        addCheck(list, 'warn', slotName + ' already holds values (Z ' + fmt(slot[2]) + ')',
+          'If you use ' + slotName + ' for work, pick another slot. If it\'s from an earlier recording, that\'s fine.');
+      } else addCheck(list, 'ok', slotName + ' is empty', 'It can hold the spoilboard height.');
+      if (gc && gc.wcs && gc.wcs !== WCS_NAMES[+$('mw-wcs').value]) {
+        addCheck(list, 'warn', 'You\'re working in ' + gc.wcs, 'The macros set ' + WCS_NAMES[+$('mw-wcs').value] + ' and the record macro selects it. Change Work Offset to Set if you meant ' + gc.wcs + '.');
+      }
+    } catch (err) {
+      addCheck(list, 'bad', 'The checks couldn\'t finish', err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Settings, in the units ncSender shows.
+  function readSettings() {
+    var k = state.imperial ? MM_PER_INCH : 1, ok = true;
+    function val(id) {
+      var el = $(id), v = parseFloat(el.value);
+      var good = isFinite(v) && v > 0;
+      el.classList.toggle('mw-invalid', !good);
+      if (!good) ok = false;
+      return v;
+    }
+    var s = {
+      blockMm: val('mw-block') * k,
+      feedMm: val('mw-feed') * k,
+      travelMm: val('mw-travel') * k,
+      retractMm: val('mw-retract') * k,
+      wcs: +$('mw-wcs').value,
+      slot: +$('mw-slot').value,
+      imperial: state.imperial
+    };
+    return ok ? s : null;
+  }
+
+  function render() {
+    var s = readSettings();
+    if (!s) return;
+    var m = buildMacros(s);
+    $('mw-record-name').textContent = m.record.name;
+    $('mw-record-code').textContent = m.record.body;
+    $('mw-set-name').textContent = m.set.name;
+    $('mw-set-code').textContent = m.set.body;
+  }
+
+  function saveSettings() {
+    var body = {
+      block: $('mw-block').value, feed: $('mw-feed').value, travel: $('mw-travel').value,
+      retract: $('mw-retract').value, wcs: $('mw-wcs').value, slot: $('mw-slot').value,
+      units: state.imperial ? 'imperial' : 'metric'
+    };
+    fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }).catch(function() {});
+  }
+
+  // Create both macros, or update the ones made before (found by name).
+  async function saveMacros() {
+    var status = $('mw-save-status'), btn = $('mw-save');
+    var s = readSettings();
+    if (!s) { status.setAttribute('data-state', 'bad'); status.textContent = 'Fix the highlighted settings first.'; return; }
+    var m = buildMacros(s);
+    btn.disabled = true;
+    status.removeAttribute('data-state');
+    status.textContent = 'Saving…';
+    try {
+      var lres = await fetch(BASE_URL + '/api/m98-macros');
+      var existing = lres.ok ? await lres.json() : [];
+      var done = [];
+      for (var key of ['record', 'set']) {
+        var mac = m[key];
+        var prev = (existing || []).filter(function(x) {
+          var n = x.name != null ? x.name : x.Name;
+          return n === mac.name;
+        })[0];
+        var prevId = prev && (prev.id != null ? prev.id : prev.Id);
+        var res = await fetch(BASE_URL + '/api/m98-macros' + (prevId ? '/' + prevId : ''), {
+          method: prevId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: prevId || 0, name: mac.name, description: 'Made by the Macro Wiz plugin', body: mac.body })
+        });
+        if (!res.ok) throw new Error((prevId ? 'updating' : 'creating') + ' "' + mac.name + '" failed (' + res.status + ')');
+        var saved = await res.json().catch(function() { return {}; });
+        done.push((saved.id || saved.Id || prevId) + ' ' + mac.name);
+      }
+      saveSettings();
+      status.setAttribute('data-state', 'ok');
+      status.textContent = 'Saved: M98 P' + done.join(', M98 P') + '. Run them from the Macros tab.';
+    } catch (err) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Couldn\'t save the macros: ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function init() {
+    try {
+      var res = await fetch(BASE_URL + '/api/settings');
+      var s = res.ok ? await res.json() : {};
+      state.imperial = (s.unitsPreference || 'metric') === 'imperial';
+    } catch (e) { /* metric */ }
+    ROOT.querySelectorAll('.mw-unit').forEach(function(el) { el.textContent = state.imperial ? 'in' : 'mm'; });
+    var saved = initialConfig || {};
+    var conv = state.imperial === (saved.units === 'imperial') ? 1 : (state.imperial ? 1 / MM_PER_INCH : MM_PER_INCH);
+    var defaults = state.imperial ? { block: 0.5906, feed: 4, travel: 1.25, retract: 0.2 } : {};
+    ['block', 'feed', 'travel', 'retract'].forEach(function(k) {
+      var v = saved[k] != null ? parseFloat(saved[k]) * conv : defaults[k];
+      if (isFinite(v)) $('mw-' + k).value = +v.toFixed(4);
+    });
+    if (saved.wcs) $('mw-wcs').value = saved.wcs;
+    if (saved.slot) $('mw-slot').value = saved.slot;
+    ['mw-block', 'mw-feed', 'mw-travel', 'mw-retract', 'mw-wcs', 'mw-slot'].forEach(function(id) {
+      $(id).addEventListener('input', render);
+      $(id).addEventListener('change', render);
+    });
+    $('mw-run-checks').addEventListener('click', runChecks);
+    $('mw-save').addEventListener('click', saveMacros);
+    render();
+  }
+
+  init();
+})();
+</script>

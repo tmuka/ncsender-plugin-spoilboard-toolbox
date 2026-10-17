@@ -1,0 +1,10 @@
+{
+  "name": "ncsender-macro-wiz",
+  "version": "0.1.0",
+  "description": "ncSender plugin: wizards that check your grblHAL setup and write macros",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.cjs",
+    "build": "bash .scripts/build.sh"
+  }
+}

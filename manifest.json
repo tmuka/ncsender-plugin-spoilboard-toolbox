@@ -1,0 +1,23 @@
+{
+  "id": "com.tmuka.macrowiz",
+  "name": "Macro Wiz",
+  "version": "0.1.0",
+  "minAppVersion": "2.0.88",
+  "configUi": "config.html",
+  "author": "tmuka",
+  "description": "Wizards that check your grblHAL setup and write ncSender macros for you. First wizard: record the spoilboard height once with a probe block, then set work Z0 on the spoilboard with any measured tool, using its tool length offset.",
+  "category": "utility",
+  "platforms": {
+    "v2": "2.0.88",
+    "pro-v2": "2.0.149"
+  },
+  "events": [],
+  "permissions": [],
+  "toolMenu": [
+    {
+      "id": "open-config",
+      "label": "Macro Wiz",
+      "clientOnly": true
+    }
+  ]
+}
