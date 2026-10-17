@@ -39,6 +39,9 @@ optional extras.
      spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
+   - **Delete Macro Wiz macros** removes every macro whose name starts with "Macro Wiz:" (for example
+     ones left over from older settings or another work offset) and nothing else. The first press lists
+     them and turns into **Confirm delete**; a second press within a few seconds deletes.
 5. **Try it once** with a paper feeler before trusting it.
 
 ### How it works

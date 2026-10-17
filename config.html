@@ -71,6 +71,12 @@
   .mw-btn:hover { filter: brightness(1.08); }
   .mw-btn:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
   .mw-btn-small { padding: 8px 12px; }
+  .mw-head-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+  .mw-btn.mw-btn-quiet {
+    background: transparent !important; color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-border) !important;
+  }
+  .mw-btn.mw-btn-danger { background: var(--color-danger, #d9534f) !important; color: #fff !important; border-color: transparent !important; }
   .mw-inline-row { display: flex; gap: 8px; min-width: 0; }
   .mw-inline-row .mw-input { flex: 1 1 auto; min-width: 0; }
   .mw-extras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
@@ -214,12 +220,15 @@
     <section class="mw-card" aria-labelledby="mw-macros-title">
       <div class="mw-card-head">
         <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">4</span>Macros</h3>
-        <button type="button" class="mw-btn" id="mw-save">Create macros</button>
+        <div class="mw-head-actions">
+          <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete Macro Wiz macros</button>
+          <button type="button" class="mw-btn" id="mw-save">Create macros</button>
+        </div>
       </div>
+      <p class="mw-status" id="mw-save-status" role="status"></p>
       <div class="mw-macros" id="mw-macros"></div>
       <p class="mw-hint">The spoilboard and stock-top macros save the current Z0 first, unless it's already one
         of theirs, so <strong>back to saved</strong> returns to your probed Z0 however many times you switch.</p>
-      <p class="mw-status" id="mw-save-status" role="status"></p>
     </section>
 
     <section class="mw-card" aria-labelledby="mw-test-title">
@@ -638,6 +647,67 @@
     }
   }
 
+  // Delete every macro this wizard made (name starts "Macro Wiz:"), e.g.
+  // ones left over from older settings. The first press only lists them
+  // and turns the button into "Confirm delete"; a second press within a
+  // few seconds deletes. Other macros are never touched.
+  var deleteArmed = null;
+  function isOurs(mac) {
+    var n = mac && (mac.name != null ? mac.name : mac.Name);
+    return typeof n === 'string' && n.indexOf('Macro Wiz:') === 0;
+  }
+  function disarmDelete() {
+    var btn = $('mw-delete');
+    if (deleteArmed && deleteArmed.timer) clearTimeout(deleteArmed.timer);
+    deleteArmed = null;
+    if (btn) { btn.textContent = 'Delete Macro Wiz macros'; btn.classList.remove('mw-btn-danger'); }
+  }
+  async function deleteMacros() {
+    var status = $('mw-save-status'), btn = $('mw-delete');
+    if (!deleteArmed) {
+      try {
+        var lres = await fetch(BASE_URL + '/api/m98-macros');
+        var mine = (lres.ok ? await lres.json() : []).filter(isOurs);
+        if (!mine.length) {
+          status.removeAttribute('data-state');
+          status.textContent = 'There are no Macro Wiz macros to delete.';
+          return;
+        }
+        deleteArmed = { macros: mine, timer: setTimeout(function() {
+          disarmDelete();
+          if (rootAlive()) { status.removeAttribute('data-state'); status.textContent = 'Delete cancelled.'; }
+        }, 6000) };
+        btn.textContent = 'Confirm delete (' + mine.length + ')';
+        btn.classList.add('mw-btn-danger');
+        status.setAttribute('data-state', 'bad');
+        status.textContent = 'This deletes ' + mine.length + ' macro' + (mine.length === 1 ? '' : 's') + ': ' +
+          mine.map(function(m) { return 'P' + (m.id != null ? m.id : m.Id) + ' ' + (m.name || m.Name).replace(/^Macro Wiz: /, ''); }).join(', ') +
+          '. Press Confirm delete to go ahead.';
+      } catch (err) {
+        status.setAttribute('data-state', 'bad');
+        status.textContent = 'Couldn\'t list the macros: ' + err.message;
+      }
+      return;
+    }
+    var list = deleteArmed.macros;
+    disarmDelete();
+    btn.disabled = true;
+    status.removeAttribute('data-state');
+    status.textContent = 'Deleting…';
+    var gone = 0, failed = [];
+    for (var i = 0; i < list.length; i++) {
+      var id = list[i].id != null ? list[i].id : list[i].Id;
+      try {
+        var res = await fetch(BASE_URL + '/api/m98-macros/' + id, { method: 'DELETE' });
+        if (res.ok || res.status === 404) gone++; else failed.push('P' + id);
+      } catch (e) { failed.push('P' + id); }
+    }
+    btn.disabled = false;
+    status.setAttribute('data-state', failed.length ? 'bad' : 'ok');
+    status.textContent = 'Deleted ' + gone + ' Macro Wiz macro' + (gone === 1 ? '' : 's') + '.' +
+      (failed.length ? ' Couldn\'t delete ' + failed.join(', ') + '.' : ' Press Create macros to make fresh ones.');
+  }
+
   // Create the macros, or update the ones made before (found by name).
   async function saveMacros() {
     var status = $('mw-save-status'), btn = $('mw-save');
@@ -714,7 +784,8 @@
       $(id).addEventListener('change', render);
     });
     $('mw-run-checks').addEventListener('click', runChecks);
-    $('mw-save').addEventListener('click', saveMacros);
+    $('mw-save').addEventListener('click', function() { disarmDelete(); saveMacros(); });
+    $('mw-delete').addEventListener('click', deleteMacros);
     render();
   }
 
