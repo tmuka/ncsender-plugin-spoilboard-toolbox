@@ -698,7 +698,8 @@
         status.setAttribute('data-state', 'bad');
         status.textContent = 'This deletes ' + mine.length + ' macro' + (mine.length === 1 ? '' : 's') + ': ' +
           mine.map(function(m) { return 'P' + (m.id != null ? m.id : m.Id) + ' ' + (m.name || m.Name).replace(/^(MW|Macro Wiz): /, ''); }).join(', ') +
-          '. Press Confirm delete to go ahead.';
+          '. Keyboard shortcuts set on them stop working, and new ones get new numbers, so to change' +
+          ' settings use Create macros instead: it updates them in place. Press Confirm delete to go ahead.';
       } catch (err) {
         status.setAttribute('data-state', 'bad');
         status.textContent = 'Couldn\'t list the macros: ' + err.message;
@@ -721,7 +722,7 @@
     btn.disabled = false;
     status.setAttribute('data-state', failed.length ? 'bad' : 'ok');
     status.textContent = 'Deleted ' + gone + ' Macro Wiz macro' + (gone === 1 ? '' : 's') + '.' +
-      (failed.length ? ' Couldn\'t delete ' + failed.join(', ') + '.' : ' Press Create macros to make fresh ones.');
+      (failed.length ? ' Couldn\'t delete ' + failed.join(', ') + '.' : ' Press Create macros to make fresh ones, then set any keyboard shortcuts on them again.');
   }
 
   // Create the macros, or update the ones made before (found by name).

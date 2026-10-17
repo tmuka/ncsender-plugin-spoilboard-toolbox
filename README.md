@@ -34,6 +34,7 @@ optional extras.
      later. They're kept in the saved-Z0 slot's X/Y, which that slot doesn't otherwise use; restore
      does nothing if nothing was saved.
 4. **Macros.** Creates the ncSender macros, or updates the ones it made before:
+   Every ncSender macro can have a keyboard shortcut (ncSender's shortcut settings, **Macros** group).
    Their names start with **MW:**, and each description is the macro's first comment line (e.g.
    "record spoilboard height"). Macros from earlier versions, named "Macro Wiz: …", are renamed in
    place.
@@ -47,7 +48,9 @@ optional extras.
    - The extras you ticked.
    - **Delete Macro Wiz macros** removes every macro whose name starts with "MW:" or the older "Macro Wiz:" (for example
      ones left over from older settings or another work offset) and nothing else. The first press lists
-     them and turns into **Confirm delete**; a second press within a few seconds deletes.
+     them and turns into **Confirm delete**; a second press within a few seconds deletes. Keyboard
+     shortcuts set on deleted macros stop working (recreated macros get new numbers), so to change
+     settings use **Create macros**, which updates the macros in place and keeps their numbers.
 5. **Try it once** with a paper feeler before trusting it.
 
 ### How it works
