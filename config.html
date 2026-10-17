@@ -226,12 +226,12 @@
       <h3 class="mw-card-title" id="mw-test-title"><span class="mw-step">5</span>Try it once</h3>
       <ol class="mw-steps">
         <li>Set the probe block on the spoilboard and load a tool whose length offset is measured and active.</li>
-        <li>Jog the bit just above the block, then run the <strong>record</strong> macro from the Macros tab. It probes down, stores the height, and backs off.</li>
-        <li>Without changing tools, run the <strong>set</strong> macro.</li>
-        <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. If it doesn't, don't use the macros until it does.</li>
-        <li>Run <strong>back to saved</strong>: work Z0 returns to where it was before step 3.</li>
-        <li>Then change to another measured tool and run only the spoilboard (or stock-top) macro.</li>
-        <li>For the stock top, press <strong>Store</strong> for a known thickness, or put the block on the stock and run <strong>Measure stock thickness</strong>.</li>
+        <li>Jog the bit just above the block. In ncSender&rsquo;s Macros tab, run <strong data-name="record"></strong>. It probes down, stores the spoilboard height, and backs off.</li>
+        <li>Without changing tools, run <strong data-name="set"></strong>. It saves your current Z0, then puts Z0 on the spoilboard.</li>
+        <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. If it doesn't, don&rsquo;t use the macros until it does.</li>
+        <li>Run <strong data-name="restore"></strong>. Work Z0 goes back to where it was before step 3.</li>
+        <li>From then on, with any measured tool, just run <strong data-name="set"></strong> or <strong data-name="stock"></strong>.</li>
+        <li>For <strong data-name="stock"></strong>, first press <strong>Store</strong> for a known thickness, or put the block on the stock and run <strong data-name="measure"></strong>.</li>
       </ol>
       <p class="mw-hint"><strong>Re-run the record macro</strong> after surfacing the spoilboard (e.g. QuickCut&rsquo;s Wasteboard
         Surfacing), or if your reference tool changes: the stored height is only as current as the last recording.</p>
@@ -576,6 +576,11 @@
     var s = readSettings();
     if (!s) return;
     var m = buildMacros(s), host = $('mw-macros');
+    // The steps name the macros as they appear in ncSender's Macros tab.
+    ROOT.querySelectorAll('[data-name]').forEach(function(el) {
+      var mac = m[el.getAttribute('data-name')];
+      el.textContent = mac ? mac.name : '';
+    });
     host.textContent = '';
     Object.keys(m).forEach(function(key) {
       var box = document.createElement('div');
