@@ -15,7 +15,9 @@ optional extras.
    - whether a tool length offset is active (`G43.1` / `G43`, not `G49`) and its value;
    - whether the storage slot is already in use;
    - which work offset you're in.
-2. **Settings.** Probe block thickness, probe feed, max probe travel, retract, the work offset to set
+2. **Settings.** Probe block thickness (filled in from ncSender's probe screen, **Standard Block →
+   Z Thickness**, when it's set there; re-run **Create macros** after changing it, since the macros keep
+   the number), probe feed, max probe travel, retract, the work offset to set
    (G54 to G59), and three different spare offsets (G59.3, G59.2, G59.1 Z) for the spoilboard height,
    your saved Z0 and the stock thickness. **Store** writes a typed stock thickness (e.g. a sheet) to
    the controller straight away.

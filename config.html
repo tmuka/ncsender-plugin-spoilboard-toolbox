@@ -61,6 +61,7 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
   .mw-input.mw-invalid, .mw-select.mw-invalid { border-color: var(--color-danger, #d9534f); }
+  .mw-source { font-size: 0.72rem; color: var(--color-text-secondary); line-height: 1.3; }
   .mw-btn {
     -webkit-appearance: none; appearance: none;
     padding: 8px 16px; border-radius: 8px !important; border: none !important;
@@ -131,6 +132,7 @@
         <div class="mw-field">
           <label for="mw-block">Probe Block Thickness (<span class="mw-unit">mm</span>)</label>
           <input class="mw-input" type="number" id="mw-block" step="0.001" min="0.001" value="15">
+          <span class="mw-source" id="mw-block-source" hidden>From ncSender&rsquo;s Standard Block probe settings.</span>
         </div>
         <div class="mw-field">
           <label for="mw-feed">Probe Feed (<span class="mw-unit">mm</span>/min)</label>
@@ -672,10 +674,15 @@
   }
 
   async function init() {
+    // The block thickness comes from ncSender's own probe screen (Standard
+    // Block, Z Thickness), stored there in mm, so there's one place to set it.
+    var probeBlockMm = null;
     try {
       var res = await fetch(BASE_URL + '/api/settings');
       var s = res.ok ? await res.json() : {};
       state.imperial = (s.unitsPreference || 'metric') === 'imperial';
+      var sb = s.probe && s.probe['standard-block'];
+      if (sb && typeof sb.zThickness === 'number' && sb.zThickness > 0) probeBlockMm = sb.zThickness;
     } catch (e) { /* metric */ }
     ROOT.querySelectorAll('.mw-unit').forEach(function(el) { el.textContent = state.imperial ? 'in' : 'mm'; });
     var saved = initialConfig || {};
@@ -685,6 +692,11 @@
       var v = saved[k] != null ? parseFloat(saved[k]) * conv : defaults[k];
       if (isFinite(v)) $('mw-' + k).value = +v.toFixed(4);
     });
+    if (probeBlockMm != null) {
+      $('mw-block').value = +(probeBlockMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
+      $('mw-block-source').hidden = false;
+      $('mw-block').title = 'From ncSender\'s probe screen (Standard Block, Z Thickness). You can change it here; the macros keep the number they were created with, so press Create macros again after changing the block.';
+    }
     if (saved.wcs) $('mw-wcs').value = saved.wcs;
     if (saved.slot) $('mw-slot').value = saved.slot;
     if (saved.backup) $('mw-backup').value = saved.backup;
