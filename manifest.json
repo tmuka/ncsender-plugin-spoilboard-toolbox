@@ -5,7 +5,7 @@
   "minAppVersion": "2.0.88",
   "configUi": "config.html",
   "author": "tmuka",
-  "description": "Wizards that check your grblHAL setup and write ncSender macros for you. First wizard: record the spoilboard height once with a probe block, then set work Z0 on the spoilboard with any measured tool, using its tool length offset.",
+  "description": "Probe your spoilboard once; then any measured tool can set Z0 on the spoilboard or the stock top with one macro, no probing, and put your old Z0 back. For grblHAL machines with a tool setter or ATC.",
   "category": "utility",
   "platforms": {
     "v2": "2.0.88",
