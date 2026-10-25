@@ -842,20 +842,22 @@
     try {
       var lres = await fetch(BASE_URL + '/api/m98-macros');
       var existing = lres.ok ? await lres.json() : [];
-      var done = [];
-      for (var key of Object.keys(m)) {
-        var mac = m[key];
-        // The same macro under its current name, or an older one: the
-        // "MW: " or "Macro Wiz: " prefix, or a name it had before (aliases).
+      var done = [], removed = [];
+      // The same macro under its current name, or an older one: the
+      // "MW: " or "Macro Wiz: " prefix, or a name it had before (aliases).
+      var find = function(mac) {
         var bare = [mac.name.slice(MACRO_PREFIX.length)].concat(mac.aliases || []);
         var names = [mac.name];
         [MACRO_PREFIX].concat(OLD_PREFIXES).forEach(function(pre) { bare.forEach(function(b) { names.push(pre + b); }); });
-        var prev = null;
-        for (var ni = 0; ni < names.length && !prev; ni++) {
-          prev = (existing || []).filter(function(x) {
-            return (x.name != null ? x.name : x.Name) === names[ni];
-          })[0] || null;
+        for (var ni = 0; ni < names.length; ni++) {
+          var hit = (existing || []).filter(function(x) { return (x.name != null ? x.name : x.Name) === names[ni]; })[0];
+          if (hit) return hit;
         }
+        return null;
+      };
+      for (var key of Object.keys(m)) {
+        var mac = m[key];
+        var prev = find(mac);
         var prevId = prev && (prev.id != null ? prev.id : prev.Id);
         var res = await fetch(BASE_URL + '/api/m98-macros' + (prevId ? '/' + prevId : ''), {
           method: prevId ? 'PUT' : 'POST',
@@ -866,9 +868,23 @@
         var saved = await res.json().catch(function() { return {}; });
         done.push((saved.id || saved.Id || prevId) + ' ' + mac.name);
       }
+      // Extras now unticked: delete the macros an earlier Create made for
+      // them (for this work offset), so the Macros tab matches the ticks.
+      var every = {};
+      EXTRAS.forEach(function(k) { every[k] = true; });
+      var all = buildMacros(Object.assign({}, s, { extras: every }));
+      for (var gone of Object.keys(all).filter(function(k) { return !m[k]; })) {
+        var old = find(all[gone]);
+        if (!old) continue;
+        var oldId = old.id != null ? old.id : old.Id;
+        var dres = await fetch(BASE_URL + '/api/m98-macros/' + oldId, { method: 'DELETE' });
+        if (!dres.ok) throw new Error('deleting "' + (old.name || old.Name) + '" failed (' + dres.status + ')');
+        removed.push((old.name || old.Name));
+      }
       saveSettings();
       status.setAttribute('data-state', 'ok');
-      status.textContent = 'Saved: M98 P' + done.join(', M98 P') + '. Run them from the Macros tab.';
+      status.textContent = 'Saved: M98 P' + done.join(', M98 P') + '. Run them from the Macros tab.' +
+        (removed.length ? ' Removed the unticked ' + removed.join(', ') + ' (a keyboard shortcut on them stops working).' : '');
     } catch (err) {
       status.setAttribute('data-state', 'bad');
       status.textContent = 'Couldn\'t save the macros: ' + err.message;

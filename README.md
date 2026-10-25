@@ -81,7 +81,7 @@ So you probe once per new stock, not once per tool.
    (G54 to G59), and three different spare offsets (G59.3, G59.2, G59.1 Z) for the spoilboard height,
    your saved Z0 and the stock thickness. **Store** writes a typed stock thickness (e.g. a sheet) to
    the controller straight away.
-3. **Extras** (tick the ones you want):
+3. **Extras** (tick the ones you want; untick one and press **Create macros** to remove its macros):
    - **Midpoint X** / **Midpoint Y**: lift to ncSender's Safe Z (machine Z0 if none is set), then move
      halfway back to X0 (or Y0) along that axis only. For round stock: touch one side and zero X, touch
      the other side, run Midpoint X. Safe Z is written into the macro, so re-run **Create macros**
