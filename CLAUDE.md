@@ -1,0 +1,169 @@
+# Macro Wiz: notes for working on this plugin
+
+Macro Wiz is a client-only ncSender plugin (`com.tmuka.macrowiz`). It runs a wizard that checks a
+grblHAL controller, then writes ncSender macros (M98 macros) that put work Z0 on the spoilboard or the
+stock top with any measured tool, without probing each time. README.md is the user guide; this file
+is how it's built, why, and how to work on it.
+
+## The idea
+
+With a tool length offset (TLO) active, grblHAL computes `work Z = machine Z - work offset Z - TLO`.
+Probe a block on the spoilboard once and store the spoilboard height as a zero-length tool sees it:
+
+```
+spoilboard = trigger Z (machine) - block thickness - TLO
+```
+
+From then on, `G10 L2 P1 Z[spoilboard]` puts G54 Z0 on the spoilboard for any tool whose TLO is
+measured against the same reference (e.g. a tool setter); grblHAL adds the loaded tool's TLO itself.
+Stock top is `spoilboard + thickness`, with the thickness typed or measured by probing on the stock.
+
+## Layout
+
+| File | What |
+| --- | --- |
+| `config.html` | The whole plugin: markup, styles, script. ncSender runs a client-only plugin's page inline, so the script can't load other files. |
+| `tests/pure.test.cjs` | Runs the pure block of `config.html` directly, plus a small grblHAL expression simulator that executes the generated `G10` lines. |
+| `manifest.json` | Plugin id, version, tool-menu entry (`clientOnly: true`). |
+| `.scripts/build.sh` | `dist/<id>_v<version>.zip` from the committed files (`git archive`), under a `<id>/` folder as the Plugin Manager expects; tests and scripts left out. |
+| `README.md` | User guide: the wizard steps, how the macros work, units, requirements. |
+
+### `config.html`
+
+- **Pure block**, between `// BEGIN pure` and `// END pure`, has no DOM use; the tests `eval` it, so there's
+  no second copy to keep in step.
+  - `buildMacros(o)`: every macro from settings in mm. Returns `{record, measure, set, stock, restore}`, plus
+    extras when ticked: `midX`, `midY`, `midXY`, `saveXY` / `restoreXY` (the "fixture" extra), `center`.
+  - `offsetZParam(p)`: `5203 + 20p`, the Z parameter of work offset P (G54 = #5223, G59.3 = #5383).
+  - `parseHashReport` (`$#`, both `[TLO:z]` and four-axis `[TLO:x,y,z,a]`) and `parseGcState` (`$G`: units, TLO
+    on/off, active work offset).
+  - `storeThicknessCommand`, `MACRO_PREFIX` (`MW: `), `OLD_PREFIX` (`Macro Wiz: `, the names earlier versions used).
+- **Everything else** is the UI and its calls:
+  - `runChecks`: the controller check.
+  - `readSettings`, `saveSettings`.
+  - `storeThickness`: the **Store** button.
+  - `saveMacros`: create or update.
+  - `deleteMacros`: two-tap delete.
+  - `render`.
+
+## Macros and storage
+
+Default storage (all three must be different, and not the work offset being set):
+
+| Value | Offset | Parameter |
+| --- | --- | --- |
+| Spoilboard height | G59.3 Z | #5383 |
+| Saved (probed) Z0, and saved X/Y for the fixture extra | G59.2 Z, X, Y | #5363, #5361, #5362 |
+| Stock thickness | G59.1 Z | #5343 |
+
+Work offsets are kept in grblHAL's non-volatile storage, so the values survive power cycles.
+
+- **Record spoilboard height:** `G21`, select the work offset, `G91 G38.2 Z-<travel> F<feed>`, `G90`, then
+  `G10 L2 P9 Z[#5063 + #5223 - <block> - #5403]`, then back off upward.
+  - `#5063` is relative to the active offset, so adding its Z gives machine Z.
+- **Measure stock thickness:** same probe, stores `surface - #5383` in the thickness slot.
+- **Z0 on spoilboard / on stock top:** first save the current Z0, but only if it isn't already one of
+  the two values these macros set, so repeated runs can't overwrite the probed Z0:
+  `G10 L2 P8 Z[#5363 + [#5223 - #5363] * [[ABS[#5223 - #5383] GT 0.001] AND [ABS[#5223 - #5383 - #5343] GT 0.001]]]`.
+  Then `G10 L2 P1 Z[#5383]` (or `Z[#5383 + #5343]`).
+- **Back to saved:** `G10 L2 P1 Z[#5223 + [#5363 - #5223] * [#5363 NE 0]]` (no-op if nothing saved).
+- **Extras:**
+  - **Midpoint X / Y / XY** lift to ncSender's Safe Z with `G53 G0 Z<safe>` (machine Z0 if unset), then
+    move to `X[#<_x> / 2]` etc.
+  - **Set XY0 to Midpoint** is `G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]` with no move.
+  - **Save / restore X/Y** use the saved-Z0 slot's X/Y.
+- **Naming:**
+  - Names are `MW: <name>`.
+  - Each description is the text of the macro's first comment line after its `Macro Wiz:` prefix.
+  - Saving updates macros in place by name: the current name, an alias (`Center X0 Y0 here`), or the
+    old `Macro Wiz: ` prefix.
+
+### Rules the macro lines follow
+
+- **No o-word flow control.** Choices are arithmetic: a grblHAL comparison evaluates to 1 or 0.
+- **Units:** `#5221…` (work offsets) and `#5403` (TLO) are **always mm**; `#5063` (probe result) and
+  `G10` values follow G20/G21. So every macro that reads stored values runs in `G21`, and
+  imperial setups get `G20` back at the end.
+- **No sideways move without lifting first:** midpoint moves lift to Safe Z; probing macros only move
+  straight down from where the user put the bit, then back off up.
+- **Lines stay short** for grblHAL, and comments aren't nested (a test checks both).
+- **Safe Z and block thickness are baked into the macros** when they're created, so changing either in
+  ncSender means pressing **Create macros** again (the README says so).
+
+## ncSender APIs used
+
+- `GET /api/settings`:
+  - `unitsPreference`;
+  - `safeZHeight` (a machine Z in mm);
+  - `probe['standard-block'].zThickness` (mm), which pre-fills the block thickness.
+- `POST /api/send-command`: `{ status: 'success' | 'error' }`. Replies arrive as `cnc-data` window messages,
+  collected for a short wait (`ask`) to read `$G`, `$#` and the expression test `#1=[1+1]`.
+- `/api/m98-macros`:
+  - `GET` lists;
+  - `POST` with `id: 0` auto-assigns an id;
+  - `PUT` updates;
+  - `DELETE` removes.
+- Plugin settings: `/api/plugins/com.tmuka.macrowiz/settings`.
+- **Keyboard shortcuts:** every macro is registered as shortcut action `Macro:<id>`; plugins can't register
+  shortcuts. So deleting a macro breaks any shortcut on it (recreated macros get new ids). That's why
+  **Delete** asks twice and warns, and **Create macros** updates in place instead.
+- **Dev install:** `POST /api/plugins/install` with the zip installs a build, but it **wipes** ncSender's
+  `settings.json`; back it up and restore it around a dev install.
+
+## Develop, test, build
+
+```
+npm test         # node --test tests/*.cjs: the pure block plus the expression simulator
+npm run build    # dist/com.tmuka.macrowiz_v<version>.zip from the last commit (commit first)
+```
+
+- Bump `version` in both `manifest.json` and `package.json` for a release build.
+- The UI was checked in headless Chrome against a stand-in for the ncSender API that stubs `fetch` and
+  posts `cnc-data` replies. The harness isn't in the repo; a fresh one only needs to stub the four APIs above.
+- Install a build from ncSender's Plugin Manager. The wizard opens from **Macro Wiz** in the plugin tool menu.
+
+## How it was built
+
+Built in one Claude Code session (2026-10-16), version 0.1 to 0.2.8, driven by requests from the author:
+
+1. **Design question:** can a macro set work Z0 from a known machine Z minus the TLO? That came from
+   reading grblHAL's `ngc_params.c` / `ngc_expr.c` and ncSender's macro and probe code. It confirmed the
+   parameter numbers, the mm-vs-current-units split, and that comparisons are 1 or 0.
+2. **Wizard and the record / spoilboard macros.** Then:
+   - stock top, with the old Z0 saved and restorable;
+   - measure / store thickness;
+   - midpoint extras (the author finds round-stock centres one axis at a time, so midpoint *moves*);
+   - fixture X/Y save / restore;
+   - a note on when to re-record.
+   - A park macro was skipped because ncSender already has Park.
+3. **Polish:**
+   - block thickness from ncSender's probe settings;
+   - "Try it once" steps that name the actual macros;
+   - a delete button with a two-tap confirm;
+   - shorter `MW:` names, descriptions from the first comment line;
+   - Safe Z lift before every move;
+   - "Set XY0 to Midpoint" naming;
+   - the shortcut warning.
+
+Each change came with tests first or alongside, then a browser check of the UI, then a zip build.
+
+## Status and ideas
+
+- **Not yet run on a machine.** The grblHAL behaviour comes from its source, and the ncSender API from
+  ncSender's source.
+- **Idea, not started:** the same logic as a core ncSender feature, a button that toggles Z0 between
+  stock top and spoilboard. In core it would be simpler and safer:
+  - the server can read `$#` and send literal numbers, so it needs no expressions or spare offsets;
+  - the button could show which Z0 is active;
+  - "Save as spoilboard height" / "Measure stock thickness" could sit in the Probe dialog after a
+    Standard Block Z probe.
+  - Guard rails: only when the machine is idle and homed with a TLO active, and a warning when the
+    stored height may be stale.
+  - If proposed upstream, Macro Wiz is the working prototype.
+
+## Conventions
+
+- Commits use the author's GitHub noreply address; check `git config user.email` before committing on a
+  new machine.
+- Keep `README.md` in step with any change to what the macros do. The comment block above `buildMacros`
+  explains the reasoning; keep it current too.
