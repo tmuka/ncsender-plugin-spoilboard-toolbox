@@ -149,8 +149,9 @@ Each change came with tests first or alongside, then a browser check of the UI, 
 
 ## Status and ideas
 
-- **Not yet run on a machine.** The grblHAL behaviour comes from its source, and the ncSender API from
-  ncSender's source.
+- **In use on the author's machine.** The grblHAL behaviour comes from its source, and the ncSender API
+  from ncSender's source.
+- **README** opens with what the plugin does and who it's for; the mechanics follow. Keep that order.
 - **Idea, not started:** the same logic as a core ncSender feature, a button that toggles Z0 between
   stock top and spoilboard. In core it would be simpler and safer:
   - the server can read `$#` and send literal numbers, so it needs no expressions or spare offsets;

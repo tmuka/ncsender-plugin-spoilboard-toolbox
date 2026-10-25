@@ -1,14 +1,51 @@
 # Macro Wiz
 
-An ncSender plugin with wizards that check your grblHAL setup and write ncSender macros for you.
+**Probe your spoilboard once. After that, with any measured tool, one click puts Z0 on the
+spoilboard or on top of your stock — no probing, no math. Another click puts your old Z0 back.**
 
-## Wizard: Z zero on the spoilboard
+Macro Wiz is an ncSender plugin. A short wizard checks your grblHAL controller, then writes the
+ncSender macros that do this, which you run from the Macros tab or a keyboard shortcut.
 
-Probe a block sitting on the spoilboard once, and the wizard's macros remember the spoilboard height
-for a zero-length tool. After that, with any tool whose length offset is measured (for example with a
-tool setter) and no probing, one macro puts work Z0 on the spoilboard, another on top of the stock
-(a stored or probed thickness), and a third puts your own (probed) Z0 back. Midpoint macros are
-optional extras.
+## Who it's for
+
+You'll get the most from it if:
+
+- your machine **measures tool lengths** (a tool setter, or an ATC such as RapidChange), so each tool
+  has a tool length offset, and
+- your controller runs **grblHAL** (the wizard checks it can do the math the macros need).
+
+Without measured tool lengths, every tool change needs a new Z probe anyway, and Macro Wiz can't
+save you that.
+
+## What you get
+
+| Macro | Does |
+| --- | --- |
+| **Record spoilboard height** | Probes a block on the spoilboard once and remembers the height. |
+| **Z0 on spoilboard** | Sets work Z0 on the spoilboard, for any measured tool. For through-cuts and parts zeroed from the bottom. |
+| **Z0 on stock top** | Sets work Z0 on top of the stock: the spoilboard plus a stored stock thickness (typed in, or probed with **Measure stock thickness**). |
+| **Z0 back to saved** | Puts back the Z0 you had before, e.g. one you probed on the stock. |
+
+In ncSender's Macros tab they're named **MW: …**, with the work offset they set (e.g.
+**MW: G54 Z0 on spoilboard**).
+
+Nothing has to be re-probed when you change tools: the controller adds each tool's length offset
+itself. The values are kept in the controller, so they survive power cycles.
+
+Optional extras for setting X/Y: move to the **midpoint** between X0 and where you are (finding the
+center of round or square stock), set X0 Y0 at that midpoint, and save / restore X/Y for a fixture.
+
+## First time
+
+1. Open **Macro Wiz** from the plugin tool menu, run the check, and press **Create macros**.
+2. With a measured tool loaded, put your probe block on the spoilboard, jog the bit just above it,
+   and run **Record spoilboard height**. It probes straight down.
+3. Run **Z0 on spoilboard**, jog down onto the block with a paper feeler, and check work Z reads the
+   block's thickness. Then run **Z0 back to saved**.
+
+From then on, just run the Z0 macro you need. Re-record after surfacing the spoilboard.
+
+## The wizard, step by step
 
 1. **Check the controller.** The wizard sends `$G`, `$#` and `#1=[1+1]` (nothing moves) and reports:
    - whether the controller accepts expressions (the macros need them);
@@ -135,5 +172,6 @@ can't load other files. The macro builder and the `$#` / `$G` parsers sit betwee
 
 ## Status
 
-Not yet run on a machine. The grblHAL behaviour above comes from its source (`ngc_params.c`), and the
-ncSender API from ncSender's source; the wizard was tested in a browser against a stand-in ncSender.
+In use on the author's grblHAL machine. The grblHAL behaviour above comes from its source
+(`ngc_params.c`), and the ncSender API from ncSender's source; the wizard is also tested in a
+browser against a stand-in ncSender.
