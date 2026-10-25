@@ -40,10 +40,32 @@ center of round or square stock), set X0 Y0 at that midpoint, and save / restore
 1. Open **Macro Wiz** from the plugin tool menu, run the check, and press **Create macros**.
 2. With a measured tool loaded, put your probe block on the spoilboard, jog the bit just above it,
    and run **Record spoilboard height**. It probes straight down.
-3. Run **Z0 on spoilboard**, jog down onto the block with a paper feeler, and check work Z reads the
-   block's thickness. Then run **Z0 back to saved**.
+3. Check it once against ncSender's own probe. With the block still on the spoilboard, run ncSender's
+   **Probe → Standard Block → Z**, which sets Z0 on the spoilboard by probing. Then run
+   **Z0 on spoilboard**: work Z shouldn't change by more than a few hundredths of a mm. (After this,
+   **Z0 back to saved** may return to the probed Z0 rather than your earlier one.) Or, without probing:
+   run **Z0 on spoilboard**, jog down until the bit just touches the block with a paper feeler, and work
+   Z should read the block's thickness; **Z0 back to saved** then puts your earlier Z0 back.
 
-From then on, just run the Z0 macro you need. Re-record after surfacing the spoilboard.
+   If the two disagree, don't use the macros until they match: check the tool length offset is
+   active and measured for this tool, and that the block thickness matches ncSender's
+   **Standard Block → Z Thickness**.
+
+Re-record after surfacing the spoilboard.
+
+## Each new job
+
+- **Same stock thickness as last time:** load any measured tool and run **Z0 on stock top**. No
+  probing.
+- **New stock thickness:** tell Macro Wiz once, then run **Z0 on stock top**. Either:
+  - put the block on the stock and run **Measure stock thickness** (one probe, good for every tool in
+    the job), or
+  - type the thickness in the wizard and press **Store**, if you trust the material's nominal size
+    (sheet goods often vary by a few tenths of a mm, so measure when depth matters).
+- **Zeroing from the bottom** (set the job's Z origin to the bottom of the stock in your CAM): run
+  **Z0 on spoilboard**. No stock probing at all, and through-cuts come out exact.
+
+So you probe once per new stock, not once per tool.
 
 ## The wizard, step by step
 
