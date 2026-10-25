@@ -90,6 +90,12 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
   `ExpandedCommandSender` sends nothing after a rejected macro line (one line in flight at a time).
   The same condition divides each guarded `G10` value, so it holds even if lines kept coming (Pro,
   controller-side macros). The check confirms the named parameters exist.
+  - Verified on the author's grblHAL (2026-10-25): `#1=[1 / 0]` gives error 72; `#<_homed_state>` and
+    `#<_tool_offset>` read fine.
+  - After an error grblHAL repeats it for every line until an empty line, a `$` command (jogs, `$H`) or a
+    reset. ncSender sends an empty line before each terminal and macro line, so it clears itself; a job
+    started straight after a stop, with nothing in between, could stop at its first line (safe, but
+    confusing).
 - **No sideways move without lifting first:** midpoint moves lift to Safe Z; probing macros only move
   straight down from where the user put the bit, then back off up.
 - **Lines stay short** for grblHAL, and comments aren't nested (a test checks both).
