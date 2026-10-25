@@ -20,6 +20,14 @@
     padding: 4px 20px 20px;
   }
   .mw-intro { margin: 0; color: var(--color-text-secondary); line-height: 1.45; }
+  .mw-diagram { width: 100%; height: auto; display: block; flex: none; }
+  .mw-diagram text { font-family: inherit; font-size: 12px; fill: var(--color-text-primary); }
+  .mw-diagram .mw-d-note { font-size: 10.5px; fill: var(--color-text-secondary); }
+  .mw-diagram .mw-d-z0 { fill: var(--color-accent); font-weight: 600; }
+  .mw-diagram .mw-d-num { font-size: 11px; font-weight: 700; fill: var(--color-accent); }
+  .mw-diagram .mw-d-line { stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+  .mw-diagram .mw-d-dim { stroke: var(--color-text-secondary); stroke-width: 1; fill: none; }
+  .mw-diagram .mw-d-edge { stroke: var(--color-border); stroke-width: 1; }
   .mw-card {
     background: var(--color-surface-muted);
     border: 1px solid var(--color-border);
@@ -122,6 +130,62 @@
       back. For machines that measure tool lengths (a tool setter or an ATC) running grblHAL. Midpoint
       macros for X/Y are extras.
     </p>
+    <svg class="mw-diagram" viewBox="0 0 720 236" role="img" aria-label="Side view: the spoilboard height is recorded once with a probe block; Z0 then goes on the spoilboard or the stock top for any measured tool, and back to your own Z0.">
+      <defs>
+        <pattern id="mw-d-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="var(--color-border)" stroke-width="1.5"/>
+        </pattern>
+        <marker id="mw-d-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--color-text-secondary)"/>
+        </marker>
+      </defs>
+      <!-- Spoilboard, probe block, stock -->
+      <rect x="16" y="186" width="420" height="26" fill="url(#mw-d-hatch)" class="mw-d-edge" style="stroke: var(--color-border)"/>
+      <text x="26" y="228" class="mw-d-note">Spoilboard</text>
+      <rect x="58" y="164" width="52" height="22" rx="2" fill="color-mix(in srgb, var(--color-accent) 22%, transparent)" stroke="var(--color-accent)"/>
+      <text x="84" y="179" text-anchor="middle" style="font-size: 10px">block</text>
+      <rect x="236" y="122" width="156" height="64" rx="2" fill="color-mix(in srgb, var(--color-warning, #d9a441) 22%, transparent)" stroke="color-mix(in srgb, var(--color-warning, #d9a441) 70%, transparent)"/>
+      <text x="314" y="158" text-anchor="middle">Stock</text>
+      <!-- Spindle and a measured tool just above the block -->
+      <rect x="62" y="10" width="44" height="46" rx="5" fill="var(--color-surface-muted)" stroke="var(--color-text-secondary)"/>
+      <path d="M72 56 L96 56 L91 70 L77 70 z" fill="var(--color-surface-muted)" stroke="var(--color-text-secondary)"/>
+      <rect x="80.5" y="70" width="7" height="82" rx="1.5" fill="var(--color-text-secondary)"/>
+      <path d="M80.5 152 L84 158 L87.5 152 z" fill="var(--color-text-secondary)"/>
+      <!-- Tool length offset -->
+      <line x1="46" y1="62" x2="46" y2="157" class="mw-d-dim" marker-start="url(#mw-d-arr)" marker-end="url(#mw-d-arr)"/>
+      <line x1="40" y1="62" x2="70" y2="62" class="mw-d-dim"/>
+      <line x1="40" y1="157" x2="78" y2="157" class="mw-d-dim"/>
+      <text x="122" y="30">Tool length offset</text>
+      <text x="122" y="44" class="mw-d-note">measured by your tool setter or ATC,</text>
+      <text x="122" y="57" class="mw-d-note">added by grblHAL for every tool</text>
+      <!-- The two Z0 levels -->
+      <line x1="16" y1="186" x2="436" y2="186" class="mw-d-line"/>
+      <line x1="236" y1="122" x2="436" y2="122" class="mw-d-line"/>
+      <line x1="408" y1="124" x2="408" y2="184" class="mw-d-dim" marker-start="url(#mw-d-arr)" marker-end="url(#mw-d-arr)"/>
+      <text x="0" y="0" text-anchor="middle" class="mw-d-note" transform="translate(424 154) rotate(-90)">thickness</text>
+      <text x="236" y="114" class="mw-d-z0">Z0 on stock top</text>
+      <text x="350" y="114" class="mw-d-note">+ thickness (<tspan data-slot="thick">G59.1</tspan> Z)</text>
+      <text x="236" y="201" class="mw-d-z0" dy="0" style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px">Z0 on spoilboard</text>
+      <text x="352" y="201" class="mw-d-note" style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px">height in <tspan data-slot="slot">G59.3</tspan> Z</text>
+      <!-- The steps -->
+      <line x1="458" y1="14" x2="458" y2="222" class="mw-d-edge"/>
+      <circle cx="486" cy="30" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
+      <text x="486" y="34" text-anchor="middle" class="mw-d-num">1</text>
+      <text x="506" y="28">Record spoilboard height</text>
+      <text x="506" y="43" class="mw-d-note">once, with the block on the spoilboard;</text>
+      <text x="506" y="56" class="mw-d-note">again after surfacing it</text>
+      <circle cx="486" cy="92" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
+      <text x="486" y="96" text-anchor="middle" class="mw-d-num">2</text>
+      <text x="506" y="90">Z0 on spoilboard or stock top</text>
+      <text x="506" y="105" class="mw-d-note">any measured tool, no probing; for new</text>
+      <text x="506" y="118" class="mw-d-note">stock, Measure or Store its thickness</text>
+      <circle cx="486" cy="154" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
+      <text x="486" y="158" text-anchor="middle" class="mw-d-num">3</text>
+      <text x="506" y="152">Z0 back to saved</text>
+      <text x="506" y="167" class="mw-d-note">your own Z0, kept in <tspan data-slot="backup">G59.2</tspan> Z</text>
+      <text x="472" y="206" class="mw-d-note">Stops, changing nothing, if the machine isn&#8217;t</text>
+      <text x="472" y="219" class="mw-d-note">homed or no tool length offset is active.</text>
+    </svg>
 
     <section class="mw-card" aria-labelledby="mw-check-title">
       <div class="mw-card-head">
@@ -640,6 +704,10 @@
     ROOT.querySelectorAll('[data-name]').forEach(function(el) {
       var mac = m[el.getAttribute('data-name')];
       el.textContent = mac ? mac.name : '';
+    });
+    // The diagram names the spare offsets picked for each value.
+    ROOT.querySelectorAll('[data-slot]').forEach(function(el) {
+      el.textContent = WCS_NAMES[s[el.getAttribute('data-slot')]] || '';
     });
     host.textContent = '';
     Object.keys(m).forEach(function(key) {
