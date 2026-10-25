@@ -24,6 +24,11 @@
   .mw-diagram text { font-family: inherit; font-size: 12px; fill: var(--color-text-primary); }
   .mw-diagram .mw-d-note { font-size: 10.5px; fill: var(--color-text-secondary); }
   .mw-diagram .mw-d-z0 { fill: var(--color-accent); font-weight: 600; }
+  .mw-diagram .mw-d-val { font-size: 11px; font-weight: 600; fill: var(--color-accent); }
+  .mw-diagram .mw-d-now { font-size: 11px; font-weight: 700; fill: var(--color-accent); display: none; }
+  .mw-diagram .mw-d-now[data-on] { display: inline; }
+  .mw-d-refresh { margin: -6px 0 0; font-size: 0.8rem; color: var(--color-text-secondary); }
+  .mw-d-refresh a { color: var(--color-accent); }
   .mw-diagram .mw-d-num { font-size: 11px; font-weight: 700; fill: var(--color-accent); }
   .mw-diagram .mw-d-line { stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
   .mw-diagram .mw-d-dim { stroke: var(--color-text-secondary); stroke-width: 1; fill: none; }
@@ -141,11 +146,12 @@
       </defs>
       <!-- Spoilboard, probe block, stock -->
       <rect x="16" y="186" width="420" height="26" fill="url(#mw-d-hatch)" class="mw-d-edge" style="stroke: var(--color-border)"/>
-      <text x="26" y="228" class="mw-d-note">Spoilboard</text>
+      <text x="26" y="228" class="mw-d-note">Spoilboard<tspan data-val="spoil"></tspan></text>
       <rect x="58" y="164" width="52" height="22" rx="2" fill="color-mix(in srgb, var(--color-accent) 22%, transparent)" stroke="var(--color-accent)"/>
       <text x="84" y="179" text-anchor="middle" style="font-size: 10px">block</text>
       <rect x="236" y="122" width="156" height="64" rx="2" fill="color-mix(in srgb, var(--color-warning, #d9a441) 22%, transparent)" stroke="color-mix(in srgb, var(--color-warning, #d9a441) 70%, transparent)"/>
       <text x="314" y="158" text-anchor="middle">Stock</text>
+      <text x="314" y="174" text-anchor="middle" class="mw-d-note" data-val="thick"></text>
       <!-- Spindle and a measured tool just above the block -->
       <rect x="62" y="10" width="44" height="46" rx="5" fill="var(--color-surface-muted)" stroke="var(--color-text-secondary)"/>
       <path d="M72 56 L96 56 L91 70 L77 70 z" fill="var(--color-surface-muted)" stroke="var(--color-text-secondary)"/>
@@ -158,6 +164,7 @@
       <text x="122" y="30">Tool length offset</text>
       <text x="122" y="44" class="mw-d-note">measured by your tool setter or ATC,</text>
       <text x="122" y="57" class="mw-d-note">added by grblHAL for every tool</text>
+      <text x="122" y="74" class="mw-d-val" data-val="tlo"></text>
       <!-- The two Z0 levels -->
       <line x1="16" y1="186" x2="436" y2="186" class="mw-d-line"/>
       <line x1="236" y1="122" x2="436" y2="122" class="mw-d-line"/>
@@ -167,6 +174,9 @@
       <text x="350" y="114" class="mw-d-note">+ thickness (<tspan data-slot="thick">G59.1</tspan> Z)</text>
       <text x="236" y="201" class="mw-d-z0" dy="0" style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px">Z0 on spoilboard</text>
       <text x="352" y="201" class="mw-d-note" style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px">height in <tspan data-slot="slot">G59.3</tspan> Z</text>
+      <!-- Where the work offset's Z0 is now -->
+      <text x="230" y="118" text-anchor="end" class="mw-d-now" data-now="stock"><tspan data-slot="wcs">G54</tspan> Z0 now &#9656;</text>
+      <text x="230" y="182" text-anchor="end" class="mw-d-now" data-now="spoil"><tspan data-slot="wcs">G54</tspan> Z0 now &#9656;</text>
       <!-- The steps -->
       <line x1="458" y1="14" x2="458" y2="222" class="mw-d-edge"/>
       <circle cx="486" cy="30" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
@@ -183,9 +193,11 @@
       <text x="486" y="158" text-anchor="middle" class="mw-d-num">3</text>
       <text x="506" y="152">Z0 back to saved</text>
       <text x="506" y="167" class="mw-d-note">your own Z0, kept in <tspan data-slot="backup">G59.2</tspan> Z</text>
+      <text x="506" y="181" class="mw-d-val" data-val="saved"></text>
       <text x="472" y="206" class="mw-d-note">Stops, changing nothing, if the machine isn&#8217;t</text>
       <text x="472" y="219" class="mw-d-note">homed or no tool length offset is active.</text>
     </svg>
+    <p class="mw-d-refresh"><span id="mw-d-status">The numbers come from the controller ($#).</span> <a href="#" id="mw-d-refresh">Refresh</a></p>
 
     <section class="mw-card" aria-labelledby="mw-check-title">
       <div class="mw-card-head">
@@ -621,6 +633,7 @@
       var g = await ask('$G', 500);
       var gc = parseGcState(g.lines);
       var hash = parseHashReport((await ask('$#', 900)).lines);
+      showNumbers(hash);
       var expr = await ask('#1=[1+1]', 300);
       // The safety stops read these named parameters (newer grblHAL builds).
       var named = expr.ok ? await ask('#1=[#<_homed_state> + #<_tool_offset>]', 300) : { ok: false };
@@ -759,6 +772,7 @@
       }
       status.setAttribute('data-state', 'ok');
       status.textContent = 'Stored ' + fmt(mm) + ' mm in ' + WCS_NAMES[s.thick] + ' Z. The stock-top macro uses it from now on.';
+      readNumbers();
     } catch (err) {
       status.setAttribute('data-state', 'bad');
       status.textContent = 'Couldn\'t store the thickness: ' + err.message + '. Is the controller connected?';
@@ -893,6 +907,51 @@
     }
   }
 
+  // The diagram's numbers: the stored spoilboard height, stock thickness
+  // and saved Z0, the loaded tool and its length offset, and which level
+  // the work offset's Z0 is at now. Read with $# (read-only; grblHAL gives
+  // offsets in mm), only when the controller is connected and idle.
+  var numbersBusy = false;
+  async function readNumbers() {
+    if (numbersBusy) return;
+    numbersBusy = true;
+    var note = $('mw-d-status');
+    try {
+      var sres = await fetch(BASE_URL + '/api/server-state');
+      var ms = (sres.ok ? await sres.json() : {}).machineState || {};
+      state.loadedTool = Number(ms.tool) || 0;
+      if (!ms.connected || String(ms.status || '').indexOf('Idle') !== 0) {
+        note.textContent = ms.connected ? 'The numbers update when the machine is idle.' : 'Connect to the controller to see the stored numbers.';
+        return;
+      }
+      showNumbers(parseHashReport((await ask('$#', 900)).lines));
+    } catch (e) {
+      note.textContent = 'Couldn\u2019t read the stored numbers.';
+    } finally {
+      numbersBusy = false;
+    }
+  }
+  function showNumbers(hash) {
+    var s = readSettings();
+    if (!s || !hash) return;
+    var z = function(p) { var v = hash[WCS_NAMES[p]]; return v ? v[2] : null; };
+    var spoil = z(s.slot), thick = z(s.thick), saved = z(s.backup), cur = z(s.wcs);
+    var mm = function(v) { return fmt(v) + ' mm'; };
+    var set = function(key, text) { ROOT.querySelectorAll('[data-val="' + key + '"]').forEach(function(el) { el.textContent = text; }); };
+    set('spoil', spoil ? ' \u2014 height ' + mm(spoil) : spoil === 0 ? ' \u2014 height not recorded yet' : '');
+    set('thick', thick ? mm(thick) + ' thick' : thick === 0 ? 'thickness not stored yet' : '');
+    set('saved', saved ? WCS_NAMES[s.backup] + ' Z: ' + mm(saved) : saved === 0 ? 'nothing saved yet' : '');
+    set('tlo', hash.TLO != null ? (state.loadedTool ? 'T' + state.loadedTool + ': ' : 'Loaded tool: ') + mm(hash.TLO) : '');
+    var near = function(a, b) { return a != null && b != null && Math.abs(a - b) <= 0.001; };
+    var onSpoil = spoil && near(cur, spoil), onStock = spoil && thick && near(cur, spoil + thick);
+    ROOT.querySelectorAll('[data-now]').forEach(function(el) {
+      var on = el.getAttribute('data-now') === 'spoil' ? onSpoil : onStock;
+      if (on) el.setAttribute('data-on', ''); else el.removeAttribute('data-on');
+    });
+    $('mw-d-status').textContent = cur == null ? 'The numbers come from the controller ($#).'
+      : WCS_NAMES[s.wcs] + ' Z0 is ' + (onSpoil ? 'on the spoilboard' : onStock ? 'on the stock top' : 'your own (' + mm(cur) + ')') + '.';
+  }
+
   async function init() {
     // The block thickness comes from ncSender's own probe screen (Standard
     // Block, Z Thickness), stored there in mm, so there's one place to set it.
@@ -934,11 +993,12 @@
       $(id).addEventListener('change', render);
     });
     $('mw-run-checks').addEventListener('click', runChecks);
+    $('mw-d-refresh').addEventListener('click', function(evt) { evt.preventDefault(); readNumbers(); });
     $('mw-save').addEventListener('click', function() { disarmDelete(); saveMacros(); });
     $('mw-delete').addEventListener('click', deleteMacros);
     render();
   }
 
-  init();
+  init().then(readNumbers);
 })();
 </script>

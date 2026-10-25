@@ -1,7 +1,7 @@
 {
   "id": "com.tmuka.macrowiz",
   "name": "Zero Swapper",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "minAppVersion": "2.0.88",
   "configUi": "config.html",
   "author": "tmuka",
