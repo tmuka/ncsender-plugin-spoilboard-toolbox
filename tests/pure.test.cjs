@@ -13,7 +13,9 @@ const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThickness
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
-const code = (body) => body.split('\n').filter(l => !l.startsWith('('));
+const code = (body) => body.split('\n').filter(l => !l.startsWith('(')).map(l => l.replace(/\s*\([^)]*\)\s*$/, ''));
+// A homed machine with a tool length offset active, as the macros need.
+const ready = { _homed_state: 1, _tool_offset: 1 };
 
 // A small stand-in for grblHAL running the macros' G10 L2 lines: work
 // offset Z values in #5203 + 20 * P, expressions with [ ], ABS, GT, NE,
@@ -29,28 +31,39 @@ function evalExpr(expr, params) {
   js = js.replace(/\(([^()]*(?:>|!=|&&|\|\|)[^()]*)\)/g, '(+($1))');
   let value = Function('return ' + js)();
   if (typeof value === 'boolean') value = +value;
+  // grblHAL rejects a division by zero (error 72).
+  if (!isFinite(value)) throw new Error('error:72');
   return Math.round(value * 1e6) / 1e6;
 }
 // Runs G10 L2 Pn Z[...] (stored offsets), G0 X[...] Y[...] (moves, into
-// params._x/_y) and G10 L20 P0 X[...] Y[...] (records the asked-for values).
+// params._x/_y), G10 L20 P0 X[...] Y[...] (records the asked-for values) and
+// #n=[...] lines. Like ncSender, it stops at the first rejected line and
+// notes it in params._error.
 function run(body, params) {
   for (const line of code(body)) {
-    let m = /^G10 L2 P(\d) Z\[(.*)\]$/.exec(line);
-    if (m) { params[offsetZParam(+m[1])] = evalExpr(m[2], params); continue; }
+    try { step(line, params); } catch (e) { params._error = line; break; }
+  }
+  return params;
+}
+function step(line, params) {
+  {
+    let m = /^#(\d+)=\[(.*)\]$/.exec(line);
+    if (m) { params[m[1]] = evalExpr(m[2], params); return; }
+    m = /^G10 L2 P(\d) Z\[(.*)\]$/.exec(line);
+    if (m) { params[offsetZParam(+m[1])] = evalExpr(m[2], params); return; }
     m = /^G10 L2 P(\d) X\[(.*)\] Y\[(.*)\]$/.exec(line);
     if (m) {
       const vx = evalExpr(m[2], params), vy = evalExpr(m[3], params);
       params[offsetZParam(+m[1]) - 2] = vx;
       params[offsetZParam(+m[1]) - 1] = vy;
-      continue;
+      return;
     }
     m = /^(?:G90 )?(G0|G10 L20 P0) (.*)$/.exec(line);
-    if (!m) continue;
+    if (!m) return;
     for (const [, axis, expr] of m[2].matchAll(/([XY])\[([^\]]*)\]/g)) {
       params[(m[1] === 'G0' ? '_' : 'L20_') + axis.toLowerCase()] = evalExpr(expr, params);
     }
   }
-  return params;
 }
 
 test('offset Z parameters: G54 #5223, G55 #5243, G59.2 #5363, G59.3 #5383', () => {
@@ -62,14 +75,18 @@ test('offset Z parameters: G54 #5223, G55 #5243, G59.2 #5363, G59.3 #5383', () =
 
 test('record macro probes, then stores trigger + offset - block - TLO in the slot', () => {
   assert.deepEqual(code(buildMacros(base).record.body), [
+    '#1=[1 / #<_homed_state>]',
+    '#1=[1 / #<_tool_offset>]',
     'G21',
     'G54',
     'G91 G38.2 Z-30.000 F100.000',
     'G90',
-    'G10 L2 P9 Z[#5063 + #5223 - 15.000 - #5403]',
+    'G10 L2 P9 Z[[#5063 + #5223 - 15.000 - #5403] / [#<_homed_state> AND #<_tool_offset>]]',
     'G91 G0 Z5.000',
     'G90'
   ]);
+  // The stop lines say why in their comments.
+  assert.match(buildMacros(base).record.body, /^#1=\[1 \/ #<_homed_state>\] \(MW stop: home the machine first\)$/m);
 });
 
 test('names start MW:, descriptions are the first comment line after its prefix', () => {
@@ -96,19 +113,20 @@ test('macros: the core five always, extras only when ticked', () => {
 
 test('measure stores stock top minus the spoilboard in the thickness slot', () => {
   const m = buildMacros(base);
-  assert.match(m.measure.body, /^G10 L2 P7 Z\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\]$/m);
+  assert.match(m.measure.body, /^G10 L2 P7 Z\[\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\] \/ \[#<_homed_state> AND #<_tool_offset> AND \[#5383 NE 0\]\]\]$/m);
   // G54 Z -77.5; tool with TLO 12; block (15) on 18 mm stock on a spoilboard at -95
   // (zero-length tool): the tip touches the block at machine -95 + 18 + 15 + 12 = -50,
   // which is -50 - (-77.5) = 27.5 in G54.
-  const p = { 5223: -77.5, 5383: -95, 5403: 12, 5063: 27.5 };
+  const p = Object.assign({ 5223: -77.5, 5383: -95, 5403: 12, 5063: 27.5 }, ready);
   run(m.measure.body, p);
+  assert.equal(p._error, undefined);
   assert.equal(p[5343], 18);
 });
 
 test('switching: probed Z0 is saved once, survives repeats, and comes back', () => {
   const m = buildMacros(base);
   // Spoilboard recorded at -95, 18 mm stored, probed top-of-stock Z0 at -77.5.
-  const p = { 5383: -95, 5343: 18, 5223: -77.5, 5363: 0 };
+  const p = Object.assign({ 5383: -95, 5343: 18, 5223: -77.5, 5363: 0 }, ready);
   run(m.set.body, p);
   assert.equal(p[5223], -95, 'Z0 on the spoilboard');
   assert.equal(p[5363], -77.5, 'probed Z0 saved');
@@ -127,24 +145,27 @@ test('switching: probed Z0 is saved once, survives repeats, and comes back', () 
 
 test('midpoint moves and center origin use the current work position', () => {
   const m = buildMacros(Object.assign({}, base, { extras: allExtras }));
-  let p = run(m.midX.body, { _x: 120, _y: 80 });
+  let p = run(m.midX.body, Object.assign({ _x: 120, _y: 80 }, ready));
   assert.deepEqual([p._x, p._y], [60, 80]);
-  p = run(m.midY.body, { _x: 120, _y: 80 });
+  p = run(m.midY.body, Object.assign({ _x: 120, _y: 80 }, ready));
   assert.deepEqual([p._x, p._y], [120, 40]);
-  p = run(m.midXY.body, { _x: -30, _y: 50 });
+  p = run(m.midXY.body, Object.assign({ _x: -30, _y: 50 }, ready));
   assert.deepEqual([p._x, p._y], [-15, 25]);
   // L20: the current spot reads as half, so X0 Y0 lands halfway.
   p = run(m.center.body, { _x: 120, _y: 80 });
   assert.deepEqual([p.L20_x, p.L20_y], [60, 40]);
-  // Every midpoint move lifts to Safe Z first, in mm; centre doesn't move.
+  // Every midpoint move needs a homed machine, then lifts to Safe Z first,
+  // in mm; center doesn't move.
   for (const k of ['midX', 'midY', 'midXY']) {
     const c = code(m[k].body);
-    assert.deepEqual(c.slice(0, 2), ['G21', 'G53 G0 Z0 (machine Z0)'], k);
-    assert.match(c[2], /^G90 G0 /, k);
+    assert.deepEqual(c.slice(0, 3), ['#1=[1 / #<_homed_state>]', 'G21', 'G53 G0 Z0'], k);
+    assert.match(c[3], /^G90 G0 /, k);
+    const unhomed = run(m[k].body, { _x: 120, _y: 80, _tool_offset: 1 });
+    assert.deepEqual([unhomed._x, unhomed._y, unhomed._error], [120, 80, '#1=[1 / #<_homed_state>]'], k + ' stops unhomed');
   }
   assert.ok(!/G0|G53/.test(m.center.body));
   const withSafe = buildMacros(Object.assign({}, base, { extras: allExtras, safeZMm: -5, imperial: true }));
-  assert.deepEqual(code(withSafe.midXY.body), ['G21', 'G53 G0 Z-5.000 (Safe Z)', 'G90 G0 X[#<_x> / 2] Y[#<_y> / 2]', 'G20 (back to inches)']);
+  assert.deepEqual(code(withSafe.midXY.body), ['#1=[1 / #<_homed_state>]', 'G21', 'G53 G0 Z-5.000', 'G90 G0 X[#<_x> / 2] Y[#<_y> / 2]', 'G20']);
 });
 
 test('save and restore X/Y: kept in the saved-Z0 slot, Z untouched, nothing saved = no change', () => {
@@ -173,11 +194,11 @@ test('restore with nothing saved leaves Z0 alone', () => {
 test('other work offset and slots', () => {
   const m = buildMacros(Object.assign({}, base, { wcs: 2, slot: 8, backup: 7, thick: 9 }));
   assert.match(m.record.body, /^G55$/m);
-  assert.match(m.record.body, /G10 L2 P8 Z\[#5063 \+ #5243 - 15\.000 - #5403\]/);
-  assert.match(m.set.body, /^G10 L2 P2 Z\[#5363\]$/m);
+  assert.match(m.record.body, /G10 L2 P8 Z\[\[#5063 \+ #5243 - 15\.000 - #5403\]/);
+  assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND #<_tool_offset> AND \[#5363 NE 0\]\]\]$/m);
   assert.match(m.set.body, /^G10 L2 P7 Z\[#5343 \+ \[#5243 - #5343\]/m);
   assert.equal(m.set.name, 'MW: G55 Z0 on spoilboard');
-  const p = { 5363: -90, 5243: -70, 5343: 0 };
+  const p = Object.assign({ 5363: -90, 5243: -70, 5343: 0 }, ready);
   run(m.set.body, p);
   assert.deepEqual([p[5243], p[5343]], [-90, -70]);
 });
@@ -188,7 +209,7 @@ test('imperial: values in mm, G21 first and G20 last in every Z macro', () => {
   for (const k of ['record', 'measure', 'set', 'stock', 'restore']) {
     const c = code(m[k].body);
     assert.ok(c.includes('G21'), k);
-    assert.equal(c[c.length - 1], 'G20 (back to inches)', k);
+    assert.equal(c[c.length - 1], 'G20', k);
   }
 });
 
@@ -216,4 +237,43 @@ test('$G state: units, tool length offset on/off, active work offset', () => {
   assert.deepEqual(parseGcState(['[GC:G0 G55 G17 G20 G90 G94 G43.1 M5 M9 T3 F0 S0]']),
     { imperial: true, tloActive: true, wcs: 'G55' });
   assert.equal(parseGcState(['ok']), null);
+});
+
+test('guards: nothing changes unless homed, an offset is active and the values exist', () => {
+  const m = buildMacros(base);
+  const start = { 5223: -77.5, 5383: -95, 5343: 18, 5363: 0, 5403: 12, 5063: 27.5 };
+  const cases = [
+    ['not homed', { _homed_state: 0, _tool_offset: 1 }, 'home the machine first'],
+    ['no tool length offset', { _homed_state: 1, _tool_offset: 0 }, 'no tool length offset active']
+  ];
+  for (const k of ['record', 'measure', 'set', 'stock']) {
+    for (const [what, state, why] of cases) {
+      const p = run(m[k].body, Object.assign({}, start, state));
+      assert.ok(p._error, k + ' stops when ' + what);
+      assert.ok(m[k].body.includes(p._error + ' (MW stop: ' + why + ')'), k + ': says why');
+      assert.deepEqual([p[5223], p[5383], p[5343], p[5363]], [-77.5, -95, 18, 0], k + ' changes nothing when ' + what);
+    }
+  }
+  // No spoilboard height recorded yet.
+  for (const k of ['measure', 'set', 'stock']) {
+    const p = run(m[k].body, Object.assign({}, start, ready, { 5383: 0 }));
+    assert.ok(m[k].body.includes(p._error + ' (MW stop: record the spoilboard height first)'), k);
+    assert.deepEqual([p[5223], p[5343], p[5363]], [-77.5, 18, 0], k + ' changes nothing');
+  }
+  // No stock thickness stored.
+  const p = run(m.stock.body, Object.assign({}, start, ready, { 5343: 0 }));
+  assert.ok(m.stock.body.includes(p._error + ' (MW stop: store a stock thickness first)'));
+  assert.deepEqual([p[5223], p[5363]], [-77.5, 0]);
+  // Back to saved needs none of it.
+  assert.ok(!/MW stop/.test(m.restore.body));
+});
+
+test('guards: the stored value itself is guarded too, if a stop line were skipped', () => {
+  const m = buildMacros(base);
+  for (const k of ['record', 'measure', 'set', 'stock']) {
+    const g10 = code(m[k].body).filter(l => /^G10 L2 P(9|7|1) Z\[\[?#(5063|5383)/.test(l)).pop();
+    assert.ok(g10, k);
+    const p = Object.assign({ 5223: -77.5, 5383: -95, 5343: 18, 5403: 12, 5063: 27.5 }, { _homed_state: 0, _tool_offset: 1 });
+    assert.throws(() => step(g10, p), /error:72/, k);
+  }
 });

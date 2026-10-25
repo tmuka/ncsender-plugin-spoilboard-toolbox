@@ -237,11 +237,14 @@
         <li>Set the probe block on the spoilboard and load a tool whose length offset is measured and active.</li>
         <li>Jog the bit just above the block. In ncSender&rsquo;s Macros tab, run <strong data-name="record"></strong>. It probes down, stores the spoilboard height, and backs off.</li>
         <li>Without changing tools, run <strong data-name="set"></strong>. It saves your current Z0, then puts Z0 on the spoilboard.</li>
-        <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. If it doesn't, don&rsquo;t use the macros until it does.</li>
+        <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. Or check it against ncSender&rsquo;s own probe: run <strong>Probe &rarr; Standard Block &rarr; Z</strong> with the block still on the spoilboard, then <strong data-name="set"></strong> again; work Z shouldn&rsquo;t change by more than a few hundredths. If they don&rsquo;t agree, don&rsquo;t use the macros until they do.</li>
         <li>Run <strong data-name="restore"></strong>. Work Z0 goes back to where it was before step 3.</li>
         <li>From then on, with any measured tool, just run <strong data-name="set"></strong> or <strong data-name="stock"></strong>.</li>
         <li>For <strong data-name="stock"></strong>, first press <strong>Store</strong> for a known thickness, or put the block on the stock and run <strong data-name="measure"></strong>.</li>
       </ol>
+      <p class="mw-hint">The macros <strong>stop without changing anything</strong> when the machine isn&rsquo;t homed, no tool
+        length offset is active, or the spoilboard height (or stock thickness) hasn&rsquo;t been stored yet. ncSender&rsquo;s
+        terminal shows <code class="mw-inline">error:72</code>; each stop line in the macro has a comment saying what it checks.</p>
       <p class="mw-hint"><strong>Re-run the record macro</strong> after surfacing the spoilboard (e.g. QuickCut&rsquo;s Wasteboard
         Surfacing), or if your reference tool changes: the stored height is only as current as the last recording.</p>
     </section>
@@ -304,10 +307,25 @@
   // moves first lift to ncSender's Safe Z (`safeZMm`, a machine Z in mm;
   // machine Z0 when it isn't set) with G53, in G21 so the height is read
   // as mm; #<_x> then also reads in mm, which keeps the move consistent.
+  // Guards: a macro stops before it changes anything when the machine
+  // isn't homed (the stored heights and Safe Z are machine Z), no tool
+  // length offset is active, or a value it needs was never stored. Without
+  // o-word flow control, the stop is a division by zero: grblHAL rejects
+  // the line (error 72), and ncSender sends nothing after a rejected line.
+  // Each stop line's comment says why. The same condition also divides
+  // the value a G10 line stores, so a wrong Z0 can't be set even where the
+  // rest of a macro would still be sent.
   function buildMacros(o) {
     var wcs = WCS_NAMES[o.wcs], slot = WCS_NAMES[o.slot], bak = WCS_NAMES[o.backup], thk = WCS_NAMES[o.thick];
     var cur = '#' + offsetZParam(o.wcs), spoil = '#' + offsetZParam(o.slot);
     var saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
+    var HOMED = '#<_homed_state>', TLO = '#<_tool_offset>';
+    var hasSpoil = '[' + spoil + ' NE 0]', hasThick = '[' + thick + ' NE 0]';
+    function stop(cond, why) { return '#1=[1 / ' + cond + '] (MW stop: ' + why + ')'; }
+    var needHomed = stop(HOMED, 'home the machine first');
+    var needTlo = stop(TLO, 'no tool length offset active');
+    var needSpoil = stop(hasSpoil, 'record the spoilboard height first');
+    var needThick = stop(hasThick, 'store a stock thickness first');
     var tail = o.imperial ? ['G20 (back to inches)'] : [];
     var probe = [
       'G21',
@@ -331,31 +349,43 @@
       '(Macro Wiz: record spoilboard height)',
       '(Probe block on the spoilboard, bit)',
       '(just above it, tool offset active.)',
-      '(Height is stored in ' + slot + ' Z.)'
-    ].concat(probe, ['G10 L2 P' + o.slot + ' Z[' + surface + ']'], back, tail));
+      '(Height is stored in ' + slot + ' Z.)',
+      needHomed,
+      needTlo
+    ].concat(probe, ['G10 L2 P' + o.slot + ' Z[[' + surface + '] / [' + HOMED + ' AND ' + TLO + ']]'], back, tail));
     m.measure = macro('Measure stock thickness', [
       '(Macro Wiz: measure stock thickness)',
       '(Probe block on the stock, bit just)',
       '(above it, tool offset active. Needs)',
       '(the spoilboard height recorded.)',
-      '(Thickness is stored in ' + thk + ' Z.)'
-    ].concat(probe, ['G10 L2 P' + o.thick + ' Z[' + surface + ' - ' + spoil + ']'], back, tail));
+      '(Thickness is stored in ' + thk + ' Z.)',
+      needHomed,
+      needTlo,
+      needSpoil
+    ].concat(probe, ['G10 L2 P' + o.thick + ' Z[[' + surface + ' - ' + spoil + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ']]'], back, tail));
     m.set = macro(wcs + ' Z0 on spoilboard', [
       '(Macro Wiz: work Z0 on spoilboard)',
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
+      needHomed,
+      needTlo,
+      needSpoil,
       'G21',
       saveLine,
-      'G10 L2 P' + o.wcs + ' Z[' + spoil + ']'
+      'G10 L2 P' + o.wcs + ' Z[' + spoil + ' / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ']]'
     ].concat(tail));
     m.stock = macro(wcs + ' Z0 on stock top', [
       '(Macro Wiz: work Z0 on stock top)',
       '(Uses the thickness in ' + thk + ' Z.)',
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
+      needHomed,
+      needTlo,
+      needSpoil,
+      needThick,
       'G21',
       saveLine,
-      'G10 L2 P' + o.wcs + ' Z[' + spoil + ' + ' + thick + ']'
+      'G10 L2 P' + o.wcs + ' Z[[' + spoil + ' + ' + thick + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + hasThick + ']]'
     ].concat(tail));
     m.restore = macro(wcs + ' Z0 back to saved', [
       '(Macro Wiz: put back the Z0 saved in ' + bak + ' Z)',
@@ -366,9 +396,11 @@
     var x = o.extras || {};
     var safe = typeof o.safeZMm === 'number' && isFinite(o.safeZMm)
       ? 'G53 G0 Z' + fmt(o.safeZMm) + ' (Safe Z)' : 'G53 G0 Z0 (machine Z0)';
+    // Safe Z is a machine Z, so the lift needs a homed machine.
     function midpoint(name, what, move) {
       return macro(name, [
         '(Macro Wiz: lift to Safe Z, then move halfway to ' + what + ')',
+        needHomed,
         'G21',
         safe,
         'G90 G0 ' + move
@@ -525,13 +557,17 @@
       var gc = parseGcState(g.lines);
       var hash = parseHashReport((await ask('$#', 900)).lines);
       var expr = await ask('#1=[1+1]', 300);
+      // The safety stops read these named parameters (newer grblHAL builds).
+      var named = expr.ok ? await ask('#1=[#<_homed_state> + #<_tool_offset>]', 300) : { ok: false };
 
       if (expr.ok) addCheck(list, 'ok', 'Expressions work', 'The controller accepted #1=[1+1], so the macros\' calculations will run.');
       else addCheck(list, 'bad', 'Expressions not supported', 'The controller rejected #1=[1+1]. The macros need a grblHAL build with parameter and expression support.');
+      if (expr.ok && named.ok) addCheck(list, 'ok', 'Safety stops work', 'The controller reads #<_homed_state> and #<_tool_offset>, so the macros stop instead of setting a wrong Z0 when the machine isn\'t homed or no tool length offset is active.');
+      else if (expr.ok) addCheck(list, 'bad', 'Safety stops not supported', 'The controller rejected #<_homed_state> or #<_tool_offset>, which the macros\' safety stops read, so every macro would stop. Update grblHAL to a newer build.');
 
       if (!gc) addCheck(list, 'warn', 'No answer to $G', 'Couldn\'t read the modal state, so the tool length offset state is unknown.');
       else if (gc.tloActive) addCheck(list, 'ok', 'Tool length offset is active', 'Make sure every tool\'s offset is measured against the same reference tool.');
-      else addCheck(list, 'warn', 'No tool length offset active (G49)', 'Both macros assume the loaded tool\'s offset is active, e.g. after measuring it with the tool setter.');
+      else addCheck(list, 'warn', 'No tool length offset active (G49)', 'The macros stop until the loaded tool\'s offset is active, e.g. after measuring it with the tool setter.');
 
       if (hash.TLO != null) {
         var tloOn = !gc || gc.tloActive;

@@ -84,6 +84,12 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 - **Units:** `#5221…` (work offsets) and `#5403` (TLO) are **always mm**; `#5063` (probe result) and
   `G10` values follow G20/G21. So every macro that reads stored values runs in `G21`, and
   imperial setups get `G20` back at the end.
+- **Safety stops:** record, measure, spoilboard and stock-top start with `#1=[1 / <cond>] (MW stop: why)`
+  lines for homed (`#<_homed_state>`), a tool length offset (`#<_tool_offset>`) and the stored values
+  they need; midpoints check homed. A division by zero is grblHAL error 72, and ncSender's
+  `ExpandedCommandSender` sends nothing after a rejected macro line (one line in flight at a time).
+  The same condition divides each guarded `G10` value, so it holds even if lines kept coming (Pro,
+  controller-side macros). The check confirms the named parameters exist.
 - **No sideways move without lifting first:** midpoint moves lift to Safe Z; probing macros only move
   straight down from where the user put the bit, then back off up.
 - **Lines stay short** for grblHAL, and comments aren't nested (a test checks both).

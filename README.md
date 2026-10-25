@@ -152,6 +152,25 @@ which leaves Z0 alone if nothing was saved. Saved values stay valid across tool 
 offsets are relative to the reference tool. The work offset is changed in place, so programs that
 hard-code `G54` (most CAM output) use whichever Z0 you last set.
 
+### Safety stops
+
+The record, measure, spoilboard and stock-top macros check first, and stop without changing
+anything, when:
+
+- the machine isn't homed (the stored heights are machine positions, which only mean something
+  once homed),
+- no tool length offset is active, or
+- the spoilboard height (or, for the stock top, the thickness) hasn't been stored yet.
+
+The midpoint moves stop too when the machine isn't homed, since their Safe Z lift is a machine
+position. **Back to saved** needs none of these.
+
+grblHAL macros have no if/else here, so a stop is a deliberate division by zero, for example
+`#1=[1 / #<_homed_state>] (MW stop: home the machine first)`: grblHAL rejects the line with
+`error:72`, and ncSender sends nothing after a rejected line of a macro. The same check also
+divides the value each `G10` line stores, so a wrong Z0 can't be set even if a stop line were
+skipped. The wizard's check confirms your grblHAL reads `#<_homed_state>` and `#<_tool_offset>`.
+
 ### When to re-record
 
 The stored spoilboard height is only as current as the last recording. Run **Record spoilboard
