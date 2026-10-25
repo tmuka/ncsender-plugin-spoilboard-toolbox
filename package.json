@@ -1,7 +1,7 @@
 {
-  "name": "ncsender-macro-wiz",
-  "version": "0.3.0",
-  "description": "ncSender plugin: wizards that check your grblHAL setup and write macros",
+  "name": "ncsender-zero-swapper",
+  "version": "0.3.1",
+  "description": "ncSender plugin: swap work zero between spoilboard and stock top with any measured tool",
   "private": true,
   "scripts": {
     "test": "node --test tests/*.cjs",

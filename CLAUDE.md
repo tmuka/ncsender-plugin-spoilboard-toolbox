@@ -1,6 +1,7 @@
-# Macro Wiz: notes for working on this plugin
+# Zero Swapper: notes for working on this plugin
 
-Macro Wiz is a client-only ncSender plugin (`com.tmuka.macrowiz`). It runs a wizard that checks a
+Zero Swapper (called Macro Wiz before 0.3.1; the id keeps the old name so installs and settings
+carry over) is a client-only ncSender plugin (`com.tmuka.macrowiz`). It runs a wizard that checks a
 grblHAL controller, then writes ncSender macros (M98 macros) that put work Z0 on the spoilboard or the
 stock top with any measured tool, without probing each time. README.md is the user guide; this file
 is how it's built, why, and how to work on it.
@@ -37,7 +38,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
   - `offsetZParam(p)`: `5203 + 20p`, the Z parameter of work offset P (G54 = #5223, G59.3 = #5383).
   - `parseHashReport` (`$#`, both `[TLO:z]` and four-axis `[TLO:x,y,z,a]`) and `parseGcState` (`$G`: units, TLO
     on/off, active work offset).
-  - `storeThicknessCommand`, `MACRO_PREFIX` (`MW: `), `OLD_PREFIX` (`Macro Wiz: `, the names earlier versions used).
+  - `storeThicknessCommand`, `MACRO_PREFIX` (`ZS: `), `OLD_PREFIXES` (`MW: `, `Macro Wiz: `, the names earlier versions used).
 - **Everything else** is the UI and its calls:
   - `runChecks`: the controller check.
   - `readSettings`, `saveSettings`.
@@ -73,10 +74,10 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
   - **Set XY0 to Midpoint** is `G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]` with no move.
   - **Save / restore X/Y** use the saved-Z0 slot's X/Y.
 - **Naming:**
-  - Names are `MW: <name>`.
-  - Each description is the text of the macro's first comment line after its `Macro Wiz:` prefix.
+  - Names are `ZS: <name>`.
+  - Each description is the text of the macro's first comment line after its `ZS:` prefix.
   - Saving updates macros in place by name: the current name, an alias (`Center X0 Y0 here`), or the
-    old `Macro Wiz: ` prefix.
+    old `MW: ` or `Macro Wiz: ` prefixes.
 
 ### Rules the macro lines follow
 
@@ -84,7 +85,7 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 - **Units:** `#5221…` (work offsets) and `#5403` (TLO) are **always mm**; `#5063` (probe result) and
   `G10` values follow G20/G21. So every macro that reads stored values runs in `G21`, and
   imperial setups get `G20` back at the end.
-- **Safety stops:** record, measure, spoilboard and stock-top start with `#1=[1 / <cond>] (MW stop: why)`
+- **Safety stops:** record, measure, spoilboard and stock-top start with `#1=[1 / <cond>] (ZS stop: why)`
   lines for homed (`#<_homed_state>`), a tool length offset (`#<_tool_offset>`) and the stored values
   they need; midpoints check homed. A division by zero is grblHAL error 72, and ncSender's
   `ExpandedCommandSender` sends nothing after a rejected macro line (one line in flight at a time).
@@ -132,9 +133,11 @@ npm run build    # dist/com.tmuka.macrowiz_v<version>.zip from the last commit (
 - Bump `version` in both `manifest.json` and `package.json` for a release build.
 - The UI was checked in headless Chrome against a stand-in for the ncSender API that stubs `fetch` and
   posts `cnc-data` replies. The harness isn't in the repo; a fresh one only needs to stub the four APIs above.
-- Install a build from ncSender's Plugin Manager. The wizard opens from **Macro Wiz** in the plugin tool menu.
+- Install a build from ncSender's Plugin Manager. The wizard opens from **Zero Swapper** in the plugin tool menu.
 
 ## How it was built
+
+(As Macro Wiz; renamed Zero Swapper in 0.3.1, with the `ZS:` macro prefix.)
 
 Built in one Claude Code session (2026-10-16), version 0.1 to 0.2.8, driven by requests from the author:
 
@@ -172,7 +175,7 @@ Each change came with tests first or alongside, then a browser check of the UI, 
     Standard Block Z probe.
   - Guard rails: only when the machine is idle and homed with a TLO active, and a warning when the
     stored height may be stale.
-  - If proposed upstream, Macro Wiz is the working prototype.
+  - If proposed upstream, Zero Swapper is the working prototype.
 
 ## Conventions
 

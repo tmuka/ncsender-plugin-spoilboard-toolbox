@@ -86,21 +86,21 @@ test('record macro probes, then stores trigger + offset - block - TLO in the slo
     'G90'
   ]);
   // The stop lines say why in their comments.
-  assert.match(buildMacros(base).record.body, /^#1=\[1 \/ #<_homed_state>\] \(MW stop: home the machine first\)$/m);
+  assert.match(buildMacros(base).record.body, /^#1=\[1 \/ #<_homed_state>\] \(ZS stop: home the machine first\)$/m);
 });
 
-test('names start MW:, descriptions are the first comment line after its prefix', () => {
+test('names start ZS:, descriptions are the first comment line after its prefix', () => {
   const m = buildMacros(Object.assign({}, base, { extras: allExtras }));
-  assert.equal(m.record.name, 'MW: Record spoilboard height');
+  assert.equal(m.record.name, 'ZS: Record spoilboard height');
   assert.equal(m.record.description, 'record spoilboard height');
   assert.equal(m.restore.description, 'put back the Z0 saved in G59.2 Z');
   assert.equal(m.midX.description, 'lift to Safe Z, then move halfway to X0');
-  assert.equal(m.center.name, 'MW: Set XY0 to Midpoint');
+  assert.equal(m.center.name, 'ZS: Set XY0 to Midpoint');
   assert.equal(m.center.description, 'set X0 Y0 halfway to here, no move');
   assert.deepEqual(m.center.aliases, ['Center X0 Y0 here']);
   for (const k of Object.keys(m)) {
-    assert.ok(m[k].name.startsWith('MW: '), k);
-    assert.ok(m[k].description && !/Macro Wiz|[()]/.test(m[k].description), k + ': ' + m[k].description);
+    assert.ok(m[k].name.startsWith('ZS: '), k);
+    assert.ok(m[k].description && !/ZS|MW|Macro Wiz|[()]/.test(m[k].description), k + ': ' + m[k].description);
   }
 });
 
@@ -197,7 +197,7 @@ test('other work offset and slots', () => {
   assert.match(m.record.body, /G10 L2 P8 Z\[\[#5063 \+ #5243 - 15\.000 - #5403\]/);
   assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND #<_tool_offset> AND \[#5363 NE 0\]\]\]$/m);
   assert.match(m.set.body, /^G10 L2 P7 Z\[#5343 \+ \[#5243 - #5343\]/m);
-  assert.equal(m.set.name, 'MW: G55 Z0 on spoilboard');
+  assert.equal(m.set.name, 'ZS: G55 Z0 on spoilboard');
   const p = Object.assign({ 5363: -90, 5243: -70, 5343: 0 }, ready);
   run(m.set.body, p);
   assert.deepEqual([p[5243], p[5343]], [-90, -70]);
@@ -250,22 +250,22 @@ test('guards: nothing changes unless homed, an offset is active and the values e
     for (const [what, state, why] of cases) {
       const p = run(m[k].body, Object.assign({}, start, state));
       assert.ok(p._error, k + ' stops when ' + what);
-      assert.ok(m[k].body.includes(p._error + ' (MW stop: ' + why + ')'), k + ': says why');
+      assert.ok(m[k].body.includes(p._error + ' (ZS stop: ' + why + ')'), k + ': says why');
       assert.deepEqual([p[5223], p[5383], p[5343], p[5363]], [-77.5, -95, 18, 0], k + ' changes nothing when ' + what);
     }
   }
   // No spoilboard height recorded yet.
   for (const k of ['measure', 'set', 'stock']) {
     const p = run(m[k].body, Object.assign({}, start, ready, { 5383: 0 }));
-    assert.ok(m[k].body.includes(p._error + ' (MW stop: record the spoilboard height first)'), k);
+    assert.ok(m[k].body.includes(p._error + ' (ZS stop: record the spoilboard height first)'), k);
     assert.deepEqual([p[5223], p[5343], p[5363]], [-77.5, 18, 0], k + ' changes nothing');
   }
   // No stock thickness stored.
   const p = run(m.stock.body, Object.assign({}, start, ready, { 5343: 0 }));
-  assert.ok(m.stock.body.includes(p._error + ' (MW stop: store a stock thickness first)'));
+  assert.ok(m.stock.body.includes(p._error + ' (ZS stop: store a stock thickness first)'));
   assert.deepEqual([p[5223], p[5363]], [-77.5, 0]);
   // Back to saved needs none of it.
-  assert.ok(!/MW stop/.test(m.restore.body));
+  assert.ok(!/ZS stop/.test(m.restore.body));
 });
 
 test('guards: the stored value itself is guarded too, if a stop line were skipped', () => {

@@ -1,9 +1,10 @@
-# Macro Wiz
+# Zero Swapper
 
 **Probe your spoilboard once. After that, with any measured tool, one click puts Z0 on the
 spoilboard or on top of your stock — no probing, no math. Another click puts your old Z0 back.**
+Extras find X/Y zero at a midpoint and save / restore it for fixtures.
 
-Macro Wiz is an ncSender plugin. A short wizard checks your grblHAL controller, then writes the
+Zero Swapper is an ncSender plugin (it was called Macro Wiz before 0.3.1). A short wizard checks your grblHAL controller, then writes the
 ncSender macros that do this, which you run from the Macros tab or a keyboard shortcut.
 
 ## Who it's for
@@ -14,7 +15,7 @@ You'll get the most from it if:
   has a tool length offset, and
 - your controller runs **grblHAL** (the wizard checks it can do the math the macros need).
 
-Without measured tool lengths, every tool change needs a new Z probe anyway, and Macro Wiz can't
+Without measured tool lengths, every tool change needs a new Z probe anyway, and Zero Swapper can't
 save you that.
 
 ## What you get
@@ -26,8 +27,8 @@ save you that.
 | **Z0 on stock top** | Sets work Z0 on top of the stock: the spoilboard plus a stored stock thickness (typed in, or probed with **Measure stock thickness**). |
 | **Z0 back to saved** | Puts back the Z0 you had before, e.g. one you probed on the stock. |
 
-In ncSender's Macros tab they're named **MW: …**, with the work offset they set (e.g.
-**MW: G54 Z0 on spoilboard**).
+In ncSender's Macros tab they're named **ZS: …**, with the work offset they set (e.g.
+**ZS: G54 Z0 on spoilboard**).
 
 Nothing has to be re-probed when you change tools: the controller adds each tool's length offset
 itself. The values are kept in the controller, so they survive power cycles.
@@ -37,7 +38,7 @@ center of round or square stock), set X0 Y0 at that midpoint, and save / restore
 
 ## First time
 
-1. Open **Macro Wiz** from the plugin tool menu, run the check, and press **Create macros**.
+1. Open **Zero Swapper** from the plugin tool menu, run the check, and press **Create macros**.
 2. With a measured tool loaded, put your probe block on the spoilboard, jog the bit just above it,
    and run **Record spoilboard height**. It probes straight down.
 3. Check it once against ncSender's own probe. With the block still on the spoilboard, run ncSender's
@@ -57,7 +58,7 @@ Re-record after surfacing the spoilboard.
 
 - **Same stock thickness as last time:** load any measured tool and run **Z0 on stock top**. No
   probing.
-- **New stock thickness:** tell Macro Wiz once, then run **Z0 on stock top**. Either:
+- **New stock thickness:** tell Zero Swapper once, then run **Z0 on stock top**. Either:
   - put the block on the stock and run **Measure stock thickness** (one probe, good for every tool in
     the job), or
   - type the thickness in the wizard and press **Store**, if you trust the material's nominal size
@@ -94,8 +95,8 @@ So you probe once per new stock, not once per tool.
      does nothing if nothing was saved.
 4. **Macros.** Creates the ncSender macros, or updates the ones it made before:
    Every ncSender macro can have a keyboard shortcut (ncSender's shortcut settings, **Macros** group).
-   Their names start with **MW:**, and each description is the macro's first comment line (e.g.
-   "record spoilboard height"). Macros from earlier versions, named "Macro Wiz: …", are renamed in
+   Their names start with **ZS:**, and each description is the macro's first comment line (e.g.
+   "record spoilboard height"). Macros from earlier versions, named "MW: …" or "Macro Wiz: …", are renamed in
    place.
    - **Record spoilboard height**: probes down onto the block and stores the height.
    - **Measure stock thickness**: with the block on the stock, probes down and stores
@@ -105,7 +106,7 @@ So you probe once per new stock, not once per tool.
      spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
-   - **Delete Macro Wiz macros** removes every macro whose name starts with "MW:" or the older "Macro Wiz:" (for example
+   - **Delete Zero Swapper macros** removes every macro whose name starts with "ZS:" or the older "MW:" or "Macro Wiz:" (for example
      ones left over from older settings or another work offset) and nothing else. The first press lists
      them and turns into **Confirm delete**; a second press within a few seconds deletes. Keyboard
      shortcuts set on deleted macros stop working (recreated macros get new numbers), so to change
@@ -166,7 +167,7 @@ The midpoint moves stop too when the machine isn't homed, since their Safe Z lif
 position. **Back to saved** needs none of these.
 
 grblHAL macros have no if/else here, so a stop is a deliberate division by zero, for example
-`#1=[1 / #<_homed_state>] (MW stop: home the machine first)`: grblHAL rejects the line with
+`#1=[1 / #<_homed_state>] (ZS stop: home the machine first)`: grblHAL rejects the line with
 `error:72`, and ncSender sends nothing after a rejected line of a macro. The same check also
 divides the value each `G10` line stores, so a wrong Z0 can't be set even if a stop line were
 skipped. The wizard's check confirms your grblHAL reads `#<_homed_state>` and `#<_tool_offset>`.
@@ -198,7 +199,7 @@ macros only move straight down from where you put the bit, then back off upward.
 ## Install
 
 Build the zip (below) and install it from ncSender's Plugin Manager. The wizard opens from the
-**Macro Wiz** entry in the plugin tool menu.
+**Zero Swapper** entry in the plugin tool menu.
 
 ## Development
 

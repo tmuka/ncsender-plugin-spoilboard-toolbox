@@ -285,7 +285,7 @@
       <div class="mw-card-head">
         <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">4</span>Macros</h3>
         <div class="mw-head-actions">
-          <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete Macro Wiz macros</button>
+          <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete Zero Swapper macros</button>
           <button type="button" class="mw-btn" id="mw-save">Create macros</button>
         </div>
       </div>
@@ -338,10 +338,11 @@
   // BEGIN pure — read by tests/*.cjs, so keep this block free of DOM use.
 
   var MM_PER_INCH = 25.4;
-  // Macro names start with this. Earlier versions used "Macro Wiz: ",
-  // which saving renames and deleting still recognises.
-  var MACRO_PREFIX = 'MW: ';
-  var OLD_PREFIX = 'Macro Wiz: ';
+  // Macro names start with this. Earlier versions (as Macro Wiz) used
+  // "MW: " and before that "Macro Wiz: "; saving renames those in place and
+  // deleting still recognizes them.
+  var MACRO_PREFIX = 'ZS: ';
+  var OLD_PREFIXES = ['MW: ', 'Macro Wiz: '];
 
   function fmt(v) { return (Math.round(v * 1000) / 1000).toFixed(3); }
 
@@ -385,7 +386,7 @@
     var saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
     var HOMED = '#<_homed_state>', TLO = '#<_tool_offset>';
     var hasSpoil = '[' + spoil + ' NE 0]', hasThick = '[' + thick + ' NE 0]';
-    function stop(cond, why) { return '#1=[1 / ' + cond + '] (MW stop: ' + why + ')'; }
+    function stop(cond, why) { return '#1=[1 / ' + cond + '] (ZS stop: ' + why + ')'; }
     var needHomed = stop(HOMED, 'home the machine first');
     var needTlo = stop(TLO, 'no tool length offset active');
     var needSpoil = stop(hasSpoil, 'record the spoilboard height first');
@@ -402,15 +403,15 @@
     // 1 when the current Z0 is neither the spoilboard nor the stock top.
     var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001]';
     var saveLine = 'G10 L2 P' + o.backup + ' Z[' + saved + ' + [' + cur + ' - ' + saved + '] * [' + notOurs + ']]';
-    // Named "MW: ..."; the description is the first comment line's text
-    // after its "Macro Wiz:" prefix, e.g. "record spoilboard height".
+    // Named "ZS: ..."; the description is the first comment line's text
+    // after its "ZS:" prefix, e.g. "record spoilboard height".
     function macro(name, lines) {
-      var first = /^\((?:Macro Wiz|MW): ?(.*)\)$/.exec(lines[0]);
+      var first = /^\((?:ZS|MW|Macro Wiz): ?(.*)\)$/.exec(lines[0]);
       return { name: MACRO_PREFIX + name, description: first ? first[1] : '', body: lines.join('\n') };
     }
     var m = {};
     m.record = macro('Record spoilboard height', [
-      '(Macro Wiz: record spoilboard height)',
+      '(ZS: record spoilboard height)',
       '(Probe block on the spoilboard, bit)',
       '(just above it, tool offset active.)',
       '(Height is stored in ' + slot + ' Z.)',
@@ -418,7 +419,7 @@
       needTlo
     ].concat(probe, ['G10 L2 P' + o.slot + ' Z[[' + surface + '] / [' + HOMED + ' AND ' + TLO + ']]'], back, tail));
     m.measure = macro('Measure stock thickness', [
-      '(Macro Wiz: measure stock thickness)',
+      '(ZS: measure stock thickness)',
       '(Probe block on the stock, bit just)',
       '(above it, tool offset active. Needs)',
       '(the spoilboard height recorded.)',
@@ -428,7 +429,7 @@
       needSpoil
     ].concat(probe, ['G10 L2 P' + o.thick + ' Z[[' + surface + ' - ' + spoil + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ']]'], back, tail));
     m.set = macro(wcs + ' Z0 on spoilboard', [
-      '(Macro Wiz: work Z0 on spoilboard)',
+      '(ZS: work Z0 on spoilboard)',
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
       needHomed,
@@ -439,7 +440,7 @@
       'G10 L2 P' + o.wcs + ' Z[' + spoil + ' / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ']]'
     ].concat(tail));
     m.stock = macro(wcs + ' Z0 on stock top', [
-      '(Macro Wiz: work Z0 on stock top)',
+      '(ZS: work Z0 on stock top)',
       '(Uses the thickness in ' + thk + ' Z.)',
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
@@ -452,7 +453,7 @@
       'G10 L2 P' + o.wcs + ' Z[[' + spoil + ' + ' + thick + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + hasThick + ']]'
     ].concat(tail));
     m.restore = macro(wcs + ' Z0 back to saved', [
-      '(Macro Wiz: put back the Z0 saved in ' + bak + ' Z)',
+      '(ZS: put back the Z0 saved in ' + bak + ' Z)',
       '(Leaves Z0 alone if nothing was saved.)',
       'G21',
       'G10 L2 P' + o.wcs + ' Z[' + cur + ' + [' + saved + ' - ' + cur + '] * [' + saved + ' NE 0]]'
@@ -463,7 +464,7 @@
     // Safe Z is a machine Z, so the lift needs a homed machine.
     function midpoint(name, what, move) {
       return macro(name, [
-        '(Macro Wiz: lift to Safe Z, then move halfway to ' + what + ')',
+        '(ZS: lift to Safe Z, then move halfway to ' + what + ')',
         needHomed,
         'G21',
         safe,
@@ -479,13 +480,13 @@
       var sx = '#' + (offsetZParam(o.backup) - 2), sy = '#' + (offsetZParam(o.backup) - 1);
       var anySaved = '[[' + sx + ' NE 0] OR [' + sy + ' NE 0]]';
       m.saveXY = macro('Save ' + wcs + ' X/Y', [
-        '(Macro Wiz: save ' + wcs + ' X/Y in ' + bak + ' X/Y)',
+        '(ZS: save ' + wcs + ' X/Y in ' + bak + ' X/Y)',
         '(e.g. a fixture or jig you come back to)',
         'G21',
         'G10 L2 P' + o.backup + ' X[' + cx + '] Y[' + cy + ']'
       ].concat(tail));
       m.restoreXY = macro(wcs + ' X/Y back to saved', [
-        '(Macro Wiz: put back the X/Y saved in ' + bak + ')',
+        '(ZS: put back the X/Y saved in ' + bak + ')',
         '(Leaves X/Y alone if nothing was saved.)',
         'G21',
         'G10 L2 P' + o.wcs + ' X[' + cx + ' + [' + sx + ' - ' + cx + '] * ' + anySaved + '] Y[' + cy + ' + [' + sy + ' - ' + cy + '] * ' + anySaved + ']'
@@ -493,7 +494,7 @@
     }
     if (x.center) {
       m.center = macro('Set XY0 to Midpoint', [
-        '(Macro Wiz: set X0 Y0 halfway to here, no move)',
+        '(ZS: set X0 Y0 halfway to here, no move)',
         'G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]'
       ]);
       m.center.aliases = ['Center X0 Y0 here'];  // its name before 0.2.7
@@ -766,15 +767,15 @@
     }
   }
 
-  // Delete every macro this wizard made (name starts "MW:", or "Macro Wiz:"
-  // from earlier versions), e.g. ones left over from older settings or
+  // Delete every macro this wizard made (name starts "ZS:", or "MW:" or
+  // "Macro Wiz:" from earlier versions), e.g. ones left over from older settings or
   // another work offset. The first press only lists them
   // and turns the button into "Confirm delete"; a second press within a
   // few seconds deletes. Other macros are never touched.
   var deleteArmed = null;
   function isOurs(mac) {
     var n = mac && (mac.name != null ? mac.name : mac.Name);
-    return typeof n === 'string' && (n.indexOf(MACRO_PREFIX) === 0 || n.indexOf(OLD_PREFIX) === 0);
+    return typeof n === 'string' && [MACRO_PREFIX].concat(OLD_PREFIXES).some(function(pre) { return n.indexOf(pre) === 0; });
   }
   function disarmDelete() {
     var btn = $('mw-delete');
@@ -790,7 +791,7 @@
         var mine = (lres.ok ? await lres.json() : []).filter(isOurs);
         if (!mine.length) {
           status.removeAttribute('data-state');
-          status.textContent = 'There are no Macro Wiz macros to delete.';
+          status.textContent = 'There are no Zero Swapper macros to delete.';
           return;
         }
         deleteArmed = { macros: mine, timer: setTimeout(function() {
@@ -801,7 +802,7 @@
         btn.classList.add('mw-btn-danger');
         status.setAttribute('data-state', 'bad');
         status.textContent = 'This deletes ' + mine.length + ' macro' + (mine.length === 1 ? '' : 's') + ': ' +
-          mine.map(function(m) { return 'P' + (m.id != null ? m.id : m.Id) + ' ' + (m.name || m.Name).replace(/^(MW|Macro Wiz): /, ''); }).join(', ') +
+          mine.map(function(m) { return 'P' + (m.id != null ? m.id : m.Id) + ' ' + (m.name || m.Name).replace(/^(ZS|MW|Macro Wiz): /, ''); }).join(', ') +
           '. Keyboard shortcuts set on them stop working, and new ones get new numbers, so to change' +
           ' settings use Create macros instead: it updates them in place. Press Confirm delete to go ahead.';
       } catch (err) {
@@ -825,7 +826,7 @@
     }
     btn.disabled = false;
     status.setAttribute('data-state', failed.length ? 'bad' : 'ok');
-    status.textContent = 'Deleted ' + gone + ' Macro Wiz macro' + (gone === 1 ? '' : 's') + '.' +
+    status.textContent = 'Deleted ' + gone + ' Zero Swapper macro' + (gone === 1 ? '' : 's') + '.' +
       (failed.length ? ' Couldn\'t delete ' + failed.join(', ') + '.' : ' Press Create macros to make fresh ones, then set any keyboard shortcuts on them again.');
   }
 
@@ -845,9 +846,10 @@
       for (var key of Object.keys(m)) {
         var mac = m[key];
         // The same macro under its current name, or an older one: the
-        // "Macro Wiz: " prefix, or a name it had before (aliases).
+        // "MW: " or "Macro Wiz: " prefix, or a name it had before (aliases).
         var bare = [mac.name.slice(MACRO_PREFIX.length)].concat(mac.aliases || []);
-        var names = [mac.name].concat(bare.map(function(b) { return MACRO_PREFIX + b; }), bare.map(function(b) { return OLD_PREFIX + b; }));
+        var names = [mac.name];
+        [MACRO_PREFIX].concat(OLD_PREFIXES).forEach(function(pre) { bare.forEach(function(b) { names.push(pre + b); }); });
         var prev = null;
         for (var ni = 0; ni < names.length && !prev; ni++) {
           prev = (existing || []).filter(function(x) {

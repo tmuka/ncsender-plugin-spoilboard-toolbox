@@ -1,11 +1,11 @@
 {
   "id": "com.tmuka.macrowiz",
-  "name": "Macro Wiz",
-  "version": "0.3.0",
+  "name": "Zero Swapper",
+  "version": "0.3.1",
   "minAppVersion": "2.0.88",
   "configUi": "config.html",
   "author": "tmuka",
-  "description": "Probe your spoilboard once; then any measured tool can set Z0 on the spoilboard or the stock top with one macro, no probing, and put your old Z0 back. For grblHAL machines with a tool setter or ATC.",
+  "description": "Probe your spoilboard once, then swap work zero between the spoilboard and the stock top with any measured tool, and back. Extras find X/Y zero at a midpoint and save / restore it for fixtures. For grblHAL machines with a tool setter or ATC.",
   "category": "utility",
   "platforms": {
     "v2": "2.0.88",
@@ -16,7 +16,7 @@
   "toolMenu": [
     {
       "id": "open-config",
-      "label": "Macro Wiz",
+      "label": "Zero Swapper",
       "clientOnly": true
     }
   ]
