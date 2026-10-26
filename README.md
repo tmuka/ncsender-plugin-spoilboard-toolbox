@@ -76,12 +76,17 @@ Every length and feed box takes mm or inches, whichever your machine uses: type 
 The plugin opens on its **Spoilboard holes** tab; the Z0 macros are on the **Z0 macros** tab, and
 **Help** in the sidebar explains whichever tab you're on.
 
-If your spoilboard has a grid of holes (dog holes, say), describe it once under **Setup** on that tab:
-**Hole Diameter**, **X Spacing** and **Y Spacing** (center to center), and **Inset X** / **Inset Y**
-(from machine X0 Y0 to the center of the first hole, into the machine's travel). Or jog the bit to the
-center of the first hole and press **Grab First Hole Center** to fill them in (any
-other hole gives the same insets). Once saved, Setup opens locked so a stray tap can't change the grid;
-press **Locked** to unlock it for editing (changes save as you go).
+Describe your spoilboard's grid once under **Setup** on that tab: **Hole Diameter**, **X Spacing**
+and **Y Spacing** (center to center), and **Inset X** / **Inset Y** (from machine X0 Y0 to the center
+of the first hole, into the machine's travel). Or jog the bit to the center of the first hole and press
+**Grab First Hole Center** to fill the insets in (any other hole gives the same insets). Once saved,
+Setup opens locked so a stray tap can't change the grid; press **Locked** to unlock it for editing
+(changes save as you go).
+
+**No holes, just a lasered or engraved grid?** Treat each line crossing as a hole: set **Hole
+Diameter** to the line's width (the laser line's width, or the V-bit's kerf width at the surface; 0 for
+a hairline), and the spacings and insets to the lines' centers. The center dot then puts X0 Y0 on the
+middle of a crossing, and a corner dot on the edges of the two lines (back right for the +X +Y edges).
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
 spindle. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
