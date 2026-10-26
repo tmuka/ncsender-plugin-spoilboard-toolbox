@@ -76,7 +76,9 @@ If your spoilboard has a grid of holes (dog holes, say), describe it once in **S
 over any hole and press **Use current position** to fill in the insets.
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
-spindle. Click a hole and press **Set G54 X0 Y0 here**: it sends `G10 L2 P1 X… Y…`, which sets the
+spindle. Click a hole, or jog roughly over one and press **Nearest hole** (it picks the hole closest
+to the spindle and says how far off it is, so you get the grid's exact position without centering
+the bit). Then press **Set G54 X0 Y0 here**: it sends `G10 L2 P1 X… Y…`, which sets the
 work offset without moving anything. It needs a homed, idle machine, since the holes are machine
 positions. The travel and its direction come from grblHAL's `$130`/`$131` and homing settings
 (`$22`/`$23`).

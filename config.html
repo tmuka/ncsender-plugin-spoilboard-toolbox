@@ -367,7 +367,8 @@
       </div>
       <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard holes; click one to pick it."></svg>
       <div class="mw-holes-pick">
-        <span id="mw-hole-picked" class="mw-hint">Click a hole.</span>
+        <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Nearest hole</button>
+        <span id="mw-hole-picked" class="mw-hint">Click a hole, or jog near one and press Nearest hole.</span>
         <button type="button" class="mw-btn" id="mw-hole-set" disabled>Set <span data-slot="wcs">G54</span> X0 Y0 here</button>
       </div>
       <p class="mw-status" id="mw-hole-status" role="status"></p>
@@ -633,6 +634,15 @@
   function insetFromPosition(posMm, spacingMm, dir) {
     var d = dir * posMm;
     return ((d % spacingMm) + spacingMm) % spacingMm;
+  }
+  // The hole nearest a machine position: { index, distanceMm }, or null.
+  function nearestHole(grid, xMm, yMm) {
+    var best = null;
+    for (var i = 0; i < grid.length; i++) {
+      var d = Math.hypot(grid[i].x - xMm, grid[i].y - yMm);
+      if (!best || d < best.distanceMm) best = { index: i, distanceMm: d };
+    }
+    return best;
   }
   // Puts the work offset's X0 Y0 on a hole (machine X / Y in mm), without
   // moving: G10 L2 sets the offset itself. In G21 since the numbers are
@@ -1102,6 +1112,7 @@
     });
     $('mw-hole-here').addEventListener('click', holeInsetsFromHere);
     $('mw-hole-set').addEventListener('click', setHoleZero);
+    $('mw-hole-nearest').addEventListener('click', pickNearestHole);
     $('mw-hole-map').addEventListener('click', function(evt) {
       var el = evt.target.closest && evt.target.closest('[data-hole]');
       if (el) pickHole(+el.getAttribute('data-hole'));
@@ -1198,11 +1209,29 @@
   }
   function pickHole(i) {
     holes.picked = i;
+    holes.nearMm = null;
     renderHoles();
+  }
+  // Jog roughly over a hole, then take the grid's exact position for it.
+  async function pickNearestHole() {
+    var status = $('mw-hole-status');
+    await readMachineState();
+    renderHoles();
+    var here = xyOf((state.machine || {}).MPos), near = here && nearestHole(holes.grid, here.x, here.y);
+    if (!near) { status.setAttribute('data-state', 'bad'); status.textContent = 'Needs the hole grid and the machine\u2019s position.'; return; }
+    holes.picked = near.index;
+    holes.nearMm = near.distanceMm;
+    renderHoles();
+    // Further than a third of the spacing: probably not over the hole meant.
+    var h = readHoles(), far = h && near.distanceMm > Math.min(h.sxMm, h.syMm) / 3;
+    status.setAttribute('data-state', far ? 'bad' : 'ok');
+    status.textContent = far ? 'The spindle is ' + fmt(near.distanceMm) + ' mm from the nearest hole: check it\u2019s the one you meant before setting X0 Y0.'
+      : 'Picked the hole nearest the spindle. Press Set to put X0 Y0 on it.';
   }
   function updatePicked() {
     var p = holes.grid[holes.picked], btn = $('mw-hole-set');
-    $('mw-hole-picked').textContent = p ? 'Column ' + p.col + ', row ' + p.row + ': machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm' : 'Click a hole.';
+    $('mw-hole-picked').textContent = p ? 'Column ' + p.col + ', row ' + p.row + ': machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm' +
+      (holes.nearMm != null ? ' (' + fmt(holes.nearMm) + ' mm from the spindle)' : '') : 'Click a hole, or jog near one and press Nearest hole.';
     btn.disabled = !p;
   }
   // With the bit centered over any hole: the insets that put a hole there.

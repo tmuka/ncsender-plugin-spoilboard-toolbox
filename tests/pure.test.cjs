@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, nearestHole } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, nearestHole };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -312,4 +312,12 @@ test('inset from the current position over any hole', () => {
 test('X0 Y0 on a hole: G10 L2 on the work offset, in mm', () => {
   assert.deepEqual(holeCommands(1, 144, 222, false), ['G21', 'G10 L2 P1 X144.000 Y222.000']);
   assert.deepEqual(holeCommands(2, -150.5, -50, true), ['G21', 'G10 L2 P2 X-150.500 Y-50.000', 'G20']);
+});
+
+test('nearest hole to a rough position', () => {
+  const g = holeGrid({ sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 30, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 });
+  const n = nearestHole(g, 243.1, 122.5);
+  assert.deepEqual([g[n.index].col, g[n.index].row, g[n.index].x, g[n.index].y], [3, 2, 240, 126]);
+  assert.ok(Math.abs(n.distanceMm - Math.hypot(3.1, 3.5)) < 1e-9);
+  assert.equal(nearestHole([], 0, 0), null);
 });
