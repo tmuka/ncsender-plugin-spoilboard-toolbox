@@ -12,6 +12,10 @@ grblHAL CNC routers. Its **XY0 Picker** tab sets the XY work origin (G54–G59.3
 without moving the machine; its **Z0 macros** tab checks your grblHAL controller, then writes ncSender
 macros you run from the Macros tab or a keyboard shortcut.
 
+![Zero Swapper's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid with a hole picked,
+the ATCi tool rack's keepout zone in red, and the Select Nearest, Go to Selected and Set G54 XY
+buttons](docs/xy0-picker.png)
+
 ## Who it's for
 
 The **XY0 Picker** works on any homed grblHAL machine with a grid on its spoilboard. You'll get the

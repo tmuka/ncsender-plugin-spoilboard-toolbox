@@ -10,7 +10,7 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p dist
 git archive --prefix="$ID/" HEAD | tar -x -C "$TMP"
-rm -rf "$TMP/$ID/.scripts" "$TMP/$ID/tests" "$TMP/$ID/.gitignore"
+rm -rf "$TMP/$ID/.scripts" "$TMP/$ID/tests" "$TMP/$ID/docs" "$TMP/$ID/.gitignore"
 rm -f "$OUT"
 (cd "$TMP" && zip -qr - "$ID") > "$OUT"
 echo "$OUT"

@@ -26,7 +26,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
 | `config.html` | The whole plugin: markup, styles, script. ncSender runs a client-only plugin's page inline, so the script can't load other files. |
 | `tests/pure.test.cjs` | Runs the pure block of `config.html` directly, plus a small grblHAL expression simulator that executes the generated `G10` lines. |
 | `manifest.json` | Plugin id, version, tool-menu entry (`clientOnly: true`). |
-| `.scripts/build.sh` | `dist/<id>_v<version>.zip` from the committed files (`git archive`), under a `<id>/` folder as the Plugin Manager expects; tests and scripts left out. |
+| `.scripts/build.sh` | `dist/<id>_v<version>.zip` from the committed files (`git archive`), under a `<id>/` folder as the Plugin Manager expects; tests, scripts and `docs/` (README images) left out. |
 | `README.md` | User guide: the wizard steps, how the macros work, units, requirements. |
 
 ### `config.html`
