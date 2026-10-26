@@ -71,8 +71,14 @@
   .mw-tab[hidden] { display: none; }
   .mw-help-body { display: flex; flex-direction: column; gap: var(--mw-gap); }
   .mw-help-title { margin: 0; font-size: 1.1rem; font-weight: 600; }
-  .mw-holes-set { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
-  .mw-hole-origin-wrap { display: flex; gap: 12px; align-items: center; }
+  .mw-holebar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+    padding: 10px 12px; border-radius: 10px; background: var(--color-surface-muted);
+  }
+  .mw-holebar-info { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .mw-holebar-title { font-weight: 600; }
+  .mw-holebar-info .mw-hint { font-variant-numeric: tabular-nums; }
+  .mw-holebar-actions { display: flex; gap: 8px; }
   .mw-hole-origin {
     position: relative; display: grid; grid-template-columns: repeat(3, 14px); gap: 8px; padding: 6px;
   }
@@ -192,13 +198,16 @@
   .mw-holes-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
   .mw-hole-map { width: 100%; height: auto; display: block; flex: none; max-height: 420px; }
   .mw-hole-map .mw-h-area { fill: color-mix(in srgb, var(--color-text-secondary) 6%, transparent); stroke: var(--color-border); }
-  .mw-hole-map .mw-h-hole { fill: var(--color-surface); stroke: var(--color-text-secondary); stroke-width: 1; cursor: pointer; }
-  .mw-hole-map .mw-h-hole:hover { stroke: var(--color-accent); stroke-width: 2; }
-  .mw-hole-map .mw-h-hole[data-picked] { fill: var(--color-accent); stroke: var(--color-accent); }
+  .mw-hole-map .mw-h-spot { cursor: pointer; }
+  .mw-hole-map .mw-h-hit { fill: transparent; }
+  .mw-hole-map .mw-h-hole { fill: var(--color-surface); stroke: var(--color-text-secondary); stroke-width: 1; pointer-events: none; }
+  .mw-hole-map .mw-h-halo { fill: none; stroke: none; pointer-events: none; }
+  .mw-hole-map .mw-h-spot:hover .mw-h-hole { stroke: var(--color-accent); stroke-width: 2; }
+  .mw-hole-map .mw-h-spot[data-picked] .mw-h-hole { fill: var(--color-accent); stroke: var(--color-accent); }
+  .mw-hole-map .mw-h-spot[data-picked] .mw-h-halo { stroke: var(--color-accent); stroke-width: 2; opacity: 0.5; }
   .mw-hole-map .mw-h-wcs { stroke: var(--color-accent); stroke-width: 2; fill: none; }
   .mw-hole-map .mw-h-spindle { fill: var(--color-warning, #d9a441); }
   .mw-hole-map text { font-family: inherit; font-size: 11px; fill: var(--color-text-secondary); }
-  .mw-holes-pick { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
   .mw-status[data-state="ok"] { color: var(--color-success, #2e9e6b); }
   .mw-status[data-state="bad"] { color: var(--color-danger, #d9534f); }
   .mw-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.45; }
@@ -233,20 +242,22 @@
     </aside>
     <main class="mw-panel">
     <div class="mw-tab" data-tab="holes">
-      <p class="mw-intro"><strong>Put <span data-slot="wcs">G54</span> X0 Y0 on a spoilboard hole.</strong> Click a hole, or jog roughly over one
-        and press <strong>Nearest hole</strong>, then <strong>Set</strong>. Nothing moves; it only sets the work offset.</p>
+      <p class="mw-intro"><strong>Put <span data-slot="wcs">G54</span> X0 Y0 on a spoilboard hole.</strong> Click a hole, or jog near one
+        and press <strong>Nearest</strong>; the dots pick its center or a side. <strong>Go to</strong> moves there at Safe Z;
+        <strong>Set</strong> makes it X0 Y0 without moving.</p>
       <section class="mw-card" aria-label="Pick a hole">
         <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard holes; click one to pick it."></svg>
-        <div class="mw-holes-pick">
-          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Nearest hole</button>
-          <span id="mw-hole-picked" class="mw-hint">Click a hole, or jog near one and press Nearest hole.</span>
-        </div>
-        <div class="mw-holes-set">
-          <div class="mw-hole-origin-wrap">
-            <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><button type="button" class="mw-dot" data-origin="back-left" title="−X +Y side (back left)"></button><button type="button" class="mw-dot" data-origin="back-center" title="+Y side (back)"></button><button type="button" class="mw-dot" data-origin="back-right" title="+X +Y side (back right)"></button><button type="button" class="mw-dot" data-origin="left-center" title="−X side (left)"></button><button type="button" class="mw-dot" data-origin="center" title="Center of the hole"></button><button type="button" class="mw-dot" data-origin="right-center" title="+X side (right)"></button><button type="button" class="mw-dot" data-origin="front-left" title="−X −Y side (front left)"></button><button type="button" class="mw-dot" data-origin="front-center" title="−Y side (front)"></button><button type="button" class="mw-dot" data-origin="front-right" title="+X −Y side (front right)"></button></div>
-            <span class="mw-hint" id="mw-hole-origin-note">X0 Y0 on the hole&rsquo;s center.</span>
+        <div class="mw-holebar">
+          <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><button type="button" class="mw-dot" data-origin="back-left" title="−X +Y side (back left)"></button><button type="button" class="mw-dot" data-origin="back-center" title="+Y side (back)"></button><button type="button" class="mw-dot" data-origin="back-right" title="+X +Y side (back right)"></button><button type="button" class="mw-dot" data-origin="left-center" title="−X side (left)"></button><button type="button" class="mw-dot" data-origin="center" title="Center of the hole"></button><button type="button" class="mw-dot" data-origin="right-center" title="+X side (right)"></button><button type="button" class="mw-dot" data-origin="front-left" title="−X −Y side (front left)"></button><button type="button" class="mw-dot" data-origin="front-center" title="−Y side (front)"></button><button type="button" class="mw-dot" data-origin="front-right" title="+X −Y side (front right)"></button></div>
+          <div class="mw-holebar-info">
+            <span class="mw-holebar-title" id="mw-hole-picked">No hole picked</span>
+            <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Nearest.</span>
           </div>
-          <button type="button" class="mw-btn" id="mw-hole-set" disabled>Set <span data-slot="wcs">G54</span> X0 Y0 here</button>
+          <div class="mw-holebar-actions">
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Nearest</button>
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-goto" disabled title="Move the spindle over the picked point: first up to ncSender's Safe Z, then across. Tap twice.">Go to</button>
+            <button type="button" class="mw-btn mw-btn-small" id="mw-hole-set" disabled title="Make the picked point the work offset's X0 Y0 (G10 L2). Nothing moves.">Set <span data-slot="wcs">G54</span> XY</button>
+          </div>
         </div>
         <p class="mw-status" id="mw-hole-status" role="status"></p>
       </section>
@@ -769,6 +780,13 @@
     };
   }
 
+  // Up to Safe Z (a machine Z; machine Z0 when unset), then across, in
+  // machine coordinates.
+  function holeGotoCommands(xMm, yMm, safeZMm, imperial) {
+    var z = typeof safeZMm === 'number' && isFinite(safeZMm) ? safeZMm : 0;
+    return ['G21', 'G53 G0 Z' + fmt(z), 'G53 G0 X' + fmt(xMm) + ' Y' + fmt(yMm)].concat(imperial ? ['G20'] : []);
+  }
+
   function holeCommands(wcsP, xMm, yMm, imperial) {
     return ['G21', 'G10 L2 P' + wcsP + ' X' + fmt(xMm) + ' Y' + fmt(yMm)].concat(imperial ? ['G20'] : []);
   }
@@ -1093,7 +1111,7 @@
     var btn = $('mw-delete');
     if (deleteArmed && deleteArmed.timer) clearTimeout(deleteArmed.timer);
     deleteArmed = null;
-    if (btn) { btn.textContent = 'Delete Macro Wiz macros'; btn.classList.remove('mw-btn-danger'); }
+    if (btn) { btn.textContent = 'Delete Zero Swapper macros'; btn.classList.remove('mw-btn-danger'); }
   }
   async function deleteMacros() {
     var status = $('mw-save-status'), btn = $('mw-delete');
@@ -1307,6 +1325,7 @@
     $('mw-hole-here').addEventListener('click', holeInsetsFromHere);
     $('mw-hole-set').addEventListener('click', setHoleZero);
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
+    $('mw-hole-goto').addEventListener('click', goToHole);
     setHoleOrigin(saved.holeOrigin);
     ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
       d.addEventListener('click', function() { setHoleOrigin(d.getAttribute('data-origin')); renderHoles(); saveSettings(); });
@@ -1331,10 +1350,8 @@
   // X0 Y0 and the spindle position from ncSender's machine state.
   var holes = { grid: [], picked: -1, origin: 'center' };
   var ORIGIN_NOTES = {
-    center: 'the hole\u2019s center', 'back-center': 'the back (+Y) edge', 'front-center': 'the front (\u2212Y) edge',
-    'left-center': 'the left (\u2212X) edge', 'right-center': 'the right (+X) edge',
-    'back-left': 'the back left (\u2212X +Y)', 'back-right': 'the back right (+X +Y)',
-    'front-left': 'the front left (\u2212X \u2212Y)', 'front-right': 'the front right (+X \u2212Y)'
+    center: 'center', 'back-center': 'back side', 'front-center': 'front side', 'left-center': 'left side', 'right-center': 'right side',
+    'back-left': 'back left', 'back-right': 'back right', 'front-left': 'front left', 'front-right': 'front right'
   };
   // The point X0 Y0 goes on for the picked hole, with the origin's offset.
   function holeTarget(p) {
@@ -1347,7 +1364,6 @@
     ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
       d.setAttribute('aria-pressed', d.getAttribute('data-origin') === holes.origin ? 'true' : 'false');
     });
-    $('mw-hole-origin-note').textContent = 'X0 Y0 on ' + ORIGIN_NOTES[holes.origin] + (holes.origin === 'center' ? '.' : ', one hole radius out.');
   }
   async function loadMachine() {
     try {
@@ -1411,13 +1427,24 @@
     if (holes.grid.length > 2500) {
       add('text', { x: (w / 2).toFixed(1), y: (ht / 2).toFixed(1), 'text-anchor': 'middle' }, holes.grid.length + ' holes: too many to draw');
     } else if (h) {
-      var r = Math.max(3, h.diaMm / 2 * sc);
+      // Each hole sits in a hit area most of the way to its neighbours, so
+      // small holes are easy to tap.
+      var r = Math.max(3, h.diaMm / 2 * sc), hit = Math.max(r, Math.min(h.sxMm, h.syMm) * sc * 0.45);
       holes.grid.forEach(function(p, i) {
-        var c = add('circle', { class: 'mw-h-hole', cx: X(p.x), cy: Y(p.y), r: r.toFixed(1), 'data-hole': i });
-        if (i === holes.picked) c.setAttribute('data-picked', '');
+        var g = document.createElementNS(ns, 'g');
+        g.setAttribute('class', 'mw-h-spot');
+        g.setAttribute('data-hole', i);
+        if (i === holes.picked) g.setAttribute('data-picked', '');
+        svg.appendChild(g);
+        [['mw-h-hit', hit], ['mw-h-halo', r + 5], ['mw-h-hole', r]].forEach(function(c) {
+          var el = document.createElementNS(ns, 'circle');
+          el.setAttribute('class', c[0]);
+          el.setAttribute('cx', X(p.x)); el.setAttribute('cy', Y(p.y)); el.setAttribute('r', c[1].toFixed(1));
+          g.appendChild(el);
+        });
         var tip = document.createElementNS(ns, 'title');
         tip.textContent = 'Column ' + p.col + ', row ' + p.row + ': machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm';
-        c.appendChild(tip);
+        g.appendChild(tip);
       });
     }
     // The work offset's X0 Y0 now, and where the spindle is.
@@ -1437,6 +1464,7 @@
     updatePicked();
   }
   function pickHole(i) {
+    disarmGoto();
     holes.picked = i;
     holes.nearMm = null;
     renderHoles();
@@ -1455,14 +1483,16 @@
     var h = readHoles(), far = h && near.distanceMm > Math.min(h.sxMm, h.syMm) / 3;
     status.setAttribute('data-state', far ? 'bad' : 'ok');
     status.textContent = far ? 'The spindle is ' + fmt(near.distanceMm) + ' mm from the nearest hole: check it\u2019s the one you meant before setting X0 Y0.'
-      : 'Picked the hole nearest the spindle. Press Set to put X0 Y0 on it.';
+      : '';
   }
   function updatePicked() {
-    var p = holes.grid[holes.picked], btn = $('mw-hole-set');
-    var tg = p && holeTarget(p);
-    $('mw-hole-picked').textContent = p ? 'Column ' + p.col + ', row ' + p.row + ': X0 Y0 at machine X ' + fmt(tg.x) + ', Y ' + fmt(tg.y) + ' mm' +
-      (holes.nearMm != null ? ' (' + fmt(holes.nearMm) + ' mm from the spindle)' : '') : 'Click a hole, or jog near one and press Nearest hole.';
-    btn.disabled = !p;
+    var p = holes.grid[holes.picked], tg = p && holeTarget(p);
+    $('mw-hole-picked').textContent = p ? 'Column ' + p.col + ', row ' + p.row + ' \u00b7 ' + ORIGIN_NOTES[holes.origin] : 'No hole picked';
+    $('mw-hole-pos').textContent = p ? 'Machine X ' + fmt(tg.x) + '  Y ' + fmt(tg.y) + ' mm' +
+      (holes.nearMm != null ? ' \u00b7 ' + fmt(holes.nearMm) + ' mm from the spindle' : '') : 'Click a hole, or jog near one and press Nearest.';
+    $('mw-hole-set').disabled = !p;
+    $('mw-hole-goto').disabled = !p;
+    if (!p) disarmGoto();
   }
   // With the bit centered over any hole: the insets that put a hole there.
   async function holeInsetsFromHere() {
@@ -1478,6 +1508,54 @@
     renderHoles();
     saveSettings();
   }
+  // The holes are machine positions, so moves and offsets need a homed,
+  // idle machine.
+  async function machineReady() {
+    await readMachineState();
+    var ms = state.machine || {};
+    if (!ms.connected) throw new Error('the controller isn\u2019t connected');
+    if (!ms.homed) throw new Error('home the machine first: the holes are machine positions');
+    if (String(ms.status || '').indexOf('Idle') !== 0) throw new Error('the machine isn\u2019t idle');
+  }
+  // Go to moves the machine, so it takes a second tap within 3 s.
+  var gotoArmed = null;
+  function disarmGoto() {
+    if (gotoArmed) clearTimeout(gotoArmed);
+    gotoArmed = null;
+    var btn = $('mw-hole-goto');
+    btn.textContent = 'Go to';
+    btn.classList.remove('mw-btn-danger');
+  }
+  async function goToHole() {
+    var status = $('mw-hole-status'), btn = $('mw-hole-goto'), p = holes.grid[holes.picked];
+    if (!p) return;
+    if (!gotoArmed) {
+      btn.textContent = 'Move?';
+      btn.classList.add('mw-btn-danger');
+      gotoArmed = setTimeout(disarmGoto, 3000);
+      return;
+    }
+    disarmGoto();
+    btn.disabled = true;
+    try {
+      await machineReady();
+      var tg = holeTarget(p), cmds = holeGotoCommands(tg.x, tg.y, state.safeZMm, state.imperial);
+      for (var i = 0; i < cmds.length; i++) {
+        var r = await sendCommand(cmds[i]);
+        if (!r.ok) throw new Error('the controller rejected ' + cmds[i]);
+      }
+      status.setAttribute('data-state', 'ok');
+      status.textContent = 'Moving to the ' + ORIGIN_NOTES[holes.origin] + ' of column ' + p.col + ', row ' + p.row + ' at ' +
+        (state.safeZMm != null ? 'Safe Z.' : 'machine Z0 (no Safe Z set in ncSender).');
+      holes.nearMm = null;
+      setTimeout(function() { if (rootAlive()) readMachineState().then(renderHoles); }, 1500);
+    } catch (err) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Couldn\u2019t move: ' + err.message + '.';
+    } finally {
+      btn.disabled = !holes.grid[holes.picked];
+    }
+  }
   // Sets the work offset's X0 Y0 on the picked hole: G10 L2, no move. Only
   // on a homed, idle machine, since the holes are machine positions.
   async function setHoleZero() {
@@ -1485,11 +1563,7 @@
     if (!p || !s) return;
     btn.disabled = true;
     try {
-      await readMachineState();
-      var ms = state.machine || {};
-      if (!ms.connected) throw new Error('the controller isn\u2019t connected');
-      if (!ms.homed) throw new Error('home the machine first: the holes are machine positions');
-      if (String(ms.status || '').indexOf('Idle') !== 0) throw new Error('the machine isn\u2019t idle');
+      await machineReady();
       var tg = holeTarget(p);
       var cmds = holeCommands(s.wcs, tg.x, tg.y, state.imperial);
       for (var i = 0; i < cmds.length; i++) {
@@ -1497,7 +1571,7 @@
         if (!r.ok) throw new Error('the controller rejected ' + cmds[i]);
       }
       status.setAttribute('data-state', 'ok');
-      status.textContent = WCS_NAMES[s.wcs] + ' X0 Y0 is now on ' + ORIGIN_NOTES[holes.origin] + ' of column ' + p.col + ', row ' + p.row + ' (machine X ' + fmt(tg.x) + ', Y ' + fmt(tg.y) + ' mm).';
+      status.textContent = WCS_NAMES[s.wcs] + ' X0 Y0 is now on the ' + ORIGIN_NOTES[holes.origin] + ' of column ' + p.col + ', row ' + p.row + ' (machine X ' + fmt(tg.x) + ', Y ' + fmt(tg.y) + ' mm).';
       await readMachineState();
       renderHoles();
       readNumbers();
@@ -1518,8 +1592,9 @@
   var HELP_TOPICS = {
     holes: { name: 'Spoilboard holes', notes: [
       'Puts the work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say) without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The machine has to be homed and idle, since the holes are machine positions.',
-      'Click a hole on the map, or jog roughly over one and press <strong>Nearest hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
-      'The dots beside Set pick where on the hole X0 Y0 goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks that point on the picked hole.',
+      'Click a hole on the map, or jog roughly over one and press <strong>Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
+      'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
+      '<strong>Go to</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set), then across, in machine coordinates. Tap it twice; the first tap turns it into <strong>Move?</strong> for 3 seconds.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the small dot is the spindle.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of any hole and press <strong>Set Insets</strong>. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       'Size fields take mm or inches and convert when you leave the field: <kbd>20mm</kbd>, <kbd>3/4"</kbd>, <kbd>1-1/2in</kbd>.' ] },

@@ -83,11 +83,12 @@ center of the first hole and press **Set Insets: bit at first hole's center** to
 other hole gives the same insets).
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
-spindle. Click a hole, or jog roughly over one and press **Nearest hole** (it picks the hole closest
+spindle. Click a hole, or jog roughly over one and press **Nearest** (it picks the hole closest
 to the spindle and says how far off it is, so you get the grid's exact position without centering
 the bit). The dots beside the Set button pick where on the hole X0 Y0 goes: the center, or an edge
 or corner one hole radius out (back is +Y, right is +X), e.g. back right for a stop pin's +X +Y side.
-Then press **Set G54 X0 Y0 here**: it sends `G10 L2 P1 X… Y…`, which sets the
+**Go to** moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0 when
+none is set); tap it twice, since it moves the machine. **Set G54 XY** sends `G10 L2 P1 X… Y…`, which sets the
 work offset without moving anything. It needs a homed, idle machine, since the holes are machine
 positions. The travel and its direction come from grblHAL's `$130`/`$131` and homing settings
 (`$22`/`$23`).

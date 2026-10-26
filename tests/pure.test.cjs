@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeOriginOffset, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeOriginOffset, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, holeOriginOffset, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, holeOriginOffset, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -391,4 +391,9 @@ test('holeOriginOffset puts X0 Y0 a hole radius out in machine X and Y', () => {
   assert.deepEqual(holeOriginOffset('left-center', 10), { dx: -10, dy: 0 });
   assert.deepEqual(holeOriginOffset('back-center', 10), { dx: 0, dy: 10 });
   assert.deepEqual(holeOriginOffset(undefined, 10), { dx: 0, dy: 0 });
+});
+
+test('holeGotoCommands lifts to Safe Z, then moves in machine coordinates', () => {
+  assert.deepEqual(holeGotoCommands(346, 250, -5, false), ['G21', 'G53 G0 Z-5.000', 'G53 G0 X346.000 Y250.000']);
+  assert.deepEqual(holeGotoCommands(-10.5, 20, null, true), ['G21', 'G53 G0 Z0.000', 'G53 G0 X-10.500 Y20.000', 'G20']);
 });
