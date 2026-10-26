@@ -80,10 +80,12 @@ If your spoilboard has a grid of holes (dog holes, say), describe it once under 
 **Hole Diameter**, **X Spacing** and **Y Spacing** (center to center), and **Inset X** / **Inset Y**
 (from machine X0 Y0 to the center of the first hole, into the machine's travel). Or jog the bit to the
 center of the first hole and press **Set Insets: bit at first hole's center** to fill them in (any
-other hole gives the same insets).
+other hole gives the same insets). Once saved, Setup opens locked so a stray tap can't change the grid;
+press **Locked** to unlock it for editing (changes save as you go).
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
-spindle. Click a hole, or jog roughly over one and press **Nearest** (it picks the hole closest
+spindle. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
+`$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole, or jog roughly over one and press **Nearest** (it picks the hole closest
 to the spindle and says how far off it is, so you get the grid's exact position without centering
 the bit). The dots beside the Set button pick where on the hole X0 Y0 goes: the center, or an edge
 or corner one hole radius out (back is +Y, right is +X), e.g. back right for a stop pin's +X +Y side.

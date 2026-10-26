@@ -136,6 +136,11 @@
     gap: 10px;
     min-width: 0;
   }
+  .mw-lock-btn { display: inline-flex; align-items: center; gap: 6px; }
+  .mw-lock-btn svg { width: 16px; height: 16px; flex: none; }
+  .mw-btn.mw-btn-quiet.mw-lock-btn[aria-pressed="false"] { color: var(--color-warning, #d9a441) !important; border-color: var(--color-warning, #d9a441) !important; }
+  .mw-lock-btn[aria-pressed="false"] .mw-lock-shackle { transform: translateX(5px) translateY(-2px); }
+  .mw-input:disabled { opacity: 0.65; cursor: not-allowed; }
   .mw-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .mw-card-title { margin: 0; font-size: 1rem; font-weight: 600; }
   .mw-step {
@@ -257,6 +262,13 @@
   .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
   .mw-hole-map .mw-h-area { fill: color-mix(in srgb, var(--color-text-secondary) 6%, transparent); stroke: var(--color-border); }
   .mw-hole-map .mw-h-spot { cursor: pointer; }
+  .mw-hole-map .mw-h-keepout {
+    fill: color-mix(in srgb, var(--color-danger, #e74c3c) 12%, transparent);
+    stroke: color-mix(in srgb, var(--color-danger, #e74c3c) 60%, transparent); stroke-dasharray: 4 3;
+  }
+  .mw-hole-map text.mw-h-keepout-label { fill: var(--color-danger, #e74c3c); opacity: 0.85; }
+  .mw-hole-map .mw-h-spot.mw-h-blocked { cursor: not-allowed; opacity: 0.35; }
+  .mw-hole-map .mw-h-spot.mw-h-blocked:hover .mw-h-hole { stroke: var(--color-text-secondary); stroke-width: 1; }
   .mw-hole-map .mw-h-hit { fill: transparent; }
   .mw-hole-map .mw-h-hole { fill: var(--color-surface); stroke: var(--color-text-secondary); stroke-width: 1; pointer-events: none; }
   .mw-hole-map .mw-h-halo { fill: none; stroke: none; pointer-events: none; }
@@ -326,7 +338,10 @@
         <p class="mw-status" id="mw-hole-status" role="status"></p>
       </section>
       <section class="mw-card" aria-labelledby="mw-holes-title">
-        <h3 class="mw-card-title" id="mw-holes-title">Setup</h3>
+        <div class="mw-card-head">
+          <h3 class="mw-card-title" id="mw-holes-title">Setup</h3>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-lock-btn" id="mw-hole-lock" aria-pressed="true" title="Locked so the grid can't be changed by accident. Unlock to edit; changes save as you go."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="mw-lock-shackle" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span id="mw-hole-lock-text">Locked</span></button>
+        </div>
         <p class="mw-hint">Describe your spoilboard&rsquo;s hole grid once (dog holes, say). The machine&rsquo;s travel comes from grblHAL.</p>
         <div class="mw-row">
           <div class="mw-field">
@@ -822,9 +837,11 @@
     return ((d % spacingMm) + spacingMm) % spacingMm;
   }
   // The hole nearest a machine position: { index, distanceMm }, or null.
+  // Holes marked `blocked` (in a keepout zone) are skipped.
   function nearestHole(grid, xMm, yMm) {
     var best = null;
     for (var i = 0; i < grid.length; i++) {
+      if (grid[i].blocked) continue;
       var d = Math.hypot(grid[i].x - xMm, grid[i].y - yMm);
       if (!best || d < best.distanceMm) best = { index: i, distanceMm: d };
     }
@@ -842,6 +859,39 @@
       dx: /right/.test(o) ? rMm : /left/.test(o) ? -rMm : 0,
       dy: /^back/.test(o) ? rMm : /^front/.test(o) ? -rMm : 0
     };
+  }
+
+  // The keepout zones that are on, in machine mm, as QuickCut's Wasteboard
+  // Surfacing reads them: ncSender Pro's (Settings › Advanced) and the
+  // grblHAL ATCi plugin's ($683 bit 0 = Enable, $684-$687 = X min, Y min,
+  // X max, Y max), the latter checked by name so another firmware's
+  // $683-$687 aren't read as a zone.
+  function keepoutZones(settings, fw) {
+    var zones = [];
+    var kz = settings && settings.advanced && settings.advanced.keepoutZone;
+    if (kz && kz.enabled && kz.min && kz.max) {
+      zones.push({ name: 'ncSender', minX: Number(kz.min.x), minY: Number(kz.min.y), maxX: Number(kz.max.x), maxY: Number(kz.max.y) });
+    }
+    var on = fw && fw['683'];
+    if (on && /ATCi/.test(on.name || '') && (parseInt(on.value, 10) & 1)) {
+      var v = ['684', '685', '686', '687'].map(function(id) {
+        return fw[id] && /ATCi Keepout/.test(fw[id].name || '') ? parseFloat(fw[id].value) : NaN;
+      });
+      if (v.every(isFinite)) zones.push({ name: 'ATCi', minX: v[0], minY: v[1], maxX: v[2], maxY: v[3] });
+    }
+    return zones.filter(function(z) { return [z.minX, z.minY, z.maxX, z.maxY].every(isFinite); }).map(function(z) {
+      return { name: z.name, minX: Math.min(z.minX, z.maxX), maxX: Math.max(z.minX, z.maxX),
+               minY: Math.min(z.minY, z.maxY), maxY: Math.max(z.minY, z.maxY) };
+    });
+  }
+  // The first zone a hole (a circle of radius rMm) reaches into, or null.
+  function holeKeepout(xMm, yMm, rMm, zones) {
+    for (var i = 0; i < zones.length; i++) {
+      var z = zones[i];
+      var dx = Math.max(z.minX - xMm, 0, xMm - z.maxX), dy = Math.max(z.minY - yMm, 0, yMm - z.maxY);
+      if (Math.hypot(dx, dy) <= rMm) return z;
+    }
+    return null;
   }
 
   // Up to Safe Z (a machine Z; machine Z0 when unset), then across, in
@@ -1342,6 +1392,7 @@
       state.imperial = (s.unitsPreference || 'metric') === 'imperial';
       var sz = Number(s.safeZHeight);
       state.safeZMm = s.safeZHeight != null && s.safeZHeight !== '' && isFinite(sz) ? sz : null;
+      state.ncSettings = s;
       var sb = s.probe && s.probe['standard-block'];
       if (sb && typeof sb.zThickness === 'number' && sb.zThickness > 0) probeBlockMm = sb.zThickness;
     } catch (e) { /* metric */ }
@@ -1401,6 +1452,8 @@
     gotoBtn.addEventListener('keyup', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') stopGotoHold(true); });
     gotoBtn.addEventListener('blur', function() { stopGotoHold(false); });
     $('mw-hole-wcs').addEventListener('change', renderHoles);
+    setHoleLock(saved.holeDia != null);
+    $('mw-hole-lock').addEventListener('click', function() { setHoleLock($('mw-hole-lock').getAttribute('aria-pressed') !== 'true'); });
     var resizeTimer = null;
     window.addEventListener('resize', function onResize() {
       if (!rootAlive()) { window.removeEventListener('resize', onResize); return; }
@@ -1469,6 +1522,7 @@
       var tx = parseFloat(set['130'] && set['130'].value), ty = parseFloat(set['131'] && set['131'].value);
       var dirs = travelDirs(set);
       state.travel = tx > 0 && ty > 0 && dirs ? { xMm: tx, yMm: ty, dirX: dirs.dirX, dirY: dirs.dirY } : null;
+      state.keepouts = keepoutZones(state.ncSettings, set);
     } catch (e) { state.travel = null; }
     await readMachineState();
     renderHoles();
@@ -1482,6 +1536,14 @@
   function xyOf(str) {
     var v = String(str || '').split(',').map(Number);
     return v.length >= 2 && isFinite(v[0]) && isFinite(v[1]) ? { x: v[0], y: v[1] } : null;
+  }
+  // Setup is locked on open once a grid has been saved, so a stray tap
+  // can't change (and autosave) it; Unlock to edit.
+  var HOLE_FIELDS = ['mw-hole-dia', 'mw-hole-sx', 'mw-hole-sy', 'mw-hole-ix', 'mw-hole-iy'];
+  function setHoleLock(locked) {
+    HOLE_FIELDS.concat(['mw-hole-here']).forEach(function(id) { $(id).disabled = locked; });
+    $('mw-hole-lock').setAttribute('aria-pressed', locked ? 'true' : 'false');
+    $('mw-hole-lock-text').textContent = locked ? 'Locked' : 'Unlocked';
   }
   function readHoles() {
     var k = state.imperial ? MM_PER_INCH : 1, ok = true;
@@ -1519,6 +1581,12 @@
     }
     note.textContent = 'Machine travel ' + fmt(t.xMm) + ' \u00d7 ' + fmt(t.yMm) + ' mm, running ' + (t.dirX > 0 ? '+' : '\u2212') + 'X ' + (t.dirY > 0 ? '+' : '\u2212') + 'Y from machine X0 Y0.';
     holes.grid = h ? holeGrid(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h)) : [];
+    var zones = state.keepouts || [];
+    holes.grid.forEach(function(p) {
+      var z = holeKeepout(p.x, p.y, h.diaMm / 2, zones);
+      if (z) { p.blocked = true; p.zone = z.name; }
+    });
+    if (holes.grid[holes.picked] && holes.grid[holes.picked].blocked) holes.picked = -1;
     if (holes.picked >= holes.grid.length) holes.picked = -1;
     // Machine X right and Y up (back at the top), fitted into 700 x 400.
     // The bed sits flush with the card's top left, like the Setup heading
@@ -1541,6 +1609,17 @@
     };
     add('rect', { class: 'mw-h-area', x: pad, y: padT, width: (t.xMm * sc).toFixed(1), height: (t.yMm * sc).toFixed(1), rx: 3 });
     add('text', { x: X(0), y: (+Y(0) + (t.dirY > 0 ? 16 : -6)).toFixed(1), 'text-anchor': t.dirX > 0 ? 'start' : 'end' }, 'machine X0 Y0');
+    // Keepout zones, clipped to the travel; their holes can't be picked.
+    zones.forEach(function(z) {
+      var x0 = Math.max(z.minX, minX), x1 = Math.min(z.maxX, minX + t.xMm);
+      var y0 = Math.max(z.minY, minY), y1 = Math.min(z.maxY, minY + t.yMm);
+      if (x1 <= x0 || y1 <= y0) return;
+      var zr = add('rect', { class: 'mw-h-keepout', x: X(x0), y: Y(y1), width: ((x1 - x0) * sc).toFixed(1), height: ((y1 - y0) * sc).toFixed(1) });
+      var zt = document.createElementNS(ns, 'title');
+      zt.textContent = z.name + ' keepout zone: machine X ' + fmt(z.minX) + ' to ' + fmt(z.maxX) + ', Y ' + fmt(z.minY) + ' to ' + fmt(z.maxY) + ' mm';
+      zr.appendChild(zt);
+      add('text', { class: 'mw-h-keepout-label', x: ((+X(x0) + +X(x1)) / 2).toFixed(1), y: (+Y(y1) + 13).toFixed(1), 'text-anchor': 'middle' }, z.name);
+    });
     if (holes.grid.length > 2500) {
       add('text', { x: (w / 2).toFixed(1), y: (ht / 2).toFixed(1), 'text-anchor': 'middle' }, holes.grid.length + ' holes: too many to draw');
     } else if (h) {
@@ -1549,8 +1628,8 @@
       var r = Math.max(3, h.diaMm / 2 * sc), hit = Math.max(r, Math.min(h.sxMm, h.syMm) * sc * 0.45);
       holes.grid.forEach(function(p, i) {
         var g = document.createElementNS(ns, 'g');
-        g.setAttribute('class', 'mw-h-spot');
-        g.setAttribute('data-hole', i);
+        g.setAttribute('class', p.blocked ? 'mw-h-spot mw-h-blocked' : 'mw-h-spot');
+        if (!p.blocked) g.setAttribute('data-hole', i);
         if (i === holes.picked) g.setAttribute('data-picked', '');
         svg.appendChild(g);
         [['mw-h-hit', hit], ['mw-h-halo', r + 5], ['mw-h-hole', r]].forEach(function(c) {
@@ -1560,7 +1639,8 @@
           g.appendChild(el);
         });
         var tip = document.createElementNS(ns, 'title');
-        tip.textContent = 'Column ' + p.col + ', row ' + p.row + ': machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm';
+        tip.textContent = 'Column ' + p.col + ', row ' + p.row + ': machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm' +
+          (p.blocked ? ' (in the ' + p.zone + ' keepout zone)' : '');
         g.appendChild(tip);
       });
     }
@@ -1597,9 +1677,16 @@
     if (!near) { status.setAttribute('data-state', 'bad'); status.textContent = 'Needs the hole grid and the machine\u2019s position.'; return; }
     holes.picked = near.index;
     holes.nearMm = near.distanceMm;
+    var any = nearestHole(holes.grid.map(function(g) { return { x: g.x, y: g.y }; }), here.x, here.y);
+    var under = any && holes.grid[any.index].blocked ? holes.grid[any.index] : null;
     renderHoles();
     // Further than a third of the spacing: probably not over the hole meant.
     var h = readHoles(), far = h && near.distanceMm > Math.min(h.sxMm, h.syMm) / 3;
+    if (under) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'The hole nearest the spindle is in the ' + under.zone + ' keepout zone, so the nearest one outside it is picked (' + fmt(near.distanceMm) + ' mm away).';
+      return;
+    }
     status.setAttribute('data-state', far ? 'bad' : 'ok');
     status.textContent = far ? 'The spindle is ' + fmt(near.distanceMm) + ' mm from the nearest hole: check it\u2019s the one you meant before setting X0 Y0.'
       : '';
@@ -1678,7 +1765,7 @@
   function disarmGoto() { stopGotoHold(false); }
   async function goToHole() {
     var status = $('mw-hole-status'), btn = $('mw-hole-goto'), p = holes.grid[holes.picked];
-    if (!p) return;
+    if (!p || p.blocked) return;
     btn.disabled = true;
     try {
       await machineReady();
@@ -1703,7 +1790,7 @@
   // on a homed, idle machine, since the holes are machine positions.
   async function setHoleZero() {
     var status = $('mw-hole-status'), btn = $('mw-hole-set'), p = holes.grid[holes.picked];
-    if (!p) return;
+    if (!p || p.blocked) return;
     btn.disabled = true;
     try {
       await machineReady();
@@ -1740,7 +1827,9 @@
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
       '<strong>Go to</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set), then across, in machine coordinates. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the small dot is the spindle.',
+      'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of any hole and press <strong>Set Insets</strong>. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
+      '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
       'Size fields take mm or inches and convert when you leave the field: <kbd>20mm</kbd>, <kbd>3/4"</kbd>, <kbd>1-1/2in</kbd>.' ] },
     macros: { name: 'Z0 macros', notes: [
       'Record the spoilboard height once with a probe block and a measured tool; then the <strong>ZS:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',

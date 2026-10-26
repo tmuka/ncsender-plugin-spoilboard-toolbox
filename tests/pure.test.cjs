@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, holeOriginOffset, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, holeOriginOffset, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, holeOriginOffset, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, holeOriginOffset, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -396,4 +396,25 @@ test('holeOriginOffset puts X0 Y0 a hole radius out in machine X and Y', () => {
 test('holeGotoCommands lifts to Safe Z, then moves in machine coordinates', () => {
   assert.deepEqual(holeGotoCommands(346, 250, -5, false), ['G21', 'G53 G0 Z-5.000', 'G53 G0 X346.000 Y250.000']);
   assert.deepEqual(holeGotoCommands(-10.5, 20, null, true), ['G21', 'G53 G0 Z0.000', 'G53 G0 X-10.500 Y20.000', 'G20']);
+});
+
+test('keepoutZones reads ncSender\'s zone and the ATCi one when on', () => {
+  const settings = { advanced: { keepoutZone: { enabled: true, min: { x: 700, y: 0 }, max: { x: 600, y: 120 } } } };
+  const fw = { 683: { name: 'ATCi Keepout: Enable', value: '1' }, 684: { name: 'ATCi Keepout X min', value: '0' },
+    685: { name: 'ATCi Keepout Y min', value: '1100' }, 686: { name: 'ATCi Keepout X max', value: '812' }, 687: { name: 'ATCi Keepout Y max', value: '1230' } };
+  assert.deepEqual(keepoutZones(settings, fw), [
+    { name: 'ncSender', minX: 600, maxX: 700, minY: 0, maxY: 120 },
+    { name: 'ATCi', minX: 0, maxX: 812, minY: 1100, maxY: 1230 }]);
+  assert.deepEqual(keepoutZones({ advanced: { keepoutZone: { enabled: false, min: { x: 0, y: 0 }, max: { x: 1, y: 1 } } } },
+    Object.assign({}, fw, { 683: { name: 'ATCi Keepout: Enable', value: '0' } })), []);
+  assert.deepEqual(keepoutZones({}, { 683: { name: 'Something else', value: '1' } }), []);
+});
+
+test('holeKeepout catches holes reaching into a zone; nearestHole skips them', () => {
+  const zones = [{ name: 'ATCi', minX: 0, maxX: 812, minY: 1100, maxY: 1230 }];
+  assert.equal(holeKeepout(48, 1104, 10, zones).name, 'ATCi');
+  assert.equal(holeKeepout(48, 1091, 10, zones).name, 'ATCi');
+  assert.equal(holeKeepout(48, 1089, 10, zones), null);
+  const grid = [{ x: 0, y: 0, blocked: true }, { x: 96, y: 0 }];
+  assert.deepEqual(nearestHole(grid, 1, 1).index, 1);
 });
