@@ -79,7 +79,7 @@ The plugin opens on its **Spoilboard holes** tab; the Z0 macros are on the **Z0 
 If your spoilboard has a grid of holes (dog holes, say), describe it once under **Setup** on that tab:
 **Hole Diameter**, **X Spacing** and **Y Spacing** (center to center), and **Inset X** / **Inset Y**
 (from machine X0 Y0 to the center of the first hole, into the machine's travel). Or jog the bit to the
-center of the first hole and press **Set Insets: bit at first hole's center** to fill them in (any
+center of the first hole and press **Grab First Hole Center** to fill them in (any
 other hole gives the same insets). Once saved, Setup opens locked so a stray tap can't change the grid;
 press **Locked** to unlock it for editing (changes save as you go).
 

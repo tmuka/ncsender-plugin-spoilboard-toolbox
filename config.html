@@ -136,6 +136,9 @@
     gap: 10px;
     min-width: 0;
   }
+  /* Sits in the Setup grid's third column, filling the space beside the
+     Inset boxes (the grid makes the cells the same height). */
+  .mw-btn.mw-grab-btn { flex: 1 1 auto; min-height: 0 !important; padding: 0 10px !important; }
   .mw-lock-btn { display: inline-flex; align-items: center; gap: 6px; }
   .mw-lock-btn svg { width: 16px; height: 16px; flex: none; }
   .mw-btn.mw-btn-quiet.mw-lock-btn[aria-pressed="false"] { color: var(--color-warning, #d9a441) !important; border-color: var(--color-warning, #d9a441) !important; }
@@ -364,9 +367,12 @@
             <label for="mw-hole-iy">Inset Y (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-iy" step="0.01" min="0" value="48" title="From machine Y0 to the center of the first row of holes, into the machine's travel.">
           </div>
+          <div class="mw-field">
+            <label aria-hidden="true">&nbsp;</label>
+            <button type="button" class="mw-btn mw-btn-quiet mw-grab-btn" id="mw-hole-here" title="Jog the bit to the center of the first hole and press this: Inset X and Inset Y are filled in from where the machine is. Any other hole works too; the insets come out the same.">Grab First Hole Center</button>
+          </div>
         </div>
         <div class="mw-holes-tools">
-          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-here" title="Jog the bit to the center of the first hole and press this: Inset X and Inset Y are filled in from where the machine is. Any other hole works too; the insets come out the same.">Set Insets: bit at first hole&rsquo;s center</button>
           <span class="mw-hint" id="mw-hole-note"></span>
         </div>
       </section>
@@ -1828,7 +1834,7 @@
       '<strong>Go to</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set), then across, in machine coordinates. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the small dot is the spindle.',
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Nearest skips them.',
-      '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of any hole and press <strong>Set Insets</strong>. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
+      '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of any hole and press <strong>Grab First Hole Center</strong>. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
       'Size fields take mm or inches and convert when you leave the field: <kbd>20mm</kbd>, <kbd>3/4"</kbd>, <kbd>1-1/2in</kbd>.' ] },
     macros: { name: 'Z0 macros', notes: [
