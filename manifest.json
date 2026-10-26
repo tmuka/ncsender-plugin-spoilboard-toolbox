@@ -1,7 +1,7 @@
 {
   "id": "com.tmuka.zeroswapper",
   "name": "Zero Swapper",
-  "version": "0.3.18",
+  "version": "0.3.19",
   "minAppVersion": "2.0.88",
   "configUi": "config.html",
   "author": "tmuka",

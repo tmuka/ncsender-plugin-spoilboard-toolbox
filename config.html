@@ -316,7 +316,7 @@
     <main class="mw-panel">
     <div class="mw-tab" data-tab="holes">
       <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a dog hole or grid line crossing.</strong> Click a hole, or jog near one
-        and press <strong>Nearest</strong>; the dots pick its center or a side. Hold <strong>Go to</strong> to move there at Safe Z;
+        and press <strong>Nearest</strong>; the dots pick its center or a side. Hold <strong>Go to Selected</strong> to move there at Safe Z;
         <strong>Set</strong> makes it X0 Y0 without moving.</p>
       <section class="mw-card mw-pick-card" id="mw-pick-card" aria-label="Pick a hole">
         <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
@@ -328,7 +328,7 @@
           </div>
           <div class="mw-holebar-actions">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Nearest</button>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill" id="mw-hole-goto-fill"></span>Go to<span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill" id="mw-hole-goto-fill"></span>Go to Selected<span class="mw-hold-hint">Hold</span></button>
             <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
               <option value="" selected>Active</option>
               <option value="1">G54</option><option value="2">G55</option><option value="3">G56</option>
@@ -1729,7 +1729,7 @@
     if (!ms.homed) throw new Error('home the machine first: the holes are machine positions');
     if (String(ms.status || '').indexOf('Idle') !== 0) throw new Error('the machine isn\u2019t idle');
   }
-  // Go to moves the machine, so like ncSender's XY0 it takes a 1 s hold:
+  // Go to Selected moves the machine, so like ncSender's XY0 it takes a 1 s hold:
   // the fill shows after 150 ms, and letting go early blinks the border.
   var HOLD_MS = 1000, HOLD_VISUAL_MS = 150;
   var hold = { raf: null, start: 0, active: false };
@@ -1831,7 +1831,7 @@
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
-      '<strong>Go to</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set), then across, in machine coordinates. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
+      '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set), then across, in machine coordinates. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the small dot is the spindle.',
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of any hole and press <strong>Grab First Hole Center</strong>. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
