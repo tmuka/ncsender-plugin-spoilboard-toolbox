@@ -562,6 +562,10 @@ test('nearest-hole macros: Go lifts (never down), then moves; stops for keepouts
   assert.ok(p._error && p._mx === undefined, 'keepout stops before moving');
   p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: 720, _abs_y: 1008 }));
   assert.ok(p._error && p.P0_x === undefined);
+  p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: 150, _abs_y: 230, 5211: 2.49, 5212: 258 }));
+  assert.ok(p._error && p.P0_x === undefined, 'a G92 offset stops XY0');
+  p = run(m.goHole.body, Object.assign({}, ready, { _abs_x: 150, _abs_y: 230, _abs_z: -30, 5211: 2.49, 5212: 258 }));
+  assert.equal(p._mx, 144, 'Go to ignores G92 (machine coordinates)');
   p = run(m.setHole.body, { _homed_state: 0, _abs_x: 150, _abs_y: 230 });
   assert.ok(p._error && p.P0_x === undefined, 'unhomed stops');
   assert.match(m.setHole.name, /XY0 on nearest hole$/);

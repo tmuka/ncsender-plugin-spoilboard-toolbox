@@ -680,6 +680,8 @@
     var needTlo = stop(TLO, 'no tool length offset active');
     var needSpoil = stop(hasSpoil, 'record the spoilboard height first');
     var needThick = stop(hasThick, 'store a stock thickness first');
+    // A G92 offset (#5211 / #5212, mm) shifts X0 Y0 away from what's set.
+    var noG92 = stop('[[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005]]', 'a G92 offset is active; G92.1 clears it');
     var tail = o.imperial ? ['G20 (back to inches)'] : [];
     var probe = [
       'G21',
@@ -802,6 +804,7 @@
         '(Sets the active work offset.)',
         '(Create macros again after changing the grid.)',
         needHomed,
+        noG92,
         'G21'
       ].concat(calc.lines, ['G10 L2 P0 X' + calc.x + ' Y' + calc.y], tail));
     }
@@ -2051,6 +2054,10 @@
         var t = usableTarget();
         if (!t) return;
         await machineReady();
+        var hash = parseHashReport((await ask('$#', 500)).lines), g92 = hash.G92 || [];
+        if (Math.abs(g92[0] || 0) > 0.0005 || Math.abs(g92[1] || 0) > 0.0005) {
+          throw new Error('a G92 offset is active (X ' + fmt(g92[0]) + ', Y ' + fmt(g92[1]) + ' in the controller\u2019s units), which would shift X0 Y0 away from the hole. Send G92.1 in the terminal to clear it, then Set again');
+        }
         var wcsP = await resolveHoleWcs();
         await sendHoleCommands(holeCommands(wcsP, t.tg.x, t.tg.y));
         status.setAttribute('data-state', 'ok');
@@ -2082,7 +2089,7 @@
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Select Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
-      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (ncSender&rsquo;s shortcut settings, Macros group). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed, the hole is in a keepout zone, or that side of it is outside the travel.',
+      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (ncSender&rsquo;s shortcut settings, Macros group). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed, the hole is in a keepout zone, or that side of it is outside the travel. XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
       'Size fields take mm or inches and convert when you leave the field: <kbd>20mm</kbd>, <kbd>3/4"</kbd>, <kbd>1-1/2in</kbd>.' ] },
