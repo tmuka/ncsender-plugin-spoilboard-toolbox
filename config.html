@@ -266,6 +266,7 @@
   .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
   .mw-hole-map .mw-h-area { fill: color-mix(in srgb, var(--color-text-secondary) 6%, transparent); stroke: var(--color-border); }
   .mw-hole-map .mw-h-spot { cursor: pointer; }
+  .mw-hole-map .mw-h-track { fill: color-mix(in srgb, var(--color-text-secondary) 22%, transparent); pointer-events: none; }
   .mw-hole-map .mw-h-keepout {
     fill: color-mix(in srgb, var(--color-danger, #e74c3c) 12%, transparent);
     stroke: color-mix(in srgb, var(--color-danger, #e74c3c) 60%, transparent); stroke-dasharray: 4 3;
@@ -371,6 +372,24 @@
           <div class="mw-field">
             <label aria-hidden="true">&nbsp;</label>
             <button type="button" class="mw-btn mw-btn-quiet mw-grab-btn" id="mw-hole-here" title="Jog the bit to the center of the first hole and press this: Inset X and Inset Y are filled in from where the machine is. Any hole works as long as the first hole is less than one spacing from machine X0 Y0.">Grab First Hole Center</button>
+          </div>
+        </div>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-hole-track">T-tracks</label>
+            <select class="mw-select" id="mw-hole-track" title="T-tracks that divide the spoilboard into panels of holes: along X splits the rows, along Y the columns.">
+              <option value="">None</option>
+              <option value="x">Along X (between rows)</option>
+              <option value="y">Along Y (between columns)</option>
+            </select>
+          </div>
+          <div class="mw-field">
+            <label for="mw-hole-pn">Holes per Panel</label>
+            <input class="mw-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" id="mw-hole-pn" value="5" title="How many rows (or columns) of holes each panel has between T-tracks.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-hole-pp">Panel Pitch (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-pp" placeholder="auto" title="From the first hole of one panel to the first hole of the next, across the track. Blank: Holes per Panel x the spacing, when the spacing carries straight on across the track.">
           </div>
         </div>
         <div class="mw-holes-tools">
@@ -818,12 +837,44 @@
   function holeGrid(o) {
     var out = [];
     if (!(o.sxMm > 0 && o.syMm > 0 && o.insetXMm >= 0 && o.insetYMm >= 0 && o.travelXMm > 0 && o.travelYMm > 0)) return out;
-    var cols = Math.min(HOLE_GRID_MAX, Math.floor((o.travelXMm - o.insetXMm) / o.sxMm + 1e-9) + 1);
-    var rows = Math.min(HOLE_GRID_MAX, Math.floor((o.travelYMm - o.insetYMm) / o.syMm + 1e-9) + 1);
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        out.push({ col: c + 1, row: r + 1, x: o.dirX * (o.insetXMm + c * o.sxMm), y: o.dirY * (o.insetYMm + r * o.syMm) });
+    var xs = axisPositions(o.insetXMm, o.sxMm, o.travelXMm, o.trackAxis === 'y' ? o.panelHoles : 0, o.panelPitchMm);
+    var ys = axisPositions(o.insetYMm, o.syMm, o.travelYMm, o.trackAxis === 'x' ? o.panelHoles : 0, o.panelPitchMm);
+    for (var r = 0; r < ys.length; r++) {
+      for (var c = 0; c < xs.length; c++) {
+        out.push({ col: c + 1, row: r + 1, x: o.dirX * xs[c], y: o.dirY * ys[r] });
       }
+    }
+    return out;
+  }
+  // Hole centers along one axis, from machine 0 into the travel. With
+  // T-tracks, holes come in panels of `perPanel` at `spacing`, and each
+  // panel starts `pitch` after the last (default perPanel x spacing,
+  // which leaves the spacing unbroken across the track).
+  function axisPositions(inset, spacing, travel, perPanel, pitch) {
+    var out = [], n = perPanel >= 1 ? Math.floor(perPanel) : 0;
+    var P = n ? (pitch > 0 ? pitch : n * spacing) : 0;
+    for (var i = 0; out.length < HOLE_GRID_MAX; i++) {
+      var pos = n ? inset + Math.floor(i / n) * P + (i % n) * spacing : inset + i * spacing;
+      if (pos > travel + 1e-9) break;
+      out.push(pos);
+    }
+    return out;
+  }
+  // T-track bands between panels, along the axis they divide, in machine
+  // mm ({ from, to }, from < to): the gap between a panel's last hole and
+  // the next panel's first, less half a spacing, centered in it.
+  function trackBands(o) {
+    var n = Math.floor(o.panelHoles || 0), axis = o.trackAxis;
+    if (!(axis === 'x' || axis === 'y') || n < 1) return [];
+    var y = axis === 'x', s = y ? o.syMm : o.sxMm, inset = y ? o.insetYMm : o.insetXMm;
+    var travel = y ? o.travelYMm : o.travelXMm, dir = y ? o.dirY : o.dirX;
+    var P = o.panelPitchMm > 0 ? o.panelPitchMm : n * s, out = [];
+    for (var k = 0; k < HOLE_GRID_MAX; k++) {
+      var last = inset + k * P + (n - 1) * s, next = inset + (k + 1) * P;
+      if (next > travel + 1e-9 || next <= last) break;
+      var mid = (last + next) / 2, half = Math.max(next - last - s / 2, s / 4) / 2;
+      var a = dir * (mid - half), b = dir * (mid + half);
+      out.push({ from: Math.min(a, b), to: Math.max(a, b) });
     }
     return out;
   }
@@ -1202,6 +1253,8 @@
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       holeDia: u('mw-hole-dia'), holeSx: u('mw-hole-sx'), holeSy: u('mw-hole-sy'),
       holeIx: u('mw-hole-ix'), holeIy: u('mw-hole-iy'), holeOrigin: holes.origin,
+      holeTrack: $('mw-hole-track').value, holePanelHoles: $('mw-hole-pn').value,
+      holePanelPitch: $('mw-hole-pp').value.trim() === '' ? '' : u('mw-hole-pp'),
       units: state.imperial ? 'imperial' : 'metric'
     };
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
@@ -1439,6 +1492,10 @@
       var v = saved['hole' + k] != null ? parseFloat(saved['hole' + k]) * conv : holeDefaults[k];
       if (isFinite(v)) $('mw-hole-' + k.toLowerCase()).value = +v.toFixed(4);
     });
+    if (saved.holeTrack === 'x' || saved.holeTrack === 'y') $('mw-hole-track').value = saved.holeTrack;
+    if (saved.holePanelHoles) $('mw-hole-pn').value = saved.holePanelHoles;
+    var pitch = parseFloat(saved.holePanelPitch);
+    if (isFinite(pitch) && pitch > 0) $('mw-hole-pp').value = +(pitch * conv).toFixed(4);
     if (probeBlockMm != null) {
       $('mw-block').value = +(probeBlockMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
       $('mw-block-source').hidden = false;
@@ -1464,7 +1521,7 @@
       // The grid changes shape, so the picked index would be another hole.
       $(id).addEventListener('input', function() { holes.picked = -1; holes.nearMm = null; });
       $(id).addEventListener('input', renderHoles);
-      $(id).addEventListener('change', function() { renderHoles(); saveSettings(); });
+      $(id).addEventListener('change', function() { holePanelFields(); renderHoles(); saveSettings(); });
     });
     $('mw-hole-here').addEventListener('click', holeInsetsFromHere);
     $('mw-hole-set').addEventListener('click', setHoleZero);
@@ -1568,11 +1625,17 @@
   }
   // Setup is locked on open once a grid has been saved, so a stray tap
   // can't change (and autosave) it; Unlock to edit.
-  var HOLE_FIELDS = ['mw-hole-dia', 'mw-hole-sx', 'mw-hole-sy', 'mw-hole-ix', 'mw-hole-iy'];
+  var HOLE_FIELDS = ['mw-hole-dia', 'mw-hole-sx', 'mw-hole-sy', 'mw-hole-ix', 'mw-hole-iy', 'mw-hole-track', 'mw-hole-pn', 'mw-hole-pp'];
   function setHoleLock(locked) {
     HOLE_FIELDS.concat(['mw-hole-here']).forEach(function(id) { $(id).disabled = locked; });
     $('mw-hole-lock').setAttribute('aria-pressed', locked ? 'true' : 'false');
+    holePanelFields();
     $('mw-hole-lock-text').textContent = locked ? 'Locked' : 'Unlocked';
+  }
+  // Holes per Panel and Panel Pitch only mean something with T-tracks.
+  function holePanelFields() {
+    var off = !$('mw-hole-track').value || $('mw-hole-lock').getAttribute('aria-pressed') === 'true';
+    ['mw-hole-pn', 'mw-hole-pp'].forEach(function(id) { $(id).disabled = off; });
   }
   function readHoles() {
     var k = state.imperial ? MM_PER_INCH : 1, ok = true;
@@ -1584,6 +1647,15 @@
     }
     var h = { diaMm: val('mw-hole-dia', 0), sxMm: val('mw-hole-sx', 0.001), syMm: val('mw-hole-sy', 0.001),
               insetXMm: val('mw-hole-ix', 0), insetYMm: val('mw-hole-iy', 0) };
+    h.trackAxis = $('mw-hole-track').value || null;
+    var pn = $('mw-hole-pn'), ppEl = $('mw-hole-pp');
+    var n = parseInt(pn.value, 10), pnGood = !h.trackAxis || (n >= 1 && String(n) === pn.value.trim());
+    pn.classList.toggle('mw-invalid', !pnGood);
+    var pp = ppEl.value.trim() === '' ? 0 : unitVal(ppEl) * k, ppGood = !h.trackAxis || pp === 0 || pp > 0;
+    ppEl.classList.toggle('mw-invalid', !ppGood);
+    if (!pnGood || !ppGood) ok = false;
+    h.panelHoles = h.trackAxis ? n : 0;
+    h.panelPitchMm = h.trackAxis ? pp : 0;
     return ok ? h : null;
   }
   // The space the map can fill, in px, after choosing the layout: the
@@ -1609,7 +1681,7 @@
       return;
     }
     note.textContent = 'Machine travel ' + fmt(t.xMm) + ' \u00d7 ' + fmt(t.yMm) + ' mm, running ' + (t.dirX > 0 ? '+' : '\u2212') + 'X ' + (t.dirY > 0 ? '+' : '\u2212') + 'Y from machine X0 Y0.' +
-      (h && (Math.floor((t.xMm - h.insetXMm) / h.sxMm) + 1 > HOLE_GRID_MAX || Math.floor((t.yMm - h.insetYMm) / h.syMm) + 1 > HOLE_GRID_MAX)
+      (holes.grid.some(function(g) { return g.col >= HOLE_GRID_MAX || g.row >= HOLE_GRID_MAX; })
         ? ' Only the first ' + HOLE_GRID_MAX + ' columns and rows are shown: check the spacings.' : '');
     holes.grid = h ? holeGrid(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h)) : [];
     var zones = state.keepouts || [];
@@ -1640,6 +1712,13 @@
     };
     add('rect', { class: 'mw-h-area', x: pad, y: padT, width: (t.xMm * sc).toFixed(1), height: (t.yMm * sc).toFixed(1), rx: 3 });
     add('text', { x: X(0), y: (+Y(0) + (t.dirY > 0 ? 16 : -6)).toFixed(1), 'text-anchor': t.dirX > 0 ? 'start' : 'end' }, 'machine X0 Y0');
+    // T-tracks between panels, across the whole travel.
+    if (h) trackBands(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h)).forEach(function(band) {
+      var alongX = h.trackAxis === 'x';
+      add('rect', alongX
+        ? { class: 'mw-h-track', x: X(minX), y: Y(band.to), width: (t.xMm * sc).toFixed(1), height: ((band.to - band.from) * sc).toFixed(1) }
+        : { class: 'mw-h-track', x: X(band.from), y: Y(minY + t.yMm), width: ((band.to - band.from) * sc).toFixed(1), height: (t.yMm * sc).toFixed(1) });
+    });
     // Keepout zones, clipped to the travel; their holes can't be picked.
     zones.forEach(function(z) {
       var x0 = Math.max(z.minX, minX), x1 = Math.min(z.maxX, minX + t.xMm);
@@ -1788,8 +1867,11 @@
     var here = xyOf((state.machine || {}).MPos);
     if (!t || !h || !here) { status.setAttribute('data-state', 'bad'); status.textContent = 'Needs the machine\u2019s travel, the spacings, and its position.'; return; }
     var k = state.imperial ? MM_PER_INCH : 1;
-    $('mw-hole-ix').value = +(insetFromPosition(here.x, h.sxMm, t.dirX) / k).toFixed(4);
-    $('mw-hole-iy').value = +(insetFromPosition(here.y, h.syMm, t.dirY) / k).toFixed(4);
+    // Along the panels' axis the pattern repeats every panel pitch.
+    var px = h.trackAxis === 'y' ? (h.panelPitchMm || h.panelHoles * h.sxMm) : h.sxMm;
+    var py = h.trackAxis === 'x' ? (h.panelPitchMm || h.panelHoles * h.syMm) : h.syMm;
+    $('mw-hole-ix').value = +(insetFromPosition(here.x, px, t.dirX) / k).toFixed(4);
+    $('mw-hole-iy').value = +(insetFromPosition(here.y, py, t.dirY) / k).toFixed(4);
     status.setAttribute('data-state', 'ok');
     status.textContent = 'Insets set from machine X ' + fmt(here.x) + ', Y ' + fmt(here.y) + ' mm.';
     holes.picked = -1;
@@ -1919,6 +2001,7 @@
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Select Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
+      '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
       'Size fields take mm or inches and convert when you leave the field: <kbd>20mm</kbd>, <kbd>3/4"</kbd>, <kbd>1-1/2in</kbd>.' ] },
     macros: { name: 'Z0 macros', notes: [

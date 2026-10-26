@@ -106,6 +106,11 @@ works when the first one is less than one spacing from machine X0 Y0). Once save
 Setup opens locked so a stray tap can't change the grid; press **Locked** to unlock it for editing
 (changes save as you go).
 
+**T-tracks between panels?** Pick **T-tracks: Along X** (tracks between rows) or **Along Y** (between
+columns) and set **Holes per Panel**. Leave **Panel Pitch** blank when the hole spacing carries straight
+on across a track; if a track pushes the next panel over, measure from the first hole of one panel to
+the first hole of the next. The tracks show as grey bands on the map.
+
 **No holes, just a lasered or engraved grid?** Treat each line crossing as a hole: set **Hole
 Diameter** to the line's width (the laser line's width, or the V-bit's kerf width at the surface; 0 for
 a hairline), and the spacings and insets to the lines' centers. The center dot then puts X0 Y0 on the

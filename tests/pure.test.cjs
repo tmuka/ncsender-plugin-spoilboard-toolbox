@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, holeOriginOffset, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, holeOriginOffset, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -470,4 +470,32 @@ test('holeKeepout with a zero radius and a point on the zone edge', () => {
   const zones = [{ name: 'Z', minX: 0, maxX: 10, minY: 0, maxY: 10 }];
   assert.equal(holeKeepout(10, 5, 0, zones).name, 'Z');
   assert.equal(holeKeepout(10.001, 5, 0, zones), null);
+});
+
+test('holeGrid with T-track panels: unbroken spacing, and a track that shifts the next panel', () => {
+  const base = { sxMm: 48.6, syMm: 48.6, insetXMm: 8, insetYMm: 28.265, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 };
+  const plain = holeGrid(base);
+  const unbroken = holeGrid(Object.assign({}, base, { trackAxis: 'x', panelHoles: 5, panelPitchMm: 0 }));
+  assert.equal(unbroken.length, plain.length);
+  unbroken.forEach((p, i) => assert.ok(Math.abs(p.x - plain[i].x) < 1e-9 && Math.abs(p.y - plain[i].y) < 1e-9));
+  const shifted = holeGrid(Object.assign({}, base, { trackAxis: 'x', panelHoles: 5, panelPitchMm: 5 * 48.6 + 30 }));
+  const ys = [...new Set(shifted.map((p) => p.y))];
+  assert.ok(Math.abs(ys[4] - (28.265 + 4 * 48.6)) < 1e-9);
+  assert.ok(Math.abs(ys[5] - (28.265 + 5 * 48.6 + 30)) < 1e-9);
+  assert.ok(Math.abs(ys[6] - ys[5] - 48.6) < 1e-9);
+  assert.ok(ys[ys.length - 1] <= 1230);
+  // Columns untouched by tracks along X.
+  assert.deepEqual([...new Set(shifted.map((p) => p.x))], [...new Set(plain.map((p) => p.x))]);
+});
+
+test('trackBands sit between panels, along the right axis and direction', () => {
+  const base = { sxMm: 50, syMm: 50, insetXMm: 25, insetYMm: 25, travelXMm: 800, travelYMm: 600, dirX: 1, dirY: 1, trackAxis: 'x', panelHoles: 5 };
+  const bands = trackBands(base);
+  // Panels of rows at 25..225, 275..475, 525..: bands centered at 250 and 500, 25 wide.
+  assert.deepEqual(bands, [{ from: 237.5, to: 262.5 }, { from: 487.5, to: 512.5 }]);
+  assert.deepEqual(trackBands(Object.assign({}, base, { dirY: -1 }))[0], { from: -262.5, to: -237.5 });
+  assert.deepEqual(trackBands(Object.assign({}, base, { trackAxis: null })), []);
+  const wide = trackBands(Object.assign({}, base, { panelPitchMm: 280 }));
+  // Last row 225, next panel at 305: gap 80, band 80 - 25 = 55 wide around 265.
+  assert.deepEqual(wide[0], { from: 237.5, to: 292.5 });
 });
