@@ -79,19 +79,36 @@
   .mw-holebar-title { font-weight: 600; }
   .mw-holebar-info .mw-hint { font-variant-numeric: tabular-nums; }
   .mw-holebar-actions { display: flex; gap: 8px; }
+  /* QuickCut's drill origin picker: the hole inside its dashed box, with
+     a dot on each corner, edge middle and the center. Spans, not buttons,
+     so ncSender's button styles don't reach them. */
   .mw-hole-origin {
-    position: relative; display: grid; grid-template-columns: repeat(3, 14px); gap: 8px; padding: 6px;
+    position: relative; flex: none; width: 52px; height: 52px; margin: 8px;
+    border: 1px dashed var(--color-text-secondary); border-radius: 6px;
   }
   .mw-hole-origin::before {
-    content: ''; position: absolute; inset: 13px; border-radius: 50%;
-    border: 1.5px dashed var(--color-text-secondary); opacity: 0.6; pointer-events: none;
+    content: ''; position: absolute; inset: 0; box-sizing: border-box; pointer-events: none;
+    border: 1px solid var(--color-text-secondary); border-radius: 50%;
   }
   .mw-dot {
-    position: relative; width: 14px; height: 14px; padding: 0; border-radius: 50%; cursor: pointer;
-    background: var(--color-surface) !important; border: 1.5px solid var(--color-text-secondary) !important;
+    position: absolute; border-radius: 50%; cursor: pointer; outline: none;
+    background: var(--color-text-secondary); transform: translate(-50%, -50%);
+    transition: background 0.15s ease, transform 0.15s ease;
   }
-  .mw-dot:hover { border-color: var(--color-accent) !important; }
-  .mw-dot[aria-pressed="true"] { background: var(--color-accent) !important; border-color: var(--color-accent) !important; }
+  .mw-dot.mw-corner { width: 13px; height: 13px; }
+  .mw-dot.mw-edge { width: 9px; height: 9px; }
+  .mw-dot::before {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 24px; height: 24px;
+    border-radius: 50%; transform: translate(-50%, -50%);
+  }
+  .mw-dot:hover, .mw-dot:focus-visible { background: var(--color-accent); }
+  .mw-dot[aria-pressed="true"] { background: var(--color-accent); transform: translate(-50%, -50%) scale(1.15); }
+  .mw-dot[data-origin^="back"] { top: 0; }
+  .mw-dot[data-origin$="-center"]:not([data-origin^="back"]):not([data-origin^="front"]), .mw-dot[data-origin="center"] { top: 50%; }
+  .mw-dot[data-origin^="front"] { top: 100%; }
+  .mw-dot[data-origin$="left"], .mw-dot[data-origin="left-center"] { left: 0; }
+  .mw-dot[data-origin="back-center"], .mw-dot[data-origin="center"], .mw-dot[data-origin="front-center"] { left: 50%; }
+  .mw-dot[data-origin$="right"], .mw-dot[data-origin="right-center"] { left: 100%; }
   .mw-hole-map .mw-h-target { stroke: var(--color-warning, #d9a441); stroke-width: 2; fill: none; }
   .mw-intro { margin: 0; color: var(--color-text-secondary); line-height: 1.45; }
   .mw-diagram { width: 100%; height: auto; display: block; flex: none; }
@@ -248,7 +265,7 @@
       <section class="mw-card" aria-label="Pick a hole">
         <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard holes; click one to pick it."></svg>
         <div class="mw-holebar">
-          <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><button type="button" class="mw-dot" data-origin="back-left" title="−X +Y side (back left)"></button><button type="button" class="mw-dot" data-origin="back-center" title="+Y side (back)"></button><button type="button" class="mw-dot" data-origin="back-right" title="+X +Y side (back right)"></button><button type="button" class="mw-dot" data-origin="left-center" title="−X side (left)"></button><button type="button" class="mw-dot" data-origin="center" title="Center of the hole"></button><button type="button" class="mw-dot" data-origin="right-center" title="+X side (right)"></button><button type="button" class="mw-dot" data-origin="front-left" title="−X −Y side (front left)"></button><button type="button" class="mw-dot" data-origin="front-center" title="−Y side (front)"></button><button type="button" class="mw-dot" data-origin="front-right" title="+X −Y side (front right)"></button></div>
+          <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div>
           <div class="mw-holebar-info">
             <span class="mw-holebar-title" id="mw-hole-picked">No hole picked</span>
             <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Nearest.</span>
@@ -1329,6 +1346,9 @@
     setHoleOrigin(saved.holeOrigin);
     ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
       d.addEventListener('click', function() { setHoleOrigin(d.getAttribute('data-origin')); renderHoles(); saveSettings(); });
+      d.addEventListener('keydown', function(evt) {
+        if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); d.click(); }
+      });
     });
     ROOT.querySelectorAll('.mw-sidebar-nav .mw-nav-btn').forEach(function(b) {
       b.addEventListener('click', function() { showTab(b.getAttribute('data-tab')); });

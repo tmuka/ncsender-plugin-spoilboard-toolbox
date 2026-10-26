@@ -187,6 +187,31 @@ Each change came with tests first or alongside, then a browser check of the UI, 
   is copied into each plugin. Ideally ncSender would provide it, so every plugin and ncSender's own
   fields could use one shared, tested version.
 
+- **Idea, planned only: machine labels onto the spoilboard** (V-bit or laser), so the holes the map
+  names can be found on the bed.
+  - **What gets labeled.** Default: chessboard-style edge labels, column letters along the front and row
+    numbers along the left, so there's little to cut and it still reads at a glance. Option: a short label
+    beside every hole (`B3`), placed in the quarter the user picks so it clears the hole and its stop pins.
+    The map and the picked-hole line would switch to the same names (`B3` instead of "column 2, row 3").
+  - **Text.** A single-line (stroke) font, e.g. Hershey Simplex, cut down to digits and capitals and kept
+    in the pure block as polylines; no outline fonts. A pure `labelPaths(text, heightMm, x, y)` returns
+    polylines in machine mm and gets tests like the rest.
+  - **V-bit.** The angle, line width and depth (depth = half the width / tan(half the angle)), feed and
+    plunge. Keep the depth well under what a surfacing pass takes, so labels survive one or two passes.
+    Z0 on the spoilboard comes from the stored spoilboard height (the `ZS: … Z0 on spoilboard` macro), so
+    no new probing.
+  - **Laser.** Power (S), feed, `M4` dynamic power, a fixed Z for focus, and a check that `$32` (laser
+    mode) is on; no plunges. Lines only, no fill.
+  - **Coordinates.** The holes are machine positions. Either cut each move with `G53` (grblHAL takes
+    G53 with G1), or set a spare work offset to machine X0 Y0 for the program and name it in the header;
+    pick one when building it, with the controller check covering it.
+  - **Output.** Save a program to ncSender's File Manager (as QuickCut does) and let the user run it with
+    ncSender's normal job controls, instead of streaming moves from the plugin. Show the labels on the hole
+    map first; leave out anything over a hole, outside the travel, or in a keepout zone.
+  - **Where it lives.** Zero Swapper owns the hole grid, so start here. QuickCut already generates and
+    saves programs (and knows the travel for Wasteboard Surfacing), so lift its program-saving code, or
+    later share the text and saving code between the two.
+
 ## Conventions
 
 - Commits use the author's GitHub noreply address; check `git config user.email` before committing on a
