@@ -75,8 +75,9 @@ Every length and feed box takes mm or inches, whichever your machine uses: type 
 
 If your spoilboard has a grid of holes (dog holes, say), describe it once in **Spoilboard holes**:
 **Hole Diameter**, **X Spacing** and **Y Spacing** (center to center), and **Inset X** / **Inset Y**
-(from machine X0 Y0 to the center of the first hole, into the machine's travel). Or center the bit
-over any hole and press **Use current position** to fill in the insets.
+(from machine X0 Y0 to the center of the first hole, into the machine's travel). Or jog the bit to the
+center of the first hole and press **Set Insets: bit at first hole's center** to fill them in (any
+other hole gives the same insets).
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
 spindle. Click a hole, or jog roughly over one and press **Nearest hole** (it picks the hole closest
