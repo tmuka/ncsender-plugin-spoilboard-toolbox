@@ -709,8 +709,9 @@
     var needThick = stop(hasThick, 'store a stock thickness first');
     // A G92 offset (#5211 / #5212, mm) shifts X0 Y0 away from what's set.
     // And a G92 Z offset (#5213) shifts Z0 the same way.
-    var noG92Z = stop('[ABS[#5213] LT 0.0005]', 'a G92 Z offset is active; G92.1 clears it');
-    var noG92 = stop('[[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005]]', 'a G92 offset is active; G92.1 clears it');
+    var G92Z = '[ABS[#5213] LT 0.0005]', G92XY = '[[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005]]';
+    var noG92Z = stop(G92Z, 'a G92 Z offset is active; G92.1 clears it');
+    var noG92 = stop(G92XY, 'a G92 offset is active; G92.1 clears it');
     var tail = o.imperial ? ['G20 (back to inches)'] : [];
     var probe = [
       'G21',
@@ -758,7 +759,7 @@
       noG92Z,
       'G21',
       saveLine,
-      'G10 L2 P' + o.wcs + ' Z[' + spoil + ' / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ']]'
+      'G10 L2 P' + o.wcs + ' Z[' + spoil + ' / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + G92Z + ']]'
     ].concat(tail));
     m.stock = macro(wcs + ' Z0 on stock top', [
       '(ZS: work Z0 on stock top)',
@@ -772,26 +773,28 @@
       noG92Z,
       'G21',
       saveLine,
-      'G10 L2 P' + o.wcs + ' Z[[' + spoil + ' + ' + thick + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + hasThick + ']]'
+      'G10 L2 P' + o.wcs + ' Z[[' + spoil + ' + ' + thick + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + hasThick + ' AND ' + G92Z + ']]'
     ].concat(tail));
     m.restore = macro(wcs + ' Z0 back to saved', [
       '(ZS: put back the Z0 saved in ' + bak + ' Z)',
       '(Leaves Z0 alone if nothing was saved.)',
       noG92Z,
       'G21',
-      'G10 L2 P' + o.wcs + ' Z[' + cur + ' + [' + saved + ' - ' + cur + '] * [' + saved + ' NE 0]]'
+      'G10 L2 P' + o.wcs + ' Z[[' + cur + ' + [' + saved + ' - ' + cur + '] * [' + saved + ' NE 0]] / ' + G92Z + ']'
     ].concat(tail));
     var x = o.extras || {};
     var safe = typeof o.safeZMm === 'number' && isFinite(o.safeZMm)
-      ? 'G53 G0 Z' + fmt(o.safeZMm) + ' (Safe Z)' : 'G53 G0 Z0 (machine Z0)';
-    // Safe Z is a machine Z, so the lift needs a homed machine.
+      ? 'G53 G0 Z[' + fmt(o.safeZMm) + ' / ' + HOMED + '] (Safe Z)' : 'G53 G0 Z[0 / ' + HOMED + '] (machine Z0)';
+    // Safe Z is a machine Z, so the lift needs a homed machine; the lift
+    // and the move are divided by the homed state too, in case the stop
+    // line were skipped.
     function midpoint(name, what, move) {
       return macro(name, [
         '(ZS: lift to Safe Z, then move halfway to ' + what + ')',
         needHomed,
         'G21',
         safe,
-        'G90 G0 ' + move
+        'G90 G0 ' + move.replace(/ \/ 2\]/g, ' / [2 * ' + HOMED + ']]')
       ].concat(tail));
     }
     if (x.midX) m.midX = midpoint('Midpoint X', 'X0', 'X[#<_x> / 2]');
@@ -820,12 +823,16 @@
       var calc = g ? nearestHoleLines(g) : { lines: [stop(0, 'set up the XY0 Picker grid first')], x: '0', y: '0' };
       var side = g ? g.originName : 'center';
       var lift = typeof o.safeZMm === 'number' && isFinite(o.safeZMm) ? fmt(o.safeZMm) : '0';
-      var inUnits = function(v) { return '[' + v + ' / ' + MM_PER_UNIT + ']'; };
+      // #10 is 1 while every check has passed: each move and offset is
+      // divided by it, so even if a stop line were skipped (ncSender before
+      // 2.0.161 kept sending after a rejected line) it's rejected too.
+      var inUnits = function(v) { return '[' + v + ' / ' + MM_PER_UNIT + ' / #10]'; };
       m.goHole = macro('Go to nearest hole', [
         '(ZS: lift, then move over the nearest hole\'s ' + side + ')',
         '(Grid from the XY0 Picker when created:)',
         '(Create macros again after changing it.)',
-        needHomed
+        needHomed,
+        '#10=[#<_homed_state>]'
       ].concat(calc.lines, [
         '#3=[#<_abs_z> * ' + MM_PER_UNIT + ']',
         '#8=[[' + lift + '] + [#3 - [' + lift + ']] * [#3 GT [' + lift + ']]]',
@@ -837,7 +844,8 @@
         '(Sets the active work offset.)',
         '(Create macros again after changing the grid.)',
         needHomed,
-        noG92
+        noG92,
+        '#10=[#<_homed_state> * ' + G92XY + ']'
       ].concat(calc.lines, ['G10 L2 P0 X' + inUnits(calc.x) + ' Y' + inUnits(calc.y)]));
     }
     if (x.center) {
@@ -966,7 +974,6 @@
     var d = dir * posMm;
     return ((d % spacingMm) + spacingMm) % spacingMm;
   }
-  // The hole nearest a machine position: { index, distanceMm }, or null.
   // Ruler ticks: round values (1, 2 or 5 x 10^n) from lo to hi at least
   // minPx apart on screen, given pxPerUnit.
   function axisTicks(lo, hi, pxPerUnit, minPx) {
@@ -1020,6 +1027,7 @@
       return formatHoleList(r.holes, toImperial) + (note && !/^[(;]/.test(line.trim()) ? note[0] : '');
     }).join('\n');
   }
+  // The hole nearest a machine position: { index, distanceMm }, or null.
   // Holes marked `blocked` (in a keepout zone) are skipped.
   function nearestHole(grid, xMm, yMm) {
     var best = null;
@@ -1117,12 +1125,12 @@
       axis('y', ys ? g.panelHoles : 0, g.insetYMm, g.syMm, g.panelPitchMm, g.lastYMm, g.dirY, 7));
     var r = g.diaMm / 2;
     (g.zones || []).forEach(function(z) {
-      lines.push('#1=[1 / [1 - [[#6 GE ' + fmt5(z.minX - r) + '] AND [#6 LE ' + fmt5(z.maxX + r) + '] AND [#7 GE ' + fmt5(z.minY - r) + '] AND [#7 LE ' + fmt5(z.maxY + r) + ']]]] (ZS stop: nearest hole is in the ' + z.name + ' keepout zone)');
+      lines.push('#10=[#10 * [1 - [[#6 GE ' + fmt5(z.minX - r) + '] AND [#6 LE ' + fmt5(z.maxX + r) + '] AND [#7 GE ' + fmt5(z.minY - r) + '] AND [#7 LE ' + fmt5(z.maxY + r) + ']]]]', '#1=[1 / #10] (ZS stop: nearest hole is in the ' + z.name + ' keepout zone)');
     });
     var minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
     var tx = '[#6 + ' + fmt5(g.dx) + ']', ty = '[#7 + ' + fmt5(g.dy) + ']';
     if (g.dx || g.dy) {
-      lines.push('#1=[1 / [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]] (ZS stop: that side of the hole is outside the travel)');
+      lines.push('#10=[#10 * [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]]', '#1=[1 / #10] (ZS stop: that side of the hole is outside the travel)');
     }
     return { lines: lines, x: tx, y: ty };
   }
@@ -1142,7 +1150,7 @@
   function nearestListLines(g) {
     var usable = usableListHoles(g);
     var lines = ['(Nearest of ' + usable.length + ' listed holes)'];
-    if (!usable.length) return { lines: lines.concat(['#1=[1 / 0] (ZS stop: no listed hole can be used)']), x: '[#6]', y: '[#7]' };
+    if (!usable.length) return { lines: lines.concat(['#10=[0]', '#1=[1 / #10] (ZS stop: no listed hole can be used)']), x: '[#6]', y: '[#7]' };
     lines.push('#4=[#<_abs_x> * ' + MM_PER_UNIT + ']', '#5=[#<_abs_y> * ' + MM_PER_UNIT + ']', '#9=[1000000000]', '#6=[' + fmt5(usable[0].x) + ']', '#7=[' + fmt5(usable[0].y) + ']');
     usable.forEach(function(p) {
       lines.push(
@@ -1956,10 +1964,7 @@
         (outside ? ', ' + outside + ' outside the machine\u2019s travel (not shown)' : '') + '.';
     }
     if (holes.picked >= holes.grid.length) holes.picked = -1;
-    // Machine X right and Y up (back at the top), fitted into 700 x 400.
-    // The bed sits flush with the card's top left, like the Setup heading
-    // below; only the machine X0 Y0 label's side gets room for it.
-    // The bed flush with the card's top left, like the Setup heading below;
+    // Machine X right and Y up (back at the top). The bed flush with the card's top left, like the Setup heading below;
     // machine X numbers run along the bottom and Y down the right.
     var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = 1;
     var padT = pad, padB = 20, padR = 46;
@@ -1985,8 +1990,10 @@
     tx.values.forEach(function(v) {
       var px = +X(v * uk);
       add('line', { class: 'mw-h-tick', x1: px, y1: bottom, x2: px, y2: bottom + 4 });
+      // About 6 px a character at 10 px: keep each label inside the map.
+      var half = String(v).length * 3;
       add('text', { class: 'mw-h-ruler', x: px.toFixed(1), y: (bottom + 15).toFixed(1),
-        'text-anchor': px < 12 ? 'start' : px > right - 12 ? 'end' : 'middle' }, String(v));
+        'text-anchor': px < half ? 'start' : px > right - half ? 'end' : 'middle' }, String(v));
     });
     var ty = axisTicks(minY / uk, (minY + t.yMm) / uk, sc * uk, 30);
     ty.values.forEach(function(v) {
@@ -2100,11 +2107,14 @@
     status.textContent = far ? 'The spindle is ' + fmt(near.distanceMm) + ' mm from the nearest hole: check it\u2019s the one you meant before setting X0 Y0.'
       : '';
   }
+  // A length in ncSender's units, for the readouts (the rulers match).
+  function shown(mm) { return state.imperial ? (mm / MM_PER_INCH).toFixed(4) : fmt(mm); }
+  function unitName() { return state.imperial ? 'in' : 'mm'; }
   function updatePicked() {
     var p = holes.grid[holes.picked], tg = p && holeTarget(p);
     $('mw-hole-picked').textContent = p ? holeLabel(p) + ' \u00b7 ' + ORIGIN_NOTES[holes.origin] : 'No hole picked';
-    $('mw-hole-pos').textContent = p ? 'Machine X ' + fmt(tg.x) + '  Y ' + fmt(tg.y) + ' mm' +
-      (holes.nearMm != null ? ' \u00b7 ' + fmt(holes.nearMm) + ' mm from the spindle' : '') : 'Click a hole, or jog near one and press Select Nearest.';
+    $('mw-hole-pos').textContent = p ? 'Machine X ' + shown(tg.x) + '  Y ' + shown(tg.y) + ' ' + unitName() +
+      (holes.nearMm != null ? ' \u00b7 ' + shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '') : 'Click a hole, or jog near one and press Select Nearest.';
     var problem = p && state.travel ? targetProblem(tg.x, tg.y, state.travel, state.keepouts || []) : null;
     if (problem) $('mw-hole-pos').textContent = 'This side of the hole is ' + problem + ': pick another dot or hole.';
     $('mw-hole-pos').classList.toggle('mw-bad-text', !!problem);

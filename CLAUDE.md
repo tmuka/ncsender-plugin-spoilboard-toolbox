@@ -1,6 +1,6 @@
 # Zero Swapper: notes for working on this plugin
 
-Zero Swapper (`com.tmuka.zeroswapper`; called Macro Wiz, `com.tmuka.macrowiz`, before 0.3.3) is a
+Zero Swapper (`com.tmuka.zeroswapper`; called Macro Wiz before 0.3.1, with id `com.tmuka.macrowiz` before 0.3.3) is a
 client-only ncSender plugin. It runs a wizard that checks a
 grblHAL controller, then writes ncSender macros (M98 macros) that put work Z0 on the spoilboard or the
 stock top with any measured tool, without probing each time. README.md is the user guide; this file
@@ -27,7 +27,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
 | `tests/pure.test.cjs` | Runs the pure block of `config.html` directly, plus a small grblHAL expression simulator that executes the generated `G10` lines. |
 | `manifest.json` | Plugin id, version, tool-menu entry (`clientOnly: true`). |
 | `icon.svg`, `icon.png` | The plugin icon (Plugins panel, tool menu, registry): the hole grid with X0 Y0 on ncSender's green. Edit the SVG and re-render the 512 px PNG. |
-| `.scripts/build.sh` | `dist/<id>_v<version>.zip` from the committed files (`git archive`), under a `<id>/` folder as the Plugin Manager expects; tests, scripts and `docs/` (README images) left out. |
+| `.scripts/build.sh` | `dist/<id>_v<version>.zip` from the committed files (`git archive`), under a `<id>/` folder as the Plugin Manager expects; tests, scripts, `docs/` (README images) and this file left out. |
 | `README.md` | User guide: the wizard steps, how the macros work, units, requirements. |
 
 ### `config.html`
@@ -95,8 +95,12 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
   lines for homed (`#<_homed_state>`), a tool length offset (`#<_tool_offset>`) and the stored values
   they need; midpoints check homed. A division by zero is grblHAL error 72, and ncSender's
   `ExpandedCommandSender` sends nothing after a rejected macro line (one line in flight at a time).
-  The same condition divides each guarded `G10` value, so it holds even if lines kept coming (Pro,
-  controller-side macros). The check confirms the named parameters exist.
+  The same conditions divide every offset and move line, so they hold even if lines kept coming
+  (ncSender before 2.0.161 kept sending after a rejected line): the Z0 `G10`s also include no G92 Z;
+  the midpoint lift and move divide by homed; the nearest-hole macros keep a running "all clear" in
+  `#10` (homed, keepout, travel, and no G92 X/Y for XY0) and divide their `G53` moves and `G10 L2 P0`
+  by it. The manifest needs ncSender 2.0.163 (the first that enforces `minAppVersion`). The check
+  confirms the named parameters exist; the tests' `runAll` sends every line like old ncSender.
   - Verified on the author's grblHAL (2026-10-25): `#1=[1 / 0]` gives error 72; `#<_homed_state>` and
     `#<_tool_offset>` read fine.
   - After an error grblHAL repeats it for every line until an empty line, a `$` command (jogs, `$H`) or a
@@ -123,6 +127,8 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
   - `PUT` updates;
   - `DELETE` removes.
 - Plugin settings: `/api/plugins/com.tmuka.zeroswapper/settings`.
+- `GET /api/server-state`: `machineState` (`MPos`, `g54`…`g59`, `workspace`, `homed`, `status`, `connected`).
+- `GET /api/firmware`: grblHAL settings (`$130`/`$131` travel, `$22`/`$23` homing, `$683`-`$687` ATCi keepout).
 - **Keyboard shortcuts:** every macro is registered as shortcut action `Macro:<id>`; plugins can't register
   shortcuts. So deleting a macro breaks any shortcut on it (recreated macros get new ids). That's why
   **Delete** asks twice and warns, and **Create macros** updates in place instead.
@@ -138,7 +144,7 @@ npm run build    # dist/com.tmuka.zeroswapper_v<version>.zip from the last commi
 
 - Bump `version` in both `manifest.json` and `package.json` for a release build.
 - The UI was checked in headless Chrome against a stand-in for the ncSender API that stubs `fetch` and
-  posts `cnc-data` replies. The harness isn't in the repo; a fresh one only needs to stub the four APIs above.
+  posts `cnc-data` replies. The harness isn't in the repo; a fresh one only needs to stub the APIs above.
 - Install a build from ncSender's Plugin Manager. The wizard opens from **Zero Swapper** in the plugin tool menu.
 
 ## How it was built

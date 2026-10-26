@@ -278,9 +278,11 @@ probe point relative to the work offset only.)
 
 grblHAL macros have no if/else here, so a stop is a deliberate division by zero, for example
 `#1=[1 / #<_homed_state>] (ZS stop: home the machine first)`: grblHAL rejects the line with
-`error:72`, and ncSender sends nothing after a rejected line of a macro. The same check also
-divides the value each `G10` line stores, so a wrong Z0 can't be set even if a stop line were
-skipped. The wizard's check confirms your grblHAL reads `#<_homed_state>` and `#<_tool_offset>`.
+`error:72`, and ncSender (2.0.161 and later) sends nothing after a rejected line of a macro. As a
+second line of defence, every line that sets an offset or moves is divided by the same checks too
+(homed, tool length offset, stored values, no G92 offset, and for the nearest-hole macros the keepout
+and travel checks), so even if a stop line were skipped, nothing is set or moved. The wizard's check
+confirms your grblHAL reads `#<_homed_state>` and `#<_tool_offset>`.
 
 ### When to re-record
 
@@ -301,6 +303,7 @@ macros only move straight down from where you put the bit, then back off upward.
 
 ### Requirements
 
+- ncSender 2.0.163 or later (it stops a macro at its first rejected line, and checks this).
 - grblHAL built with parameter and expression support (the check tells you).
 - Tool length offsets for every tool measured against the same reference tool, and active when you
   run either macro. A `G43.1` offset is cleared by a reset.

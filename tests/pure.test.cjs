@@ -52,8 +52,29 @@ function run(body, params) {
   }
   return params;
 }
+// ncSender before 2.0.161: a rejected line is skipped and the rest still
+// sent. Returns the params and how many lines were rejected.
+function runAll(body, params) {
+  let rejected = 0;
+  for (const line of code(body)) {
+    try { step(line, params); } catch (e) { if (e.unknown) throw e; rejected++; }
+  }
+  return Object.assign(params, { _rejected: rejected });
+}
 // Lines the stand-in doesn't evaluate but knows are plain G-code.
 const PLAIN = /^(G2[01]|G90|G5[4-9](\.[1-3])?|G91 G38\.2 Z-[\d.]+ F[\d.]+|G91 G0 Z[\d.]+|G53 G0 Z-?[\d.]+|G20)$/;
+// The X[...] / Y[...] words of a line, with nested brackets.
+function words(text) {
+  const out = [];
+  for (let i = 0; i < text.length; i++) {
+    if (!/[XY]/.test(text[i]) || text[i + 1] !== '[') continue;
+    let depth = 0, j = i + 1;
+    for (; j < text.length; j++) { if (text[j] === '[') depth++; else if (text[j] === ']' && --depth === 0) break; }
+    out.push([text[i], text.slice(i + 2, j)]);
+    i = j;
+  }
+  return out;
+}
 function step(line, params) {
   {
     let m = /^#(\d+)=\[(.*)\]$/.exec(line);
@@ -69,7 +90,7 @@ function step(line, params) {
       params[offsetZParam(+m[1]) - 1] = vy;
       return;
     }
-    m = /^G53 G90 G0 Z\[(.*)\]$/.exec(line);
+    m = /^G53 (?:G90 )?G0 Z\[(.*)\]$/.exec(line);
     if (m) { params._mz = evalExpr(m[1], params); return; }
     m = /^G53 G90 G0 X\[(.*)\] Y\[(.*)\]$/.exec(line);
     if (m) { params._mx = evalExpr(m[1], params); params._my = evalExpr(m[2], params); return; }
@@ -79,9 +100,9 @@ function step(line, params) {
       // Anything else is a line the tests can't vouch for: fail loudly.
       throw Object.assign(new Error('stand-in doesn\'t know: ' + line), { unknown: true });
     }
-    for (const [, axis, expr] of m[2].matchAll(/([XY])\[([^\]]*)\]/g)) {
-      params[(m[1] === 'G0' ? '_' : 'L20_') + axis.toLowerCase()] = evalExpr(expr, params);
-    }
+    // Evaluate every word first, like grblHAL rejecting the whole block.
+    const vals = words(m[2]).map(([axis, expr]) => [axis, evalExpr(expr, params)]);
+    for (const [axis, v] of vals) params[(m[1] === 'G0' ? '_' : 'L20_') + axis.toLowerCase()] = v;
   }
 }
 
@@ -177,14 +198,14 @@ test('midpoint moves and center origin use the current work position', () => {
   // in mm; center doesn't move.
   for (const k of ['midX', 'midY', 'midXY']) {
     const c = code(m[k].body);
-    assert.deepEqual(c.slice(0, 3), ['#1=[1 / #<_homed_state>]', 'G21', 'G53 G0 Z0'], k);
+    assert.deepEqual(c.slice(0, 3), ['#1=[1 / #<_homed_state>]', 'G21', 'G53 G0 Z[0 / #<_homed_state>]'], k);
     assert.match(c[3], /^G90 G0 /, k);
     const unhomed = run(m[k].body, { _x: 120, _y: 80, _tool_offset: 1 });
     assert.deepEqual([unhomed._x, unhomed._y, unhomed._error], [120, 80, '#1=[1 / #<_homed_state>]'], k + ' stops unhomed');
   }
   assert.ok(!/G0|G53/.test(m.center.body));
   const withSafe = buildMacros(Object.assign({}, base, { extras: allExtras, safeZMm: -5, imperial: true }));
-  assert.deepEqual(code(withSafe.midXY.body), ['#1=[1 / #<_homed_state>]', 'G21', 'G53 G0 Z-5.000', 'G90 G0 X[#<_x> / 2] Y[#<_y> / 2]', 'G20']);
+  assert.deepEqual(code(withSafe.midXY.body), ['#1=[1 / #<_homed_state>]', 'G21', 'G53 G0 Z[-5.000 / #<_homed_state>]', 'G90 G0 X[#<_x> / [2 * #<_homed_state>]] Y[#<_y> / [2 * #<_homed_state>]]', 'G20']);
 });
 
 test('save and restore X/Y: kept in the saved-Z0 slot, Z untouched, nothing saved = no change', () => {
@@ -214,7 +235,7 @@ test('other work offset and slots', () => {
   const m = buildMacros(Object.assign({}, base, { wcs: 2, slot: 8, backup: 7, thick: 9 }));
   assert.match(m.record.body, /^G55$/m);
   assert.match(m.record.body, /G10 L2 P8 Z\[\[#5063 \+ #5243 - 15\.000 - #5403\]/);
-  assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND #<_tool_offset> AND \[#5363 NE 0\]\]\]$/m);
+  assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND #<_tool_offset> AND \[#5363 NE 0\] AND \[ABS\[#5213\] LT 0\.0005\]\]\]$/m);
   assert.match(m.set.body, /^G10 L2 P7 Z\[#5343 \+ \[#5243 - #5343\]/m);
   assert.equal(m.set.name, 'ZS: G55 Z0 on spoilboard');
   const p = Object.assign({ 5363: -90, 5243: -70, 5343: 0 }, ready);
@@ -657,4 +678,32 @@ test('axisTicks picks round steps at least minPx apart', () => {
   // Homing to max: negative machine coordinates.
   assert.deepEqual(axisTicks(-800, 0, 0.5, 56).values, [-800, -600, -400, -200, 0]);
   assert.deepEqual(axisTicks(0, 1, 300, 56).values, [0, 0.2, 0.4, 0.6, 0.8, 1]);
+});
+
+test('guards hold even when a stop line is skipped (ncSender before 2.0.161)', () => {
+  const g = macroGrid({ diaMm: 20, origin: 'center', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1,
+    zones: [{ name: 'ATCi', minX: 690, maxX: 812, minY: 700, maxY: 1230 }] });
+  const m = buildMacros(Object.assign({}, base, { safeZMm: -5, extras: { holes: true, midX: true, midY: true, midXY: true }, holes: g }));
+  const moved = (p) => p._mx !== undefined || p._my !== undefined || p._mz !== undefined || p._x !== undefined || p._y !== undefined;
+  // Unhomed: nothing moves or changes.
+  for (const k of ['goHole', 'setHole', 'midX', 'midY', 'midXY']) {
+    const p = runAll(m[k].body, { _homed_state: 0, _tool_offset: 1, _abs_x: 150, _abs_y: 230, _abs_z: -30, _x: undefined, _y: undefined });
+    assert.ok(!moved(p) && p.P0_x === undefined, k + ' unhomed');
+  }
+  // Keepout: Go and XY0 refuse the hole in the rack zone.
+  let p = runAll(m.goHole.body, Object.assign({}, ready, { _abs_x: 720, _abs_y: 1008, _abs_z: -30 }));
+  assert.ok(p._mx === undefined && p._mz === undefined, 'go keepout');
+  p = runAll(m.setHole.body, Object.assign({}, ready, { _abs_x: 720, _abs_y: 1008 }));
+  assert.equal(p.P0_x, undefined, 'set keepout');
+  // G92 offsets: XY0 and the Z0 macros refuse.
+  p = runAll(m.setHole.body, Object.assign({}, ready, { _abs_x: 150, _abs_y: 230, 5211: 2.49, 5212: 258 }));
+  assert.equal(p.P0_x, undefined, 'set G92');
+  const start = { 5223: -77.5, 5383: -95, 5343: 18, 5363: -60, 5213: 3 };
+  for (const k of ['set', 'stock', 'restore']) {
+    const q = runAll(m[k].body, Object.assign({}, start, ready));
+    assert.equal(q[5223], -77.5, k + ' G92 Z');
+  }
+  // And all clear, they do their job.
+  p = runAll(m.goHole.body, Object.assign({}, ready, { _abs_x: 150, _abs_y: 230, _abs_z: -30 }));
+  assert.deepEqual([p._rejected, p._mz, p._mx, p._my], [0, -5, 144, 240]);
 });
