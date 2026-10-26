@@ -1,10 +1,11 @@
 {
   "id": "com.tmuka.zeroswapper",
   "name": "Zero Swapper",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "minAppVersion": "2.0.88",
   "configUi": "config.html",
   "author": "tmuka",
+  "repository": "https://github.com/tmuka/ncsender-plugin-zero-swapper",
   "description": "Probe your spoilboard once, then swap work zero between the spoilboard and the stock top with any measured tool, and back. Extras find X/Y zero at a midpoint and save / restore it for fixtures. For grblHAL machines with a tool setter or ATC.",
   "category": "utility",
   "platforms": {
