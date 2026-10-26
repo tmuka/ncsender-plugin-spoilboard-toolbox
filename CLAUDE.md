@@ -177,6 +177,11 @@ Each change came with tests first or alongside, then a browser check of the UI, 
     stored height may be stale.
   - If proposed upstream, Zero Swapper is the working prototype.
 
+- **Idea, not started: unit-aware input as a native ncSender library.** Typing mm or inches in any
+  field and converting to the machine's units (`parseUnitValue`, from QuickCut's `lib/unit-input.cjs`)
+  is copied into each plugin. Ideally ncSender would provide it, so every plugin and ncSender's own
+  fields could use one shared, tested version.
+
 ## Conventions
 
 - Commits use the author's GitHub noreply address; check `git config user.email` before committing on a

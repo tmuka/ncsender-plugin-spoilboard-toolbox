@@ -68,6 +68,9 @@ Re-record after surfacing the spoilboard.
 
 So you probe once per new stock, not once per tool.
 
+Every length and feed box takes mm or inches, whichever your machine uses: type `6.35mm`, `1/4"`,
+`1-1/2 in` or `100ipm`, and it's converted to the machine's units when you leave the box.
+
 ## X0 Y0 on a spoilboard hole
 
 If your spoilboard has a grid of holes (dog holes, say), describe it once in **Spoilboard holes**:

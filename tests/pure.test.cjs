@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, nearestHole } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, nearestHole };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -320,4 +320,66 @@ test('nearest hole to a rough position', () => {
   assert.deepEqual([g[n.index].col, g[n.index].row, g[n.index].x, g[n.index].y], [3, 2, 240, 126]);
   assert.ok(Math.abs(n.distanceMm - Math.hypot(3.1, 3.5)) < 1e-9);
   assert.equal(nearestHole([], 0, 0), null);
+});
+
+// Typing mm or inches in any unit field (the same parser as QuickCut).
+const METRIC = false, IMPERIAL = true;
+
+test('plain numbers pass through untouched in either unit system', () => {
+  assert.equal(parseUnitValue('6.35', METRIC, 'length'), 6.35);
+  assert.equal(parseUnitValue('.25', IMPERIAL, 'length'), 0.25);
+  assert.equal(parseUnitValue(' -30 ', METRIC, 'length'), -30);
+  assert.equal(parseUnitValue('3.14159', METRIC, 'length'), 3.14159);
+});
+
+test('inch input converts to mm on a metric machine', () => {
+  assert.equal(parseUnitValue('.25in', METRIC, 'length'), 6.35);
+  assert.equal(parseUnitValue('.25"', METRIC, 'length'), 6.35);
+  assert.equal(parseUnitValue('0.25 inch', METRIC, 'length'), 6.35);
+  assert.equal(parseUnitValue('1/4"', METRIC, 'length'), 6.35);
+  assert.equal(parseUnitValue('1-1/2"', METRIC, 'length'), 38.1);
+  // Fractions over 1 work too.
+  assert.equal(parseUnitValue('5/4"', METRIC, 'length'), 31.75);
+  assert.equal(parseUnitValue('5/4"', IMPERIAL, 'length'), 1.25);
+  assert.equal(parseUnitValue('1 1/2 in', METRIC, 'length'), 38.1);
+  assert.equal(parseUnitValue('1/4”', METRIC, 'length'), 6.35);
+});
+
+test('mm/cm input converts to inches on an imperial machine', () => {
+  assert.equal(parseUnitValue('6.35mm', IMPERIAL, 'length'), 0.25);
+  assert.equal(parseUnitValue('6.35 MM', IMPERIAL, 'length'), 0.25);
+  assert.equal(parseUnitValue('2.54cm', IMPERIAL, 'length'), 1);
+  assert.equal(parseUnitValue('3mm', IMPERIAL, 'length'), 0.1181);
+});
+
+test('fractions with no unit stay in the active units', () => {
+  assert.equal(parseUnitValue('1/4', IMPERIAL, 'length'), 0.25);
+  assert.equal(parseUnitValue('-1-1/2', IMPERIAL, 'length'), -1.5);
+});
+
+test('feed fields accept per-minute units', () => {
+  assert.equal(parseUnitValue('100ipm', METRIC, 'feed'), 2540);
+  assert.equal(parseUnitValue('100 in/min', METRIC, 'feed'), 2540);
+  assert.equal(parseUnitValue('2540 mm/min', IMPERIAL, 'feed'), 100);
+  assert.equal(parseUnitValue('600mm', IMPERIAL, 'feed'), 23.622);
+  assert.equal(parseUnitValue('100ipm', METRIC, 'length'), null, 'ipm is a feed unit only');
+});
+
+test('feed fields accept /m as per minute and per-second units', () => {
+  assert.equal(parseUnitValue('1500mm/m', IMPERIAL, 'feed'), 59.0551);
+  assert.equal(parseUnitValue('1500 mm/m', METRIC, 'feed'), 1500);
+  assert.equal(parseUnitValue('60in/m', METRIC, 'feed'), 1524);
+  assert.equal(parseUnitValue('25mm/s', IMPERIAL, 'feed'), 59.0551);
+  assert.equal(parseUnitValue('25 mm/sec', METRIC, 'feed'), 1500);
+  assert.equal(parseUnitValue('1ips', METRIC, 'feed'), 1524);
+  assert.equal(parseUnitValue('1 in/s', IMPERIAL, 'feed'), 60);
+  assert.equal(parseUnitValue('0.5in/sec', IMPERIAL, 'feed'), 30);
+  assert.equal(parseUnitValue('25mm/s', METRIC, 'length'), null, 'per-second units are feed-only');
+  assert.equal(parseUnitValue('25mm/h', METRIC, 'feed'), null);
+});
+
+test('unreadable text returns null', () => {
+  for (const bad of ['', 'abc', '1/0', '1.5/2', '1-1/0', '6.35 furlongs', '1..2', '--1', '1/4/2']) {
+    assert.equal(parseUnitValue(bad, METRIC, 'length'), null, JSON.stringify(bad));
+  }
 });
