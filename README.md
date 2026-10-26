@@ -10,7 +10,7 @@ offset lands exactly on it. Extras find X/Y zero at a midpoint and save / restor
 Zero Swapper is a plugin for [ncSender](https://github.com/siganberg/ncSender), the G-code sender for
 grblHAL CNC routers. Its **XY0 Picker** tab sets the XY work origin (G54–G59.3) on a hole or grid line
 without moving the machine; its **Z0 macros** tab checks your grblHAL controller, then writes ncSender
-macros you run from the Macros tab or a keyboard shortcut.
+macros you run from the Macros tab or, best of all, a keyboard shortcut.
 
 ![Zero Swapper's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid with a hole picked,
 the ATCi tool rack's keepout zone in red, and the Select Nearest, Go to Selected and Set G54 XY
@@ -47,6 +47,20 @@ tool, without re-probing after a tool change:
 
 In ncSender's Macros tab they're named **ZS: …**, with the work offset they set (e.g.
 **ZS: G54 Z0 on spoilboard**).
+
+### Put them on keys
+
+This is where the macros really pay off: **ncSender lets you assign any macro to a keyboard
+shortcut** (or a gamepad button), so switching Z0, snapping X0 Y0 to the nearest dog hole, or
+finding a midpoint is one keypress at the machine, with no menus and no plugin window open.
+
+1. Open ncSender's **Settings → Controls** (keyboard control has to be on).
+2. Type **ZS** in **Search Actions…**; the macros are listed in the **Macros** group.
+3. Click the pencil next to one and press the key combination you want.
+
+For example: one key for **Z0 on stock top**, another for **Z0 on spoilboard**, and one for **XY0 on
+nearest hole** after jogging roughly over a hole. Press **Create macros** again after changing settings
+rather than deleting and recreating: it updates the macros in place, so your shortcuts keep working.
 
 Nothing has to be re-probed when you change tools: the controller adds each tool's length offset
 itself. The values are kept in the controller, so they survive power cycles.
@@ -109,7 +123,7 @@ Setup opens locked so a stray tap can't change the grid; press **Locked** to unl
 **From the keyboard, without opening the plugin:** tick **Nearest hole** under the Z0 macros tab's
 **Extras** and press **Create macros**. You get **ZS: Go to nearest hole** and **ZS: XY0 on nearest
 hole**: the controller works out the nearest hole to the spindle (grblHAL expressions with the grid
-built in), so you can jog roughly and press a key (ncSender's shortcut settings, **Macros** group). Go to
+built in), so you can jog roughly and press a key (see [Put them on keys](#put-them-on-keys)). Go to
 lifts to Safe Z first and never moves down; XY0 sets the active work offset on the side picked with the
 dots. Both stop without changing anything if the machine isn't homed, the hole is in a keepout zone, or
 that side of it is outside the travel. XY0 (and the picker's **Set**) also stop while a **G92 offset**
@@ -173,7 +187,8 @@ direction come from grblHAL's `$130`/`$131` and homing settings
      later. They're kept in the saved-Z0 slot's X/Y, which that slot doesn't otherwise use; restore
      does nothing if nothing was saved.
 4. **Macros.** Creates the ncSender macros, or updates the ones it made before:
-   Every ncSender macro can have a keyboard shortcut (ncSender's shortcut settings, **Macros** group).
+   Every ncSender macro can have a keyboard shortcut (**Settings → Controls**, **Macros** group; see
+   [Put them on keys](#put-them-on-keys)).
    Their names start with **ZS:**, and each description is the macro's first comment line (e.g.
    "record spoilboard height").
    - **Record spoilboard height**: probes down onto the block and stores the height.
