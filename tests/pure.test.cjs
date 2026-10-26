@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, holeLabel, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, holeLabel, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -581,4 +581,44 @@ test('nearest-hole macros: Go lifts (never down), then moves; stops for keepouts
   // Without a grid it only stops.
   const none = buildMacros(Object.assign({}, base, { extras: { holes: true } }));
   assert.ok(run(none.setHole.body, Object.assign({}, ready))._error);
+});
+
+test('parseHoleList reads names, mixed units and skips comments; formatHoleList writes it back', () => {
+  const r = parseHoleList('A: 0, 0\n( locating pins )\n\nB: 300, 12.5\n12-1/2", 6"\n1: 2in, 50.8mm\nnot a hole\n5, 6, 7', false);
+  assert.deepEqual(r.bad, [7, 8]);
+  assert.deepEqual(r.holes, [
+    { name: 'A', xMm: 0, yMm: 0 }, { name: 'B', xMm: 300, yMm: 12.5 },
+    { name: '', xMm: 317.5, yMm: 152.4 }, { name: '1', xMm: 50.8, yMm: 50.8 }]);
+  const inch = parseHoleList('1, 2\nC: 25.4mm, 0.5', true);
+  assert.deepEqual(inch.holes, [{ name: '', xMm: 25.4, yMm: 50.8 }, { name: 'C', xMm: 25.4, yMm: 12.7 }]);
+  assert.equal(formatHoleList(inch.holes, true), '1, 2\nC: 1, 0.5');
+  assert.equal(formatHoleList(r.holes.slice(0, 2), false), 'A: 0, 0\nB: 300, 12.5');
+});
+
+test('holeGrid with a list: reference point plus x, y into the travel; outside dropped', () => {
+  const list = [{ name: 'A', xMm: 0, yMm: 0 }, { name: '', xMm: 100, yMm: 50 }, { name: 'far', xMm: 900, yMm: 0 }];
+  const o = { layout: 'list', list, insetXMm: 20, insetYMm: 30, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 };
+  assert.deepEqual(holeGrid(o), [{ index: 1, name: 'A', x: 20, y: 30 }, { index: 2, name: '', x: 120, y: 80 }]);
+  assert.deepEqual(holeGrid(Object.assign({}, o, { dirX: -1, dirY: -1 })).map((p) => [p.x, p.y]), [[-20, -30], [-120, -80]]);
+  assert.deepEqual(holeGrid(o).map(holeLabel), ['A', 'Hole 2']);
+  assert.equal(holeLabel({ col: 3, row: 2 }), 'Column 3, row 2');
+});
+
+test('nearest-hole macros with a list pick the nearest usable listed hole', () => {
+  const list = [{ name: 'A', xMm: 0, yMm: 0 }, { name: 'B', xMm: 300, yMm: 10 }, { name: 'C', xMm: 155, yMm: 400 }, { name: 'D', xMm: 700, yMm: 700 }];
+  const g0 = { layout: 'list', list, insetXMm: 20, insetYMm: 30, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1, diaMm: 20, origin: 'center',
+    zones: [{ name: 'ATCi', minX: 690, maxX: 812, minY: 700, maxY: 1230 }] };
+  const grid = holeGrid(g0);
+  const g = Object.assign({}, g0, { dx: 0, dy: 0, originName: 'center', lastXMm: 0, lastYMm: 0 });
+  const m = buildMacros(Object.assign({}, base, { safeZMm: -5, extras: { holes: true }, holes: g }));
+  const usable = grid.filter((p) => p.name !== 'D');
+  for (let i = 0; i <= 30; i++) for (let j = 0; j <= 30; j++) {
+    const x = 812 * i / 30, y = 1230 * j / 30;
+    const want = usable[nearestHole(usable, x, y).index];
+    const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: x, _abs_y: y }));
+    assert.equal(p._error, undefined);
+    assert.ok(Math.abs(Math.hypot(p.P0_x - x, p.P0_y - y) - Math.hypot(want.x - x, want.y - y)) < 1e-3, 'at ' + x + ',' + y);
+  }
+  const none = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: Object.assign({}, g, { list: [list[3]] }) }));
+  assert.ok(run(none.setHole.body, Object.assign({}, ready, { _abs_x: 1, _abs_y: 1 }))._error);
 });

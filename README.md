@@ -132,6 +132,15 @@ is active, since grblHAL adds it on top and X0 Y0 would land away from the hole;
 it. Go to moves in machine coordinates, which G92 doesn't affect. They use the grid, side and keepout zones as they were when
 created, so press **Create macros** again after changing any of them.
 
+**Holes that aren't a regular grid?** Locating holes, fixture pins, or a custom layout: set the
+**Layout** menu at the top of Setup to **List** and enter one hole per line, as `x, y` or
+`name: x, y` (e.g. `A: 0, 0`, `pin: 12-1/2", 6"`), measured from a **reference point** (Reference X /
+Y) into the machine's travel, the same way the grid's insets are. Easiest: set the reference, then jog
+over each hole and press **Add Current Position**. Positions are relative so that if the board or the
+machine's homing ever shifts, jogging to the first listed hole and pressing **Grab First Hole Center**
+moves the reference and the whole list follows. The map, Select Nearest, the dots, Go to Selected,
+Set, keepout zones and the nearest-hole macros all work the same.
+
 **T-tracks between panels?** Pick **T-tracks: Along X** (tracks between rows) or **Along Y** (between
 columns) and set **Holes per Panel**. Leave **Panel Pitch** blank when the hole spacing carries straight
 on across a track; if a track pushes the next panel over, measure from the first hole of one panel to
