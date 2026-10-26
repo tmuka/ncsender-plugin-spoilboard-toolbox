@@ -78,7 +78,9 @@
   .mw-holebar-info { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .mw-holebar-title { font-weight: 600; }
   .mw-holebar-info .mw-hint { font-variant-numeric: tabular-nums; }
-  .mw-holebar-actions { display: flex; gap: 8px; }
+  .mw-holebar-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+  .mw-holebar-info { flex-basis: 150px; }
+  .mw-select.mw-hole-wcs { width: 8.5em !important; min-width: 0 !important; min-height: 0 !important; padding: 6px 8px !important; }
   /* QuickCut's drill origin picker: the hole inside its dashed box, with
      a dot on each corner, edge middle and the center. Spans, not buttons,
      so ncSender's button styles don't reach them. */
@@ -259,7 +261,7 @@
     </aside>
     <main class="mw-panel">
     <div class="mw-tab" data-tab="holes">
-      <p class="mw-intro"><strong>Put <span data-slot="wcs">G54</span> X0 Y0 on a spoilboard hole.</strong> Click a hole, or jog near one
+      <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a spoilboard hole.</strong> Click a hole, or jog near one
         and press <strong>Nearest</strong>; the dots pick its center or a side. <strong>Go to</strong> moves there at Safe Z;
         <strong>Set</strong> makes it X0 Y0 without moving.</p>
       <section class="mw-card" aria-label="Pick a hole">
@@ -273,7 +275,13 @@
           <div class="mw-holebar-actions">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Nearest</button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-goto" disabled title="Move the spindle over the picked point: first up to ncSender's Safe Z, then across. Tap twice.">Go to</button>
-            <button type="button" class="mw-btn mw-btn-small" id="mw-hole-set" disabled title="Make the picked point the work offset's X0 Y0 (G10 L2). Nothing moves.">Set <span data-slot="wcs">G54</span> XY</button>
+            <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
+              <option value="" selected>Active</option>
+              <option value="1">G54</option><option value="2">G55</option><option value="3">G56</option>
+              <option value="4">G57</option><option value="5">G58</option><option value="6">G59</option>
+              <option value="7">G59.1</option><option value="8">G59.2</option><option value="9">G59.3</option>
+            </select>
+            <button type="button" class="mw-btn mw-btn-small" id="mw-hole-set" disabled title="Make the picked point X0 Y0 of the work offset active in ncSender (G10 L2). Nothing moves.">Set <span data-hole-wcs>G54</span> XY</button>
           </div>
         </div>
         <p class="mw-status" id="mw-hole-status" role="status"></p>
@@ -1343,6 +1351,7 @@
     $('mw-hole-set').addEventListener('click', setHoleZero);
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
     $('mw-hole-goto').addEventListener('click', goToHole);
+    $('mw-hole-wcs').addEventListener('change', renderHoles);
     setHoleOrigin(saved.holeOrigin);
     ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
       d.addEventListener('click', function() { setHoleOrigin(d.getAttribute('data-origin')); renderHoles(); saveSettings(); });
@@ -1374,6 +1383,19 @@
     'back-left': 'back left', 'back-right': 'back right', 'front-left': 'front left', 'front-right': 'front right'
   };
   // The point X0 Y0 goes on for the picked hole, with the origin's offset.
+  // The holes tab sets the offset picked beside Set, by default whichever
+  // is active in ncSender (the macros' Work Offset to Set when ncSender
+  // hasn't reported one).
+  function holeWcs() {
+    var picked = $('mw-hole-wcs').value;
+    return picked ? +picked : activeWcs();
+  }
+  function activeWcs() {
+    var name = String((state.machine || {}).workspace || '').toUpperCase();
+    for (var k in WCS_NAMES) if (WCS_NAMES[k] === name) return +k;
+    var s = readSettings();
+    return s ? s.wcs : 1;
+  }
   function holeTarget(p) {
     var h = readHoles();
     var o = holeOriginOffset(holes.origin, h ? h.diaMm / 2 : 0);
@@ -1468,7 +1490,9 @@
       });
     }
     // The work offset's X0 Y0 now, and where the spindle is.
-    var ms = state.machine || {}, s = readSettings(), wcs = s ? WCS_NAMES[s.wcs] : 'G54';
+    var ms = state.machine || {}, wcs = WCS_NAMES[holeWcs()];
+    ROOT.querySelectorAll('[data-hole-wcs]').forEach(function(el) { el.textContent = wcs; });
+    $('mw-hole-wcs').options[0].textContent = 'Active (' + WCS_NAMES[activeWcs()] + ')';
     var zero = xyOf(ms[wcs.toLowerCase()]), here = xyOf(ms.MPos);
     if (zero) {
       var zx = +X(zero.x), zy = +Y(zero.y);
@@ -1579,19 +1603,20 @@
   // Sets the work offset's X0 Y0 on the picked hole: G10 L2, no move. Only
   // on a homed, idle machine, since the holes are machine positions.
   async function setHoleZero() {
-    var status = $('mw-hole-status'), btn = $('mw-hole-set'), p = holes.grid[holes.picked], s = readSettings();
-    if (!p || !s) return;
+    var status = $('mw-hole-status'), btn = $('mw-hole-set'), p = holes.grid[holes.picked];
+    if (!p) return;
     btn.disabled = true;
     try {
       await machineReady();
       var tg = holeTarget(p);
-      var cmds = holeCommands(s.wcs, tg.x, tg.y, state.imperial);
+      var wcsP = holeWcs();
+      var cmds = holeCommands(wcsP, tg.x, tg.y, state.imperial);
       for (var i = 0; i < cmds.length; i++) {
         var r = await sendCommand(cmds[i]);
         if (!r.ok) throw new Error('the controller rejected ' + cmds[i]);
       }
       status.setAttribute('data-state', 'ok');
-      status.textContent = WCS_NAMES[s.wcs] + ' X0 Y0 is now on the ' + ORIGIN_NOTES[holes.origin] + ' of column ' + p.col + ', row ' + p.row + ' (machine X ' + fmt(tg.x) + ', Y ' + fmt(tg.y) + ' mm).';
+      status.textContent = WCS_NAMES[wcsP] + ' X0 Y0 is now on the ' + ORIGIN_NOTES[holes.origin] + ' of column ' + p.col + ', row ' + p.row + ' (machine X ' + fmt(tg.x) + ', Y ' + fmt(tg.y) + ' mm).';
       await readMachineState();
       renderHoles();
       readNumbers();
@@ -1611,7 +1636,7 @@
   var help = { tab: 'holes', from: 'holes' };
   var HELP_TOPICS = {
     holes: { name: 'Spoilboard holes', notes: [
-      'Puts the work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say) without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The machine has to be homed and idle, since the holes are machine positions.',
+      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say) without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
       '<strong>Go to</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set), then across, in machine coordinates. Tap it twice; the first tap turns it into <strong>Move?</strong> for 3 seconds.',

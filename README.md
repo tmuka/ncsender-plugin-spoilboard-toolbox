@@ -88,8 +88,9 @@ to the spindle and says how far off it is, so you get the grid's exact position 
 the bit). The dots beside the Set button pick where on the hole X0 Y0 goes: the center, or an edge
 or corner one hole radius out (back is +Y, right is +X), e.g. back right for a stop pin's +X +Y side.
 **Go to** moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0 when
-none is set); tap it twice, since it moves the machine. **Set G54 XY** sends `G10 L2 P1 X… Y…`, which sets the
-work offset without moving anything. It needs a homed, idle machine, since the holes are machine
+none is set); tap it twice, since it moves the machine. **Set G54 XY** sends `G10 L2 P1 X… Y…`, which sets that
+work offset without moving anything. The menu beside it picks the offset: **Active** (the default)
+follows the one ncSender is using, or pick any of G54–G59.3. It needs a homed, idle machine, since the holes are machine
 positions. The travel and its direction come from grblHAL's `$130`/`$131` and homing settings
 (`$22`/`$23`).
 
