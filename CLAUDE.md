@@ -1,7 +1,7 @@
 # Zero Swapper: notes for working on this plugin
 
-Zero Swapper (called Macro Wiz before 0.3.1; the id keeps the old name so installs and settings
-carry over) is a client-only ncSender plugin (`com.tmuka.macrowiz`). It runs a wizard that checks a
+Zero Swapper (`com.tmuka.zeroswapper`; called Macro Wiz, `com.tmuka.macrowiz`, before 0.3.3) is a
+client-only ncSender plugin. It runs a wizard that checks a
 grblHAL controller, then writes ncSender macros (M98 macros) that put work Z0 on the spoilboard or the
 stock top with any measured tool, without probing each time. README.md is the user guide; this file
 is how it's built, why, and how to work on it.
@@ -116,7 +116,7 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
   - `POST` with `id: 0` auto-assigns an id;
   - `PUT` updates;
   - `DELETE` removes.
-- Plugin settings: `/api/plugins/com.tmuka.macrowiz/settings`.
+- Plugin settings: `/api/plugins/com.tmuka.zeroswapper/settings`.
 - **Keyboard shortcuts:** every macro is registered as shortcut action `Macro:<id>`; plugins can't register
   shortcuts. So deleting a macro breaks any shortcut on it (recreated macros get new ids). That's why
   **Delete** asks twice and warns, and **Create macros** updates in place instead.
@@ -127,7 +127,7 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 
 ```
 npm test         # node --test tests/*.cjs: the pure block plus the expression simulator
-npm run build    # dist/com.tmuka.macrowiz_v<version>.zip from the last commit (commit first)
+npm run build    # dist/com.tmuka.zeroswapper_v<version>.zip from the last commit (commit first)
 ```
 
 - Bump `version` in both `manifest.json` and `package.json` for a release build.

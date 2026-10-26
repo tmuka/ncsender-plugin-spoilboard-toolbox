@@ -1,6 +1,6 @@
 {
   "name": "ncsender-zero-swapper",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "ncSender plugin: swap work zero between spoilboard and stock top with any measured tool",
   "private": true,
   "scripts": {

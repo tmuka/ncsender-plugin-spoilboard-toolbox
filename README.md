@@ -204,7 +204,7 @@ Build the zip (below) and install it from ncSender's Plugin Manager. The wizard 
 
 ```
 npm test         # pure functions from config.html, plus a stand-in for grblHAL running the G10 lines
-npm run build    # dist/com.tmuka.macrowiz_v<version>.zip from the committed files
+npm run build    # dist/com.tmuka.zeroswapper_v<version>.zip from the committed files
 ```
 
 `config.html` is the whole plugin: ncSender runs a client-only plugin's page inline, so its script
