@@ -4,7 +4,7 @@
 spoilboard or on top of your stock — no probing, no math. Another click puts your old Z0 back.**
 Extras find X/Y zero at a midpoint and save / restore it for fixtures.
 
-Zero Swapper is an ncSender plugin (it was called Macro Wiz before 0.3.1). A short wizard checks your grblHAL controller, then writes the
+Zero Swapper is an ncSender plugin. A short wizard checks your grblHAL controller, then writes the
 ncSender macros that do this, which you run from the Macros tab or a keyboard shortcut.
 
 ## Who it's for
@@ -96,8 +96,7 @@ So you probe once per new stock, not once per tool.
 4. **Macros.** Creates the ncSender macros, or updates the ones it made before:
    Every ncSender macro can have a keyboard shortcut (ncSender's shortcut settings, **Macros** group).
    Their names start with **ZS:**, and each description is the macro's first comment line (e.g.
-   "record spoilboard height"). Macros from earlier versions, named "MW: …" or "Macro Wiz: …", are renamed in
-   place.
+   "record spoilboard height").
    - **Record spoilboard height**: probes down onto the block and stores the height.
    - **Measure stock thickness**: with the block on the stock, probes down and stores
      stock top minus the spoilboard height.
@@ -106,7 +105,7 @@ So you probe once per new stock, not once per tool.
      spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
-   - **Delete Zero Swapper macros** removes every macro whose name starts with "ZS:" or the older "MW:" or "Macro Wiz:" (for example
+   - **Delete Zero Swapper macros** removes every macro whose name starts with "ZS:" (for example
      ones left over from older settings or another work offset) and nothing else. The first press lists
      them and turns into **Confirm delete**; a second press within a few seconds deletes. Keyboard
      shortcuts set on deleted macros stop working (recreated macros get new numbers), so to change
