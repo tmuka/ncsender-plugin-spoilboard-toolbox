@@ -1,24 +1,92 @@
 <style>
+  /* QuickCut's layout: the dialog's own header is hidden while this is
+     open; the sidebar names the plugin and has Close. */
+  .plugin-dialog-header { display: none !important; }
+  .plugin-dialog-content { padding: 0 !important; }
   .mw-wrapper {
     --mw-gap: 12px;
-    width: 760px;
+    width: 953px;
     max-width: 95vw;
+    height: 85vh;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     background: var(--color-surface);
     color: var(--color-text-primary);
     font-size: 0.9rem;
   }
+  .mw-container { display: flex; flex: 1; min-height: 0; }
+  .mw-sidebar {
+    display: flex; flex-direction: column; flex-shrink: 0; width: 220px;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+    padding: 22px 14px 14px;
+  }
+  .mw-sidebar-header {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 0 12px 18px; margin-bottom: 12px; border-bottom: 1px solid var(--color-border);
+  }
+  .mw-sidebar-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); opacity: 0.85; }
+  .mw-sidebar-title { font-size: 1.05rem; font-weight: 600; color: var(--color-text-primary); }
+  .mw-sidebar-unit {
+    align-self: flex-start; margin-top: 6px; padding: 3px 10px; border-radius: 999px;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.3;
+    color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  }
+  .mw-sidebar-nav { display: flex; flex-direction: column; gap: 6px; }
+  .mw-nav-btn {
+    -webkit-appearance: none; appearance: none; display: flex; align-items: center; gap: 10px;
+    padding: 12px; width: 100%; margin: 0; text-align: left; line-height: 1.2;
+    background: transparent !important; border: none !important; border-radius: 8px !important; box-shadow: none; outline: none;
+    color: var(--color-text-secondary) !important; font: inherit; font-size: 0.9rem; font-weight: 500; cursor: pointer;
+  }
+  .mw-nav-btn:hover { background: color-mix(in srgb, var(--color-text-primary, #fff) 5%, transparent) !important; color: var(--color-text-primary) !important; }
+  .mw-nav-btn.active {
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent) !important;
+    color: var(--color-text-primary) !important; font-weight: 600;
+  }
+  .mw-nav-icon { display: inline-flex; width: 20px; height: 20px; color: inherit; opacity: 0.8; }
+  .mw-nav-btn.active .mw-nav-icon { color: var(--color-accent); opacity: 1; }
+  .mw-nav-icon svg { width: 18px; height: 18px; }
+  .mw-sidebar-footer {
+    margin-top: auto; padding-top: 14px; border-top: 1px solid var(--color-border);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .mw-close { width: 100%; }
+  .mw-help-card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+  .mw-help-card li { line-height: 1.45; }
+  .mw-help-tips { display: grid; grid-template-columns: minmax(110px, max-content) 1fr; gap: 6px 14px; margin: 0; line-height: 1.45; }
+  .mw-help-tips dt { font-weight: 600; }
+  .mw-help-tips dd { margin: 0; }
+  .mw-help-card a { color: var(--color-accent); }
   .mw-panel {
     flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: var(--mw-gap);
-    padding: 4px 20px 20px;
+    padding: 20px;
   }
+  .mw-tab { display: flex; flex-direction: column; gap: var(--mw-gap); }
+  .mw-tab[hidden] { display: none; }
+  .mw-help-body { display: flex; flex-direction: column; gap: var(--mw-gap); }
+  .mw-help-title { margin: 0; font-size: 1.1rem; font-weight: 600; }
+  .mw-holes-set { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  .mw-hole-origin-wrap { display: flex; gap: 12px; align-items: center; }
+  .mw-hole-origin {
+    position: relative; display: grid; grid-template-columns: repeat(3, 14px); gap: 8px; padding: 6px;
+  }
+  .mw-hole-origin::before {
+    content: ''; position: absolute; inset: 13px; border-radius: 50%;
+    border: 1.5px dashed var(--color-text-secondary); opacity: 0.6; pointer-events: none;
+  }
+  .mw-dot {
+    position: relative; width: 14px; height: 14px; padding: 0; border-radius: 50%; cursor: pointer;
+    background: var(--color-surface) !important; border: 1.5px solid var(--color-text-secondary) !important;
+  }
+  .mw-dot:hover { border-color: var(--color-accent) !important; }
+  .mw-dot[aria-pressed="true"] { background: var(--color-accent) !important; border-color: var(--color-accent) !important; }
+  .mw-hole-map .mw-h-target { stroke: var(--color-warning, #d9a441); stroke-width: 2; fill: none; }
   .mw-intro { margin: 0; color: var(--color-text-secondary); line-height: 1.45; }
   .mw-diagram { width: 100%; height: auto; display: block; flex: none; }
   .mw-diagram text { font-family: inherit; font-size: 12px; fill: var(--color-text-primary); }
@@ -138,241 +206,284 @@
 </style>
 
 <div class="mw-wrapper">
-  <div class="mw-panel">
-    <p class="mw-intro">
-      <strong>Probe your spoilboard once.</strong> After that, with any measured tool, one macro puts
-      work Z0 on the spoilboard or on top of your stock, with no probing, and another puts your old Z0
-      back. For machines that measure tool lengths (a tool setter or an ATC) running grblHAL. Midpoint
-      macros for X/Y are extras.
-    </p>
-    <svg class="mw-diagram" viewBox="0 0 720 236" role="img" aria-label="Side view: the spoilboard height is recorded once with a probe block; Z0 then goes on the spoilboard or the stock top for any measured tool, and back to your own Z0.">
-      <defs>
-        <pattern id="mw-d-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="7" stroke="var(--color-border)" stroke-width="1.5"/>
-        </pattern>
-        <marker id="mw-d-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--color-text-secondary)"/>
-        </marker>
-      </defs>
-      <!-- Spoilboard, probe block, stock -->
-      <rect x="16" y="186" width="420" height="26" fill="url(#mw-d-hatch)" class="mw-d-edge" style="stroke: var(--color-border)"/>
-      <text x="26" y="228" class="mw-d-note">Spoilboard<tspan data-val="spoil"></tspan></text>
-      <rect x="58" y="164" width="52" height="22" rx="2" fill="color-mix(in srgb, var(--color-accent) 22%, transparent)" stroke="var(--color-accent)"/>
-      <text x="84" y="179" text-anchor="middle" style="font-size: 10px">block</text>
-      <rect x="236" y="122" width="156" height="64" rx="2" fill="color-mix(in srgb, var(--color-warning, #d9a441) 22%, transparent)" stroke="color-mix(in srgb, var(--color-warning, #d9a441) 70%, transparent)"/>
-      <text x="314" y="158" text-anchor="middle">Stock</text>
-      <text x="314" y="174" text-anchor="middle" class="mw-d-note" data-val="thick"></text>
-      <!-- Spindle and a measured tool just above the block -->
-      <rect x="62" y="10" width="44" height="46" rx="5" fill="var(--color-surface-muted)" stroke="var(--color-text-secondary)"/>
-      <path d="M72 56 L96 56 L91 70 L77 70 z" fill="var(--color-surface-muted)" stroke="var(--color-text-secondary)"/>
-      <rect x="80.5" y="70" width="7" height="82" rx="1.5" fill="var(--color-text-secondary)"/>
-      <path d="M80.5 152 L84 158 L87.5 152 z" fill="var(--color-text-secondary)"/>
-      <!-- Tool length offset -->
-      <line x1="46" y1="62" x2="46" y2="157" class="mw-d-dim" marker-start="url(#mw-d-arr)" marker-end="url(#mw-d-arr)"/>
-      <line x1="40" y1="62" x2="70" y2="62" class="mw-d-dim"/>
-      <line x1="40" y1="157" x2="78" y2="157" class="mw-d-dim"/>
-      <text x="122" y="30">Tool length offset</text>
-      <text x="122" y="44" class="mw-d-note">measured by your tool setter or ATC,</text>
-      <text x="122" y="57" class="mw-d-note">added by grblHAL for every tool</text>
-      <text x="122" y="74" class="mw-d-val" data-val="tlo"></text>
-      <!-- The two Z0 levels -->
-      <line x1="16" y1="186" x2="436" y2="186" class="mw-d-line"/>
-      <line x1="236" y1="122" x2="436" y2="122" class="mw-d-line"/>
-      <line x1="408" y1="124" x2="408" y2="184" class="mw-d-dim" marker-start="url(#mw-d-arr)" marker-end="url(#mw-d-arr)"/>
-      <text x="0" y="0" text-anchor="middle" class="mw-d-note" transform="translate(424 154) rotate(-90)">thickness</text>
-      <text x="236" y="114" class="mw-d-z0">Z0 on stock top</text>
-      <text x="350" y="114" class="mw-d-note">+ thickness (<tspan data-slot="thick">G59.1</tspan> Z)</text>
-      <text x="236" y="201" class="mw-d-z0" dy="0" style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px">Z0 on spoilboard</text>
-      <text x="352" y="201" class="mw-d-note" style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px">height in <tspan data-slot="slot">G59.3</tspan> Z</text>
-      <!-- Where the work offset's Z0 is now -->
-      <text x="230" y="118" text-anchor="end" class="mw-d-now" data-now="stock"><tspan data-slot="wcs">G54</tspan> Z0 now &#9656;</text>
-      <text x="230" y="182" text-anchor="end" class="mw-d-now" data-now="spoil"><tspan data-slot="wcs">G54</tspan> Z0 now &#9656;</text>
-      <!-- The steps -->
-      <line x1="458" y1="14" x2="458" y2="222" class="mw-d-edge"/>
-      <circle cx="486" cy="30" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
-      <text x="486" y="34" text-anchor="middle" class="mw-d-num">1</text>
-      <text x="506" y="28">Record spoilboard height</text>
-      <text x="506" y="43" class="mw-d-note">once, with the block on the spoilboard;</text>
-      <text x="506" y="56" class="mw-d-note">again after surfacing it</text>
-      <circle cx="486" cy="92" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
-      <text x="486" y="96" text-anchor="middle" class="mw-d-num">2</text>
-      <text x="506" y="90">Z0 on spoilboard or stock top</text>
-      <text x="506" y="105" class="mw-d-note">any measured tool, no probing; for new</text>
-      <text x="506" y="118" class="mw-d-note">stock, Measure or Store its thickness</text>
-      <circle cx="486" cy="154" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
-      <text x="486" y="158" text-anchor="middle" class="mw-d-num">3</text>
-      <text x="506" y="152">Z0 back to saved</text>
-      <text x="506" y="167" class="mw-d-note">your own Z0, kept in <tspan data-slot="backup">G59.2</tspan> Z</text>
-      <text x="506" y="181" class="mw-d-val" data-val="saved"></text>
-      <text x="472" y="206" class="mw-d-note">Stops, changing nothing, if the machine isn&#8217;t</text>
-      <text x="472" y="219" class="mw-d-note">homed or no tool length offset is active.</text>
-    </svg>
-    <p class="mw-d-refresh"><span id="mw-d-status">The numbers come from the controller ($#).</span> <a href="#" id="mw-d-refresh">Refresh</a></p>
-
-    <section class="mw-card" aria-labelledby="mw-check-title">
-      <div class="mw-card-head">
-        <h3 class="mw-card-title" id="mw-check-title"><span class="mw-step">1</span>Check the controller</h3>
-        <button type="button" class="mw-btn" id="mw-run-checks">Run checks</button>
+  <div class="mw-container">
+    <aside class="mw-sidebar">
+      <div class="mw-sidebar-header">
+        <span class="mw-sidebar-eyebrow">ncSender</span>
+        <span class="mw-sidebar-title">Zero Swapper</span>
+        <span class="mw-sidebar-unit" id="mw-unit-badge">METRIC (mm)</span>
       </div>
-      <p class="mw-hint">Asks the controller for its state (<code class="mw-inline">$G</code>, <code class="mw-inline">$#</code>) and tries one harmless expression. Nothing moves.</p>
-      <ul class="mw-checks" id="mw-checks"></ul>
-    </section>
-
-    <section class="mw-card" aria-labelledby="mw-settings-title">
-      <h3 class="mw-card-title" id="mw-settings-title"><span class="mw-step">2</span>Settings</h3>
-      <div class="mw-row">
-        <div class="mw-field">
-          <label for="mw-block">Probe Block Thickness (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-block" step="0.001" min="0.001" value="15">
-          <span class="mw-source" id="mw-block-source" hidden>From ncSender&rsquo;s Standard Block probe settings.</span>
+      <nav class="mw-sidebar-nav">
+        <button type="button" class="mw-nav-btn active" data-tab="holes">
+          <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
+          <span class="mw-nav-label">Spoilboard holes</span>
+        </button>
+        <button type="button" class="mw-nav-btn" data-tab="macros">
+          <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14L5 19h14"/></svg></span>
+          <span class="mw-nav-label">Z0 macros</span>
+        </button>
+      </nav>
+      <div class="mw-sidebar-footer">
+        <button type="button" class="mw-nav-btn" id="mw-help-btn" title="More about this tab">
+          <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.6"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg></span>
+          <span class="mw-nav-label">Help</span>
+        </button>
+        <button type="button" class="mw-btn mw-close" id="mw-close">Close</button>
+      </div>
+    </aside>
+    <main class="mw-panel">
+    <div class="mw-tab" data-tab="holes">
+      <p class="mw-intro"><strong>Put <span data-slot="wcs">G54</span> X0 Y0 on a spoilboard hole.</strong> Click a hole, or jog roughly over one
+        and press <strong>Nearest hole</strong>, then <strong>Set</strong>. Nothing moves; it only sets the work offset.</p>
+      <section class="mw-card" aria-label="Pick a hole">
+        <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard holes; click one to pick it."></svg>
+        <div class="mw-holes-pick">
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Nearest hole</button>
+          <span id="mw-hole-picked" class="mw-hint">Click a hole, or jog near one and press Nearest hole.</span>
         </div>
-        <div class="mw-field">
-          <label for="mw-feed">Probe Feed (<span class="mw-unit">mm</span>/min)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-feed" step="1" min="1" value="100">
+        <div class="mw-holes-set">
+          <div class="mw-hole-origin-wrap">
+            <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><button type="button" class="mw-dot" data-origin="back-left" title="−X +Y side (back left)"></button><button type="button" class="mw-dot" data-origin="back-center" title="+Y side (back)"></button><button type="button" class="mw-dot" data-origin="back-right" title="+X +Y side (back right)"></button><button type="button" class="mw-dot" data-origin="left-center" title="−X side (left)"></button><button type="button" class="mw-dot" data-origin="center" title="Center of the hole"></button><button type="button" class="mw-dot" data-origin="right-center" title="+X side (right)"></button><button type="button" class="mw-dot" data-origin="front-left" title="−X −Y side (front left)"></button><button type="button" class="mw-dot" data-origin="front-center" title="−Y side (front)"></button><button type="button" class="mw-dot" data-origin="front-right" title="+X −Y side (front right)"></button></div>
+            <span class="mw-hint" id="mw-hole-origin-note">X0 Y0 on the hole&rsquo;s center.</span>
+          </div>
+          <button type="button" class="mw-btn" id="mw-hole-set" disabled>Set <span data-slot="wcs">G54</span> X0 Y0 here</button>
         </div>
-        <div class="mw-field">
-          <label for="mw-travel">Max Probe Travel (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-travel" step="1" min="1" value="30">
-        </div>
-        <div class="mw-field">
-          <label for="mw-retract">Retract After (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-retract" step="0.5" min="0.1" value="5">
-        </div>
-        <div class="mw-field">
-          <label for="mw-stock">Stock Thickness (<span class="mw-unit">mm</span>)</label>
-          <div class="mw-inline-row">
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock" step="0.001" min="0" value="18" title="A known stock thickness, e.g. a sheet. Store writes it to the controller for the stock-top macro; the measure macro writes a probed one.">
-            <button type="button" class="mw-btn mw-btn-small" id="mw-store-stock">Store</button>
+        <p class="mw-status" id="mw-hole-status" role="status"></p>
+      </section>
+      <section class="mw-card" aria-labelledby="mw-holes-title">
+        <h3 class="mw-card-title" id="mw-holes-title">Setup</h3>
+        <p class="mw-hint">Describe your spoilboard&rsquo;s hole grid once (dog holes, say). The machine&rsquo;s travel comes from grblHAL.</p>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-hole-dia">Hole Diameter (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-dia" step="0.01" min="0.1" value="20">
+          </div>
+          <div class="mw-field">
+            <label for="mw-hole-sx">X Spacing (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-sx" step="0.1" min="0.1" value="96" title="Center to center between holes along X.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-hole-sy">Y Spacing (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-sy" step="0.1" min="0.1" value="96" title="Center to center between holes along Y.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-hole-ix">Inset X (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-ix" step="0.01" min="0" value="48" title="From machine X0 to the center of the first column of holes, into the machine's travel.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-hole-iy">Inset Y (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-iy" step="0.01" min="0" value="48" title="From machine Y0 to the center of the first row of holes, into the machine's travel.">
           </div>
         </div>
-        <div class="mw-field">
-          <label for="mw-wcs">Work Offset to Set</label>
-          <select class="mw-select" id="mw-wcs">
-            <option value="1" selected>G54</option>
-            <option value="2">G55</option>
-            <option value="3">G56</option>
-            <option value="4">G57</option>
-            <option value="5">G58</option>
-            <option value="6">G59</option>
-          </select>
+        <div class="mw-holes-tools">
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-here" title="Jog the bit to the center of the first hole and press this: Inset X and Inset Y are filled in from where the machine is. Any other hole works too; the insets come out the same.">Set Insets: bit at first hole&rsquo;s center</button>
+          <span class="mw-hint" id="mw-hole-note"></span>
         </div>
-        <div class="mw-field">
-          <label for="mw-slot">Store Height In</label>
-          <select class="mw-select" id="mw-slot">
-            <option value="9" selected>G59.3 Z</option>
-            <option value="8">G59.2 Z</option>
-            <option value="7">G59.1 Z</option>
-          </select>
-        </div>
-        <div class="mw-field">
-          <label for="mw-backup">Save Old Z0 In</label>
-          <select class="mw-select" id="mw-backup">
-            <option value="9">G59.3 Z</option>
-            <option value="8" selected>G59.2 Z</option>
-            <option value="7">G59.1 Z</option>
-          </select>
-        </div>
-        <div class="mw-field">
-          <label for="mw-thick">Store Thickness In</label>
-          <select class="mw-select" id="mw-thick">
-            <option value="9">G59.3 Z</option>
-            <option value="8">G59.2 Z</option>
-            <option value="7" selected>G59.1 Z</option>
-          </select>
-        </div>
-      </div>
-      <p class="mw-status" id="mw-store-status" role="status"></p>
-      <p class="mw-hint">
-        The spoilboard height, your saved Z0 and the stock thickness are kept in three spare work offsets'
-        Z, which the controller keeps through power cycles; pick ones you don't use. The stock-top macro
-        uses whatever thickness is stored: press <strong>Store</strong> for a known thickness, or run the
-        measure macro. The macros switch to mm (<code class="mw-inline">G21</code>) while they work,
-        because grblHAL reports stored offsets and tool lengths in mm whatever the units mode.
+      </section>
+    </div>
+    <div class="mw-tab" data-tab="macros" hidden>
+      <p class="mw-intro">
+        <strong>Probe your spoilboard once.</strong> After that, with any measured tool, one macro puts
+        work Z0 on the spoilboard or on top of your stock, with no probing, and another puts your old Z0
+        back. For machines that measure tool lengths (a tool setter or an ATC) running grblHAL. Midpoint
+        macros for X/Y are extras.
       </p>
-    </section>
+      <svg class="mw-diagram" viewBox="0 0 720 236" role="img" aria-label="Side view: the spoilboard height is recorded once with a probe block; Z0 then goes on the spoilboard or the stock top for any measured tool, and back to your own Z0.">
+        <defs>
+          <pattern id="mw-d-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="7" stroke="var(--color-border)" stroke-width="1.5"/>
+          </pattern>
+          <marker id="mw-d-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--color-text-secondary)"/>
+          </marker>
+        </defs>
+        <!-- Spoilboard, probe block, stock -->
+        <rect x="16" y="186" width="420" height="26" fill="url(#mw-d-hatch)" class="mw-d-edge" style="stroke: var(--color-border)"/>
+        <text x="26" y="228" class="mw-d-note">Spoilboard<tspan data-val="spoil"></tspan></text>
+        <rect x="58" y="164" width="52" height="22" rx="2" fill="color-mix(in srgb, var(--color-accent) 22%, transparent)" stroke="var(--color-accent)"/>
+        <text x="84" y="179" text-anchor="middle" style="font-size: 10px">block</text>
+        <rect x="236" y="122" width="156" height="64" rx="2" fill="color-mix(in srgb, var(--color-warning, #d9a441) 22%, transparent)" stroke="color-mix(in srgb, var(--color-warning, #d9a441) 70%, transparent)"/>
+        <text x="314" y="158" text-anchor="middle">Stock</text>
+        <text x="314" y="174" text-anchor="middle" class="mw-d-note" data-val="thick"></text>
+        <!-- Spindle and a measured tool just above the block -->
+        <rect x="62" y="10" width="44" height="46" rx="5" fill="var(--color-surface-muted)" stroke="var(--color-text-secondary)"/>
+        <path d="M72 56 L96 56 L91 70 L77 70 z" fill="var(--color-surface-muted)" stroke="var(--color-text-secondary)"/>
+        <rect x="80.5" y="70" width="7" height="82" rx="1.5" fill="var(--color-text-secondary)"/>
+        <path d="M80.5 152 L84 158 L87.5 152 z" fill="var(--color-text-secondary)"/>
+        <!-- Tool length offset -->
+        <line x1="46" y1="62" x2="46" y2="157" class="mw-d-dim" marker-start="url(#mw-d-arr)" marker-end="url(#mw-d-arr)"/>
+        <line x1="40" y1="62" x2="70" y2="62" class="mw-d-dim"/>
+        <line x1="40" y1="157" x2="78" y2="157" class="mw-d-dim"/>
+        <text x="122" y="30">Tool length offset</text>
+        <text x="122" y="44" class="mw-d-note">measured by your tool setter or ATC,</text>
+        <text x="122" y="57" class="mw-d-note">added by grblHAL for every tool</text>
+        <text x="122" y="74" class="mw-d-val" data-val="tlo"></text>
+        <!-- The two Z0 levels -->
+        <line x1="16" y1="186" x2="436" y2="186" class="mw-d-line"/>
+        <line x1="236" y1="122" x2="436" y2="122" class="mw-d-line"/>
+        <line x1="408" y1="124" x2="408" y2="184" class="mw-d-dim" marker-start="url(#mw-d-arr)" marker-end="url(#mw-d-arr)"/>
+        <text x="0" y="0" text-anchor="middle" class="mw-d-note" transform="translate(424 154) rotate(-90)">thickness</text>
+        <text x="236" y="114" class="mw-d-z0">Z0 on stock top</text>
+        <text x="350" y="114" class="mw-d-note">+ thickness (<tspan data-slot="thick">G59.1</tspan> Z)</text>
+        <text x="236" y="201" class="mw-d-z0" dy="0" style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px">Z0 on spoilboard</text>
+        <text x="352" y="201" class="mw-d-note" style="paint-order: stroke; stroke: var(--color-surface); stroke-width: 3px">height in <tspan data-slot="slot">G59.3</tspan> Z</text>
+        <!-- Where the work offset's Z0 is now -->
+        <text x="230" y="118" text-anchor="end" class="mw-d-now" data-now="stock"><tspan data-slot="wcs">G54</tspan> Z0 now &#9656;</text>
+        <text x="230" y="182" text-anchor="end" class="mw-d-now" data-now="spoil"><tspan data-slot="wcs">G54</tspan> Z0 now &#9656;</text>
+        <!-- The steps -->
+        <line x1="458" y1="14" x2="458" y2="222" class="mw-d-edge"/>
+        <circle cx="486" cy="30" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
+        <text x="486" y="34" text-anchor="middle" class="mw-d-num">1</text>
+        <text x="506" y="28">Record spoilboard height</text>
+        <text x="506" y="43" class="mw-d-note">once, with the block on the spoilboard;</text>
+        <text x="506" y="56" class="mw-d-note">again after surfacing it</text>
+        <circle cx="486" cy="92" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
+        <text x="486" y="96" text-anchor="middle" class="mw-d-num">2</text>
+        <text x="506" y="90">Z0 on spoilboard or stock top</text>
+        <text x="506" y="105" class="mw-d-note">any measured tool, no probing; for new</text>
+        <text x="506" y="118" class="mw-d-note">stock, Measure or Store its thickness</text>
+        <circle cx="486" cy="154" r="11" fill="color-mix(in srgb, var(--color-accent) 18%, transparent)"/>
+        <text x="486" y="158" text-anchor="middle" class="mw-d-num">3</text>
+        <text x="506" y="152">Z0 back to saved</text>
+        <text x="506" y="167" class="mw-d-note">your own Z0, kept in <tspan data-slot="backup">G59.2</tspan> Z</text>
+        <text x="506" y="181" class="mw-d-val" data-val="saved"></text>
+        <text x="472" y="206" class="mw-d-note">Stops, changing nothing, if the machine isn&#8217;t</text>
+        <text x="472" y="219" class="mw-d-note">homed or no tool length offset is active.</text>
+      </svg>
+      <p class="mw-d-refresh"><span id="mw-d-status">The numbers come from the controller ($#).</span> <a href="#" id="mw-d-refresh">Refresh</a></p>
 
-    <section class="mw-card" aria-labelledby="mw-extras-title">
-      <h3 class="mw-card-title" id="mw-extras-title"><span class="mw-step">3</span>Extras</h3>
-      <div class="mw-extras">
-        <label class="mw-extra"><input type="checkbox" id="mw-x-midX" checked><span><strong>Midpoint X</strong><span>Move halfway back to X0, e.g. after touching both sides of round stock.</span></span></label>
-        <label class="mw-extra"><input type="checkbox" id="mw-x-midY" checked><span><strong>Midpoint Y</strong><span>The same along Y.</span></span></label>
-        <label class="mw-extra"><input type="checkbox" id="mw-x-midXY" checked><span><strong>Midpoint XY</strong><span>Move halfway to X0 Y0, e.g. from the opposite corner of square stock.</span></span></label>
-        <label class="mw-extra"><input type="checkbox" id="mw-x-center" checked><span><strong>Set XY0 to Midpoint</strong><span>Put X0 Y0 halfway to the current spot without moving.</span></span></label>
-        <label class="mw-extra"><input type="checkbox" id="mw-x-fixture" checked><span><strong>Save / restore X/Y</strong><span>Keep the work offset's X/Y for a fixture or jig, and bring it back later. Uses the saved-Z0 slot's X/Y.</span></span></label>
-      </div>
-      <p class="mw-hint" id="mw-safe-note">Midpoint moves first lift to ncSender&rsquo;s Safe Z. They use the active work offset.</p>
-    </section>
+      <section class="mw-card" aria-labelledby="mw-check-title">
+        <div class="mw-card-head">
+          <h3 class="mw-card-title" id="mw-check-title"><span class="mw-step">1</span>Check the controller</h3>
+          <button type="button" class="mw-btn" id="mw-run-checks">Run checks</button>
+        </div>
+        <p class="mw-hint">Asks the controller for its state (<code class="mw-inline">$G</code>, <code class="mw-inline">$#</code>) and tries one harmless expression. Nothing moves.</p>
+        <ul class="mw-checks" id="mw-checks"></ul>
+      </section>
 
-    <section class="mw-card" aria-labelledby="mw-macros-title">
-      <div class="mw-card-head">
-        <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">4</span>Macros</h3>
-        <div class="mw-head-actions">
-          <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete Zero Swapper macros</button>
-          <button type="button" class="mw-btn" id="mw-save">Create macros</button>
+      <section class="mw-card" aria-labelledby="mw-settings-title">
+        <h3 class="mw-card-title" id="mw-settings-title"><span class="mw-step">2</span>Settings</h3>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-block">Probe Block Thickness (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-block" step="0.001" min="0.001" value="15">
+            <span class="mw-source" id="mw-block-source" hidden>From ncSender&rsquo;s Standard Block probe settings.</span>
+          </div>
+          <div class="mw-field">
+            <label for="mw-feed">Probe Feed (<span class="mw-unit">mm</span>/min)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-feed" step="1" min="1" value="100">
+          </div>
+          <div class="mw-field">
+            <label for="mw-travel">Max Probe Travel (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-travel" step="1" min="1" value="30">
+          </div>
+          <div class="mw-field">
+            <label for="mw-retract">Retract After (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-retract" step="0.5" min="0.1" value="5">
+          </div>
+          <div class="mw-field">
+            <label for="mw-stock">Stock Thickness (<span class="mw-unit">mm</span>)</label>
+            <div class="mw-inline-row">
+              <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock" step="0.001" min="0" value="18" title="A known stock thickness, e.g. a sheet. Store writes it to the controller for the stock-top macro; the measure macro writes a probed one.">
+              <button type="button" class="mw-btn mw-btn-small" id="mw-store-stock">Store</button>
+            </div>
+          </div>
+          <div class="mw-field">
+            <label for="mw-wcs">Work Offset to Set</label>
+            <select class="mw-select" id="mw-wcs">
+              <option value="1" selected>G54</option>
+              <option value="2">G55</option>
+              <option value="3">G56</option>
+              <option value="4">G57</option>
+              <option value="5">G58</option>
+              <option value="6">G59</option>
+            </select>
+          </div>
+          <div class="mw-field">
+            <label for="mw-slot">Store Height In</label>
+            <select class="mw-select" id="mw-slot">
+              <option value="9" selected>G59.3 Z</option>
+              <option value="8">G59.2 Z</option>
+              <option value="7">G59.1 Z</option>
+            </select>
+          </div>
+          <div class="mw-field">
+            <label for="mw-backup">Save Old Z0 In</label>
+            <select class="mw-select" id="mw-backup">
+              <option value="9">G59.3 Z</option>
+              <option value="8" selected>G59.2 Z</option>
+              <option value="7">G59.1 Z</option>
+            </select>
+          </div>
+          <div class="mw-field">
+            <label for="mw-thick">Store Thickness In</label>
+            <select class="mw-select" id="mw-thick">
+              <option value="9">G59.3 Z</option>
+              <option value="8">G59.2 Z</option>
+              <option value="7" selected>G59.1 Z</option>
+            </select>
+          </div>
         </div>
-      </div>
-      <p class="mw-status" id="mw-save-status" role="status"></p>
-      <div class="mw-macros" id="mw-macros"></div>
-      <p class="mw-hint">The spoilboard and stock-top macros save the current Z0 first, unless it's already one
-        of theirs, so <strong>back to saved</strong> returns to your probed Z0 however many times you switch.</p>
-    </section>
+        <p class="mw-status" id="mw-store-status" role="status"></p>
+        <p class="mw-hint">
+          The spoilboard height, your saved Z0 and the stock thickness are kept in three spare work offsets'
+          Z, which the controller keeps through power cycles; pick ones you don't use. The stock-top macro
+          uses whatever thickness is stored: press <strong>Store</strong> for a known thickness, or run the
+          measure macro. The macros switch to mm (<code class="mw-inline">G21</code>) while they work,
+          because grblHAL reports stored offsets and tool lengths in mm whatever the units mode.
+        </p>
+      </section>
 
-    <section class="mw-card" aria-labelledby="mw-test-title">
-      <h3 class="mw-card-title" id="mw-test-title"><span class="mw-step">5</span>Try it once</h3>
-      <ol class="mw-steps">
-        <li>Set the probe block on the spoilboard and load a tool whose length offset is measured and active.</li>
-        <li>Jog the bit just above the block. In ncSender&rsquo;s Macros tab, run <strong data-name="record"></strong>. It probes down, stores the spoilboard height, and backs off.</li>
-        <li>Without changing tools, run <strong data-name="set"></strong>. It saves your current Z0, then puts Z0 on the spoilboard.</li>
-        <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. Or check it against ncSender&rsquo;s own probe: run <strong>Probe &rarr; Standard Block &rarr; Z</strong> with the block still on the spoilboard, then <strong data-name="set"></strong> again; work Z shouldn&rsquo;t change by more than a few hundredths. If they don&rsquo;t agree, don&rsquo;t use the macros until they do.</li>
-        <li>Run <strong data-name="restore"></strong>. Work Z0 goes back to where it was before step 3.</li>
-        <li>From then on, with any measured tool, just run <strong data-name="set"></strong> or <strong data-name="stock"></strong>.</li>
-        <li>For <strong data-name="stock"></strong>, first press <strong>Store</strong> for a known thickness, or put the block on the stock and run <strong data-name="measure"></strong>.</li>
-      </ol>
-      <p class="mw-hint">The macros <strong>stop without changing anything</strong> when the machine isn&rsquo;t homed, no tool
-        length offset is active, or the spoilboard height (or stock thickness) hasn&rsquo;t been stored yet. ncSender&rsquo;s
-        terminal shows <code class="mw-inline">error:72</code>; each stop line in the macro has a comment saying what it checks.</p>
-      <p class="mw-hint"><strong>Re-run the record macro</strong> after surfacing the spoilboard (e.g. QuickCut&rsquo;s Wasteboard
-        Surfacing), or if your reference tool changes: the stored height is only as current as the last recording.</p>
-    </section>
+      <section class="mw-card" aria-labelledby="mw-extras-title">
+        <h3 class="mw-card-title" id="mw-extras-title"><span class="mw-step">3</span>Extras</h3>
+        <div class="mw-extras">
+          <label class="mw-extra"><input type="checkbox" id="mw-x-midX" checked><span><strong>Midpoint X</strong><span>Move halfway back to X0, e.g. after touching both sides of round stock.</span></span></label>
+          <label class="mw-extra"><input type="checkbox" id="mw-x-midY" checked><span><strong>Midpoint Y</strong><span>The same along Y.</span></span></label>
+          <label class="mw-extra"><input type="checkbox" id="mw-x-midXY" checked><span><strong>Midpoint XY</strong><span>Move halfway to X0 Y0, e.g. from the opposite corner of square stock.</span></span></label>
+          <label class="mw-extra"><input type="checkbox" id="mw-x-center" checked><span><strong>Set XY0 to Midpoint</strong><span>Put X0 Y0 halfway to the current spot without moving.</span></span></label>
+          <label class="mw-extra"><input type="checkbox" id="mw-x-fixture" checked><span><strong>Save / restore X/Y</strong><span>Keep the work offset's X/Y for a fixture or jig, and bring it back later. Uses the saved-Z0 slot's X/Y.</span></span></label>
+        </div>
+        <p class="mw-hint" id="mw-safe-note">Midpoint moves first lift to ncSender&rsquo;s Safe Z. They use the active work offset.</p>
+      </section>
 
-    <section class="mw-card" aria-labelledby="mw-holes-title">
-      <h3 class="mw-card-title" id="mw-holes-title"><span class="mw-step">6</span>Spoilboard holes</h3>
-      <p class="mw-hint">Put <span data-slot="wcs">G54</span> X0 Y0 on a spoilboard hole (a dog hole, say): describe the hole grid once,
-        then click a hole. Nothing moves; it only sets the work offset.</p>
-      <div class="mw-row">
-        <div class="mw-field">
-          <label for="mw-hole-dia">Hole Diameter (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-dia" step="0.01" min="0.1" value="20">
+      <section class="mw-card" aria-labelledby="mw-macros-title">
+        <div class="mw-card-head">
+          <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">4</span>Macros</h3>
+          <div class="mw-head-actions">
+            <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete Zero Swapper macros</button>
+            <button type="button" class="mw-btn" id="mw-save">Create macros</button>
+          </div>
         </div>
-        <div class="mw-field">
-          <label for="mw-hole-sx">X Spacing (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-sx" step="0.1" min="0.1" value="96" title="Center to center between holes along X.">
-        </div>
-        <div class="mw-field">
-          <label for="mw-hole-sy">Y Spacing (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-sy" step="0.1" min="0.1" value="96" title="Center to center between holes along Y.">
-        </div>
-        <div class="mw-field">
-          <label for="mw-hole-ix">Inset X (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-ix" step="0.01" min="0" value="48" title="From machine X0 to the center of the first column of holes, into the machine's travel.">
-        </div>
-        <div class="mw-field">
-          <label for="mw-hole-iy">Inset Y (<span class="mw-unit">mm</span>)</label>
-          <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-iy" step="0.01" min="0" value="48" title="From machine Y0 to the center of the first row of holes, into the machine's travel.">
-        </div>
-      </div>
-      <div class="mw-holes-tools">
-        <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-here" title="Jog the bit to the center of the first hole and press this: Inset X and Inset Y are filled in from where the machine is. Any other hole works too; the insets come out the same.">Set Insets: bit at first hole&rsquo;s center</button>
-        <span class="mw-hint" id="mw-hole-note"></span>
-      </div>
-      <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard holes; click one to pick it."></svg>
-      <div class="mw-holes-pick">
-        <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Nearest hole</button>
-        <span id="mw-hole-picked" class="mw-hint">Click a hole, or jog near one and press Nearest hole.</span>
-        <button type="button" class="mw-btn" id="mw-hole-set" disabled>Set <span data-slot="wcs">G54</span> X0 Y0 here</button>
-      </div>
-      <p class="mw-status" id="mw-hole-status" role="status"></p>
-    </section>
+        <p class="mw-status" id="mw-save-status" role="status"></p>
+        <div class="mw-macros" id="mw-macros"></div>
+        <p class="mw-hint">The spoilboard and stock-top macros save the current Z0 first, unless it's already one
+          of theirs, so <strong>back to saved</strong> returns to your probed Z0 however many times you switch.</p>
+      </section>
+
+      <section class="mw-card" aria-labelledby="mw-test-title">
+        <h3 class="mw-card-title" id="mw-test-title"><span class="mw-step">5</span>Try it once</h3>
+        <ol class="mw-steps">
+          <li>Set the probe block on the spoilboard and load a tool whose length offset is measured and active.</li>
+          <li>Jog the bit just above the block. In ncSender&rsquo;s Macros tab, run <strong data-name="record"></strong>. It probes down, stores the spoilboard height, and backs off.</li>
+          <li>Without changing tools, run <strong data-name="set"></strong>. It saves your current Z0, then puts Z0 on the spoilboard.</li>
+          <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. Or check it against ncSender&rsquo;s own probe: run <strong>Probe &rarr; Standard Block &rarr; Z</strong> with the block still on the spoilboard, then <strong data-name="set"></strong> again; work Z shouldn&rsquo;t change by more than a few hundredths. If they don&rsquo;t agree, don&rsquo;t use the macros until they do.</li>
+          <li>Run <strong data-name="restore"></strong>. Work Z0 goes back to where it was before step 3.</li>
+          <li>From then on, with any measured tool, just run <strong data-name="set"></strong> or <strong data-name="stock"></strong>.</li>
+          <li>For <strong data-name="stock"></strong>, first press <strong>Store</strong> for a known thickness, or put the block on the stock and run <strong data-name="measure"></strong>.</li>
+        </ol>
+        <p class="mw-hint">The macros <strong>stop without changing anything</strong> when the machine isn&rsquo;t homed, no tool
+          length offset is active, or the spoilboard height (or stock thickness) hasn&rsquo;t been stored yet. ncSender&rsquo;s
+          terminal shows <code class="mw-inline">error:72</code>; each stop line in the macro has a comment saying what it checks.</p>
+        <p class="mw-hint"><strong>Re-run the record macro</strong> after surfacing the spoilboard (e.g. QuickCut&rsquo;s Wasteboard
+          Surfacing), or if your reference tool changes: the stored height is only as current as the last recording.</p>
+      </section>
+    </div>
+    <div class="mw-tab" data-tab="help" hidden>
+      <h2 class="mw-help-title">Help: <span id="mw-help-for"></span></h2>
+      <div id="mw-help-body" class="mw-help-body"></div>
+      <div><button type="button" class="mw-btn" id="mw-help-back">Back</button></div>
+    </div>
+    </main>
   </div>
 </div>
 
@@ -647,6 +758,17 @@
   // Puts the work offset's X0 Y0 on a hole (machine X / Y in mm), without
   // moving: G10 L2 sets the offset itself. In G21 since the numbers are
   // mm; inch setups get G20 back.
+  // Where X0 Y0 goes on a hole, as an offset from its center in machine X
+  // and Y: back is +Y, right +X, the edges one hole radius out.
+  var HOLE_ORIGINS = ['back-left', 'back-center', 'back-right', 'left-center', 'center', 'right-center', 'front-left', 'front-center', 'front-right'];
+  function holeOriginOffset(origin, rMm) {
+    var o = String(origin || 'center');
+    return {
+      dx: /right/.test(o) ? rMm : /left/.test(o) ? -rMm : 0,
+      dy: /^back/.test(o) ? rMm : /^front/.test(o) ? -rMm : 0
+    };
+  }
+
   function holeCommands(wcsP, xMm, yMm, imperial) {
     return ['G21', 'G10 L2 P' + wcsP + ' X' + fmt(xMm) + ' Y' + fmt(yMm)].concat(imperial ? ['G20'] : []);
   }
@@ -920,7 +1042,7 @@
       slot: $('mw-slot').value, backup: $('mw-backup').value, thick: $('mw-thick').value,
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       holeDia: u('mw-hole-dia'), holeSx: u('mw-hole-sx'), holeSy: u('mw-hole-sy'),
-      holeIx: u('mw-hole-ix'), holeIy: u('mw-hole-iy'),
+      holeIx: u('mw-hole-ix'), holeIy: u('mw-hole-iy'), holeOrigin: holes.origin,
       units: state.imperial ? 'imperial' : 'metric'
     };
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
@@ -1185,6 +1307,17 @@
     $('mw-hole-here').addEventListener('click', holeInsetsFromHere);
     $('mw-hole-set').addEventListener('click', setHoleZero);
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
+    setHoleOrigin(saved.holeOrigin);
+    ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
+      d.addEventListener('click', function() { setHoleOrigin(d.getAttribute('data-origin')); renderHoles(); saveSettings(); });
+    });
+    ROOT.querySelectorAll('.mw-sidebar-nav .mw-nav-btn').forEach(function(b) {
+      b.addEventListener('click', function() { showTab(b.getAttribute('data-tab')); });
+    });
+    $('mw-help-btn').addEventListener('click', function() { showTab(help.tab === 'help' ? help.from : 'help'); });
+    $('mw-help-back').addEventListener('click', function() { showTab(help.from); });
+    $('mw-close').addEventListener('click', function() { window.postMessage({ type: 'close-plugin-dialog' }, '*'); });
+    $('mw-unit-badge').textContent = state.imperial ? 'IMPERIAL (in)' : 'METRIC (mm)';
     $('mw-hole-map').addEventListener('click', function(evt) {
       var el = evt.target.closest && evt.target.closest('[data-hole]');
       if (el) pickHole(+el.getAttribute('data-hole'));
@@ -1196,7 +1329,26 @@
   // Spoilboard holes (step 6). The machine's travel and which way it runs
   // come from grblHAL's settings ($130 / $131, $22 / $23); the work offset's
   // X0 Y0 and the spindle position from ncSender's machine state.
-  var holes = { grid: [], picked: -1 };
+  var holes = { grid: [], picked: -1, origin: 'center' };
+  var ORIGIN_NOTES = {
+    center: 'the hole\u2019s center', 'back-center': 'the back (+Y) edge', 'front-center': 'the front (\u2212Y) edge',
+    'left-center': 'the left (\u2212X) edge', 'right-center': 'the right (+X) edge',
+    'back-left': 'the back left (\u2212X +Y)', 'back-right': 'the back right (+X +Y)',
+    'front-left': 'the front left (\u2212X \u2212Y)', 'front-right': 'the front right (+X \u2212Y)'
+  };
+  // The point X0 Y0 goes on for the picked hole, with the origin's offset.
+  function holeTarget(p) {
+    var h = readHoles();
+    var o = holeOriginOffset(holes.origin, h ? h.diaMm / 2 : 0);
+    return { x: p.x + o.dx, y: p.y + o.dy };
+  }
+  function setHoleOrigin(origin) {
+    holes.origin = HOLE_ORIGINS.indexOf(origin) >= 0 ? origin : 'center';
+    ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
+      d.setAttribute('aria-pressed', d.getAttribute('data-origin') === holes.origin ? 'true' : 'false');
+    });
+    $('mw-hole-origin-note').textContent = 'X0 Y0 on ' + ORIGIN_NOTES[holes.origin] + (holes.origin === 'center' ? '.' : ', one hole radius out.');
+  }
   async function loadMachine() {
     try {
       var fw = await (await fetch(BASE_URL + '/api/firmware')).json();
@@ -1276,6 +1428,11 @@
       add('path', { class: 'mw-h-wcs', d: 'M' + (zx - 9) + ' ' + zy + 'H' + (zx + 9) + 'M' + zx + ' ' + (zy - 9) + 'V' + (zy + 9) });
       add('text', { x: (zx + 11).toFixed(1), y: (zy - 6).toFixed(1) }, wcs + ' X0 Y0');
     }
+    var picked = holes.grid[holes.picked];
+    if (picked && holes.origin !== 'center') {
+      var tg = holeTarget(picked), tx = +X(tg.x), ty = +Y(tg.y);
+      add('path', { class: 'mw-h-target', d: 'M' + (tx - 6) + ' ' + ty + 'H' + (tx + 6) + 'M' + tx + ' ' + (ty - 6) + 'V' + (ty + 6) });
+    }
     if (here) add('circle', { class: 'mw-h-spindle', cx: X(here.x), cy: Y(here.y), r: 3.5 });
     updatePicked();
   }
@@ -1302,7 +1459,8 @@
   }
   function updatePicked() {
     var p = holes.grid[holes.picked], btn = $('mw-hole-set');
-    $('mw-hole-picked').textContent = p ? 'Column ' + p.col + ', row ' + p.row + ': machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm' +
+    var tg = p && holeTarget(p);
+    $('mw-hole-picked').textContent = p ? 'Column ' + p.col + ', row ' + p.row + ': X0 Y0 at machine X ' + fmt(tg.x) + ', Y ' + fmt(tg.y) + ' mm' +
       (holes.nearMm != null ? ' (' + fmt(holes.nearMm) + ' mm from the spindle)' : '') : 'Click a hole, or jog near one and press Nearest hole.';
     btn.disabled = !p;
   }
@@ -1332,13 +1490,14 @@
       if (!ms.connected) throw new Error('the controller isn\u2019t connected');
       if (!ms.homed) throw new Error('home the machine first: the holes are machine positions');
       if (String(ms.status || '').indexOf('Idle') !== 0) throw new Error('the machine isn\u2019t idle');
-      var cmds = holeCommands(s.wcs, p.x, p.y, state.imperial);
+      var tg = holeTarget(p);
+      var cmds = holeCommands(s.wcs, tg.x, tg.y, state.imperial);
       for (var i = 0; i < cmds.length; i++) {
         var r = await sendCommand(cmds[i]);
         if (!r.ok) throw new Error('the controller rejected ' + cmds[i]);
       }
       status.setAttribute('data-state', 'ok');
-      status.textContent = WCS_NAMES[s.wcs] + ' X0 Y0 is now on column ' + p.col + ', row ' + p.row + ' (machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm).';
+      status.textContent = WCS_NAMES[s.wcs] + ' X0 Y0 is now on ' + ORIGIN_NOTES[holes.origin] + ' of column ' + p.col + ', row ' + p.row + ' (machine X ' + fmt(tg.x) + ', Y ' + fmt(tg.y) + ' mm).';
       await readMachineState();
       renderHoles();
       readNumbers();
@@ -1348,6 +1507,59 @@
     } finally {
       btn.disabled = !holes.grid[holes.picked];
     }
+  }
+
+  // ---------- Tabs and Help ----------
+  //
+  // Help shows notes for the tab it was opened from, then that tab's hover
+  // tooltips read from the page, so touch users see them too. Keep the
+  // notes in step with the README.
+  var help = { tab: 'holes', from: 'holes' };
+  var HELP_TOPICS = {
+    holes: { name: 'Spoilboard holes', notes: [
+      'Puts the work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say) without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The machine has to be homed and idle, since the holes are machine positions.',
+      'Click a hole on the map, or jog roughly over one and press <strong>Nearest hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
+      'The dots beside Set pick where on the hole X0 Y0 goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks that point on the picked hole.',
+      'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the small dot is the spindle.',
+      '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of any hole and press <strong>Set Insets</strong>. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
+      'Size fields take mm or inches and convert when you leave the field: <kbd>20mm</kbd>, <kbd>3/4"</kbd>, <kbd>1-1/2in</kbd>.' ] },
+    macros: { name: 'Z0 macros', notes: [
+      'Record the spoilboard height once with a probe block and a measured tool; then the <strong>ZS:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
+      '<strong>Run checks</strong> confirms the controller supports the parameters and expressions the macros use. Run it once, and again after a firmware change.',
+      'The values are kept in spare work offsets (G59.1&ndash;G59.3 Z by default); pick ones you don&rsquo;t use. Re-record the spoilboard height after surfacing it.',
+      'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, or a value it needs isn&rsquo;t stored; ncSender&rsquo;s terminal shows <code>error:72</code>.',
+      '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.' ] }
+  };
+  var HELP_DOCS = 'https://github.com/tmuka/ncsender-plugin-zero-swapper#readme';
+  function helpEscape(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function helpTips(tab) {
+    var seen = {}, out = [];
+    tab.querySelectorAll('[title]').forEach(function(el) {
+      var tip = String(el.getAttribute('title') || '').replace(/\s*Type mm or inches.*$/, '');
+      var lab = el.id && ROOT.querySelector('label[for="' + el.id + '"]');
+      var name = (lab ? lab.textContent : el.textContent).replace(/\s+/g, ' ').trim();
+      if (!tip || !name || seen[name]) return;
+      seen[name] = true;
+      out.push('<dt>' + helpEscape(name) + '</dt><dd>' + helpEscape(tip) + '</dd>');
+    });
+    return out.join('');
+  }
+  function renderHelp(from) {
+    var t = HELP_TOPICS[from], tab = ROOT.querySelector('.mw-tab[data-tab="' + from + '"]'), tips = helpTips(tab);
+    $('mw-help-for').textContent = t.name;
+    $('mw-help-body').innerHTML =
+      '<section class="mw-card mw-help-card"><ul>' + t.notes.map(function(n) { return '<li>' + n + '</li>'; }).join('') + '</ul></section>' +
+      (tips ? '<section class="mw-card mw-help-card"><h3 class="mw-card-title">Field tips</h3><dl class="mw-help-tips">' + tips + '</dl></section>' : '') +
+      '<p class="mw-hint">More in the <a href="' + HELP_DOCS + '" target="_blank" rel="noopener">README</a>.</p>';
+  }
+  function showTab(name) {
+    if (name === 'help') renderHelp(help.from);
+    else help.from = name;
+    help.tab = name;
+    ROOT.querySelectorAll('.mw-panel > .mw-tab').forEach(function(t) { t.hidden = t.getAttribute('data-tab') !== name; });
+    ROOT.querySelectorAll('.mw-sidebar-nav .mw-nav-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-tab') === name); });
+    $('mw-help-btn').classList.toggle('active', name === 'help');
+    ROOT.querySelector('.mw-panel').scrollTop = 0;
   }
 
   init().then(readNumbers);

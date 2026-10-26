@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeOriginOffset, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeOriginOffset, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -382,4 +382,13 @@ test('unreadable text returns null', () => {
   for (const bad of ['', 'abc', '1/0', '1.5/2', '1-1/0', '6.35 furlongs', '1..2', '--1', '1/4/2']) {
     assert.equal(parseUnitValue(bad, METRIC, 'length'), null, JSON.stringify(bad));
   }
+});
+
+test('holeOriginOffset puts X0 Y0 a hole radius out in machine X and Y', () => {
+  assert.deepEqual(holeOriginOffset('center', 10), { dx: 0, dy: 0 });
+  assert.deepEqual(holeOriginOffset('back-right', 10), { dx: 10, dy: 10 });
+  assert.deepEqual(holeOriginOffset('front-left', 10), { dx: -10, dy: -10 });
+  assert.deepEqual(holeOriginOffset('left-center', 10), { dx: -10, dy: 0 });
+  assert.deepEqual(holeOriginOffset('back-center', 10), { dx: 0, dy: 10 });
+  assert.deepEqual(holeOriginOffset(undefined, 10), { dx: 0, dy: 0 });
 });
