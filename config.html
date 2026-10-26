@@ -298,7 +298,7 @@
       <nav class="mw-sidebar-nav">
         <button type="button" class="mw-nav-btn active" data-tab="holes">
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
-          <span class="mw-nav-label">Spoilboard holes</span>
+          <span class="mw-nav-label">XY0 Picker</span>
         </button>
         <button type="button" class="mw-nav-btn" data-tab="macros">
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14L5 19h14"/></svg></span>
@@ -315,11 +315,11 @@
     </aside>
     <main class="mw-panel">
     <div class="mw-tab" data-tab="holes">
-      <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a spoilboard hole.</strong> Click a hole, or jog near one
+      <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a dog hole or grid line crossing.</strong> Click a hole, or jog near one
         and press <strong>Nearest</strong>; the dots pick its center or a side. Hold <strong>Go to</strong> to move there at Safe Z;
         <strong>Set</strong> makes it X0 Y0 without moving.</p>
       <section class="mw-card mw-pick-card" id="mw-pick-card" aria-label="Pick a hole">
-        <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard holes; click one to pick it."></svg>
+        <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
         <div class="mw-holebar" id="mw-holebar">
           <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div>
           <div class="mw-holebar-info">
@@ -1488,7 +1488,7 @@
     loadMachine();
   }
 
-  // Spoilboard holes (step 6). The machine's travel and which way it runs
+  // XY0 Picker: spoilboard holes. The machine's travel and which way it runs
   // come from grblHAL's settings ($130 / $131, $22 / $23); the work offset's
   // X0 Y0 and the spindle position from ncSender's machine state.
   var holes = { grid: [], picked: -1, origin: 'center' };
@@ -1827,7 +1827,7 @@
   // notes in step with the README.
   var help = { tab: 'holes', from: 'holes' };
   var HELP_TOPICS = {
-    holes: { name: 'Spoilboard holes', notes: [
+    holes: { name: 'XY0 Picker', notes: [
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',

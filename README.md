@@ -71,9 +71,9 @@ So you probe once per new stock, not once per tool.
 Every length and feed box takes mm or inches, whichever your machine uses: type `6.35mm`, `1/4"`,
 `1-1/2 in` or `100ipm`, and it's converted to the machine's units when you leave the box.
 
-## X0 Y0 on a spoilboard hole
+## XY0 Picker: X0 Y0 on a dog hole or grid line
 
-The plugin opens on its **Spoilboard holes** tab; the Z0 macros are on the **Z0 macros** tab, and
+The plugin opens on its **XY0 Picker** tab; the Z0 macros are on the **Z0 macros** tab, and
 **Help** in the sidebar explains whichever tab you're on.
 
 Describe your spoilboard's grid once under **Setup** on that tab: **Hole Diameter**, **X Spacing**

@@ -41,7 +41,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
   - `storeThicknessCommand`, `MACRO_PREFIX` (`ZS: `), `OLD_PREFIXES` (`MW: `, `Macro Wiz: `, the names earlier versions used).
   - Spoilboard holes: `holeGrid`, `travelDirs`, `insetFromPosition`, `nearestHole`, `holeOriginOffset` (where X0 Y0
     goes on a hole, one radius out in machine X / Y), `holeCommands`; and `parseUnitValue`.
-- **Layout** follows QuickCut's: the dialog header is hidden, and a sidebar has the tabs (**Spoilboard holes**, first;
+- **Layout** follows QuickCut's: the dialog header is hidden, and a sidebar has the tabs (**XY0 Picker**, first;
   **Z0 macros**), **Help** (notes in `HELP_TOPICS` plus the tab's tooltips) and **Close** (`close-plugin-dialog`).
   Keep `HELP_TOPICS` in step with the README.
 - **Everything else** is the UI and its calls:
