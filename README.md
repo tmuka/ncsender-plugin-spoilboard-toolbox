@@ -328,6 +328,11 @@ npm run build    # dist/com.tmuka.zeroswapper_v<version>.zip from the committed 
 can't load other files. The macro builder and the `$#` / `$G` parsers sit between `BEGIN pure` and
 `END pure` markers, and the tests run that block directly, so there's no second copy to keep in step.
 
+## License
+
+Zero Swapper is licensed under the [GNU General Public License v3.0](LICENSE), the same license as
+ncSender's open-source edition. Copyright (c) 2026 tmuka.
+
 ## Status
 
 In use on the author's grblHAL machine. The grblHAL behaviour above comes from its source
