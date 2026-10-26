@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, holeOriginOffset, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, holeOriginOffset, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, holeOriginOffset, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, holeOriginOffset, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -310,8 +310,8 @@ test('inset from the current position over any hole', () => {
 });
 
 test('X0 Y0 on a hole: G10 L2 on the work offset, in mm', () => {
-  assert.deepEqual(holeCommands(1, 144, 222, false), ['G21', 'G10 L2 P1 X144.000 Y222.000']);
-  assert.deepEqual(holeCommands(2, -150.5, -50, true), ['G21', 'G10 L2 P2 X-150.500 Y-50.000', 'G20']);
+  assert.deepEqual(holeCommands(1, 144, 222), ['G21 G10 L2 P1 X144.000 Y222.000']);
+  assert.deepEqual(holeCommands(2, -150.5, -50), ['G21 G10 L2 P2 X-150.500 Y-50.000']);
 });
 
 test('nearest hole to a rough position', () => {
@@ -394,8 +394,12 @@ test('holeOriginOffset puts X0 Y0 a hole radius out in machine X and Y', () => {
 });
 
 test('holeGotoCommands lifts to Safe Z, then moves in machine coordinates', () => {
-  assert.deepEqual(holeGotoCommands(346, 250, -5, false), ['G21', 'G53 G0 Z-5.000', 'G53 G0 X346.000 Y250.000']);
-  assert.deepEqual(holeGotoCommands(-10.5, 20, null, true), ['G21', 'G53 G0 Z0.000', 'G53 G0 X-10.500 Y20.000', 'G20']);
+  assert.deepEqual(holeGotoCommands(346, 250, -5, -30), ['G53 G21 G90 G0 Z-5.000', 'G53 G21 G90 G0 X346.000 Y250.000']);
+  assert.deepEqual(holeGotoCommands(-10.5, 20, null, NaN), ['G53 G21 G90 G0 Z0.000', 'G53 G21 G90 G0 X-10.500 Y20.000']);
+  // Never down: above Safe Z it stays at the current height.
+  assert.deepEqual(holeGotoCommands(1, 2, -5, -1)[0], 'G53 G21 G90 G0 Z-1.000');
+  // Every motion or offset line says its own units.
+  [holeGotoCommands(1, 2, -5, -9), holeCommands(3, 1, 2)].flat().forEach((l) => assert.match(l, /\bG21\b/));
 });
 
 test('keepoutZones reads ncSender\'s zone and the ATCi one when on', () => {
@@ -417,4 +421,53 @@ test('holeKeepout catches holes reaching into a zone; nearestHole skips them', (
   assert.equal(holeKeepout(48, 1089, 10, zones), null);
   const grid = [{ x: 0, y: 0, blocked: true }, { x: 96, y: 0 }];
   assert.deepEqual(nearestHole(grid, 1, 1).index, 1);
+});
+
+test('targetProblem refuses points outside the travel or in a keepout zone', () => {
+  const travel = { xMm: 812, yMm: 1230, dirX: 1, dirY: 1 };
+  const zones = [{ name: 'ATCi', minX: 690, maxX: 812, minY: 700, maxY: 1230 }];
+  assert.equal(targetProblem(100, 100, travel, zones), null);
+  assert.equal(targetProblem(-2, 100, travel, zones), 'outside the machine\u2019s travel');
+  assert.equal(targetProblem(812, 1230.5, travel, []), 'outside the machine\u2019s travel');
+  assert.equal(targetProblem(690, 700, travel, zones), 'in the ATCi keepout zone');
+  // A corner origin a hole radius out from a hole whose circle clears the zone.
+  const r = 10, hx = 690 - 8, hy = 700 - 8;
+  assert.equal(holeKeepout(hx, hy, r, zones), null);
+  assert.equal(targetProblem(hx + r, hy + r, travel, zones), 'in the ATCi keepout zone');
+  // Homing to max: travel runs negative.
+  const neg = { xMm: 800, yMm: 600, dirX: -1, dirY: -1 };
+  assert.equal(targetProblem(-799, -1, neg, []), null);
+  assert.equal(targetProblem(1, -1, neg, []), 'outside the machine\u2019s travel');
+});
+
+test('holeOriginOffset covers all nine origins', () => {
+  const want = { 'back-left': [-1, 1], 'back-center': [0, 1], 'back-right': [1, 1], 'left-center': [-1, 0], center: [0, 0],
+    'right-center': [1, 0], 'front-left': [-1, -1], 'front-center': [0, -1], 'front-right': [1, -1], bogus: [0, 0] };
+  for (const [o, [x, y]] of Object.entries(want)) assert.deepEqual(holeOriginOffset(o, 4), { dx: 4 * x || 0, dy: 4 * y || 0 }, o);
+});
+
+test('holeGrid edge cases: inset past the travel, the cap, diameter 0', () => {
+  const base = { sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 };
+  assert.equal(holeGrid(Object.assign({}, base, { insetXMm: 900 })).length, 0);
+  const tiny = holeGrid(Object.assign({}, base, { sxMm: 1, syMm: 1, insetXMm: 0, insetYMm: 0 }));
+  assert.equal(tiny.length, 200 * 200);
+  assert.equal(holeGrid(Object.assign({}, base, { diaMm: 0 })).length, 8 * 13);
+});
+
+test('travelDirs with one axis homing to min, and an unknown format', () => {
+  const fmt = 'Enable,Enable single axis commands,Homing on startup required,Set machine origin to 0';
+  assert.deepEqual(travelDirs({ 22: { value: '9', format: fmt }, 23: { value: '1' } }), { dirX: 1, dirY: -1 });
+  assert.deepEqual(travelDirs({ 22: { value: '9', format: fmt }, 23: { value: '2' } }), { dirX: -1, dirY: 1 });
+  assert.equal(travelDirs({ 22: { value: '9', format: 'Enable,Something else' }, 23: { value: '3' } }), null);
+});
+
+test('insetFromPosition with a negative direction and an off-grid position', () => {
+  assert.equal(insetFromPosition(-150, 96, -1), 54);
+  assert.ok(Math.abs(insetFromPosition(250.5, 96, 1) - 58.5) < 1e-9);
+});
+
+test('holeKeepout with a zero radius and a point on the zone edge', () => {
+  const zones = [{ name: 'Z', minX: 0, maxX: 10, minY: 0, maxY: 10 }];
+  assert.equal(holeKeepout(10, 5, 0, zones).name, 'Z');
+  assert.equal(holeKeepout(10.001, 5, 0, zones), null);
 });

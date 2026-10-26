@@ -1,6 +1,6 @@
 {
   "name": "ncsender-plugin-zero-swapper",
-  "version": "0.3.21",
+  "version": "0.3.22",
   "description": "ncSender plugin: set XY zero on spoilboard dog holes or a grid, and swap Z zero between spoilboard and stock top with any measured tool",
   "private": true,
   "scripts": {

@@ -101,7 +101,8 @@ The plugin opens on its **XY0 Picker** tab; the Z0 macros are on the **Z0 macros
 Describe your spoilboard's grid once under **Setup** on that tab: **Hole Diameter**, **X Spacing**
 and **Y Spacing** (center to center), and **Inset X** / **Inset Y** (from machine X0 Y0 to the center
 of the first hole, into the machine's travel). Or jog the bit to the center of the first hole and press
-**Grab First Hole Center** to fill the insets in (any other hole gives the same insets). Once saved,
+**Grab First Hole Center** to fill the insets in (with the machine connected and homed; any hole
+works when the first one is less than one spacing from machine X0 Y0). Once saved,
 Setup opens locked so a stray tap can't change the grid; press **Locked** to unlock it for editing
 (changes save as you go).
 
@@ -118,10 +119,14 @@ to the spindle and says how far off it is, so you get the grid's exact position 
 the bit). The dots beside the Set button pick where on the hole X0 Y0 goes: the center, or an edge
 or corner one hole radius out (back is +Y, right is +X), e.g. back right for a stop pin's +X +Y side.
 **Go to Selected** moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0
-when none is set). Like ncSender's XY0, hold it for a second, since it moves the machine.
-**Set G54 XY** sends `G10 L2 P1 X… Y…`, which sets that work offset without moving anything. The menu
-beside it picks the offset: **Active** (the default) follows the one ncSender is using, or pick any of
-G54–G59.3. It needs a homed, idle machine, since the holes are machine positions. The travel and its direction come from grblHAL's `$130`/`$131` and homing settings
+when none is set; it never moves down, so a spindle already above Safe Z stays there). Like ncSender's
+XY0, hold it for a second, since it moves the machine. A side of a hole that would land in a keepout
+zone or outside the travel can't be used.
+**Set G54 XY** sends `G21 G10 L2 P1 X… Y…`, which sets that work offset without moving anything. The
+menu beside it picks the offset: **Active** (the default) asks the controller which one is in use, so
+G59.1–G59.3 work too, or pick any of G54–G59.3; the spare offsets the Z0 macros store values in are
+left out. It needs a homed, idle machine, since the holes are machine positions. The travel and its
+direction come from grblHAL's `$130`/`$131` and homing settings
 (`$22`/`$23`).
 
 ## The wizard, step by step
