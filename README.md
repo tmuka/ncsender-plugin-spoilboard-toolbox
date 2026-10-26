@@ -100,8 +100,9 @@ Re-record after surfacing the spoilboard.
 
 So you probe once per new stock, not once per tool.
 
-Every length and feed box takes mm or inches, whichever your machine uses: type `6.35mm`, `1/4"`,
-`1-1/2 in` or `100ipm`, and it's converted to the machine's units when you leave the box.
+Every length and feed box takes mm or inches, whichever you have to hand, and converts it to the
+machine's units when you leave the box: `1/4"`, `5/4"`, `.25in`, `1-1/2"`, `6.35mm`, and for feeds
+`100ipm`, `2540mm/min`, `25mm/s`.
 
 ## XY0 Picker: X0 Y0 on a dog hole or grid line
 

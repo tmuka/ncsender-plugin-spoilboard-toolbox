@@ -60,6 +60,10 @@
   .mw-help-tips dt { font-weight: 600; }
   .mw-help-tips dd { margin: 0; }
   .mw-help-card a { color: var(--color-accent); }
+  .mw-help-card kbd {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8em; padding: 1px 5px;
+    border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-surface);
+  }
   .mw-panel {
     flex: 1 1 auto;
     min-width: 0;
@@ -2084,6 +2088,8 @@
   // tooltips read from the page, so touch users see them too. Keep the
   // notes in step with the README.
   var help = { tab: 'holes', from: 'holes' };
+  var HELP_KEYS = '<strong>Put the macros on keys:</strong> ncSender can run any macro from a keyboard shortcut (or a gamepad button), which is where these really pay off: switching Z0, snapping X0 Y0 to the nearest hole or finding a midpoint becomes one keypress at the machine. In ncSender&rsquo;s <strong>Settings &rsaquo; Controls</strong> (with keyboard control on), search for <kbd>ZS</kbd>, click the pencil next to a macro in the <strong>Macros</strong> group, and press a key combination. Use <strong>Create macros</strong> to update them after a change, rather than deleting them, so the shortcuts keep working.';
+  var HELP_UNITS = '<strong>Typing units:</strong> size and feed fields take mm or inches, whichever you have to hand, and convert to the machine&rsquo;s units when you leave the field: <kbd>1/4"</kbd>, <kbd>5/4"</kbd>, <kbd>.25in</kbd>, <kbd>1-1/2"</kbd>, <kbd>6.35mm</kbd>, and for feeds <kbd>100ipm</kbd>, <kbd>2540mm/min</kbd>, <kbd>25mm/s</kbd>.';
   var HELP_TOPICS = {
     holes: { name: 'XY0 Picker', notes: [
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
@@ -2094,16 +2100,17 @@
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Select Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
-      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (ncSender&rsquo;s shortcut settings, Macros group). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed, the hole is in a keepout zone, or that side of it is outside the travel. XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
+      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed, the hole is in a keepout zone, or that side of it is outside the travel. XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
-      'Size fields take mm or inches and convert when you leave the field: <kbd>20mm</kbd>, <kbd>3/4"</kbd>, <kbd>1-1/2in</kbd>.' ] },
+      HELP_UNITS ] },
     macros: { name: 'Z0 macros', notes: [
       'Record the spoilboard height once with a probe block and a measured tool; then the <strong>ZS:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
       '<strong>Run checks</strong> confirms the controller supports the parameters and expressions the macros use. Run it once, and again after a firmware change.',
       'The values are kept in spare work offsets (G59.1&ndash;G59.3 Z by default); pick ones you don&rsquo;t use. Re-record the spoilboard height after surfacing it.',
       'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, or a value it needs isn&rsquo;t stored; ncSender&rsquo;s terminal shows <code>error:72</code>.',
-      '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.' ] }
+      '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.',
+      HELP_KEYS, HELP_UNITS ] }
   };
   var HELP_DOCS = 'https://github.com/tmuka/ncsender-plugin-zero-swapper#readme';
   function helpEscape(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
