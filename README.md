@@ -2,23 +2,37 @@
 
 **Probe your spoilboard once. After that, with any measured tool, one click puts Z0 on the
 spoilboard or on top of your stock — no probing, no math. Another click puts your old Z0 back.**
-Extras find X/Y zero at a midpoint and save / restore it for fixtures.
 
-Zero Swapper is an ncSender plugin. A short wizard checks your grblHAL controller, then writes the
-ncSender macros that do this, which you run from the Macros tab or a keyboard shortcut.
+**Set X0 Y0 on your spoilboard's dog hole grid (or a lasered / engraved grid) in two taps:** pick a
+hole on a map of your CNC's bed, or jog near one and let the plugin snap to the grid, and the work
+offset lands exactly on it. Extras find X/Y zero at a midpoint and save / restore it for fixtures.
+
+Zero Swapper is a plugin for [ncSender](https://github.com/siganberg/ncSender), the G-code sender for
+grblHAL CNC routers. Its **XY0 Picker** tab sets the XY work origin (G54–G59.3) on a hole or grid line
+without moving the machine; its **Z0 macros** tab checks your grblHAL controller, then writes ncSender
+macros you run from the Macros tab or a keyboard shortcut.
 
 ## Who it's for
 
-You'll get the most from it if:
+The **XY0 Picker** works on any homed grblHAL machine with a grid on its spoilboard. You'll get the
+most from the **Z0 macros** if:
 
-- your machine **measures tool lengths** (a tool setter, or an ATC such as RapidChange), so each tool
-  has a tool length offset, and
+- your machine **measures tool lengths** (a tool setter / tool length sensor, or an automatic tool
+  changer (ATC) such as RapidChange), so each tool has a tool length offset (TLO), and
 - your controller runs **grblHAL** (the wizard checks it can do the math the macros need).
 
 Without measured tool lengths, every tool change needs a new Z probe anyway, and Zero Swapper can't
 save you that.
 
 ## What you get
+
+**XY0 Picker:** repeatable XY zero from your spoilboard grid. Use it for bench-dog stops and fences,
+fixtures and jigs that register in the holes, or to get back to the same work origin job after job,
+without an edge finder or XY probe. It shows the keepout zones (ncSender's, or the ATCi tool rack's)
+and won't pick a hole inside one.
+
+**Z0 macros:** switch work Z zero between the spoilboard (wasteboard) and the stock top, for every
+tool, without re-probing after a tool change:
 
 | Macro | Does |
 | --- | --- |
@@ -39,7 +53,7 @@ center of round or square stock), set X0 Y0 at that midpoint, and save / restore
 ## First time
 
 1. Open **Zero Swapper** from the plugin tool menu, run the check, and press **Create macros**.
-2. With a measured tool loaded, put your probe block on the spoilboard, jog the bit just above it,
+2. With a measured tool loaded, put your probe block (touch plate) on the spoilboard, jog the bit just above it,
    and run **Record spoilboard height**. It probes straight down.
 3. Check it once against ncSender's own probe. With the block still on the spoilboard, run ncSender's
    **Probe → Standard Block → Z**, which sets Z0 on the spoilboard by probing. Then run
@@ -73,6 +87,10 @@ Every length and feed box takes mm or inches, whichever your machine uses: type 
 
 ## XY0 Picker: X0 Y0 on a dog hole or grid line
 
+Set your CNC's work zero (X0 Y0) to a spoilboard dog hole, a bench-dog hole, a threaded-insert grid,
+or a crossing of lines lasered or V-carved into the spoilboard. Because the grid is at known machine
+coordinates, the work origin is exact and repeatable, with no edge finding, touch plate or XY probe.
+
 The plugin opens on its **XY0 Picker** tab; the Z0 macros are on the **Z0 macros** tab, and
 **Help** in the sidebar explains whichever tab you're on.
 
@@ -90,15 +108,16 @@ middle of a crossing, and a corner dot on the edges of the two lines (back right
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
 spindle. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
-`$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole, or jog roughly over one and press **Select Nearest** (it picks the hole closest
+`$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole,
+or jog roughly over one and press **Select Nearest** (it picks the hole closest
 to the spindle and says how far off it is, so you get the grid's exact position without centering
 the bit). The dots beside the Set button pick where on the hole X0 Y0 goes: the center, or an edge
 or corner one hole radius out (back is +Y, right is +X), e.g. back right for a stop pin's +X +Y side.
-**Go to Selected** moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0 when
-none is set). Like ncSender's XY0, hold it for a second, since it moves the machine. **Set G54 XY** sends `G10 L2 P1 X… Y…`, which sets that
-work offset without moving anything. The menu beside it picks the offset: **Active** (the default)
-follows the one ncSender is using, or pick any of G54–G59.3. It needs a homed, idle machine, since the holes are machine
-positions. The travel and its direction come from grblHAL's `$130`/`$131` and homing settings
+**Go to Selected** moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0
+when none is set). Like ncSender's XY0, hold it for a second, since it moves the machine.
+**Set G54 XY** sends `G10 L2 P1 X… Y…`, which sets that work offset without moving anything. The menu
+beside it picks the offset: **Active** (the default) follows the one ncSender is using, or pick any of
+G54–G59.3. It needs a homed, idle machine, since the holes are machine positions. The travel and its direction come from grblHAL's `$130`/`$131` and homing settings
 (`$22`/`$23`).
 
 ## The wizard, step by step
@@ -230,8 +249,14 @@ macros only move straight down from where you put the bit, then back off upward.
 
 ## Install
 
-Build the zip (below) and install it from ncSender's Plugin Manager. The wizard opens from the
-**Zero Swapper** entry in the plugin tool menu.
+1. Download the latest `com.tmuka.zeroswapper_v….zip` from this repository's
+   [Releases](https://github.com/tmuka/ncsender-plugin-zero-swapper/releases).
+2. In ncSender: **Settings → Plugins → Install Plugin → ZIP**, pick the file and press **Install from
+   File**, or paste the zip's link and press **Install from URL**.
+3. Open **Zero Swapper** from the plugin tool menu.
+
+Later versions show up under ncSender's plugin **Update** button. To build the zip yourself, see
+Development below.
 
 ## Development
 
