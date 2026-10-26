@@ -215,7 +215,20 @@
   }
   .mw-status { margin: 0; font-size: 0.85rem; }
   .mw-holes-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
-  .mw-hole-map { width: 100%; height: auto; display: block; flex: none; max-height: 420px; }
+  /* The map is sized in renderHoles to fill what's left of the panel.
+     A machine deeper (Y) than it is wide puts the controls in a column on
+     the right; otherwise they sit below the map. */
+  .mw-hole-map { width: 100%; height: 300px; display: block; flex: none; }
+  .mw-pick-card.mw-tall {
+    display: grid; grid-template-columns: minmax(0, 1fr) 230px; grid-template-rows: auto 1fr;
+    gap: 10px 16px; align-items: start;
+  }
+  .mw-pick-card.mw-tall .mw-hole-map { grid-row: 1 / span 2; }
+  .mw-pick-card.mw-tall .mw-holebar { flex-direction: column; align-items: stretch; }
+  .mw-pick-card.mw-tall .mw-hole-origin { align-self: center; }
+  .mw-pick-card.mw-tall .mw-holebar-info { flex: none; text-align: center; }
+  .mw-pick-card.mw-tall .mw-holebar-actions { flex-direction: column; align-items: stretch; margin-left: 0; }
+  .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
   .mw-hole-map .mw-h-area { fill: color-mix(in srgb, var(--color-text-secondary) 6%, transparent); stroke: var(--color-border); }
   .mw-hole-map .mw-h-spot { cursor: pointer; }
   .mw-hole-map .mw-h-hit { fill: transparent; }
@@ -264,9 +277,9 @@
       <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a spoilboard hole.</strong> Click a hole, or jog near one
         and press <strong>Nearest</strong>; the dots pick its center or a side. <strong>Go to</strong> moves there at Safe Z;
         <strong>Set</strong> makes it X0 Y0 without moving.</p>
-      <section class="mw-card" aria-label="Pick a hole">
+      <section class="mw-card mw-pick-card" id="mw-pick-card" aria-label="Pick a hole">
         <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard holes; click one to pick it."></svg>
-        <div class="mw-holebar">
+        <div class="mw-holebar" id="mw-holebar">
           <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div>
           <div class="mw-holebar-info">
             <span class="mw-holebar-title" id="mw-hole-picked">No hole picked</span>
@@ -1352,6 +1365,12 @@
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
     $('mw-hole-goto').addEventListener('click', goToHole);
     $('mw-hole-wcs').addEventListener('change', renderHoles);
+    var resizeTimer = null;
+    window.addEventListener('resize', function onResize() {
+      if (!rootAlive()) { window.removeEventListener('resize', onResize); return; }
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() { if (!$('mw-pick-card').closest('[hidden]')) renderHoles(); }, 150);
+    });
     setHoleOrigin(saved.holeOrigin);
     ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
       d.addEventListener('click', function() { setHoleOrigin(d.getAttribute('data-origin')); renderHoles(); saveSettings(); });
@@ -1440,6 +1459,19 @@
               insetXMm: val('mw-hole-ix', 0), insetYMm: val('mw-hole-iy', 0) };
     return ok ? h : null;
   }
+  // The space the map can fill, in px, after choosing the layout: the
+  // panel's height below the map's top, less the controls when they're
+  // underneath. Falls back to 700 x 400 while the tab is hidden.
+  function holeMapBox(t) {
+    var card = $('mw-pick-card'), svg = $('mw-hole-map'), panel = ROOT.querySelector('.mw-panel');
+    card.classList.toggle('mw-tall', t.yMm > t.xMm);
+    var w = svg.getBoundingClientRect().width;
+    if (!w) return { w: 700, h: 400 };
+    var top = svg.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
+    var below = 20 + 13;
+    if (t.yMm <= t.xMm) below += $('mw-holebar').offsetHeight + Math.max($('mw-hole-status').offsetHeight, 18) + 20;
+    return { w: w, h: Math.max(260, panel.clientHeight - top - below) };
+  }
   function renderHoles() {
     var svg = $('mw-hole-map'), note = $('mw-hole-note'), t = state.travel, h = readHoles();
     svg.textContent = '';
@@ -1453,7 +1485,9 @@
     if (holes.picked >= holes.grid.length) holes.picked = -1;
     // Machine X right and Y up (back at the top), fitted into 700 x 400.
     var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = 24;
-    var sc = Math.min(700 / t.xMm, 400 / t.yMm), w = t.xMm * sc + 2 * pad, ht = t.yMm * sc + 2 * pad;
+    var box = holeMapBox(t), sc = Math.min((box.w - 2 * pad) / t.xMm, (box.h - 2 * pad) / t.yMm);
+    var w = t.xMm * sc + 2 * pad, ht = t.yMm * sc + 2 * pad;
+    svg.style.height = ht.toFixed(0) + 'px';
     var X = function(x) { return (pad + (x - minX) * sc).toFixed(1); }, Y = function(y) { return (pad + (minY + t.yMm - y) * sc).toFixed(1); };
     svg.setAttribute('viewBox', '0 0 ' + w.toFixed(1) + ' ' + ht.toFixed(1));
     var ns = 'http://www.w3.org/2000/svg';
@@ -1680,6 +1714,7 @@
     ROOT.querySelectorAll('.mw-sidebar-nav .mw-nav-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-tab') === name); });
     $('mw-help-btn').classList.toggle('active', name === 'help');
     ROOT.querySelector('.mw-panel').scrollTop = 0;
+    if (name === 'holes') renderHoles();
   }
 
   init().then(readNumbers);
