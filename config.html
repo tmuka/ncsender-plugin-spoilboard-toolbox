@@ -316,7 +316,7 @@
     <main class="mw-panel">
     <div class="mw-tab" data-tab="holes">
       <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a dog hole or grid line crossing.</strong> Click a hole, or jog near one
-        and press <strong>Nearest</strong>; the dots pick its center or a side. Hold <strong>Go to Selected</strong> to move there at Safe Z;
+        and press <strong>Select Nearest</strong>; the dots pick its center or a side. Hold <strong>Go to Selected</strong> to move there at Safe Z;
         <strong>Set</strong> makes it X0 Y0 without moving.</p>
       <section class="mw-card mw-pick-card" id="mw-pick-card" aria-label="Pick a hole">
         <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
@@ -324,10 +324,10 @@
           <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div>
           <div class="mw-holebar-info">
             <span class="mw-holebar-title" id="mw-hole-picked">No hole picked</span>
-            <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Nearest.</span>
+            <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Select Nearest.</span>
           </div>
           <div class="mw-holebar-actions">
-            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Nearest</button>
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Select Nearest</button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill" id="mw-hole-goto-fill"></span>Go to Selected<span class="mw-hold-hint">Hold</span></button>
             <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
               <option value="" selected>Active</option>
@@ -1701,7 +1701,7 @@
     var p = holes.grid[holes.picked], tg = p && holeTarget(p);
     $('mw-hole-picked').textContent = p ? 'Column ' + p.col + ', row ' + p.row + ' \u00b7 ' + ORIGIN_NOTES[holes.origin] : 'No hole picked';
     $('mw-hole-pos').textContent = p ? 'Machine X ' + fmt(tg.x) + '  Y ' + fmt(tg.y) + ' mm' +
-      (holes.nearMm != null ? ' \u00b7 ' + fmt(holes.nearMm) + ' mm from the spindle' : '') : 'Click a hole, or jog near one and press Nearest.';
+      (holes.nearMm != null ? ' \u00b7 ' + fmt(holes.nearMm) + ' mm from the spindle' : '') : 'Click a hole, or jog near one and press Select Nearest.';
     $('mw-hole-set').disabled = !p;
     $('mw-hole-goto').disabled = !p;
     if (!p) disarmGoto();
@@ -1829,11 +1829,11 @@
   var HELP_TOPICS = {
     holes: { name: 'XY0 Picker', notes: [
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
-      'Click a hole on the map, or jog roughly over one and press <strong>Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
+      'Click a hole on the map, or jog roughly over one and press <strong>Select Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
       '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set), then across, in machine coordinates. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the small dot is the spindle.',
-      'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Nearest skips them.',
+      'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Select Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of any hole and press <strong>Grab First Hole Center</strong>. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',

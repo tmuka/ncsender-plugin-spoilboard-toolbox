@@ -90,7 +90,7 @@ middle of a crossing, and a corner dot on the edges of the two lines (back right
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
 spindle. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
-`$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole, or jog roughly over one and press **Nearest** (it picks the hole closest
+`$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole, or jog roughly over one and press **Select Nearest** (it picks the hole closest
 to the spindle and says how far off it is, so you get the grid's exact position without centering
 the bit). The dots beside the Set button pick where on the hole X0 Y0 goes: the center, or an edge
 or corner one hole radius out (back is +Y, right is +X), e.g. back right for a stop pin's +X +Y side.
