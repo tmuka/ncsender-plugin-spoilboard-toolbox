@@ -244,7 +244,7 @@
   /* The map is sized in renderHoles to fill what's left of the panel.
      A machine deeper (Y) than it is wide puts the controls in a column on
      the right; otherwise they sit below the map. */
-  .mw-hole-map { width: 100%; height: 300px; display: block; flex: none; }
+  .mw-hole-map { width: 100%; max-width: 100%; height: 300px; display: block; flex: none; overflow: visible; }
   .mw-pick-card.mw-tall {
     display: grid; grid-template-columns: minmax(0, 1fr) 230px; grid-template-rows: auto 1fr;
     gap: 10px 16px; align-items: start;
@@ -1501,6 +1501,7 @@
   function holeMapBox(t) {
     var card = $('mw-pick-card'), svg = $('mw-hole-map'), panel = ROOT.querySelector('.mw-panel');
     card.classList.toggle('mw-tall', t.yMm > t.xMm);
+    svg.style.width = '';
     var w = svg.getBoundingClientRect().width;
     if (!w) return { w: 700, h: 400 };
     var top = svg.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
@@ -1520,11 +1521,15 @@
     holes.grid = h ? holeGrid(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h)) : [];
     if (holes.picked >= holes.grid.length) holes.picked = -1;
     // Machine X right and Y up (back at the top), fitted into 700 x 400.
-    var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = 24;
-    var box = holeMapBox(t), sc = Math.min((box.w - 2 * pad) / t.xMm, (box.h - 2 * pad) / t.yMm);
-    var w = t.xMm * sc + 2 * pad, ht = t.yMm * sc + 2 * pad;
+    // The bed sits flush with the card's top left, like the Setup heading
+    // below; only the machine X0 Y0 label's side gets room for it.
+    var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = 1;
+    var padT = t.dirY > 0 ? pad : 18, padB = t.dirY > 0 ? 18 : pad;
+    var box = holeMapBox(t), sc = Math.min((box.w - 2 * pad) / t.xMm, (box.h - padT - padB) / t.yMm);
+    var w = t.xMm * sc + 2 * pad, ht = t.yMm * sc + padT + padB;
+    svg.style.width = w.toFixed(0) + 'px';
     svg.style.height = ht.toFixed(0) + 'px';
-    var X = function(x) { return (pad + (x - minX) * sc).toFixed(1); }, Y = function(y) { return (pad + (minY + t.yMm - y) * sc).toFixed(1); };
+    var X = function(x) { return (pad + (x - minX) * sc).toFixed(1); }, Y = function(y) { return (padT + (minY + t.yMm - y) * sc).toFixed(1); };
     svg.setAttribute('viewBox', '0 0 ' + w.toFixed(1) + ' ' + ht.toFixed(1));
     var ns = 'http://www.w3.org/2000/svg';
     var add = function(tag, attrs, text) {
@@ -1534,7 +1539,7 @@
       svg.appendChild(el);
       return el;
     };
-    add('rect', { class: 'mw-h-area', x: pad, y: pad, width: (t.xMm * sc).toFixed(1), height: (t.yMm * sc).toFixed(1), rx: 3 });
+    add('rect', { class: 'mw-h-area', x: pad, y: padT, width: (t.xMm * sc).toFixed(1), height: (t.yMm * sc).toFixed(1), rx: 3 });
     add('text', { x: X(0), y: (+Y(0) + (t.dirY > 0 ? 16 : -6)).toFixed(1), 'text-anchor': t.dirX > 0 ? 'start' : 'end' }, 'machine X0 Y0');
     if (holes.grid.length > 2500) {
       add('text', { x: (w / 2).toFixed(1), y: (ht / 2).toFixed(1), 'text-anchor': 'middle' }, holes.grid.length + ' holes: too many to draw');
