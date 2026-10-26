@@ -1,9 +1,10 @@
 {
   "id": "com.tmuka.zeroswapper",
   "name": "Zero Swapper",
-  "version": "0.3.30",
+  "version": "0.3.31",
   "minAppVersion": "2.0.88",
   "configUi": "config.html",
+  "icon": "icon.png",
   "author": "tmuka",
   "repository": "https://github.com/tmuka/ncsender-plugin-zero-swapper",
   "description": "Set X0 Y0 on your spoilboard's dog hole or lasered grid from a map of the bed, and swap work Z0 between the spoilboard and the stock top with any measured tool, no re-probing. For grblHAL machines; the Z0 macros need a tool setter or ATC.",
@@ -18,6 +19,7 @@
     {
       "id": "open-config",
       "label": "Zero Swapper",
+      "icon": "icon.png",
       "clientOnly": true
     }
   ]
