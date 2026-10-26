@@ -68,6 +68,19 @@ Re-record after surfacing the spoilboard.
 
 So you probe once per new stock, not once per tool.
 
+## X0 Y0 on a spoilboard hole
+
+If your spoilboard has a grid of holes (dog holes, say), describe it once in **Spoilboard holes**:
+**Hole Diameter**, **X Spacing** and **Y Spacing** (center to center), and **Inset X** / **Inset Y**
+(from machine X0 Y0 to the center of the first hole, into the machine's travel). Or center the bit
+over any hole and press **Use current position** to fill in the insets.
+
+A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
+spindle. Click a hole and press **Set G54 X0 Y0 here**: it sends `G10 L2 P1 X… Y…`, which sets the
+work offset without moving anything. It needs a homed, idle machine, since the holes are machine
+positions. The travel and its direction come from grblHAL's `$130`/`$131` and homing settings
+(`$22`/`$23`).
+
 ## The wizard, step by step
 
 1. **Check the controller.** The wizard sends `$G`, `$#` and `#1=[1+1]` (nothing moves) and reports:

@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -276,4 +276,40 @@ test('guards: the stored value itself is guarded too, if a stop line were skippe
     const p = Object.assign({ 5223: -77.5, 5383: -95, 5343: 18, 5403: 12, 5063: 27.5 }, { _homed_state: 0, _tool_offset: 1 });
     assert.throws(() => step(g10, p), /error:72/, k);
   }
+});
+
+const HOMING_FORMAT = 'Enable,Enable single axis commands,Homing on startup required,Set machine origin to 0,Two switches shares one input,Allow manual,Override locks,N/A,N/A,Per axis feedrates,Run startup scripts only on homing completed';
+
+test('travel direction from $22 / $23', () => {
+  // The author's machine: homes X and Y to min, origin set there: travel runs positive.
+  assert.deepEqual(travelDirs({ 22: { value: '623', format: HOMING_FORMAT }, 23: { value: '3' } }), { dirX: 1, dirY: 1 });
+  // grbl's default, homing to max: travel runs negative.
+  assert.deepEqual(travelDirs({ 22: { value: '623', format: HOMING_FORMAT }, 23: { value: '0' } }), { dirX: -1, dirY: -1 });
+  // Origin not set at home: negative, as grbl.
+  assert.deepEqual(travelDirs({ 22: { value: '1', format: HOMING_FORMAT }, 23: { value: '3' } }), { dirX: -1, dirY: -1 });
+  assert.equal(travelDirs({}), null);
+  assert.equal(travelDirs({ 22: { value: '0', format: HOMING_FORMAT }, 23: { value: '3' } }), null, 'homing off');
+});
+
+test('hole grid: as many as fit in the travel, from the inset, in machine coordinates', () => {
+  const g = holeGrid({ sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 30, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 });
+  // X: 48, 144, ... 816 is past 812, so 8 columns (48 + 7 * 96 = 720); Y: 30 + 12 * 96 = 1182, 13 rows.
+  assert.equal(g.length, 8 * 13);
+  assert.deepEqual(g[0], { col: 1, row: 1, x: 48, y: 30 });
+  assert.deepEqual(g[g.length - 1], { col: 8, row: 13, x: 720, y: 1182 });
+  const neg = holeGrid({ sxMm: 100, syMm: 100, insetXMm: 50, insetYMm: 50, travelXMm: 300, travelYMm: 200, dirX: -1, dirY: -1 });
+  assert.deepEqual(neg.map(h => [h.x, h.y]), [[-50, -50], [-150, -50], [-250, -50], [-50, -150], [-150, -150], [-250, -150]]);
+  assert.deepEqual(holeGrid({ sxMm: 0, syMm: 96, insetXMm: 0, insetYMm: 0, travelXMm: 800, travelYMm: 800, dirX: 1, dirY: 1 }), [], 'no spacing, no holes');
+});
+
+test('inset from the current position over any hole', () => {
+  assert.equal(insetFromPosition(336, 96, 1), 48);
+  assert.equal(insetFromPosition(-336, 96, -1), 48);
+  assert.equal(insetFromPosition(30, 96, 1), 30);
+  assert.equal(insetFromPosition(192, 96, 1), 0);
+});
+
+test('X0 Y0 on a hole: G10 L2 on the work offset, in mm', () => {
+  assert.deepEqual(holeCommands(1, 144, 222, false), ['G21', 'G10 L2 P1 X144.000 Y222.000']);
+  assert.deepEqual(holeCommands(2, -150.5, -50, true), ['G21', 'G10 L2 P2 X-150.500 Y-50.000', 'G20']);
 });
