@@ -817,25 +817,25 @@
       var calc = g ? nearestHoleLines(g) : { lines: [stop(0, 'set up the XY0 Picker grid first')], x: '0', y: '0' };
       var side = g ? g.originName : 'center';
       var lift = typeof o.safeZMm === 'number' && isFinite(o.safeZMm) ? fmt(o.safeZMm) : '0';
+      var inUnits = function(v) { return '[' + v + ' / ' + MM_PER_UNIT + ']'; };
       m.goHole = macro('Go to nearest hole', [
         '(ZS: lift, then move over the nearest hole\'s ' + side + ')',
         '(Grid from the XY0 Picker when created:)',
         '(Create macros again after changing it.)',
-        needHomed,
-        'G21'
+        needHomed
       ].concat(calc.lines, [
-        '#8=[[' + lift + '] + [#<_abs_z> - [' + lift + ']] * [#<_abs_z> GT [' + lift + ']]]',
-        'G53 G90 G0 Z[#8] (Safe Z, never down)',
-        'G53 G90 G0 X' + calc.x + ' Y' + calc.y
-      ], tail));
+        '#3=[#<_abs_z> * ' + MM_PER_UNIT + ']',
+        '#8=[[' + lift + '] + [#3 - [' + lift + ']] * [#3 GT [' + lift + ']]]',
+        'G53 G90 G0 Z' + inUnits('#8') + ' (Safe Z, never down)',
+        'G53 G90 G0 X' + inUnits(calc.x) + ' Y' + inUnits(calc.y)
+      ]));
       m.setHole = macro('XY0 on nearest hole', [
         '(ZS: X0 Y0 on the nearest hole\'s ' + side + ', no move)',
         '(Sets the active work offset.)',
         '(Create macros again after changing the grid.)',
         needHomed,
-        noG92,
-        'G21'
-      ].concat(calc.lines, ['G10 L2 P0 X' + calc.x + ' Y' + calc.y], tail));
+        noG92
+      ].concat(calc.lines, ['G10 L2 P0 X' + inUnits(calc.x) + ' Y' + inUnits(calc.y)]));
     }
     if (x.center) {
       m.center = macro('Set XY0 to Midpoint', [
@@ -976,15 +976,15 @@
   function parseHoleList(text, imperial) {
     var holes = [], bad = [];
     String(text || '').split(/\r?\n/).forEach(function(line, i) {
-      var t = line.trim();
-      if (!t || /^[(;]/.test(t)) return;
+      var t = line.replace(/\s*(;.*|\([^)]*\))\s*$/, '').trim();
+      if (!t || /^[(;]/.test(line.trim())) return;
       var m = /^([^:,]*[^\s:,]):\s*(.*)$/.exec(t), name = '';
       if (m) { name = m[1].trim(); t = m[2]; }
       var parts = t.split(',');
       var k = imperial ? 25.4 : 1;
       var x = parts.length === 2 ? parseUnitValue(parts[0], imperial, 'length') : NaN;
       var y = parts.length === 2 ? parseUnitValue(parts[1], imperial, 'length') : NaN;
-      if (!isFinite(x) || !isFinite(y)) { bad.push(i + 1); return; }
+      if (x == null || y == null || !isFinite(x) || !isFinite(y)) { bad.push(i + 1); return; }
       holes.push({ name: name, xMm: x * k, yMm: y * k });
     });
     return { holes: holes, bad: bad };
@@ -995,6 +995,17 @@
     var k = imperial ? 25.4 : 1;
     return holes.map(function(h) {
       return (h.name ? h.name + ': ' : '') + +(h.xMm / k).toFixed(4) + ', ' + +(h.yMm / k).toFixed(4);
+    }).join('\n');
+  }
+  // The list with each readable line's bare numbers rewritten from one
+  // unit to the other; comments, blank and unreadable lines kept as typed.
+  function convertHoleList(text, fromImperial, toImperial) {
+    if (fromImperial === toImperial) return String(text || '');
+    return String(text || '').split(/\r?\n/).map(function(line) {
+      var r = parseHoleList(line, fromImperial);
+      if (r.holes.length !== 1) return line;
+      var note = /\s*(;.*|\([^)]*\))\s*$/.exec(line);
+      return formatHoleList(r.holes, toImperial) + (note && !/^[(;]/.test(line.trim()) ? note[0] : '');
     }).join('\n');
   }
   // Holes marked `blocked` (in a keepout zone) are skipped.
@@ -1063,20 +1074,27 @@
   // to the grid. Leaves the hole center in #6 (X) and #7 (Y), and stops
   // (error 72, nothing changed) when that hole reaches into a keepout zone
   // or the picked side of it is outside the travel.
+  // Five decimals: the grid's spacing and insets are multiplied by up to
+  // 200 holes, so 0.001 mm rounding would add up.
+  function fmt5(v) { return (Math.round(v * 1e5) / 1e5).toFixed(5); }
+  // mm per unit of the controller's current mode, so the hole macros read
+  // and write in whatever units are active without switching (a stop can
+  // then never leave an inch machine in G21).
+  var MM_PER_UNIT = '[1 + 24.4 * #<_imperial>]';
   function nearestHoleLines(g) {
     if (g.layout === 'list') return nearestListLines(g);
     function axis(ax, n, inset, s, P, last, d, out) {
       var per = n >= 1 ? Math.floor(n) : 1, pitch = n >= 1 ? (P > 0 ? P : per * s) : s;
       var gap = pitch - (per - 1) * s;
       return [
-        '#2=[' + (d > 0 ? '' : '-1 * ') + '#<_abs_' + ax + '>]',
-        '#3=[FIX[[#2 - ' + fmt(inset) + ' + ' + fmt(gap / 2) + '] / ' + fmt(pitch) + ']]',
+        '#2=[' + (d > 0 ? '' : '-1 * ') + '#<_abs_' + ax + '> * ' + MM_PER_UNIT + ']',
+        '#3=[FIX[[#2 - ' + fmt5(inset) + ' + ' + fmt5(gap / 2) + '] / ' + fmt5(pitch) + ']]',
         '#3=[#3 * [#3 GT 0]]',
-        '#4=[ROUND[[#2 - ' + fmt(inset) + ' - #3 * ' + fmt(pitch) + '] / ' + fmt(s) + ']]',
+        '#4=[ROUND[[#2 - ' + fmt5(inset) + ' - #3 * ' + fmt5(pitch) + '] / ' + fmt5(s) + ']]',
         '#4=[#4 * [#4 GT 0]]',
         '#4=[#4 + [' + (per - 1) + ' - #4] * [#4 GT ' + (per - 1) + ']]',
-        '#5=[' + fmt(inset) + ' + #3 * ' + fmt(pitch) + ' + #4 * ' + fmt(s) + ']',
-        '#5=[#5 + [' + fmt(last) + ' - #5] * [#5 GT ' + fmt(last) + ']]',
+        '#5=[' + fmt5(inset) + ' + #3 * ' + fmt5(pitch) + ' + #4 * ' + fmt5(s) + ']',
+        '#5=[#5 + [' + fmt5(last) + ' - #5] * [#5 GT ' + fmt5(last) + ']]',
         '#' + out + '=[' + (d > 0 ? '' : '-1 * ') + '#5]'
       ];
     }
@@ -1087,12 +1105,12 @@
       axis('y', ys ? g.panelHoles : 0, g.insetYMm, g.syMm, g.panelPitchMm, g.lastYMm, g.dirY, 7));
     var r = g.diaMm / 2;
     (g.zones || []).forEach(function(z) {
-      lines.push('#1=[1 / [1 - [[#6 GE ' + fmt(z.minX - r) + '] AND [#6 LE ' + fmt(z.maxX + r) + '] AND [#7 GE ' + fmt(z.minY - r) + '] AND [#7 LE ' + fmt(z.maxY + r) + ']]]] (ZS stop: nearest hole is in the ' + z.name + ' keepout zone)');
+      lines.push('#1=[1 / [1 - [[#6 GE ' + fmt5(z.minX - r) + '] AND [#6 LE ' + fmt5(z.maxX + r) + '] AND [#7 GE ' + fmt5(z.minY - r) + '] AND [#7 LE ' + fmt5(z.maxY + r) + ']]]] (ZS stop: nearest hole is in the ' + z.name + ' keepout zone)');
     });
     var minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
-    var tx = '[#6 + ' + fmt(g.dx) + ']', ty = '[#7 + ' + fmt(g.dy) + ']';
+    var tx = '[#6 + ' + fmt5(g.dx) + ']', ty = '[#7 + ' + fmt5(g.dy) + ']';
     if (g.dx || g.dy) {
-      lines.push('#1=[1 / [1 - [[' + tx + ' LT ' + fmt(minX) + '] OR [' + tx + ' GT ' + fmt(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt(minY) + '] OR [' + ty + ' GT ' + fmt(minY + g.travelYMm) + ']]]] (ZS stop: that side of the hole is outside the travel)');
+      lines.push('#1=[1 / [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]] (ZS stop: that side of the hole is outside the travel)');
     }
     return { lines: lines, x: tx, y: ty };
   }
@@ -1101,24 +1119,29 @@
   // (squared distance, keeping the smallest): holes in a keepout zone, or
   // whose picked side is, or is outside the travel, are left out when the
   // macro is made. Leaves the hole center in #6 / #7, like the grid.
-  function nearestListLines(g) {
+  // The listed holes the macros can use: inside the travel, clear of the
+  // keepout zones, with the picked side inside the travel and clear too.
+  function usableListHoles(g) {
     var travel = { xMm: g.travelXMm, yMm: g.travelYMm, dirX: g.dirX, dirY: g.dirY }, r = g.diaMm / 2;
-    var usable = holeGrid(g).filter(function(p) {
+    return holeGrid(g).filter(function(p) {
       return !holeKeepout(p.x, p.y, r, g.zones || []) && !targetProblem(p.x + g.dx, p.y + g.dy, travel, g.zones || []);
     });
+  }
+  function nearestListLines(g) {
+    var usable = usableListHoles(g);
     var lines = ['(Nearest of ' + usable.length + ' listed holes)'];
     if (!usable.length) return { lines: lines.concat(['#1=[1 / 0] (ZS stop: no listed hole can be used)']), x: '[#6]', y: '[#7]' };
-    lines.push('#9=[1000000000]', '#6=[' + fmt(usable[0].x) + ']', '#7=[' + fmt(usable[0].y) + ']');
+    lines.push('#4=[#<_abs_x> * ' + MM_PER_UNIT + ']', '#5=[#<_abs_y> * ' + MM_PER_UNIT + ']', '#9=[1000000000]', '#6=[' + fmt5(usable[0].x) + ']', '#7=[' + fmt5(usable[0].y) + ']');
     usable.forEach(function(p) {
       lines.push(
-        '#2=[[#<_abs_x> - [' + fmt(p.x) + ']] * [#<_abs_x> - [' + fmt(p.x) + ']] + [#<_abs_y> - [' + fmt(p.y) + ']] * [#<_abs_y> - [' + fmt(p.y) + ']]]',
+        '#2=[[#4 - [' + fmt5(p.x) + ']] * [#4 - [' + fmt5(p.x) + ']] + [#5 - [' + fmt5(p.y) + ']] * [#5 - [' + fmt5(p.y) + ']]]',
         '#3=[#2 LT #9]',
         '#9=[#9 + [#2 - #9] * #3]',
-        '#6=[#6 + [[' + fmt(p.x) + '] - #6] * #3]',
-        '#7=[#7 + [[' + fmt(p.y) + '] - #7] * #3]'
+        '#6=[#6 + [[' + fmt5(p.x) + '] - #6] * #3]',
+        '#7=[#7 + [[' + fmt5(p.y) + '] - #7] * #3]'
       );
     });
-    return { lines: lines, x: '[#6 + ' + fmt(g.dx) + ']', y: '[#7 + ' + fmt(g.dy) + ']' };
+    return { lines: lines, x: '[#6 + ' + fmt5(g.dx) + ']', y: '[#7 + ' + fmt5(g.dy) + ']' };
   }
 
   // Up to Safe Z (a machine Z; machine Z0 when unset), then across, in
@@ -1281,11 +1304,14 @@
       var expr = await ask('#1=[1+1]', 300);
       // The safety stops read these named parameters (newer grblHAL builds).
       var named = expr.ok ? await ask('#1=[#<_homed_state> + #<_tool_offset>]', 300) : { ok: false };
+      var holeOps = expr.ok ? await ask('#1=[FIX[#<_abs_x>] + ROUND[#<_abs_y>] + #5211 + #<_imperial>]', 300) : { ok: false };
 
       if (expr.ok) addCheck(list, 'ok', 'Expressions work', 'The controller accepted #1=[1+1], so the macros\' calculations will run.');
       else addCheck(list, 'bad', 'Expressions not supported', 'The controller rejected #1=[1+1]. The macros need a grblHAL build with parameter and expression support.');
       if (expr.ok && named.ok) addCheck(list, 'ok', 'Safety stops work', 'The controller reads #<_homed_state> and #<_tool_offset>, so the macros stop instead of setting a wrong Z0 when the machine isn\'t homed or no tool length offset is active.');
       else if (expr.ok) addCheck(list, 'bad', 'Safety stops not supported', 'The controller rejected #<_homed_state> or #<_tool_offset>, which the macros\' safety stops read, so every macro would stop. Update grblHAL to a newer build.');
+      if (expr.ok && holeOps.ok) addCheck(list, 'ok', 'Nearest-hole macros will work', 'The controller reads the machine position (#<_abs_x>), FIX, ROUND, the G92 offset (#5211) and #<_imperial>.');
+      else if (expr.ok) addCheck(list, 'warn', 'Nearest-hole macros not supported', 'The controller rejected #<_abs_x>, FIX, ROUND, #5211 or #<_imperial>; the Nearest hole extra would stop without doing anything. The rest is unaffected.');
 
       if (!gc) addCheck(list, 'warn', 'No answer to $G', 'Couldn\'t read the modal state, so the tool length offset state is unknown.');
       else if (gc.tloActive) addCheck(list, 'ok', 'Tool length offset is active', 'Make sure every tool\'s offset is measured against the same reference tool.');
@@ -1529,6 +1555,11 @@
     var s = readSettings();
     if (!s) { status.setAttribute('data-state', 'bad'); status.textContent = 'Fix the highlighted settings first.'; return; }
     if (s.extras.holes && !s.holes) { status.setAttribute('data-state', 'bad'); status.textContent = 'Nearest hole needs the XY0 Picker\u2019s grid set up first, or untick it.'; return; }
+    if (s.extras.holes && s.holes.layout === 'list' && !usableListHoles(s.holes).length) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Nearest hole: none of the listed holes can be used (each is outside the travel or in a keepout zone, or the picked side is). Fix the list, or untick it.';
+      return;
+    }
     var m = buildMacros(s);
     btn.disabled = true;
     status.removeAttribute('data-state');
@@ -1668,8 +1699,7 @@
       // Bare numbers are in the units they were saved in; rewrite them
       // when ncSender's units have changed since.
       var savedImperial = saved.units === 'imperial';
-      var back = parseHoleList(saved.holeList, savedImperial);
-      $('mw-hole-list').value = savedImperial === state.imperial || back.bad.length ? saved.holeList : formatHoleList(back.holes, state.imperial);
+      $('mw-hole-list').value = convertHoleList(saved.holeList, savedImperial, state.imperial);
     }
     holeLayout();
     if (saved.holePanelHoles) $('mw-hole-pn').value = saved.holePanelHoles;
@@ -1867,7 +1897,9 @@
     var pn = $('mw-hole-pn'), ppEl = $('mw-hole-pp');
     var n = parseInt(pn.value, 10), pnGood = !h.trackAxis || (n >= 1 && String(n) === pn.value.trim());
     pn.classList.toggle('mw-invalid', !pnGood);
-    var pp = ppEl.value.trim() === '' ? 0 : unitVal(ppEl) * k, ppGood = !h.trackAxis || pp === 0 || pp > 0;
+    // A pitch must clear the panel's own holes, or the panels overlap.
+    var panelSpan = (n - 1) * (h.trackAxis === 'x' ? h.syMm : h.sxMm);
+    var pp = ppEl.value.trim() === '' ? 0 : unitVal(ppEl) * k, ppGood = !h.trackAxis || pp === 0 || pp > panelSpan + 1e-9;
     ppEl.classList.toggle('mw-invalid', !ppGood);
     if (!pnGood || !ppGood) ok = false;
     h.panelHoles = h.trackAxis ? n : 0;
@@ -1906,6 +1938,11 @@
       if (z) { p.blocked = true; p.zone = z.name; }
     });
     if (holes.grid[holes.picked] && holes.grid[holes.picked].blocked) holes.picked = -1;
+    if (h && h.layout === 'list') {
+      var outside = h.list.length - holes.grid.length;
+      $('mw-hole-list-note').textContent = h.list.length + ' hole' + (h.list.length === 1 ? '' : 's') +
+        (outside ? ', ' + outside + ' outside the machine\u2019s travel (not shown)' : '') + '.';
+    }
     if (holes.picked >= holes.grid.length) holes.picked = -1;
     // Machine X right and Y up (back at the top), fitted into 700 x 400.
     // The bed sits flush with the card's top left, like the Setup heading
@@ -2233,7 +2270,8 @@
         var t = usableTarget();
         if (!t) return;
         await machineReady();
-        var hash = parseHashReport((await ask('$#', 500)).lines), g92 = hash.G92 || [];
+        var hash = parseHashReport((await ask('$#', 900)).lines), g92 = hash.G92;
+        if (!g92) throw new Error('the controller didn\u2019t report its G92 offset ($#), so it isn\u2019t safe to set X0 Y0; try again');
         if (Math.abs(g92[0] || 0) > 0.0005 || Math.abs(g92[1] || 0) > 0.0005) {
           throw new Error('a G92 offset is active (X ' + fmt(g92[0]) + ', Y ' + fmt(g92[1]) + ' in the controller\u2019s units), which would shift X0 Y0 away from the hole. Send G92.1 in the terminal to clear it, then Set again');
         }
@@ -2270,7 +2308,7 @@
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Select Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
-      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed, the hole is in a keepout zone, or that side of it is outside the travel. XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
+      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Select Nearest, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',

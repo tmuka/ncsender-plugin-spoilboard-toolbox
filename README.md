@@ -126,8 +126,10 @@ Setup opens locked so a stray tap can't change the grid; press **Locked** to unl
 hole**: the controller works out the nearest hole to the spindle (grblHAL expressions with the grid
 built in), so you can jog roughly and press a key (see [Put them on keys](#put-them-on-keys)). Go to
 lifts to Safe Z first and never moves down; XY0 sets the active work offset on the side picked with the
-dots. Both stop without changing anything if the machine isn't homed, the hole is in a keepout zone, or
-that side of it is outside the travel. XY0 (and the picker's **Set**) also stop while a **G92 offset**
+dots. Both stop without changing anything if the machine isn't homed and, on a grid, if the nearest
+hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left
+out when the macros are made, so the nearest usable one is used). They read and write in whatever
+units the controller is in, so they never switch between G20 and G21. XY0 (and the picker's **Set**) also stop while a **G92 offset**
 is active, since grblHAL adds it on top and X0 Y0 would land away from the hole; send `G92.1` to clear
 it. Go to moves in machine coordinates, which G92 doesn't affect. They use the grid, side and keepout zones as they were when
 created, so press **Create macros** again after changing any of them.

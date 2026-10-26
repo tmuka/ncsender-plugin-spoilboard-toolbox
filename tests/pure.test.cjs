@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, holeLabel, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, holeLabel, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -45,10 +45,15 @@ function evalExpr(expr, params) {
 // notes it in params._error.
 function run(body, params) {
   for (const line of code(body)) {
-    try { step(line, params); } catch (e) { params._error = line; break; }
+    try { step(line, params); } catch (e) {
+      if (e.unknown) throw e;
+      params._error = line; break;
+    }
   }
   return params;
 }
+// Lines the stand-in doesn't evaluate but knows are plain G-code.
+const PLAIN = /^(G2[01]|G90|G5[4-9](\.[1-3])?|G91 G38\.2 Z-[\d.]+ F[\d.]+|G91 G0 Z[\d.]+|G53 G0 Z-?[\d.]+|G20)$/;
 function step(line, params) {
   {
     let m = /^#(\d+)=\[(.*)\]$/.exec(line);
@@ -69,7 +74,11 @@ function step(line, params) {
     m = /^G53 G90 G0 X\[(.*)\] Y\[(.*)\]$/.exec(line);
     if (m) { params._mx = evalExpr(m[1], params); params._my = evalExpr(m[2], params); return; }
     m = /^(?:G90 )?(G0|G10 L20 P0) (.*)$/.exec(line);
-    if (!m) return;
+    if (!m) {
+      if (PLAIN.test(line)) return;
+      // Anything else is a line the tests can't vouch for: fail loudly.
+      throw Object.assign(new Error('stand-in doesn\'t know: ' + line), { unknown: true });
+    }
     for (const [, axis, expr] of m[2].matchAll(/([XY])\[([^\]]*)\]/g)) {
       params[(m[1] === 'G0' ? '_' : 'L20_') + axis.toLowerCase()] = evalExpr(expr, params);
     }
@@ -575,8 +584,13 @@ test('nearest-hole macros: Go lifts (never down), then moves; stops for keepouts
   p = run(m.setHole.body, { _homed_state: 0, _abs_x: 150, _abs_y: 230 });
   assert.ok(p._error && p.P0_x === undefined, 'unhomed stops');
   assert.match(m.setHole.name, /XY0 on nearest hole$/);
-  const imperial = buildMacros(Object.assign({}, base, { imperial: true, extras: { holes: true }, holes: g }));
-  assert.equal(code(imperial.setHole.body).at(-1), 'G20');
+  // Inch mode: no unit switch at all; reads and writes inches.
+  const imperial = buildMacros(Object.assign({}, base, { imperial: true, safeZMm: -5, extras: { holes: true }, holes: g }));
+  assert.ok(!code(imperial.setHole.body).some((l) => /G2[01]/.test(l)) && !code(imperial.goHole.body).some((l) => /G2[01]/.test(l)));
+  p = run(imperial.setHole.body, Object.assign({}, ready, { _imperial: 1, _abs_x: 150 / 25.4, _abs_y: 230 / 25.4 }));
+  assert.ok(Math.abs(p.P0_x - 144 / 25.4) < 1e-5 && Math.abs(p.P0_y - 240 / 25.4) < 1e-5);
+  p = run(imperial.goHole.body, Object.assign({}, ready, { _imperial: 1, _abs_x: 150 / 25.4, _abs_y: 230 / 25.4, _abs_z: -30 / 25.4 }));
+  assert.ok(Math.abs(p._mz - -5 / 25.4) < 1e-5 && Math.abs(p._mx - 144 / 25.4) < 1e-5);
   assert.ok(code(imperial.setHole.body).every((l) => l.length <= 200), 'lines fit grblHAL\'s buffer');
   // Without a grid it only stops.
   const none = buildMacros(Object.assign({}, base, { extras: { holes: true } }));
@@ -621,4 +635,16 @@ test('nearest-hole macros with a list pick the nearest usable listed hole', () =
   }
   const none = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: Object.assign({}, g, { list: [list[3]] }) }));
   assert.ok(run(none.setHole.body, Object.assign({}, ready, { _abs_x: 1, _abs_y: 1 }))._error);
+});
+
+test('parseHoleList flags typos instead of reading them as 0; trailing comments are fine', () => {
+  const r = parseHoleList('A: 3O0, 10\nB: 300, 12 ; note\nC: 300,\nD: , 5\nE: 1 2, 5\nF: 10, 20 (pin)', false);
+  assert.deepEqual(r.bad, [1, 3, 4, 5]);
+  assert.deepEqual(r.holes, [{ name: 'B', xMm: 300, yMm: 12 }, { name: 'F', xMm: 10, yMm: 20 }]);
+});
+
+test('convertHoleList rewrites readable lines, keeps comments and unreadable lines', () => {
+  const text = '( locating )\nA: 25.4, 50.8 ; front\nbad line\nB: 1in, 0';
+  assert.equal(convertHoleList(text, false, true), '( locating )\nA: 1, 2 ; front\nbad line\nB: 1, 0');
+  assert.equal(convertHoleList(text, true, true), text);
 });
