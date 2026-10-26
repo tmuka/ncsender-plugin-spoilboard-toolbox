@@ -25,11 +25,15 @@ function evalExpr(expr, params) {
       .replace(/#<(_\w+)>/g, (_, n) => '(' + (params[n] || 0) + ')')
       .replace(/#(\d+)/g, (_, n) => '(' + (params[n] || 0) + ')')
       .replace(/ABS\[/g, 'Math.abs(')
+      .replace(/FIX\[/g, 'Math.floor(')
+      .replace(/ROUND\[/g, 'gRound(')
       .replace(/\[/g, '(').replace(/\]/g, ')')
-      .replace(/ GT /g, ' > ').replace(/ NE /g, ' != ').replace(/ AND /g, ' && ').replace(/ OR /g, ' || ');
+      .replace(/ GT /g, ' > ').replace(/ GE /g, ' >= ').replace(/ LT /g, ' < ').replace(/ LE /g, ' <= ').replace(/ NE /g, ' != ').replace(/ AND /g, ' && ').replace(/ OR /g, ' || ');
   // Comparisons and AND evaluate to 1 or 0 in grblHAL.
-  js = js.replace(/\(([^()]*(?:>|!=|&&|\|\|)[^()]*)\)/g, '(+($1))');
-  let value = Function('return ' + js)();
+  js = js.replace(/\(([^()]*(?:>|<|!=|&&|\|\|)[^()]*)\)/g, '(+($1))');
+  // grblHAL's ROUND: (int)(v + 0.5), or - 0.5 below zero.
+  const gRound = (v) => Math.trunc(v + (v < 0 ? -0.5 : 0.5));
+  let value = Function('gRound', 'return ' + js)(gRound);
   if (typeof value === 'boolean') value = +value;
   // grblHAL rejects a division by zero (error 72).
   if (!isFinite(value)) throw new Error('error:72');
@@ -49,6 +53,8 @@ function step(line, params) {
   {
     let m = /^#(\d+)=\[(.*)\]$/.exec(line);
     if (m) { params[m[1]] = evalExpr(m[2], params); return; }
+    m = /^G10 L2 P0 X\[(.*)\] Y\[(.*)\]$/.exec(line);
+    if (m) { params.P0_x = evalExpr(m[1], params); params.P0_y = evalExpr(m[2], params); return; }
     m = /^G10 L2 P(\d) Z\[(.*)\]$/.exec(line);
     if (m) { params[offsetZParam(+m[1])] = evalExpr(m[2], params); return; }
     m = /^G10 L2 P(\d) X\[(.*)\] Y\[(.*)\]$/.exec(line);
@@ -58,6 +64,10 @@ function step(line, params) {
       params[offsetZParam(+m[1]) - 1] = vy;
       return;
     }
+    m = /^G53 G90 G0 Z\[(.*)\]$/.exec(line);
+    if (m) { params._mz = evalExpr(m[1], params); return; }
+    m = /^G53 G90 G0 X\[(.*)\] Y\[(.*)\]$/.exec(line);
+    if (m) { params._mx = evalExpr(m[1], params); params._my = evalExpr(m[2], params); return; }
     m = /^(?:G90 )?(G0|G10 L20 P0) (.*)$/.exec(line);
     if (!m) return;
     for (const [, axis, expr] of m[2].matchAll(/([XY])\[([^\]]*)\]/g)) {
@@ -498,4 +508,67 @@ test('trackBands sit between panels, along the right axis and direction', () => 
   const wide = trackBands(Object.assign({}, base, { panelPitchMm: 280 }));
   // Last row 225, next panel at 305: gap 80, band 80 - 25 = 55 wide around 265.
   assert.deepEqual(wide[0], { from: 237.5, to: 292.5 });
+});
+
+// The grid as config.html's holeMacroGrid builds it.
+function macroGrid(o) {
+  const grid = holeGrid(o);
+  const xs = [...new Set(grid.map((p) => o.dirX * p.x))].sort((a, b) => a - b);
+  const ys = [...new Set(grid.map((p) => o.dirY * p.y))].sort((a, b) => a - b);
+  const off = holeOriginOffset(o.origin || 'center', o.diaMm / 2);
+  return Object.assign({}, o, { lastXMm: xs[xs.length - 1], lastYMm: ys[ys.length - 1], dx: off.dx, dy: off.dy, originName: o.origin || 'center', zones: o.zones || [] });
+}
+
+test('nearest-hole macros find the same hole as the XY0 Picker, on the controller', () => {
+  const grids = [
+    { name: 'plain, homes to min', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 },
+    { name: 'homes to max', sxMm: 50, syMm: 40, insetXMm: 20, insetYMm: 15, travelXMm: 800, travelYMm: 600, dirX: -1, dirY: -1 },
+    { name: 'T-tracks along X, unbroken', sxMm: 48.6, syMm: 48.6, insetXMm: 8.001, insetYMm: 28.265, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1, trackAxis: 'x', panelHoles: 5, panelPitchMm: 0 },
+    { name: 'T-tracks along Y, shifted', sxMm: 50, syMm: 50, insetXMm: 25, insetYMm: 25, travelXMm: 900, travelYMm: 500, dirX: 1, dirY: -1, trackAxis: 'y', panelHoles: 4, panelPitchMm: 235 }
+  ];
+  for (const g0 of grids) {
+    const g = macroGrid(Object.assign({ diaMm: 20, origin: 'back-right' }, g0));
+    const m = buildMacros(Object.assign({}, base, { safeZMm: -5, extras: { holes: true }, holes: g }));
+    const grid = holeGrid(g);
+    const minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
+    for (let i = 0; i <= 40; i++) {
+      for (let j = 0; j <= 40; j++) {
+        const x = minX + g.travelXMm * i / 40, y = minY + g.travelYMm * j / 40;
+        const want = grid[nearestHole(grid, x, y).index];
+        const inside = (v, lo, span) => v >= lo - 1e-6 && v <= lo + span + 1e-6;
+        const ok = inside(want.x + 10, minX, g.travelXMm) && inside(want.y + 10 * 1, minY, g.travelYMm);
+        const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: x, _abs_y: y, _abs_z: -20 }));
+        if (!ok) { assert.ok(p._error, g.name + ': should stop outside the travel at ' + x + ',' + y); continue; }
+        assert.equal(p._error, undefined, g.name + ' at ' + x + ',' + y);
+        // Ties (exactly halfway) may go either way; anything else must match.
+        const dWant = Math.hypot(want.x - x, want.y - y);
+        const got = { x: p.P0_x - 10, y: p.P0_y - 10 };
+        assert.ok(Math.abs(Math.hypot(got.x - x, got.y - y) - dWant) < 1e-3, g.name + ' at ' + x + ',' + y + ': got ' + JSON.stringify(got) + ' want ' + JSON.stringify(want));
+        assert.ok(grid.some((h) => Math.abs(h.x - got.x) < 1e-3 && Math.abs(h.y - got.y) < 1e-3), g.name + ': not a hole');
+      }
+    }
+  }
+});
+
+test('nearest-hole macros: Go lifts (never down), then moves; stops for keepouts and unhomed', () => {
+  const g = macroGrid({ diaMm: 20, origin: 'center', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1,
+    zones: [{ name: 'ATCi', minX: 690, maxX: 812, minY: 700, maxY: 1230 }] });
+  const m = buildMacros(Object.assign({}, base, { safeZMm: -5, extras: { holes: true }, holes: g }));
+  let p = run(m.goHole.body, Object.assign({}, ready, { _abs_x: 150, _abs_y: 230, _abs_z: -30 }));
+  assert.deepEqual([p._mz, p._mx, p._my], [-5, 144, 240]);
+  p = run(m.goHole.body, Object.assign({}, ready, { _abs_x: 150, _abs_y: 230, _abs_z: -2 }));
+  assert.equal(p._mz, -2);
+  p = run(m.goHole.body, Object.assign({}, ready, { _abs_x: 720, _abs_y: 1008, _abs_z: -30 }));
+  assert.ok(p._error && p._mx === undefined, 'keepout stops before moving');
+  p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: 720, _abs_y: 1008 }));
+  assert.ok(p._error && p.P0_x === undefined);
+  p = run(m.setHole.body, { _homed_state: 0, _abs_x: 150, _abs_y: 230 });
+  assert.ok(p._error && p.P0_x === undefined, 'unhomed stops');
+  assert.match(m.setHole.name, /XY0 on nearest hole$/);
+  const imperial = buildMacros(Object.assign({}, base, { imperial: true, extras: { holes: true }, holes: g }));
+  assert.equal(code(imperial.setHole.body).at(-1), 'G20');
+  assert.ok(code(imperial.setHole.body).every((l) => l.length <= 200), 'lines fit grblHAL\'s buffer');
+  // Without a grid it only stops.
+  const none = buildMacros(Object.assign({}, base, { extras: { holes: true } }));
+  assert.ok(run(none.setHole.body, Object.assign({}, ready))._error);
 });

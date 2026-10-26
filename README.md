@@ -33,7 +33,7 @@ save you that.
 **XY0 Picker:** repeatable XY zero from your spoilboard grid. Use it for bench-dog stops and fences,
 fixtures and jigs that register in the holes, or to get back to the same work origin job after job,
 without an edge finder or XY probe. It shows the keepout zones (ncSender's, or the ATCi tool rack's)
-and won't pick a hole inside one.
+and won't pick a hole inside one. Optional macros snap to the nearest dog hole from a keyboard shortcut.
 
 **Z0 macros:** switch work Z zero between the spoilboard (wasteboard) and the stock top, for every
 tool, without re-probing after a tool change:
@@ -106,6 +106,15 @@ works when the first one is less than one spacing from machine X0 Y0). Once save
 Setup opens locked so a stray tap can't change the grid; press **Locked** to unlock it for editing
 (changes save as you go).
 
+**From the keyboard, without opening the plugin:** tick **Nearest hole** under the Z0 macros tab's
+**Extras** and press **Create macros**. You get **ZS: Go to nearest hole** and **ZS: XY0 on nearest
+hole**: the controller works out the nearest hole to the spindle (grblHAL expressions with the grid
+built in), so you can jog roughly and press a key (ncSender's shortcut settings, **Macros** group). Go to
+lifts to Safe Z first and never moves down; XY0 sets the active work offset on the side picked with the
+dots. Both stop without changing anything if the machine isn't homed, the hole is in a keepout zone, or
+that side of it is outside the travel. They use the grid, side and keepout zones as they were when
+created, so press **Create macros** again after changing any of them.
+
 **T-tracks between panels?** Pick **T-tracks: Along X** (tracks between rows) or **Along Y** (between
 columns) and set **Holes per Panel**. Leave **Panel Pitch** blank when the hole spacing carries straight
 on across a track; if a track pushes the next panel over, measure from the first hole of one panel to
@@ -156,6 +165,8 @@ direction come from grblHAL's `$130`/`$131` and homing settings
      stock.
    - **Set XY0 to Midpoint**: put X0 Y0 halfway to the current spot without moving
      (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`).
+   - **Nearest hole**: **Go to nearest hole** and **XY0 on nearest hole**, keyboard versions of the
+     XY0 Picker's buttons (see the XY0 Picker section above).
    - **Save / restore X/Y**: save the work offset's X and Y (e.g. a fixture or jig) and put them back
      later. They're kept in the saved-Z0 slot's X/Y, which that slot doesn't otherwise use; restore
      does nothing if nothing was saved.

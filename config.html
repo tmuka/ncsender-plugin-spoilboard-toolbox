@@ -557,6 +557,7 @@
           <label class="mw-extra"><input type="checkbox" id="mw-x-midY" checked><span><strong>Midpoint Y</strong><span>The same along Y.</span></span></label>
           <label class="mw-extra"><input type="checkbox" id="mw-x-midXY" checked><span><strong>Midpoint XY</strong><span>Move halfway to X0 Y0, e.g. from the opposite corner of square stock.</span></span></label>
           <label class="mw-extra"><input type="checkbox" id="mw-x-center" checked><span><strong>Set XY0 to Midpoint</strong><span>Put X0 Y0 halfway to the current spot without moving.</span></span></label>
+          <label class="mw-extra"><input type="checkbox" id="mw-x-holes"><span><strong>Nearest hole</strong><span>Go to, or set X0 Y0 on, the XY0 Picker hole nearest the spindle, from a keyboard shortcut. Uses the grid and the side picked there; Create macros again after changing them.</span></span></label>
           <label class="mw-extra"><input type="checkbox" id="mw-x-fixture" checked><span><strong>Save / restore X/Y</strong><span>Keep the work offset's X/Y for a fixture or jig, and bring it back later. Uses the saved-Z0 slot's X/Y.</span></span></label>
         </div>
         <p class="mw-hint" id="mw-safe-note">Midpoint moves first lift to ncSender&rsquo;s Safe Z. They use the active work offset.</p>
@@ -780,6 +781,30 @@
         'G10 L2 P' + o.wcs + ' X[' + cx + ' + [' + sx + ' - ' + cx + '] * ' + anySaved + '] Y[' + cy + ' + [' + sy + ' - ' + cy + '] * ' + anySaved + ']'
       ].concat(tail));
     }
+    if (x.holes) {
+      var g = o.holes;
+      var calc = g ? nearestHoleLines(g) : { lines: [stop(0, 'set up the XY0 Picker grid first')], x: '0', y: '0' };
+      var side = g ? g.originName : 'center';
+      var lift = typeof o.safeZMm === 'number' && isFinite(o.safeZMm) ? fmt(o.safeZMm) : '0';
+      m.goHole = macro('Go to nearest hole', [
+        '(ZS: lift, then move over the nearest hole\'s ' + side + ')',
+        '(Grid from the XY0 Picker when created:)',
+        '(Create macros again after changing it.)',
+        needHomed,
+        'G21'
+      ].concat(calc.lines, [
+        '#8=[[' + lift + '] + [#<_abs_z> - [' + lift + ']] * [#<_abs_z> GT [' + lift + ']]]',
+        'G53 G90 G0 Z[#8] (Safe Z, never down)',
+        'G53 G90 G0 X' + calc.x + ' Y' + calc.y
+      ], tail));
+      m.setHole = macro('XY0 on nearest hole', [
+        '(ZS: X0 Y0 on the nearest hole\'s ' + side + ', no move)',
+        '(Sets the active work offset.)',
+        '(Create macros again after changing the grid.)',
+        needHomed,
+        'G21'
+      ].concat(calc.lines, ['G10 L2 P0 X' + calc.x + ' Y' + calc.y], tail));
+    }
     if (x.center) {
       m.center = macro('Set XY0 to Midpoint', [
         '(ZS: set X0 Y0 halfway to here, no move)',
@@ -954,6 +979,48 @@
     return null;
   }
 
+  // G-code lines that work out the nearest hole to the spindle on the
+  // controller itself, for the nearest-hole macros, from the XY0 Picker's
+  // grid baked in as numbers (machine mm, after G21). Per axis, with u the
+  // distance into the travel: the panel is FIX[(u - inset + gap / 2) /
+  // pitch] (the boundary halfway across a track; no tracks is panels of
+  // one hole at the spacing), then the hole in it ROUND[...], both clamped
+  // to the grid. Leaves the hole center in #6 (X) and #7 (Y), and stops
+  // (error 72, nothing changed) when that hole reaches into a keepout zone
+  // or the picked side of it is outside the travel.
+  function nearestHoleLines(g) {
+    function axis(ax, n, inset, s, P, last, d, out) {
+      var per = n >= 1 ? Math.floor(n) : 1, pitch = n >= 1 ? (P > 0 ? P : per * s) : s;
+      var gap = pitch - (per - 1) * s;
+      return [
+        '#2=[' + (d > 0 ? '' : '-1 * ') + '#<_abs_' + ax + '>]',
+        '#3=[FIX[[#2 - ' + fmt(inset) + ' + ' + fmt(gap / 2) + '] / ' + fmt(pitch) + ']]',
+        '#3=[#3 * [#3 GT 0]]',
+        '#4=[ROUND[[#2 - ' + fmt(inset) + ' - #3 * ' + fmt(pitch) + '] / ' + fmt(s) + ']]',
+        '#4=[#4 * [#4 GT 0]]',
+        '#4=[#4 + [' + (per - 1) + ' - #4] * [#4 GT ' + (per - 1) + ']]',
+        '#5=[' + fmt(inset) + ' + #3 * ' + fmt(pitch) + ' + #4 * ' + fmt(s) + ']',
+        '#5=[#5 + [' + fmt(last) + ' - #5] * [#5 GT ' + fmt(last) + ']]',
+        '#' + out + '=[' + (d > 0 ? '' : '-1 * ') + '#5]'
+      ];
+    }
+    var ys = g.trackAxis === 'x', xs = g.trackAxis === 'y';
+    var lines = ['(Nearest hole along X)'].concat(
+      axis('x', xs ? g.panelHoles : 0, g.insetXMm, g.sxMm, g.panelPitchMm, g.lastXMm, g.dirX, 6),
+      ['(Nearest hole along Y)'],
+      axis('y', ys ? g.panelHoles : 0, g.insetYMm, g.syMm, g.panelPitchMm, g.lastYMm, g.dirY, 7));
+    var r = g.diaMm / 2;
+    (g.zones || []).forEach(function(z) {
+      lines.push('#1=[1 / [1 - [[#6 GE ' + fmt(z.minX - r) + '] AND [#6 LE ' + fmt(z.maxX + r) + '] AND [#7 GE ' + fmt(z.minY - r) + '] AND [#7 LE ' + fmt(z.maxY + r) + ']]]] (ZS stop: nearest hole is in the ' + z.name + ' keepout zone)');
+    });
+    var minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
+    var tx = '[#6 + ' + fmt(g.dx) + ']', ty = '[#7 + ' + fmt(g.dy) + ']';
+    if (g.dx || g.dy) {
+      lines.push('#1=[1 / [1 - [[' + tx + ' LT ' + fmt(minX) + '] OR [' + tx + ' GT ' + fmt(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt(minY) + '] OR [' + ty + ' GT ' + fmt(minY + g.travelYMm) + ']]]] (ZS stop: that side of the hole is outside the travel)');
+    }
+    return { lines: lines, x: tx, y: ty };
+  }
+
   // Up to Safe Z (a machine Z; machine Z0 when unset), then across, in
   // machine coordinates. Never down: already above Safe Z, it stays at
   // the current Z. Each line carries G21 so it's in mm whatever else is
@@ -1028,7 +1095,7 @@
   // END pure
 
   var state = { imperial: false, capturing: null, safeZMm: null };
-  var EXTRAS = ['midX', 'midY', 'midXY', 'center', 'fixture'];
+  var EXTRAS = ['midX', 'midY', 'midXY', 'center', 'fixture', 'holes'];
 
   // Controller output reaches plugin dialogs as 'cnc-data' messages.
   function cncText(data) {
@@ -1177,6 +1244,7 @@
       imperial: state.imperial
     };
     EXTRAS.forEach(function(k2) { s.extras[k2] = $('mw-x-' + k2).checked; });
+    s.holes = holeMacroGrid();
     // The three slots must be different.
     var ids = { 'mw-slot': s.slot, 'mw-backup': s.backup, 'mw-thick': s.thick };
     Object.keys(ids).forEach(function(id) {
@@ -1359,6 +1427,7 @@
     var status = $('mw-save-status'), btn = $('mw-save');
     var s = readSettings();
     if (!s) { status.setAttribute('data-state', 'bad'); status.textContent = 'Fix the highlighted settings first.'; return; }
+    if (s.extras.holes && !s.holes) { status.setAttribute('data-state', 'bad'); status.textContent = 'Nearest hole needs the XY0 Picker\u2019s grid set up first, or untick it.'; return; }
     var m = buildMacros(s);
     btn.disabled = true;
     status.removeAttribute('data-state');
@@ -1636,6 +1705,18 @@
   function holePanelFields() {
     var off = !$('mw-hole-track').value || $('mw-hole-lock').getAttribute('aria-pressed') === 'true';
     ['mw-hole-pn', 'mw-hole-pp'].forEach(function(id) { $(id).disabled = off; });
+  }
+  // The grid as the nearest-hole macros need it, or null.
+  function holeMacroGrid() {
+    var h = readHoles(), t = state.travel;
+    if (!h || !t) return null;
+    var g = Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h);
+    var xs = axisPositions(h.insetXMm, h.sxMm, t.xMm, h.trackAxis === 'y' ? h.panelHoles : 0, h.panelPitchMm);
+    var ys = axisPositions(h.insetYMm, h.syMm, t.yMm, h.trackAxis === 'x' ? h.panelHoles : 0, h.panelPitchMm);
+    if (!xs.length || !ys.length) return null;
+    var off = holeOriginOffset(holes.origin, h.diaMm / 2);
+    return Object.assign(g, { lastXMm: xs[xs.length - 1], lastYMm: ys[ys.length - 1], dx: off.dx, dy: off.dy,
+      originName: ORIGIN_NOTES[holes.origin], zones: state.keepouts || [] });
   }
   function readHoles() {
     var k = state.imperial ? MM_PER_INCH : 1, ok = true;
@@ -2001,6 +2082,7 @@
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Select Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
+      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (ncSender&rsquo;s shortcut settings, Macros group). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed, the hole is in a keepout zone, or that side of it is outside the travel.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
       'Size fields take mm or inches and convert when you leave the field: <kbd>20mm</kbd>, <kbd>3/4"</kbd>, <kbd>1-1/2in</kbd>.' ] },
