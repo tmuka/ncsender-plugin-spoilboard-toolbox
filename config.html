@@ -276,6 +276,9 @@
   .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
   .mw-hole-map .mw-h-area { fill: color-mix(in srgb, var(--color-text-secondary) 6%, transparent); stroke: var(--color-border); }
   .mw-hole-map .mw-h-spot { cursor: pointer; }
+  .mw-hole-map .mw-h-tick { stroke: var(--color-accent); stroke-width: 1.5; }
+  .mw-hole-map text.mw-h-ruler { font-size: 10px; font-variant-numeric: tabular-nums; }
+  .mw-hole-map text.mw-h-axis { font-weight: 700; }
   .mw-hole-map text.mw-h-name { fill: var(--color-text-primary); font-weight: 600; pointer-events: none; }
   .mw-hole-map .mw-h-track { fill: color-mix(in srgb, var(--color-text-secondary) 22%, transparent); pointer-events: none; }
   .mw-hole-map .mw-h-keepout {
@@ -964,6 +967,15 @@
     return ((d % spacingMm) + spacingMm) % spacingMm;
   }
   // The hole nearest a machine position: { index, distanceMm }, or null.
+  // Ruler ticks: round values (1, 2 or 5 x 10^n) from lo to hi at least
+  // minPx apart on screen, given pxPerUnit.
+  function axisTicks(lo, hi, pxPerUnit, minPx) {
+    var raw = minPx / pxPerUnit, p10 = Math.pow(10, Math.floor(Math.log10(raw))), step = 10 * p10;
+    [1, 2, 5, 10].some(function(m) { if (m * p10 >= raw - 1e-12) { step = m * p10; return true; } return false; });
+    var out = [];
+    for (var v = Math.ceil(lo / step - 1e-9) * step; v <= hi + 1e-9 && out.length < 500; v += step) out.push(+v.toFixed(6));
+    return { step: step, values: out };
+  }
   // How the UI names a hole: its list name, list number, or grid place.
   function holeLabel(p) {
     if (p.col == null) return p.name ? p.name : 'Hole ' + p.index;
@@ -1947,10 +1959,12 @@
     // Machine X right and Y up (back at the top), fitted into 700 x 400.
     // The bed sits flush with the card's top left, like the Setup heading
     // below; only the machine X0 Y0 label's side gets room for it.
+    // The bed flush with the card's top left, like the Setup heading below;
+    // machine X numbers run along the bottom and Y down the right.
     var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = 1;
-    var padT = t.dirY > 0 ? pad : 18, padB = t.dirY > 0 ? 18 : pad;
-    var box = holeMapBox(t), sc = Math.min((box.w - 2 * pad) / t.xMm, (box.h - padT - padB) / t.yMm);
-    var w = t.xMm * sc + 2 * pad, ht = t.yMm * sc + padT + padB;
+    var padT = pad, padB = 20, padR = 46;
+    var box = holeMapBox(t), sc = Math.min((box.w - pad - padR) / t.xMm, (box.h - padT - padB) / t.yMm);
+    var w = t.xMm * sc + pad + padR, ht = t.yMm * sc + padT + padB;
     svg.style.width = w.toFixed(0) + 'px';
     svg.style.height = ht.toFixed(0) + 'px';
     var X = function(x) { return (pad + (x - minX) * sc).toFixed(1); }, Y = function(y) { return (padT + (minY + t.yMm - y) * sc).toFixed(1); };
@@ -1964,7 +1978,23 @@
       return el;
     };
     add('rect', { class: 'mw-h-area', x: pad, y: padT, width: (t.xMm * sc).toFixed(1), height: (t.yMm * sc).toFixed(1), rx: 3 });
-    add('text', { x: X(0), y: (+Y(0) + (t.dirY > 0 ? 16 : -6)).toFixed(1), 'text-anchor': t.dirX > 0 ? 'start' : 'end' }, 'machine X0 Y0');
+    // Rulers in ncSender's units: machine coordinates, 0 at machine X0 Y0.
+    var uk = state.imperial ? MM_PER_INCH : 1, unit = state.imperial ? 'in' : 'mm';
+    var bottom = padT + t.yMm * sc, right = pad + t.xMm * sc;
+    var tx = axisTicks(minX / uk, (minX + t.xMm) / uk, sc * uk, 56);
+    tx.values.forEach(function(v) {
+      var px = +X(v * uk);
+      add('line', { class: 'mw-h-tick', x1: px, y1: bottom, x2: px, y2: bottom + 4 });
+      add('text', { class: 'mw-h-ruler', x: px.toFixed(1), y: (bottom + 15).toFixed(1),
+        'text-anchor': px < 12 ? 'start' : px > right - 12 ? 'end' : 'middle' }, String(v));
+    });
+    var ty = axisTicks(minY / uk, (minY + t.yMm) / uk, sc * uk, 30);
+    ty.values.forEach(function(v) {
+      var py = +Y(v * uk);
+      add('line', { class: 'mw-h-tick', x1: right, y1: py, x2: right + 4, y2: py });
+      add('text', { class: 'mw-h-ruler', x: (right + 7).toFixed(1), y: Math.max(py + 4, 9).toFixed(1) }, String(v));
+    });
+    add('text', { class: 'mw-h-ruler mw-h-axis', x: (right + 7).toFixed(1), y: (bottom + 15).toFixed(1) }, unit);
     // T-tracks between panels, across the whole travel.
     if (h) trackBands(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h)).forEach(function(band) {
       var alongX = h.trackAxis === 'x';
@@ -2304,7 +2334,7 @@
       'Click a hole on the map, or jog roughly over one and press <strong>Select Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
       '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
-      'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the small dot is the spindle.',
+      'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the small dot is the spindle. The numbers along the bottom (X) and right (Y) are machine coordinates in ncSender&rsquo;s units.',
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Select Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',

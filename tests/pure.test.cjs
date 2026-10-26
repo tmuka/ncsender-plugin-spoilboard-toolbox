@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -647,4 +647,14 @@ test('convertHoleList rewrites readable lines, keeps comments and unreadable lin
   const text = '( locating )\nA: 25.4, 50.8 ; front\nbad line\nB: 1in, 0';
   assert.equal(convertHoleList(text, false, true), '( locating )\nA: 1, 2 ; front\nbad line\nB: 1, 0');
   assert.equal(convertHoleList(text, true, true), text);
+});
+
+test('axisTicks picks round steps at least minPx apart', () => {
+  // 812 mm at 0.45 px/mm, 56 px apart: 124 mm raw -> 200 mm steps.
+  assert.deepEqual(axisTicks(0, 812, 0.45, 56), { step: 200, values: [0, 200, 400, 600, 800] });
+  // Inches: 32 in at 11.4 px/in, 30 px apart: 2.6 in raw -> 5 in steps.
+  assert.deepEqual(axisTicks(0, 31.97, 11.43, 30).values, [0, 5, 10, 15, 20, 25, 30]);
+  // Homing to max: negative machine coordinates.
+  assert.deepEqual(axisTicks(-800, 0, 0.5, 56).values, [-800, -600, -400, -200, 0]);
+  assert.deepEqual(axisTicks(0, 1, 300, 56).values, [0, 0.2, 0.4, 0.6, 0.8, 1]);
 });
