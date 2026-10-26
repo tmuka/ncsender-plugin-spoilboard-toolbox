@@ -274,8 +274,14 @@ test('guards: nothing changes unless homed, an offset is active and the values e
   const p = run(m.stock.body, Object.assign({}, start, ready, { 5343: 0 }));
   assert.ok(m.stock.body.includes(p._error + ' (ZS stop: store a stock thickness first)'));
   assert.deepEqual([p[5223], p[5363]], [-77.5, 0]);
-  // Back to saved needs none of it.
-  assert.ok(!/ZS stop/.test(m.restore.body));
+  // Back to saved needs none of it, only no G92 Z.
+  assert.deepEqual(m.restore.body.match(/ZS stop: [^)]*/g), ['ZS stop: a G92 Z offset is active; G92.1 clears it']);
+  // A G92 Z offset stops the three that set Z0, changing nothing.
+  for (const k of ['set', 'stock', 'restore']) {
+    const q = run(m[k].body, Object.assign({}, start, ready, { 5213: 3, 5363: -50 }));
+    assert.ok(m[k].body.includes(q._error + ' (ZS stop: a G92 Z offset is active; G92.1 clears it)'), k);
+    assert.deepEqual([q[5223], q[5363]], [-77.5, -50], k + ' changes nothing with G92 Z');
+  }
 });
 
 test('guards: the stored value itself is guarded too, if a stop line were skipped', () => {

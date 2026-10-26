@@ -681,6 +681,8 @@
     var needSpoil = stop(hasSpoil, 'record the spoilboard height first');
     var needThick = stop(hasThick, 'store a stock thickness first');
     // A G92 offset (#5211 / #5212, mm) shifts X0 Y0 away from what's set.
+    // And a G92 Z offset (#5213) shifts Z0 the same way.
+    var noG92Z = stop('[ABS[#5213] LT 0.0005]', 'a G92 Z offset is active; G92.1 clears it');
     var noG92 = stop('[[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005]]', 'a G92 offset is active; G92.1 clears it');
     var tail = o.imperial ? ['G20 (back to inches)'] : [];
     var probe = [
@@ -726,6 +728,7 @@
       needHomed,
       needTlo,
       needSpoil,
+      noG92Z,
       'G21',
       saveLine,
       'G10 L2 P' + o.wcs + ' Z[' + spoil + ' / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ']]'
@@ -739,6 +742,7 @@
       needTlo,
       needSpoil,
       needThick,
+      noG92Z,
       'G21',
       saveLine,
       'G10 L2 P' + o.wcs + ' Z[[' + spoil + ' + ' + thick + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + hasThick + ']]'
@@ -746,6 +750,7 @@
     m.restore = macro(wcs + ' Z0 back to saved', [
       '(ZS: put back the Z0 saved in ' + bak + ' Z)',
       '(Leaves Z0 alone if nothing was saved.)',
+      noG92Z,
       'G21',
       'G10 L2 P' + o.wcs + ' Z[' + cur + ' + [' + saved + ' - ' + cur + '] * [' + saved + ' NE 0]]'
     ].concat(tail));

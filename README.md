@@ -244,6 +244,11 @@ anything, when:
 The midpoint moves stop too when the machine isn't homed, since their Safe Z lift is a machine
 position. **Back to saved** needs none of these.
 
+The three macros that set Z0 (spoilboard, stock top, back to saved) also stop while a **G92 Z offset**
+is active: grblHAL adds it on top of the work offset, so Z0 would land that far above or below where
+it should. `G92.1` clears it. (The probing in record and measure isn't affected: grblHAL reports the
+probe point relative to the work offset only.)
+
 grblHAL macros have no if/else here, so a stop is a deliberate division by zero, for example
 `#1=[1 / #<_homed_state>] (ZS stop: home the machine first)`: grblHAL rejects the line with
 `error:72`, and ncSender sends nothing after a rejected line of a macro. The same check also
