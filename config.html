@@ -2360,6 +2360,8 @@
       var fw = await (await fetch(BASE_URL + '/api/firmware')).json();
       var set = fw && fw.settings || {};
       var tx = parseFloat(set['130'] && set['130'].value), ty = parseFloat(set['131'] && set['131'].value);
+      var tz = parseFloat(set['132'] && set['132'].value);
+      state.zTravelMm = tz > 0 ? tz : null;
       var dirs = travelDirs(set);
       state.travel = tx > 0 && ty > 0 && dirs ? { xMm: tx, yMm: ty, dirX: dirs.dirX, dirY: dirs.dirY } : null;
       state.keepouts = keepoutZones(state.ncSettings, set);
@@ -2951,10 +2953,15 @@
     if (holes.grid[holes.picked] && holes.grid[holes.picked].hidden) holes.picked = -1;
     var editing = !holeLocked();
     if (holes.grid[holes.picked] && (holes.grid[holes.picked].blocked || (holes.grid[holes.picked].suppressed && !editing))) holes.picked = -1;
-    if (h && h.layout === 'list') {
-      var outside = h.list.length - holes.grid.length;
+    if (h && h.layout !== 'grid') {
+      var outside = h.list.length - holes.grid.filter(function(g) { return g.col == null; }).length;
+      // Heights that can't be right: below the spoilboard, or more than
+      // the Z travel (a unit typo, say). Set Z0 refuses them too.
+      var badZ = h.list.map(function(l, i) { return l.zMm != null && zProblem(l.zMm) ? i + 1 : 0; }).filter(Boolean);
       $('mw-hole-list-note').textContent = h.list.length + ' hole' + (h.list.length === 1 ? '' : 's') +
-        (outside ? ', ' + outside + ' outside the machine\u2019s travel (not shown)' : '') + '.';
+        (outside ? ', ' + outside + ' outside the machine\u2019s travel (not shown)' : '') + '.' +
+        badZ.map(function(n) { return ' Check the height on line ' + n + ': ' + zProblem(h.list[n - 1].zMm) + '.'; }).join('');
+      $('mw-hole-list-note').classList.toggle('mw-bad-text', badZ.length > 0);
     }
     if (holes.picked >= holes.grid.length) holes.picked = -1;
     if (holes.picked < 0) holes.nearMm = null;
@@ -3198,9 +3205,11 @@
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
     var zt = zTarget();
     $('mw-hole-setz').hidden = !zt;
-    $('mw-hole-setz').disabled = !zt || holes.busy;
     $('mw-hole-z').hidden = !zt;
-    $('mw-hole-z').textContent = zt ? 'Z0 option: ' + zt.what + ', spoilboard + ' + shown(zt.hMm) + ' ' + unitName() : '';
+    var zbad = zt && zProblem(zt.hMm);
+    $('mw-hole-z').textContent = zt ? 'Z0 option: ' + zt.what + ', spoilboard + ' + shown(zt.hMm) + ' ' + unitName() + (zbad ? ': ' + zbad : '') : '';
+    $('mw-hole-z').classList.toggle('mw-bad-text', !!zbad);
+    $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy;
     if (!zt && hold.btn && hold.btn.id === 'mw-hole-setz') stopHold(false);
     if (!aim || problem || holes.busy) disarmGoto();
     var on = $('mw-stock-on').checked, a = holes.stockAnchor;
@@ -3421,12 +3430,21 @@
     }
     return base != null ? { hMm: base, what: 'the surface of ' + on } : null;
   }
+  // Why a height above the spoilboard can't be Z0's: below the spoilboard,
+  // or more than the machine's Z travel ($132). Null when it's fine.
+  function zProblem(hMm) {
+    if (!(hMm >= 0)) return 'it\u2019s below the spoilboard';
+    if (state.zTravelMm && hMm > state.zTravelMm) return 'it\u2019s more than the machine\u2019s Z travel (' + shown(state.zTravelMm) + ' ' + unitName() + ')';
+    return null;
+  }
   async function setZZero() {
     var status = $('mw-hole-status');
     await holeAction(async function() {
       try {
         var z = zTarget(), s = readSettings();
         if (!z) return;
+        var zp = zProblem(z.hMm);
+        if (zp) throw new Error('that Z0 is ' + shown(z.hMm) + ' ' + unitName() + ' above the spoilboard, and ' + zp + '; check the height and the stock thickness');
         if (!s) throw new Error('the Z0 macros tab\u2019s settings need fixing first (its storage offsets)');
         await machineReady();
         var hash = parseHashReport((await ask('$#', 900)).lines), spoil = hash[WCS_NAMES[s.slot]], g92 = hash.G92;
@@ -3505,7 +3523,7 @@
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too).',
       '<strong>Grid + List</strong> adds extra holes to a grid, one per line, measured from the first grid&rsquo;s first hole. A third value is that hole&rsquo;s own diameter, e.g. <kbd>pin: 130, 40, 6mm</kbd>; the map draws it at that size, and the dots put X0 Y0 on its own edge.',
-      '<strong>Fixtures with a height</strong> (a vise, a vertical jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard, e.g. <kbd>vise: 400, 250, , 63.5mm</kbd> (a blank third value keeps Hole Diameter). Pick it and a <strong>Set Z0</strong> hold button appears: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. With <strong>Stock</strong> on, its thickness and the <strong>Z0</strong> menu put Z0 on the stock&rsquo;s bottom or top instead (on the fixture, or on the spoilboard with no fixture picked). Set Z0 needs the spoilboard height recorded and a tool length offset active, stops while a G92 Z offset is active, and keeps your previous Z0 for <strong>ZS: Z0 back to saved</strong>. The keyboard macros only ever set X and Y.',
+      '<strong>Fixtures with a height</strong> (a vise, a vertical jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard, e.g. <kbd>vise: 400, 250, , 63.5mm</kbd> (a blank third value keeps Hole Diameter). Pick it and a <strong>Set Z0</strong> hold button appears: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. With <strong>Stock</strong> on, its thickness and the <strong>Z0</strong> menu put Z0 on the stock&rsquo;s bottom or top instead (on the fixture, or on the spoilboard with no fixture picked). Set Z0 needs the spoilboard height recorded and a tool length offset active, stops while a G92 Z offset is active, and keeps your previous Z0 for <strong>ZS: Z0 back to saved</strong>. A height below the spoilboard or more than the machine&rsquo;s Z travel ($132), a unit typo say, is flagged in the list and refused. The keyboard macros only ever set X and Y.',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
