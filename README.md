@@ -13,13 +13,13 @@ without moving the machine; its **Z0 macros** tab checks your grblHAL controller
 macros you run from the Macros tab or, best of all, a keyboard shortcut.
 
 ![Zero Swapper's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid with a hole picked,
-the ATCi tool rack's keepout zone in red, and the Pick Nearest, Go to Selected and Set G54 XY
+the ATCi tool rack's keepout zone in red, and the Pick Nearest Hole, Go to Selected and Set G54 XY
 buttons](docs/xy0-picker.png)
 
 ## What a job looks like
 
 **Zero on a stock corner, no probing.** Push the stock against bench dogs in your spoilboard holes,
-jog roughly near the corner hole (a few mm off is fine), and press **Pick Nearest** then **Set**, or
+jog roughly near the corner hole (a few mm off is fine), and press **Pick Nearest Hole** then **Set**, or
 one key with the nearest-hole macro. X0 Y0 lands exactly on the hole's edge or center, with no edge
 finder, no XY probe and nothing typed into the terminal. Use the same holes next time and you get the
 same zero back.
@@ -168,10 +168,10 @@ large dog holes and a small pin grid? Press **+ Grid** for a second grid rather 
 **More than one grid.** The chips under Setup's heading list your grids; press one to edit it in the
 fields below, and **+ Grid** (with Setup unlocked) to add another, starting as a copy of the one
 you're on. Each grid has its own name, hole diameter, spacing, insets, T-tracks and suppressed holes.
-**Use for Nearest** decides whether Pick Nearest and the keyboard macros snap to its holes (untick
+**Use for Nearest** decides whether Pick Nearest Hole and the keyboard macros snap to its holes (untick
 it for a pin grid you only ever pick on the map), and **Remove Grid** deletes it. The eye on each chip
 shows or hides that grid's holes on the map, handy for picking or suppressing holes where two grids
-overlap. Hidden holes can't be picked on the map or by Pick Nearest, but the keyboard macros still
+overlap. Hidden holes can't be picked on the map or by Pick Nearest Hole, but the keyboard macros still
 use them (untick Use for Nearest to leave a grid out of those too). More than one grid makes the macros
 about 50 lines longer, plus about 30 per further grid.
 
@@ -186,7 +186,7 @@ right point on a 6 mm pin is 3 mm out each way). Extra holes can be suppressed t
 or a pattern with gaps), unlock Setup and press **Edit Holes**, then tap each missing hole on the map,
 or drag a box around several to do them at once (a box around only suppressed holes restores them).
 Press **Done** when finished. Suppressed holes are hidden while Setup is locked and shown as faint
-solid circles while it's unlocked; **Restore All** brings them all back. Pick Nearest, Go to, Set and the nearest-hole macros
+solid circles while it's unlocked; **Restore All** brings them all back. Pick Nearest Hole, Go to, Set and the nearest-hole macros
 skip them and use the nearest real hole. Each gap lengthens the nearest-hole macros, which check the
 real holes around it; a few gaps add a few dozen lines, and Setup shows how many lines they'll be and
 warns when they'd be slow to run. They're kept by column and row, so they stay put if you fine-tune the
@@ -199,7 +199,7 @@ diameter), measured from a **reference point** (Reference X /
 Y) into the machine's travel, the same way the grid's insets are. Easiest: set the reference, then jog
 over each hole and press **Add Current Position**. Positions are relative so that if the board or the
 machine's homing ever shifts, jogging to the first listed hole and pressing **Grab First Hole Center**
-moves the reference and the whole list follows. The map, Pick Nearest, the dots, Go to Selected,
+moves the reference and the whole list follows. The map, Pick Nearest Hole, the dots, Go to Selected,
 Set, keepout zones and the nearest-hole macros all work the same.
 
 **T-tracks between panels?** Pick **T-tracks: Along X** (tracks between rows) or **Along Y** (between
@@ -215,7 +215,7 @@ middle of a crossing, and a corner dot on the edges of the two lines (back right
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
 spindle, with machine-coordinate rulers along the bottom (X) and right (Y) in ncSender's units. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
 `$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole,
-or jog roughly over one and press **Pick Nearest** (it picks the hole closest
+or jog roughly over one and press **Pick Nearest Hole** (it picks the hole closest
 to the spindle and says how far off it is, so you get the grid's exact position without centering
 the bit). The dots beside the Set button pick where on the hole X0 Y0 goes: the center, or an edge
 or corner one hole radius out (back is +Y, right is +X), e.g. back right for a stop pin's +X +Y side.
@@ -234,7 +234,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 ### Map tools
 
 - **Live position:** while you jog, the spindle (a silver ring, as ncSender's Top view shows it) moves and the hole nearest it gets a dashed ring,
-  with its name and distance under the map, so you can see which hole Pick Nearest will take.
+  with its name and distance under the map, so you can see which hole Pick Nearest Hole will take.
 - **Stock:** tick it and type the stock's width (X) and length (Y). The stock is drawn from the picked
   point of the picked hole, running away from the hole (the back right side of a hole takes the
   stock's front left corner; **Corner** overrides that). The second box of dots picks where X0 Y0 goes
@@ -244,7 +244,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   It stays put when X0 Y0 changes; **From X0 Y0 now** takes X0 Y0 again. The keyboard macros always
   use the hole itself.
 - **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
-  rectangle over it. This map then won't pick its holes, Pick Nearest skips them, and Go to and Set
+  rectangle over it. This map then won't pick its holes, Pick Nearest Hole skips them, and Go to and Set
   won't target a point inside it. **That's all it does: it's a note for the picker, not a keepout
   zone.** You can still jog into it, G-code jobs still run there, the keyboard macros don't know about
   it, and Go to Selected only checks where it ends up, not what it passes over at Safe Z. Tap an

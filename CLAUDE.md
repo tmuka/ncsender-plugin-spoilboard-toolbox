@@ -57,7 +57,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
     keeps the old top-level keys, so old settings load as one grid); `allHoles` flattens them with
     `layer` 1, 2... and keys `g2:c,r`. The UI keeps every grid's typed values in `holes.gridRaw`; the
     fields show `holes.activeGrid` (`syncGrid`/`gridToDom`/`parseGrid`). `holes.hidden` (eye, by layer
-    or 'list') is map-only; `nearest: false` leaves a grid out of Pick Nearest and the macros.
+    or 'list') is map-only; `nearest: false` leaves a grid out of Pick Nearest Hole and the macros.
     Macros: one grid (+ extras) keeps the single-grid math; several grids, a list alone, or grid 1 left
     out go to `severalGridLines` (best so far in #19-#21, side offset and radius in #14-#16).
   - Profiles (`holeProfiles`, `holeProfile`): `setupBody` is what one holds (not the origin dot);
