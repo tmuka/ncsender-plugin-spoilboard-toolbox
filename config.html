@@ -116,6 +116,8 @@
   .mw-dot[data-origin="back-center"], .mw-dot[data-origin="center"], .mw-dot[data-origin="front-center"] { left: 50%; }
   .mw-dot[data-origin$="right"], .mw-dot[data-origin="right-center"] { left: 100%; }
   .mw-hole-map .mw-h-target { stroke: var(--color-warning, #d9a441); stroke-width: 2; fill: none; }
+  .mw-hole-map .mw-h-wcs.mw-h-wcs-off { stroke: var(--color-danger, #e74c3c); stroke-dasharray: 3 2; }
+  .mw-hole-map text.mw-h-wcs-off-label { fill: var(--color-danger, #e74c3c); }
   @keyframes mw-nudge { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent); } 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 45%, transparent); } }
   .mw-btn.mw-nudge { animation: mw-nudge 0.8s ease-in-out 3; }
   @media (prefers-reduced-motion: reduce) { .mw-btn.mw-nudge { animation: none; } }
@@ -3009,9 +3011,17 @@
     $('mw-hole-wcs').options[0].textContent = 'Active (' + WCS_NAMES[activeWcs()] + ')';
     var zero = xyOf(ms[wcs.toLowerCase()]), here = xyOf(ms.MPos);
     if (zero) {
-      var zx = +X(zero.x), zy = +Y(zero.y);
-      add('path', { class: 'mw-h-wcs', d: 'M' + (zx - 9) + ' ' + zy + 'H' + (zx + 9) + 'M' + zx + ' ' + (zy - 9) + 'V' + (zy + 9) });
-      add('text', { x: (zx + 11).toFixed(1), y: (zy - 6).toFixed(1) }, wcs + ' X0 Y0');
+      // Off the bed (a work offset set far away, or never set): pinned to
+      // the nearest edge and said so, rather than drawn outside the map.
+      var cx = Math.min(Math.max(zero.x, minX), minX + t.xMm), cy = Math.min(Math.max(zero.y, minY), minY + t.yMm);
+      var off = Math.abs(cx - zero.x) > 1e-6 || Math.abs(cy - zero.y) > 1e-6;
+      var zx = +X(cx), zy = +Y(cy), right = zx > pad + t.xMm * sc - 120, low = zy < padT + 14;
+      add('path', { class: 'mw-h-wcs' + (off ? ' mw-h-wcs-off' : ''), d: 'M' + (zx - 9) + ' ' + zy + 'H' + (zx + 9) + 'M' + zx + ' ' + (zy - 9) + 'V' + (zy + 9) });
+      var zl = add('text', { class: off ? 'mw-h-wcs-off-label' : '', x: (right ? zx - 11 : zx + 11).toFixed(1), y: (low ? zy + 16 : zy - 6).toFixed(1), 'text-anchor': right ? 'end' : 'start' },
+        wcs + ' X0 Y0' + (off ? ' off the bed' : ''));
+      var ztip = document.createElementNS(ns, 'title');
+      ztip.textContent = wcs + ' X0 Y0: machine X ' + fmt(zero.x) + ', Y ' + fmt(zero.y) + ' mm' + (off ? ', outside the machine\u2019s travel (shown at the nearest edge). Set it again on a hole if you use it.' : '');
+      zl.appendChild(ztip);
     }
     var picked = holes.grid[holes.picked], stock = picked ? stockAt(holePoint(picked)) : stockAt(holes.stockAnchor, true);
     if (stock) {
