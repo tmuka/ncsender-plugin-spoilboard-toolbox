@@ -223,7 +223,8 @@ or corner one hole radius out (back is +Y, right is +X), e.g. back right for a s
 when none is set; it never moves down, so a spindle already above Safe Z stays there). Like ncSender's
 XY0, hold it for a second, since it moves the machine. A side of a hole that would land in a keepout
 zone or outside the travel can't be used.
-**Set G54 XY** sends `G21 G10 L2 P1 X… Y…`, which sets that work offset without moving anything. The
+**Set G54 XY** (hold it for a second too, so a stray tap can't move your zero) sends
+`G21 G10 L2 P1 X… Y…`, which sets that work offset without moving anything. The
 menu beside it picks the offset: **Active** (the default) asks the controller which one is in use, so
 G59.1–G59.3 work too, or pick any of G54–G59.3; the spare offsets the Z0 macros store values in are
 left out. It needs a homed, idle machine, since the holes are machine positions. The travel and its

@@ -274,6 +274,9 @@
     transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   }
   .mw-btn.mw-hold-btn:hover:not(:disabled) { border-color: var(--color-accent) !important; filter: none; }
+  .mw-btn.mw-hold-btn.mw-hold-primary { background: var(--color-accent) !important; color: #fff !important; border-color: var(--color-accent) !important; }
+  .mw-btn.mw-hold-btn.mw-hold-primary .mw-hold-hint { color: #fff; opacity: 0.8; }
+  .mw-btn.mw-hold-btn.mw-hold-primary:hover:not(:disabled) { filter: brightness(1.08); }
   .mw-btn.mw-hold-btn.mw-holding {
     background: var(--color-accent) !important; color: #fff !important; border-color: var(--color-accent) !important;
     transform: scale(0.98); box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) 50%, transparent);
@@ -405,7 +408,7 @@
     <div class="mw-tab" data-tab="holes">
       <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a dog hole or grid line crossing.</strong> Click a hole, or jog near one
         and press <strong>Select Nearest</strong>; the dots pick its center or a side. Hold <strong>Go to Selected</strong> to move there at Safe Z;
-        <strong>Set</strong> makes it X0 Y0 without moving.</p>
+        hold <strong>Set</strong> to make it X0 Y0 without moving.</p>
       <section class="mw-card mw-pick-card" id="mw-pick-card" aria-label="Pick a hole">
         <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
         <div class="mw-holebar" id="mw-holebar">
@@ -416,14 +419,14 @@
           </div>
           <div class="mw-holebar-actions">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Select Nearest</button>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill" id="mw-hole-goto-fill"></span>Go to Selected<span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill"></span>Go to Selected<span class="mw-hold-hint">Hold</span></button>
             <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
               <option value="" selected>Active</option>
               <option value="1">G54</option><option value="2">G55</option><option value="3">G56</option>
               <option value="4">G57</option><option value="5">G58</option><option value="6">G59</option>
               <option value="7">G59.1</option><option value="8">G59.2</option><option value="9">G59.3</option>
             </select>
-            <button type="button" class="mw-btn mw-btn-small" id="mw-hole-set" disabled title="Make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves.">Set <span data-hole-wcs>G54</span> XY</button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span>Set <span data-hole-wcs>G54</span> XY<span class="mw-hold-hint">Hold</span></button>
           </div>
           <div class="mw-maptools">
             <div class="mw-stock">
@@ -2122,19 +2125,20 @@
     });
     $('mw-hole-here').addEventListener('click', holeInsetsFromHere);
     $('mw-hole-add').addEventListener('click', addHoleHere);
-    $('mw-hole-set').addEventListener('click', setHoleZero);
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
-    var gotoBtn = $('mw-hole-goto');
-    gotoBtn.addEventListener('pointerdown', function(evt) { if (evt.button === 0) startGotoHold(evt); });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(type) {
-      gotoBtn.addEventListener(type, function() { stopGotoHold(true); });
+    ['mw-hole-goto', 'mw-hole-set'].forEach(function(id) {
+      var btn = $(id);
+      btn.addEventListener('pointerdown', function(evt) { if (evt.button === 0) startHold(btn, evt); });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(type) {
+        btn.addEventListener(type, function() { stopHold(true, btn); });
+      });
+      btn.addEventListener('contextmenu', function(evt) { evt.preventDefault(); });
+      btn.addEventListener('keydown', function(evt) {
+        if ((evt.key === 'Enter' || evt.key === ' ') && !evt.repeat) { evt.preventDefault(); startHold(btn); }
+      });
+      btn.addEventListener('keyup', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') stopHold(true, btn); });
+      btn.addEventListener('blur', function() { stopHold(false, btn); });
     });
-    gotoBtn.addEventListener('contextmenu', function(evt) { evt.preventDefault(); });
-    gotoBtn.addEventListener('keydown', function(evt) {
-      if ((evt.key === 'Enter' || evt.key === ' ') && !evt.repeat) { evt.preventDefault(); startGotoHold(); }
-    });
-    gotoBtn.addEventListener('keyup', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') stopGotoHold(true); });
-    gotoBtn.addEventListener('blur', function() { stopGotoHold(false); });
     $('mw-hole-wcs').addEventListener('change', renderHoles);
     setHoleLock(saved.holeDia != null);
     $('mw-hole-lock').addEventListener('click', function() {
@@ -3219,35 +3223,41 @@
   // Go to Selected moves the machine, so like ncSender's XY0 it takes a 1 s hold:
   // the fill shows after 150 ms, and letting go early blinks the border.
   var HOLD_MS = 1000, HOLD_VISUAL_MS = 150;
-  var hold = { raf: null, start: 0, active: false };
-  function holdFill(pct) { $('mw-hole-goto-fill').style.width = pct + '%'; }
-  function startGotoHold(evt) {
-    var btn = $('mw-hole-goto');
+  var hold = { raf: null, start: 0, active: false, btn: null };
+  // Hold buttons (Go to Selected, Set), like ncSender's XY0: fill over a
+  // second, act at the end, blink when let go early. One at a time.
+  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : goToHole; }
+  function holdFill(btn, pct) { btn.querySelector('.mw-hold-fill').style.width = pct + '%'; }
+  function startHold(btn, evt) {
     if (btn.disabled || hold.active) return;
     if (evt) evt.preventDefault();
     hold.active = true;
+    hold.btn = btn;
     hold.start = performance.now();
+    btn.classList.remove('mw-nudge');
     btn.classList.add('mw-holding');
     var tick = function() {
       if (!hold.active) return;
       if (!rootAlive() || !btn.isConnected) { hold.active = false; return; }
       var elapsed = performance.now() - hold.start;
-      holdFill(elapsed < HOLD_VISUAL_MS ? 0 : Math.min(100, (elapsed - HOLD_VISUAL_MS) / (HOLD_MS - HOLD_VISUAL_MS) * 100));
+      holdFill(btn, elapsed < HOLD_VISUAL_MS ? 0 : Math.min(100, (elapsed - HOLD_VISUAL_MS) / (HOLD_MS - HOLD_VISUAL_MS) * 100));
       if (elapsed >= HOLD_MS) {
-        stopGotoHold(false);
-        goToHole();
+        stopHold(false);
+        holdAction(btn)();
         return;
       }
       hold.raf = requestAnimationFrame(tick);
     };
     hold.raf = requestAnimationFrame(tick);
   }
-  function stopGotoHold(early) {
-    var btn = $('mw-hole-goto'), was = hold.active;
+  // only: stop only if that button is the one held.
+  function stopHold(early, only) {
+    var btn = hold.btn, was = hold.active;
+    if (!btn || (only && only !== btn)) return;
     if (hold.raf) cancelAnimationFrame(hold.raf);
     hold.raf = null;
     hold.active = false;
-    holdFill(0);
+    holdFill(btn, 0);
     btn.classList.remove('mw-holding');
     if (early && was) {
       btn.classList.remove('mw-blink');
@@ -3256,7 +3266,7 @@
       setTimeout(function() { btn.classList.remove('mw-blink'); }, 400);
     }
   }
-  function disarmGoto() { stopGotoHold(false); }
+  function disarmGoto() { stopHold(false); }
   async function goToHole() {
     if (!rootAlive()) return;
     var status = $('mw-hole-status');
@@ -3329,7 +3339,7 @@
   var HELP_TOPICS = {
     holes: { name: 'XY0 Picker', notes: [
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Select Nearest</strong> and <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>ZS: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
-      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
+      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Select Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
       '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
