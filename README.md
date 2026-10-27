@@ -165,9 +165,9 @@ whatever the size of the bed. **List** is for holes with no regular spacing.
 
 **Holes missing from the grid?** If your spoilboard leaves some holes out (under a clamp rail, say,
 or a pattern with gaps), unlock Setup and press **Edit Holes**, then tap each missing hole on the map,
-or drag across a row to do them all at once (starting a drag on a suppressed hole restores instead).
-Press **Done** when finished. Suppressed holes are hidden while Setup is locked and dashed while it's
-unlocked; **Restore All** brings them all back. Select Nearest, Go to, Set and the nearest-hole macros
+or drag a box around several to do them at once (a box around only suppressed holes restores them).
+Press **Done** when finished. Suppressed holes are hidden while Setup is locked and shown as faint
+solid circles while it's unlocked; **Restore All** brings them all back. Select Nearest, Go to, Set and the nearest-hole macros
 skip them and use the nearest real hole. Each gap lengthens the nearest-hole macros, which check the
 real holes around it; a few gaps add a few dozen lines, and Setup shows how many lines they'll be and
 warns when they'd be slow to run. They're kept by column and row, so they stay put if you fine-tune the
@@ -219,11 +219,13 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   stock's front left corner; **Corner** overrides that). The second box of dots picks where X0 Y0 goes
   on the stock: its center, a corner or an edge. **Go to Selected** and **Set** then use that point.
   The keyboard macros always use the hole itself.
-- **Block Area:** a clamp or fixture in the way for this job? Press **Block Area** and drag a
-  rectangle over it. Its holes can't be picked, Select Nearest skips them, and Go to and Set won't
-  use a point inside it. Tap a blocked area to remove it, or **Clear Blocks**. Blocked areas stay
-  until you clear them, but they belong to the job, not the board's profile, and the keyboard macros
-  don't know about them.
+- **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
+  rectangle over it. This map then won't pick its holes, Select Nearest skips them, and Go to and Set
+  won't target a point inside it. **That's all it does: it's a note for the picker, not a keepout
+  zone.** You can still jog into it, G-code jobs still run there, the keyboard macros don't know about
+  it, and Go to Selected only checks where it ends up, not what it passes over at Safe Z. Tap an
+  excluded area to remove it, or **Clear Exclusions**. Excluded areas stay until you clear them, but they
+  belong to the job, not the board's profile.
 - **Favorites:** tap the star beside the picked hole's name to keep it as a favorite, e.g. your jig's
   home hole. Favorites are ringed on the map and listed under it; tap one to pick it. They're kept
   in the board's profile.

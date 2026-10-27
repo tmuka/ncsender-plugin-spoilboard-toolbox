@@ -795,9 +795,9 @@ test('stock: the corner on the picked point, runs away from the hole; zero on an
   assert.deepEqual(rectPoint(r, 'front-center'), { x: 400, y: 200 });
 });
 
-test('blocked areas read as such; targetProblem names them', () => {
+test('excluded areas read as such; targetProblem names them', () => {
   const travel = { xMm: 800, yMm: 600, dirX: 1, dirY: 1 };
-  assert.equal(targetProblem(50, 50, travel, [{ block: true, name: 'Blocked', minX: 0, maxX: 100, minY: 0, maxY: 100 }]), 'in a blocked area');
+  assert.equal(targetProblem(50, 50, travel, [{ block: true, name: 'Blocked', minX: 0, maxX: 100, minY: 0, maxY: 100 }]), 'in an excluded area');
   assert.equal(targetProblem(50, 50, travel, [{ name: 'ATCi', minX: 0, maxX: 100, minY: 0, maxY: 100 }]), 'in the ATCi keepout zone');
 });
 

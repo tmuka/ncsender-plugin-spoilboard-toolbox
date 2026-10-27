@@ -46,8 +46,8 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
     `suppressed`, so indices don't shift. The grid macro keeps its FIX/ROUND math and, only when that
     lands on a suppressed hole, scans the usable holes next to any suppressed one (`suppressedLines`):
     the nearest real hole is always one of those, so the macro stays short (lines go one at a time).
-  - Map tools (UI only, not in the macros): Edit Holes / Block Area modes (`setMapMode`, pointer
-    handlers `mapDown`/`mapMove`/`mapUp`, `mapPoint` inverts `holes.view`); blocked areas are zones with
+  - Map tools (UI only, not in the macros): Edit Holes / Exclude Picks modes (`setMapMode`, pointer
+    handlers `mapDown`/`mapMove`/`mapUp`, `mapPoint` inverts `holes.view`); excluded areas (`holes.blocks`, saved as `holeBlocks`) are zones with
     `block: true` (`uiZones`, `zoneText`); Stock (`stockRect`, `rectPoint`, `stockCornerFor`; `holeTarget`
     is the stock point when on); favorites (`holeKey`, in the profile, saved without marking it
     changed); live position (`startLive`: 'server-state-update' messages plus a 500 ms poll,

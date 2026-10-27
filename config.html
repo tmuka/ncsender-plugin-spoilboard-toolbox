@@ -331,8 +331,9 @@
   .mw-hole-map .mw-h-spot:hover .mw-h-hole { stroke: var(--color-accent); stroke-width: 2; }
   .mw-hole-map .mw-h-spot[data-picked] .mw-h-hole { fill: var(--color-accent); stroke: var(--color-accent); }
   .mw-hole-map .mw-h-spot[data-picked] .mw-h-halo { stroke: var(--color-accent); stroke-width: 2; opacity: 0.5; }
-  .mw-hole-map .mw-h-suppressed .mw-h-hole { fill: none; stroke-dasharray: 3 2; stroke-width: 1.5; }
-  .mw-hole-map .mw-h-suppressed[data-picked] .mw-h-hole { fill: none; stroke-dasharray: none; opacity: 1; }
+  .mw-hole-map .mw-h-suppressed .mw-h-hole { fill: var(--color-text-secondary); fill-opacity: 0.22; stroke: none; }
+  .mw-hole-map .mw-h-suppressed:hover .mw-h-hole { stroke: var(--color-accent); stroke-width: 1.5; }
+  .mw-hole-map .mw-h-select { fill: color-mix(in srgb, var(--color-accent) 10%, transparent); stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 5 3; pointer-events: none; }
   .mw-hole-map .mw-h-wcs { stroke: var(--color-accent); stroke-width: 2; fill: none; }
   .mw-hole-map .mw-h-spindle { fill: var(--color-warning, #d9a441); }
   .mw-hole-map text { font-family: inherit; font-size: 11px; fill: var(--color-text-secondary); }
@@ -407,8 +408,8 @@
               <span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span>
             </div>
             <div class="mw-maptools-row">
-              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-area" aria-pressed="false" title="Mark an area as off limits for this job, e.g. a clamp or fixture: drag a rectangle on the map. Its holes can't be picked, and Go to and Set won't use them. Tap a blocked area to remove it.">Block Area</button>
-              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-clear" hidden title="Remove every blocked area.">Clear Blocks</button>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-area" aria-pressed="false" title="Mark a clamp or fixture on the map for this job: drag a rectangle. This map then won't pick its holes, and Go to and Set won't target a point inside it. It's only a reminder for this picker: jogging, jobs and the keyboard macros don't know about it. Tap an excluded area to remove it.">Exclude Picks</button>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-clear" hidden title="Remove every excluded area.">Clear Exclusions</button>
               <span class="mw-favs" id="mw-favs"></span>
             </div>
           </div>
@@ -460,7 +461,7 @@
           </div>
         </div>
         <div class="mw-holes-tools mw-grid-only">
-          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-edit" aria-pressed="false" disabled title="For a grid with holes left out (under a clamp rail, say): tap holes on the map to suppress them, or drag across a row to do many at once; starting on a suppressed hole restores instead. Select Nearest, Go to, Set and the nearest-hole macros skip suppressed holes.">Edit Holes</button>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-edit" aria-pressed="false" disabled title="For a grid with holes left out (under a clamp rail, say): tap a hole on the map to suppress it, or drag a box around several; a box around only suppressed holes restores them. Select Nearest, Go to, Set and the nearest-hole macros skip suppressed holes.">Edit Holes</button>
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-restore-all" disabled title="Put back every suppressed hole.">Restore All</button>
           <span class="mw-hint" id="mw-hole-sup-note"></span>
         </div>
@@ -1328,7 +1329,7 @@
   }
   // How a zone is named in messages: a keepout zone, or an area blocked
   // on the map for this job (`block`).
-  function zoneText(z) { return z.block ? 'a blocked area' : 'the ' + z.name + ' keepout zone'; }
+  function zoneText(z) { return z.block ? 'an excluded area' : 'the ' + z.name + ' keepout zone'; }
 
   // Stock on the map, in machine mm: the rectangle with one corner
   // (named like the dots, e.g. 'front-left') on the point x, y, wMm
@@ -2086,7 +2087,7 @@
       d.setAttribute('aria-pressed', d.getAttribute('data-origin') === holes.stockZero ? 'true' : 'false');
     });
   }
-  // Keepout zones plus the areas blocked on the map for this job.
+  // Keepout zones plus the areas excluded on the map for this job.
   function uiZones() { return (state.keepouts || []).concat(holes.blocks); }
   function setHoleOrigin(origin) {
     holes.origin = HOLE_ORIGINS.indexOf(origin) >= 0 ? origin : 'center';
@@ -2128,7 +2129,7 @@
   }
   function holeLocked() { return $('mw-hole-lock').getAttribute('aria-pressed') === 'true'; }
   // Suppressed holes (ones a grid leaves out) are edited with Setup
-  // unlocked: then they show dashed so they can be picked and restored.
+  // unlocked: then they show as faint discs that can be picked and restored.
   function suppressButtons() {
     var locked = holeLocked(), n = holes.grid.filter(function(g) { return g.suppressed; }).length, editing = holes.mode === 'paint';
     var btn = $('mw-hole-edit');
@@ -2140,11 +2141,11 @@
     // time on every keypress: say how long, and warn when it'll be slow.
     var mg = n && holeMacroGrid(), size = mg ? nearestHoleLines(mg).lines.length : 0;
     var sizeNote = size ? ' Nearest-hole macros: ' + size + ' lines' + (size > 400 ? ', slow to run; fewer gaps, or a List, keeps them quick.' : '.') : '';
-    $('mw-hole-sup-note').textContent = editing ? 'Tap holes to suppress them, or drag across many; start on a dashed one to restore.'
+    $('mw-hole-sup-note').textContent = editing ? 'Tap a hole, or drag a box around several, to suppress them; a box around only suppressed holes restores them.'
       : n ? n + ' hole' + (n === 1 ? '' : 's') + ' suppressed' + (locked ? ', hidden while locked.' : '.') + sizeNote
       : locked ? '' : 'Holes your spoilboard leaves out? Edit Holes, then tap them.';
     var b = $('mw-block-area');
-    b.textContent = holes.mode === 'block' ? 'Done' : 'Block Area';
+    b.textContent = holes.mode === 'block' ? 'Done' : 'Exclude Picks';
     b.setAttribute('aria-pressed', holes.mode === 'block' ? 'true' : 'false');
     $('mw-block-clear').hidden = !holes.blocks.length;
   }
@@ -2155,8 +2156,8 @@
     holes.drag = null;
     var status = $('mw-hole-status');
     status.removeAttribute('data-state');
-    status.textContent = holes.mode === 'block' ? 'Drag a rectangle over a clamp or fixture to block it for this job; tap a blocked area to remove it. Done when finished.'
-      : holes.mode === 'paint' ? 'Editing holes: tap or drag on the map. Done when finished.' : '';
+    status.textContent = holes.mode === 'block' ? 'Drag a rectangle over a clamp or fixture so this map won\u2019t pick holes there (jogging and the keyboard macros aren\u2019t affected); tap an excluded area to remove it. Done when finished.'
+      : holes.mode === 'paint' ? 'Editing holes: tap a hole or drag a box on the map. Done when finished.' : '';
     renderHoles();
   }
   // Map coordinates of a pointer event: machine mm and the SVG's px.
@@ -2170,20 +2171,6 @@
     var best = -1, bd = Infinity;
     holes.grid.forEach(function(p, i) { var d = Math.hypot(p.x - pt.x, p.y - pt.y); if (d < bd) { bd = d; best = i; } });
     return bd <= holes.view.hitMm ? best : -1;
-  }
-  function paintAt(pt) {
-    var d = holes.drag, last = d.last || pt, steps = Math.max(1, Math.ceil(Math.hypot(pt.x - last.x, pt.y - last.y) / (holes.view.hitMm / 2)));
-    var changed = false;
-    for (var k = 1; k <= steps; k++) {
-      var i = holeNear({ x: last.x + (pt.x - last.x) * k / steps, y: last.y + (pt.y - last.y) * k / steps }), p = holes.grid[i];
-      if (!p || p.col == null) continue;
-      var key = holeKey(p), at = holes.suppressed.indexOf(key);
-      if (d.value === null) d.value = at < 0;
-      if (d.value && at < 0) { holes.suppressed.push(key); changed = true; }
-      if (!d.value && at >= 0) { holes.suppressed.splice(at, 1); changed = true; }
-    }
-    d.last = pt;
-    if (changed) renderHoles(true);
   }
   function blockRectPx(d) {
     var v = holes.view, x0 = Math.min(d.a.x, d.b.x), x1 = Math.max(d.a.x, d.b.x), y0 = Math.min(d.a.y, d.b.y), y1 = Math.max(d.a.y, d.b.y);
@@ -2199,25 +2186,23 @@
     if (!pt) return;
     evt.preventDefault();
     $('mw-hole-map').setPointerCapture(evt.pointerId);
-    if (holes.mode === 'paint') { holes.drag = { value: null }; paintAt(pt); return; }
     var a = clampToTravel(pt);
     holes.drag = { a: a, b: a, tap: pt };
     var r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    r.setAttribute('class', 'mw-h-block');
+    r.setAttribute('class', holes.mode === 'paint' ? 'mw-h-select' : 'mw-h-block');
     $('mw-hole-map').appendChild(r);
     holes.drag.el = r;
   }
   function mapMove(evt) {
     var d = holes.drag, pt = d && mapPoint(evt);
     if (!pt) return;
-    if (holes.mode === 'paint') return paintAt(pt);
     d.b = clampToTravel(pt);
     var r = blockRectPx(d);
     d.el.setAttribute('x', r.x.toFixed(1)); d.el.setAttribute('y', r.y.toFixed(1));
     d.el.setAttribute('width', r.w.toFixed(1)); d.el.setAttribute('height', r.h.toFixed(1));
   }
   // A cancelled gesture (the browser took it over) ends a paint stroke
-  // but never adds or removes a blocked area.
+  // but never adds or removes an excluded area.
   function mapUp(evt, cancel) {
     var d = holes.drag;
     if (!d) return;
@@ -2225,22 +2210,31 @@
     // The click this gesture ends with comes in the same turn: skip it.
     holes.skipClick = true;
     setTimeout(function() { holes.skipClick = false; }, 0);
-    if (cancel) {
-      if (d.el) d.el.remove();
-      if (holes.mode === 'paint') { saveSettings(); render(); renderHoles(); }
-      return;
-    }
+    d.el.remove();
+    if (cancel) return;
+    var box = blockRectPx(d), isBox = box.w > 6 && box.h > 6;
     if (holes.mode === 'block') {
-      var r = blockRectPx(d);
-      if (r.w > 6 && r.h > 6) {
+      var r = box;
+      if (isBox) {
         holes.blocks.push({ block: true, name: 'Blocked', minX: r.minX, maxX: r.maxX, minY: r.minY, maxY: r.maxY });
       } else {
-        // A tap: remove the blocked area under it.
+        // A tap: remove the excluded area under it.
         holes.blocks = holes.blocks.filter(function(z) { return !(d.tap.x >= z.minX && d.tap.x <= z.maxX && d.tap.y >= z.minY && d.tap.y <= z.maxY); });
       }
       saveSettings();
       return renderHoles();
     }
+    // Edit Holes: a box suppresses every grid hole inside it, or restores
+    // them when they're all suppressed already; a tap toggles one hole.
+    var inside = isBox ? holes.grid.filter(function(p) { return p.col != null && p.x >= box.minX && p.x <= box.maxX && p.y >= box.minY && p.y <= box.maxY; })
+      : [holes.grid[holeNear(d.tap)]].filter(function(p) { return p && p.col != null; });
+    if (!inside.length) return;
+    var suppress = inside.some(function(p) { return !p.suppressed; });
+    inside.forEach(function(p) {
+      var at = holes.suppressed.indexOf(holeKey(p));
+      if (suppress && at < 0) holes.suppressed.push(holeKey(p));
+      if (!suppress && at >= 0) holes.suppressed.splice(at, 1);
+    });
     saveSettings(); render(); renderHoles();
   }
   function toggleFavorite() {
@@ -2590,14 +2584,14 @@
       zr.appendChild(zt);
       add('text', { class: 'mw-h-keepout-label', x: ((+X(x0) + +X(x1)) / 2).toFixed(1), y: (+Y(y1) + 13).toFixed(1), 'text-anchor': 'middle' }, z.name);
     });
-    // Areas blocked for this job (Block Area), tapped to remove.
+    // Areas excluded for this job (Exclude Picks), tapped to remove.
     holes.blocks.forEach(function(z, i) {
       var x0 = Math.max(z.minX, minX), x1 = Math.min(z.maxX, minX + t.xMm);
       var y0 = Math.max(z.minY, minY), y1 = Math.min(z.maxY, minY + t.yMm);
       if (x1 <= x0 || y1 <= y0) return;
       var br = add('rect', { class: 'mw-h-block', 'data-block': i, x: X(x0), y: Y(y1), width: ((x1 - x0) * sc).toFixed(1), height: ((y1 - y0) * sc).toFixed(1) });
       var bt = document.createElementNS(ns, 'title');
-      bt.textContent = 'Blocked for this job: Block Area, then tap it to remove.';
+      bt.textContent = 'Excluded from picks for this job (jogging and the keyboard macros aren\u2019t affected). Exclude Picks, then tap it to remove.';
       br.appendChild(bt);
     });
     // The hole nearest the spindle, live while jogging.
@@ -2949,10 +2943,10 @@
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
       '<strong>Profiles:</strong> the menu beside Setup&rsquo;s title keeps one per spoilboard, fixture plate or grid you use. <strong>New profile&hellip;</strong> saves what&rsquo;s in Setup under a name; pick another to load it. Change a number and the bar says it&rsquo;s changed: <strong>Save</strong> keeps it, <strong>Revert</strong> puts the profile back, so you can try other numbers safely. A profile holds the layout, numbers, T-tracks, list and suppressed holes (the dot is picked per job). Press Create macros after switching if you use the nearest-hole macros.',
       '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
-      '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag across a row to do many at once; starting a drag on a suppressed hole restores instead. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and dashed while it&rsquo;s unlocked; Select Nearest, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
+      '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag a box around several; a box around only suppressed holes restores them. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and shown as faint solid circles while it&rsquo;s unlocked; Select Nearest, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
       '<strong>Live position:</strong> while you jog, the spindle dot moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
       '<strong>Stock:</strong> tick it and type the stock&rsquo;s width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole, running away from the hole (<strong>Corner</strong> overrides which stock corner sits there), and its own box of dots puts X0 Y0 on its center, a corner or an edge. Go to Selected and Set then use that point; the keyboard macros always use the hole.',
-      '<strong>Block Area:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. Its holes can&rsquo;t be picked, and Go to and Set won&rsquo;t use a point inside it. Tap a blocked area to remove it, or Clear Blocks. Blocked areas aren&rsquo;t part of a profile, and the keyboard macros don&rsquo;t know about them.',
+      '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Select Nearest, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
