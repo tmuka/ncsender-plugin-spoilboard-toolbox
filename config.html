@@ -346,7 +346,13 @@
   .mw-pick-card.mw-tall .mw-holebar { flex-direction: column; align-items: stretch; }
   .mw-pick-card.mw-tall .mw-dots-wrap { align-self: center; }
   .mw-pick-card.mw-tall .mw-holebar-info { flex: none; text-align: center; }
-  .mw-pick-card.mw-tall .mw-holebar-actions { flex-direction: column; align-items: stretch; margin-left: 0; }
+  /* The narrow column: Pick Nearest and Go to side by side, then the
+     work offset menu and Set full width. */
+  .mw-pick-card.mw-tall .mw-holebar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 0; align-items: stretch; }
+  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-wcs, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-set { grid-column: 1 / -1; }
+  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-goto {
+    min-width: 0 !important; padding-left: 6px !important; padding-right: 6px !important; white-space: normal; line-height: 1.15;
+  }
   .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
   .mw-hole-map .mw-h-area { fill: color-mix(in srgb, var(--color-text-secondary) 6%, transparent); stroke: var(--color-border); }
   .mw-hole-map .mw-h-spot { cursor: pointer; }
