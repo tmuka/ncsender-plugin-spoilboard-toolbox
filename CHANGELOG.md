@@ -3,7 +3,9 @@
 What's new in each release of Zero Swapper. Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-zero-swapper/releases).
 
-## Unreleased
+## 0.3.35
+
+**Z0 on a vise, a fixture or the stock top, and stock measured with the spindle, not a tape.**
 
 ### ✨ New
 - **Set Z0 on a fixture or the stock.** Give a listed point a fourth value, the height of its surface

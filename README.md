@@ -6,8 +6,9 @@
   **Set**: work zero lands exactly on the hole's center or edge. No edge finder, no XY probe, no
   coordinates typed into the terminal, and the same holes give the same zero next time. Put it on a
   key and it's one press near any hole.
-- **Zero anywhere on the stock, no tape measure.** Type the stock's size and put X0 Y0 on its center
-  or any corner or edge, drawn right on the map.
+- **Zero anywhere on the stock, no tape measure.** Jog to the stock's far corner and press **Far
+  Corner Here** (or type its size), then put X0 Y0 on its center or any corner or edge, drawn right on
+  the map.
 - **Z0 without re-probing.** Probe the spoilboard once. After that, any measured tool puts Z0 on the
   spoilboard or the stock top in one click, and another click puts your old Z0 back.
 - **Full XYZ on a vise or fixture.** Give a fixture point its height and Set Z0 puts Z0 on the vise
@@ -205,8 +206,8 @@ spacing or insets; a change that renumbers the holes (a different first hole) mo
 the bed. Give a listed point a fourth value, its reference surface's height above the spoilboard:
 `vise: 400, 250, , 63.5mm` (a blank third value keeps Hole Diameter). Pick it, hold **Set** for X0 Y0,
 and hold **Set Z0**: Z0 lands on the vise jaw for any measured tool, from the spoilboard height the Z0
-macros recorded, with no probing at the fixture. With **Stock** ticked, type its thickness too and
-pick **Z0: spoilboard** or **Z0: stock top** to put Z0 on the stock's bottom or top (on the fixture,
+macros recorded, with no probing at the fixture. With **Stock** ticked, its thickness fills in from **ZS: Measure stock
+thickness** (or type it), and **Z0: spoilboard** or **Z0: stock top** puts Z0 on the stock's bottom or top (on the fixture,
 or on the spoilboard when no fixture is picked). Set Z0 needs the spoilboard height recorded
 (**ZS: Record spoilboard height**) and a tool length offset active, stops while a G92 Z offset is
 active, and, on the Z0 macros' work offset, keeps a probed Z0 for **ZS: Z0 back to saved** (holding it
