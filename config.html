@@ -82,6 +82,9 @@
   .mw-holebar-info { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .mw-holebar-title { font-weight: 600; }
   .mw-holebar-info .mw-hint { font-variant-numeric: tabular-nums; }
+  .mw-holebar-info .mw-hint.mw-coords { font-size: 0.72rem; white-space: nowrap; }
+  .mw-holebar-info .mw-hole-dist { font-size: 0.72rem; }
+  .mw-holebar-info .mw-hole-dist[hidden] { display: none; }
   .mw-holebar-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
   .mw-holebar-info { flex-basis: 150px; }
   .mw-select.mw-hole-wcs { width: 8.5em !important; min-width: 0 !important; min-height: 0 !important; padding: 6px 8px !important; }
@@ -424,6 +427,7 @@
           <div class="mw-holebar-info">
             <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
             <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Pick Nearest.</span>
+            <span class="mw-hint mw-hole-dist" id="mw-hole-dist" hidden></span>
           </div>
           <div class="mw-holebar-actions">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Pick Nearest</button>
@@ -3104,14 +3108,19 @@
     $('mw-hole-dots').classList.toggle('mw-has-hole', !!p);
     $('mw-hole-fav').hidden = !p;
     $('mw-hole-fav').setAttribute('aria-pressed', p && holes.favorites.indexOf(holeKey(p)) >= 0 ? 'true' : 'false');
-    $('mw-hole-pos').textContent = aim ? 'Machine X ' + shown(tg.x) + '  Y ' + shown(tg.y) + ' ' + unitName() +
-      (holes.nearMm != null ? ' \u00b7 ' + shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '')
+    // The machine position on one line (smaller, never wrapped), the
+    // distance from the spindle on the next.
+    $('mw-hole-pos').textContent = aim ? 'Machine X ' + shown(tg.x) + '  Y ' + shown(tg.y) + ' ' + unitName()
       : live ? 'Nearest the spindle: ' + holeName(live) + ', ' + shown(holes.liveNear.distanceMm) + ' ' + unitName() + ' away. Click a hole, or press Pick Nearest.'
       : 'Click a hole, or jog near one and press Pick Nearest.';
     var problem = p && p.suppressed ? 'suppressed' : aim && state.travel ? targetProblem(tg.x, tg.y, state.travel, uiZones()) : null;
     if (problem === 'suppressed') $('mw-hole-pos').textContent = 'This hole is suppressed: Edit Holes in Setup to restore it.';
     else if (problem) $('mw-hole-pos').textContent = (onStock || !p ? 'That point on the stock is ' : 'This side of the hole is ') + problem + ': pick another dot or hole.';
     $('mw-hole-pos').classList.toggle('mw-bad-text', !!problem);
+    $('mw-hole-pos').classList.toggle('mw-coords', !!aim && !problem);
+    var dist = aim && !problem && holes.nearMm != null;
+    $('mw-hole-dist').hidden = !dist;
+    $('mw-hole-dist').textContent = dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
     if (!aim || problem || holes.busy) disarmGoto();
