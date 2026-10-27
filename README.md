@@ -10,6 +10,8 @@
   or any corner or edge, drawn right on the map.
 - **Z0 without re-probing.** Probe the spoilboard once. After that, any measured tool puts Z0 on the
   spoilboard or the stock top in one click, and another click puts your old Z0 back.
+- **Full XYZ on a vise or fixture.** Give a fixture point its height and Set Z0 puts Z0 on the vise
+  jaw or the stock top for any measured tool.
 - **Fits the bed you actually have.** Missing holes, T-track panels, dog holes plus a pin grid, custom
   locating pins, lasered or V-carved grid lines, keepout zones, and a saved profile for every board.
 
@@ -198,6 +200,17 @@ skip them and use the nearest real hole. Each gap lengthens the nearest-hole mac
 real holes around it; a few gaps add a few dozen lines, and Setup shows how many lines they'll be and
 warns when they'd be slow to run. They're kept by column and row, so they stay put if you fine-tune the
 spacing or insets; a change that renumbers the holes (a different first hole) moves them too.
+
+**Fixtures with a height: X, Y and Z in one go.** A vise or a vertical jig sits at a fixed height on
+the bed. Give a listed point a fourth value, its reference surface's height above the spoilboard:
+`vise: 400, 250, , 63.5mm` (a blank third value keeps Hole Diameter). Pick it, hold **Set** for X0 Y0,
+and hold **Set Z0**: Z0 lands on the vise jaw for any measured tool, from the spoilboard height the Z0
+macros recorded, with no probing at the fixture. With **Stock** ticked, type its thickness too and
+pick **Z0: spoilboard** or **Z0: stock top** to put Z0 on the stock's bottom or top (on the fixture,
+or on the spoilboard when no fixture is picked). Set Z0 needs the spoilboard height recorded
+(**ZS: Record spoilboard height**) and a tool length offset active, stops while a G92 Z offset is
+active, and keeps your previous Z0 for **ZS: Z0 back to saved**. Re-measure a fixture's height if you
+move it or resurface the spoilboard. The keyboard macros only ever set X and Y.
 
 **Holes that aren't a regular grid?** Locating holes, fixture pins, or a custom layout: set the
 **Layout** menu at the top of Setup to **List** and enter one hole per line, as `x, y` or

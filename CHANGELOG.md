@@ -3,6 +3,16 @@
 What's new in each release of Zero Swapper. Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-zero-swapper/releases).
 
+## Unreleased
+
+### ✨ New
+- **Set Z0 on a fixture or the stock.** Give a listed point a fourth value, the height of its surface
+  above the spoilboard (`vise: 400, 250, , 63.5mm`), and pick it: a **Set Z0** hold button puts Z0
+  on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. Stock
+  gains a thickness and a **Z0: spoilboard / stock top** menu, so Z0 can go on the stock's bottom or
+  top too. Guarded like the Z0 macros (homed, tool length offset active, spoilboard recorded, no G92
+  Z), and your previous Z0 is kept for **Z0 back to saved**.
+
 ## 0.3.34
 
 **Every kind of bed: more grids, pins with their own size, and controls that guide you.**

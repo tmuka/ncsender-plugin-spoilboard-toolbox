@@ -84,7 +84,7 @@
   .mw-holebar-info .mw-hint { font-variant-numeric: tabular-nums; }
   .mw-holebar-info .mw-hint.mw-coords { font-size: 0.72rem; white-space: nowrap; }
   .mw-holebar-info .mw-hole-dist { font-size: 0.72rem; }
-  .mw-holebar-info .mw-hole-dist[hidden] { display: none; }
+  .mw-holebar-info .mw-hole-dist[hidden], .mw-btn.mw-hold-btn[hidden] { display: none !important; }
   .mw-holebar-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
   .mw-holebar-info { flex-basis: 150px; }
   .mw-select.mw-hole-wcs { width: 8.5em !important; min-width: 0 !important; min-height: 0 !important; padding: 6px 8px !important; }
@@ -352,7 +352,8 @@
   /* The narrow column: Pick Nearest Hole and Go to side by side, then the
      work offset menu and Set full width. */
   .mw-pick-card.mw-tall .mw-holebar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 0; align-items: stretch; }
-  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-wcs, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-set { grid-column: 1 / -1; }
+  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-wcs, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-set,
+  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-setz { grid-column: 1 / -1; }
   .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-goto {
     min-width: 0 !important; padding-left: 6px !important; padding-right: 6px !important; white-space: normal; line-height: 1.15;
   }
@@ -433,6 +434,7 @@
             <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
             <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Pick Nearest Hole.</span>
             <span class="mw-hint mw-hole-dist" id="mw-hole-dist" hidden></span>
+            <span class="mw-hint mw-hole-dist" id="mw-hole-z" hidden></span>
           </div>
           <div class="mw-holebar-actions">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Pick Nearest Hole</button>
@@ -444,6 +446,7 @@
               <option value="7">G59.1</option><option value="8">G59.2</option><option value="9">G59.3</option>
             </select>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label">Set <span data-hole-wcs>G54</span> XY</span><span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset in the menu on the surface shown above it: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label">Set <span data-hole-wcs>G54</span> Z0</span><span class="mw-hold-hint">Hold</span></button>
           </div>
           <div class="mw-maptools">
             <div class="mw-stock">
@@ -451,7 +454,13 @@
               <span class="mw-stock-wl"><input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" placeholder="Width" aria-label="Stock width, along X" title="The stock's size along X. With a size, X0 Y0 goes on the stock (picked with the box of dots) instead of the hole, and the map draws it.">
               <span class="mw-hint">&times;</span>
               <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" placeholder="Length" aria-label="Stock length, along Y" title="The stock's size along Y.">
+              <span class="mw-hint">&times;</span>
+              <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
               <span class="mw-hint mw-unit">mm</span></span>
+              <select class="mw-select mw-stock-corner" id="mw-stock-zmode" aria-label="Where Set Z0 puts Z0" title="Where Set Z0 puts Z0: on what the stock sits on (the spoilboard, or a picked fixture point's surface), or on the stock's top (that plus its thickness).">
+                <option value="bottom">Z0: spoilboard</option>
+                <option value="top">Z0: stock top</option>
+              </select>
               <select class="mw-select mw-stock-corner" id="mw-stock-corner" aria-label="Which stock corner is on the picked point" title="Which corner of the stock sits on the point: the hole's picked point, or X0 Y0 when no hole is picked. Auto: the stock runs away from the hole (back right of a hole takes the stock's front left corner); from X0 Y0, its front left corner.">
                 <option value="auto">Corner: auto</option>
                 <option value="front-left">Front left at point</option><option value="front-right">Front right at point</option>
@@ -1052,6 +1061,7 @@
         if (u < -1e-9 || u > o.travelXMm + 1e-9 || v < -1e-9 || v > o.travelYMm + 1e-9) return;
         var p = { index: i + 1, name: h.name || '', x: o.dirX * u, y: o.dirY * v };
         if (h.diaMm != null) p.diaMm = h.diaMm;
+        if (h.zMm != null) p.zMm = h.zMm;
         if (sup.indexOf(holeKey(p)) >= 0) p.suppressed = true;
         listed.push(p);
       });
@@ -1151,9 +1161,11 @@
     return 'Column ' + p.col + ', row ' + p.row;
   }
   // A typed hole list: one per line, "x, y" or "name: x, y", with an
-  // optional third value for that hole's own diameter, each value in mm or
-  // inches as parseUnitValue reads it (bare numbers in the machine's
-  // units). Blank lines and lines starting with ( or ; are skipped. Returns
+  // optional third value for that hole's own diameter and a fourth for the
+  // height of its surface above the spoilboard (a vise jaw, a fixture's
+  // top: zMm), each value in mm or inches as parseUnitValue reads it
+  // (bare numbers in the machine's units). "x, y, , height" keeps Hole
+  // Diameter. Blank lines and lines starting with ( or ; are skipped. Returns
   // the holes in mm and the 1-based numbers of lines it couldn't read.
   function parseHoleList(text, imperial) {
     var holes = [], bad = [];
@@ -1163,13 +1175,17 @@
       var m = /^([^:,]*[^\s:,]):\s*(.*)$/.exec(t), name = '';
       if (m) { name = m[1].trim(); t = m[2]; }
       var parts = t.split(',');
-      var k = imperial ? 25.4 : 1, ok = parts.length === 2 || parts.length === 3;
+      var k = imperial ? 25.4 : 1, ok = parts.length >= 2 && parts.length <= 4;
       var x = ok ? parseUnitValue(parts[0], imperial, 'length') : NaN;
       var y = ok ? parseUnitValue(parts[1], imperial, 'length') : NaN;
-      var d = parts.length === 3 ? parseUnitValue(parts[2], imperial, 'length') : 0;
-      if (x == null || y == null || d == null || !isFinite(x) || !isFinite(y) || !isFinite(d) || d < 0) { bad.push(i + 1); return; }
+      // A blank diameter (x, y, , height) is Hole Diameter's.
+      var dBlank = parts.length < 3 || (parts.length === 4 && !parts[2].trim());
+      var d = dBlank ? 0 : parseUnitValue(parts[2], imperial, 'length');
+      var z = parts.length === 4 ? parseUnitValue(parts[3], imperial, 'length') : 0;
+      if (x == null || y == null || d == null || z == null || !isFinite(x) || !isFinite(y) || !isFinite(d) || !isFinite(z) || d < 0) { bad.push(i + 1); return; }
       var hole = { name: name, xMm: x * k, yMm: y * k };
-      if (parts.length === 3) hole.diaMm = d * k;
+      if (!dBlank) hole.diaMm = d * k;
+      if (parts.length === 4) hole.zMm = z * k;
       holes.push(hole);
     });
     return { holes: holes, bad: bad };
@@ -1179,7 +1195,8 @@
   function formatHoleList(holes, imperial) {
     var k = imperial ? 25.4 : 1;
     return holes.map(function(h) {
-      return (h.name ? h.name + ': ' : '') + +(h.xMm / k).toFixed(4) + ', ' + +(h.yMm / k).toFixed(4) + (h.diaMm != null ? ', ' + +(h.diaMm / k).toFixed(4) : '');
+      return (h.name ? h.name + ': ' : '') + +(h.xMm / k).toFixed(4) + ', ' + +(h.yMm / k).toFixed(4) +
+        (h.diaMm != null ? ', ' + +(h.diaMm / k).toFixed(4) : h.zMm != null ? ',' : '') + (h.zMm != null ? ', ' + +(h.zMm / k).toFixed(4) : '');
     }).join('\n');
   }
   // The list with each readable line's bare numbers rewritten from one
@@ -1471,6 +1488,28 @@
     });
     lines.push('#9=[1000000000 * #11]');
     return lines.concat(scanLines(near));
+  }
+
+  // Lines that put work offset P's Z0 hMm above the spoilboard (a
+  // fixture's surface, or the stock's top), for whichever measured tool is
+  // loaded: the spoilboard height recorded by the Z0 macros (in o.slot's
+  // Z) plus hMm. Guarded like those macros: homed, a tool length offset
+  // active, the spoilboard recorded, no G92 Z; every line that changes
+  // anything is divided by the same checks. The current Z0 is kept in
+  // o.backup's Z for "Z0 back to saved", as the Z0 macros do.
+  function zAboveSpoilLines(o, P, hMm) {
+    var cur = '#' + offsetZParam(P), spoil = '#' + offsetZParam(o.slot), saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
+    var ok = '[#<_homed_state> AND #<_tool_offset> AND [' + spoil + ' NE 0] AND [ABS[#5213] LT 0.0005]]';
+    var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001]';
+    return [
+      'G21',
+      '#1=[1 / #<_homed_state>] (ZS stop: home the machine first)',
+      '#1=[1 / #<_tool_offset>] (ZS stop: no tool length offset active)',
+      '#1=[1 / [' + spoil + ' NE 0]] (ZS stop: record the spoilboard height first)',
+      '#1=[1 / [ABS[#5213] LT 0.0005]] (ZS stop: a G92 Z offset is active; G92.1 clears it)',
+      'G10 L2 P' + o.backup + ' Z[[' + saved + ' + [' + cur + ' - ' + saved + '] * [' + notOurs + ']] / ' + ok + ']',
+      'G10 L2 P' + P + ' Z[[' + spoil + ' + ' + fmt(hMm) + '] / ' + ok + ']'
+    ];
   }
 
   // Up to Safe Z (a machine Z; machine Z0 when unset), then across, in
@@ -1850,7 +1889,8 @@
       slot: $('mw-slot').value, backup: $('mw-backup').value, thick: $('mw-thick').value,
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
-      stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'),
+      stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'),
+      stockZMode: $('mw-stock-zmode').value,
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
@@ -2103,7 +2143,8 @@
       return z && [z.minX, z.maxX, z.minY, z.maxY].every(function(v) { return typeof v === 'number' && isFinite(v); });
     }).map(function(z) { return { block: true, name: 'Blocked', minX: z.minX, maxX: z.maxX, minY: z.minY, maxY: z.maxY }; }) : [];
     $('mw-stock-on').checked = !!saved.stockOn;
-    ['W', 'L'].forEach(function(k) {
+    if (saved.stockZMode === 'top') $('mw-stock-zmode').value = 'top';
+    ['W', 'L', 'T'].forEach(function(k) {
       var v = parseFloat(saved['stock' + k]);
       if (isFinite(v) && v > 0) $('mw-stock-' + k.toLowerCase()).value = +(v * conv).toFixed(4);
     });
@@ -2143,7 +2184,7 @@
     $('mw-hole-here').addEventListener('click', holeInsetsFromHere);
     $('mw-hole-add').addEventListener('click', addHoleHere);
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
-    ['mw-hole-goto', 'mw-hole-set'].forEach(function(id) {
+    ['mw-hole-goto', 'mw-hole-set', 'mw-hole-setz'].forEach(function(id) {
       var btn = $(id);
       btn.addEventListener('pointerdown', function(evt) { if (evt.button === 0) startHold(btn, evt); });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(type) {
@@ -2178,8 +2219,8 @@
     function stockSync() { $('mw-stock-on').closest('.mw-stock').classList.toggle('mw-stock-active', $('mw-stock-on').checked); renderHoles(); saveSettings(); }
     $('mw-stock-on').addEventListener('change', function() { if ($('mw-stock-on').checked) anchorStock(); }, true);
     $('mw-stock-anchor').addEventListener('click', function() { readMachineState().then(function() { anchorStock(); stockSync(); }); });
-    ['mw-stock-on', 'mw-stock-corner'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
-    ['mw-stock-w', 'mw-stock-l'].forEach(function(id) {
+    ['mw-stock-on', 'mw-stock-corner', 'mw-stock-zmode'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
+    ['mw-stock-w', 'mw-stock-l', 'mw-stock-t'].forEach(function(id) {
       $(id).addEventListener('input', function() { renderHoles(); });
       $(id).addEventListener('change', stockSync);
     });
@@ -3018,6 +3059,7 @@
         }
         var tip = document.createElementNS(ns, 'title');
         tip.textContent = holeName(p) + ': machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm' +
+          (p.zMm != null ? '; surface ' + shown(p.zMm) + ' ' + unitName() + ' above the spoilboard' : '') +
           (p.blocked ? ' (in ' + p.zone + ')' : p.suppressed ? ' (suppressed)' : '');
         g.appendChild(tip);
       });
@@ -3145,6 +3187,12 @@
     $('mw-hole-dist').textContent = dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
+    var zt = zTarget();
+    $('mw-hole-setz').hidden = !zt;
+    $('mw-hole-setz').disabled = !zt || holes.busy;
+    $('mw-hole-z').hidden = !zt;
+    $('mw-hole-z').textContent = zt ? 'Z0 option: ' + zt.what + ', spoilboard + ' + shown(zt.hMm) + ' ' + unitName() : '';
+    if (!zt && hold.btn && hold.btn.id === 'mw-hole-setz') stopHold(false);
     if (!aim || problem || holes.busy) disarmGoto();
     var on = $('mw-stock-on').checked, a = holes.stockAnchor;
     $('mw-stock-note').textContent = !on ? '' : p ? 'Drawn from the picked hole.'
@@ -3274,7 +3322,7 @@
   var hold = { raf: null, start: 0, active: false, btn: null };
   // Hold buttons (Go to Selected, Set), like ncSender's XY0: fill over a
   // second, act at the end, blink when let go early. One at a time.
-  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : goToHole; }
+  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : btn.id === 'mw-hole-setz' ? setZZero : goToHole; }
   function holdFill(btn, pct) { btn.querySelector('.mw-hold-fill').style.width = pct + '%'; }
   function startHold(btn, evt) {
     if (btn.disabled || hold.active) return;
@@ -3349,6 +3397,49 @@
     }
     return activeWcs();
   }
+  // Where Set Z0 would put Z0, as a height above the spoilboard: a picked
+  // point's own height (a vise jaw, a fixture), and with Stock on, the
+  // stock's bottom (on that, or on the spoilboard) or its top. Null when
+  // there's nothing to set Z0 on.
+  function zTarget() {
+    var p = holes.grid[holes.picked], base = p && p.zMm != null ? p.zMm : null;
+    var on = p ? (p.name ? '\u201c' + p.name + '\u201d' : holeName(p).replace(/^Column/, 'column')) : '';
+    if ($('mw-stock-on').checked) {
+      var top = $('mw-stock-zmode').value === 'top', t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
+      if (top && !(t > 0)) return null;
+      var under = base != null ? on : 'the spoilboard';
+      return { hMm: (base || 0) + (top ? t : 0), what: top ? 'the stock top (on ' + under + ')' : base != null ? 'the stock bottom (on ' + on + ')' : 'the spoilboard' };
+    }
+    return base != null ? { hMm: base, what: 'the surface of ' + on } : null;
+  }
+  async function setZZero() {
+    var status = $('mw-hole-status');
+    await holeAction(async function() {
+      try {
+        var z = zTarget(), s = readSettings();
+        if (!z) return;
+        if (!s) throw new Error('the Z0 macros tab\u2019s settings need fixing first (its storage offsets)');
+        await machineReady();
+        var hash = parseHashReport((await ask('$#', 900)).lines), spoil = hash[WCS_NAMES[s.slot]], g92 = hash.G92;
+        if (!g92) throw new Error('the controller didn\u2019t report its G92 offset ($#), so it isn\u2019t safe to set Z0; try again');
+        if (Math.abs(g92[2] || 0) > 0.0005) throw new Error('a G92 Z offset is active, which would shift Z0. Send G92.1 in the terminal to clear it, then try again');
+        if (!spoil || !spoil[2]) throw new Error('the spoilboard height isn\u2019t recorded yet: run ZS: Record spoilboard height (Z0 macros tab) once');
+        var gc = parseGcState((await ask('$G', 500)).lines);
+        if (!gc || !gc.tloActive) throw new Error('no tool length offset is active, so Z0 wouldn\u2019t follow the tool. Measure the tool first');
+        var wcsP = await resolveHoleWcs();
+        if ([s.slot, s.backup, s.thick].indexOf(wcsP) >= 0) throw new Error(WCS_NAMES[wcsP] + ' holds the Z0 macros\u2019 stored values; pick another work offset in the menu');
+        await sendHoleCommands(zAboveSpoilLines(s, wcsP, z.hMm));
+        status.setAttribute('data-state', 'ok');
+        status.textContent = WCS_NAMES[wcsP] + ' Z0 is now on ' + z.what + ': the spoilboard + ' + shown(z.hMm) + ' ' + unitName() + '. Your previous Z0 is saved for ZS: Z0 back to saved.';
+        await readMachineState();
+        renderHoles();
+        readNumbers();
+      } catch (err) {
+        status.setAttribute('data-state', 'bad');
+        status.textContent = 'Couldn\u2019t set Z0: ' + err.message + '.';
+      }
+    });
+  }
   async function setHoleZero() {
     var status = $('mw-hole-status');
     await holeAction(async function() {
@@ -3405,6 +3496,7 @@
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too).',
       '<strong>Grid + List</strong> adds extra holes to a grid, one per line, measured from the first grid&rsquo;s first hole. A third value is that hole&rsquo;s own diameter, e.g. <kbd>pin: 130, 40, 6mm</kbd>; the map draws it at that size, and the dots put X0 Y0 on its own edge.',
+      '<strong>Fixtures with a height</strong> (a vise, a vertical jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard, e.g. <kbd>vise: 400, 250, , 63.5mm</kbd> (a blank third value keeps Hole Diameter). Pick it and a <strong>Set Z0</strong> hold button appears: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. With <strong>Stock</strong> on, its thickness and the <strong>Z0</strong> menu put Z0 on the stock&rsquo;s bottom or top instead (on the fixture, or on the spoilboard with no fixture picked). Set Z0 needs the spoilboard height recorded and a tool length offset active, stops while a G92 Z offset is active, and keeps your previous Z0 for <strong>ZS: Z0 back to saved</strong>. The keyboard macros only ever set X and Y.',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',

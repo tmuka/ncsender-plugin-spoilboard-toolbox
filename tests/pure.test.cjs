@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -619,7 +619,7 @@ test('nearest-hole macros: Go lifts (never down), then moves; stops for keepouts
 });
 
 test('parseHoleList reads names, mixed units and skips comments; formatHoleList writes it back', () => {
-  const r = parseHoleList('A: 0, 0\n( locating pins )\n\nB: 300, 12.5\n12-1/2", 6"\n1: 2in, 50.8mm\nnot a hole\n5, 6, 7, 8\npin: 5, 6, 1/4"\n7, 8, -2', false);
+  const r = parseHoleList('A: 0, 0\n( locating pins )\n\nB: 300, 12.5\n12-1/2", 6"\n1: 2in, 50.8mm\nnot a hole\n5, 6, 7, 8, 9\npin: 5, 6, 1/4"\n7, 8, -2', false);
   assert.deepEqual(r.bad, [7, 8, 10]);
   assert.deepEqual(r.holes[4], { name: 'pin', xMm: 5, yMm: 6, diaMm: 6.35 });
   assert.equal(formatHoleList([r.holes[4]], false), 'pin: 5, 6, 6.35');
@@ -923,4 +923,30 @@ test('a listed hole near a keepout corner is left out the way the macro tests it
   const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: 290, _abs_y: 290 }));
   assert.equal(p._error, undefined);
   assert.deepEqual([p.P0_x, p.P0_y], [100, 100]);
+});
+
+test('list lines take a fourth value, the height above the spoilboard; a blank diameter keeps Hole Diameter', () => {
+  const r = parseHoleList('vise: 400, 250, , 63.5\njig: 10, 20, 6, 2-1/2"\n5, 6, 7, 8, 9', false);
+  assert.deepEqual(r.bad, [3]);
+  assert.deepEqual(r.holes, [{ name: 'vise', xMm: 400, yMm: 250, zMm: 63.5 }, { name: 'jig', xMm: 10, yMm: 20, diaMm: 6, zMm: 63.5 }]);
+  assert.equal(formatHoleList(r.holes, false), 'vise: 400, 250,, 63.5\njig: 10, 20, 6, 63.5');
+  assert.deepEqual(parseHoleList(formatHoleList(r.holes, false), false).holes, r.holes);
+  const g = holeGrid({ layout: 'list', list: r.holes, insetXMm: 0, insetYMm: 0, travelXMm: 800, travelYMm: 600, dirX: 1, dirY: 1 });
+  assert.equal(g[0].zMm, 63.5);
+});
+
+test('Z0 above the spoilboard: spoilboard height + h for any tool, saved Z0 kept, guarded', () => {
+  const o = { slot: 9, backup: 8, thick: 7 };
+  const lines = zAboveSpoilLines(o, 2, 63.5).join('\n');
+  const base = { _homed_state: 1, _tool_offset: 1, 5383: -80, 5243: -40 };
+  let p = run(lines, Object.assign({}, base));
+  assert.equal(p._error, undefined);
+  assert.equal(p[offsetZParam(2)], -80 + 63.5);
+  assert.equal(p[offsetZParam(8)], -40, 'the old Z0 is saved for Z0 back to saved');
+  for (const [k, v] of [['_homed_state', 0], ['_tool_offset', 0], [5383, 0], [5213, 1.5]]) {
+    const q = runAll(lines, Object.assign({}, base, { [k]: v }));
+    assert.equal(q[offsetZParam(2)], -40, k + ': Z0 unchanged even if every line is sent');
+    assert.equal(q[offsetZParam(8)], undefined, k + ': nothing saved');
+  }
+  assert.ok(code(lines).every((l) => l.length < 200));
 });
