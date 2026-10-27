@@ -264,8 +264,10 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when you ticked
   Stock (its front left corner there, unless **Corner** says otherwise), so you can zero on a corner,
   tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; **From X0 Y0 now** takes
-  X0 Y0 again. That's for the current session only, and picking a hole replaces it. The keyboard macros always
-  use the hole itself.
+  X0 Y0 again, and picking a hole replaces it. Reopening the plugin keeps the stock where it was. No
+  tape measure? Jog the bit over the stock's opposite corner and press **Far Corner Here** for its width
+  and length; its thickness fills in from **ZS: Measure stock thickness** until you type one. The
+  keyboard macros always use the hole itself.
 - **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
   rectangle over it. This map then won't pick its holes, Pick Nearest Hole skips them, and Go to and Set
   won't target a point inside it. **That's all it does: it's a note for the picker, not a keepout

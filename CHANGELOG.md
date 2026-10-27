@@ -25,6 +25,7 @@ What's new in each release of Zero Swapper. Install or update from
 ### 🎯 Easier to use
 - Listed points (pins, a vise) sit on top of the grids and their names are clickable, so they're
   easy to pick even right next to a dog hole.
+- The stock comes back where it was when you reopen the plugin, on its hole or its X0 Y0.
 - With Grid + List, the list says how many points fall outside the machine's travel.
 - Stock thickness has its own line, so the narrow column never scrolls sideways, and the stock fields
   are wide enough for 4–5 digit sizes.
