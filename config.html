@@ -426,7 +426,7 @@
               <option value="4">G57</option><option value="5">G58</option><option value="6">G59</option>
               <option value="7">G59.1</option><option value="8">G59.2</option><option value="9">G59.3</option>
             </select>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span>Set <span data-hole-wcs>G54</span> XY<span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label">Set <span data-hole-wcs>G54</span> XY</span><span class="mw-hold-hint">Hold</span></button>
           </div>
           <div class="mw-maptools">
             <div class="mw-stock">
@@ -3376,7 +3376,7 @@
       var tip = String(el.getAttribute('title') || '').replace(/\s*Type mm or inches.*$/, '');
       var lab = el.id && ROOT.querySelector('label[for="' + el.id + '"]');
       var own = el.getAttribute('aria-label') || Array.prototype.filter.call(el.childNodes, function(n) {
-        return n.nodeType === 3 || (n.nodeType === 1 && n.hasAttribute('data-hole-wcs'));
+        return n.nodeType === 3 || (n.nodeType === 1 && (n.hasAttribute('data-hole-wcs') || n.classList.contains('mw-hold-label')));
       }).map(function(n) { return n.textContent; }).join('');
       var name = (lab ? lab.textContent : own).replace(/\s+/g, ' ').trim();
       if (!tip || !name || seen[name]) return;
