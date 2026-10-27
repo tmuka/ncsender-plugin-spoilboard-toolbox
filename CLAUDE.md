@@ -29,6 +29,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
 | `icon.svg`, `icon.png` | The plugin icon (Plugins panel, tool menu, registry): the hole grid with X0 Y0 on ncSender's green. Edit the SVG and re-render the 512 px PNG. |
 | `.scripts/build.sh` | `dist/<id>_v<version>.zip` from the committed files (`git archive`), under a `<id>/` folder as the Plugin Manager expects; tests, scripts, `docs/` (README images) and this file left out. |
 | `README.md` | User guide: the wizard steps, how the macros work, units, requirements. |
+| `CHANGELOG.md` | User-facing notes per release (ships in the zip); the GitHub release notes are drawn from it. |
 
 ### `config.html`
 

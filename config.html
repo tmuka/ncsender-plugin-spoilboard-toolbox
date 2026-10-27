@@ -551,7 +551,7 @@
         </div>
         <div class="mw-field mw-list-only">
           <label for="mw-hole-list"><span class="mw-ref-only">Holes: X, Y from the reference point, one per line</span><span class="mw-extra-only">Extra holes: X, Y from the first grid&rsquo;s first hole, one per line</span></label>
-          <textarea class="mw-input mw-hole-list" id="mw-hole-list" rows="6" spellcheck="false" placeholder="A: 0, 0&#10;B: 300, 0&#10;pin: 12-1/2&quot;, 6&quot;, 1/4&quot;" title="One hole per line: x, y or name: x, y, measured from the reference point (or, with Grid + List, from the first grid's first hole) into the machine's travel, like the insets. A third value is that hole's own diameter; without one it's the first grid's Hole Diameter (with a List alone, Hole Diameter). Values take mm or inches (6.35mm, 1/4&quot;); bare numbers are in the machine's units."></textarea>
+          <textarea class="mw-input mw-hole-list" id="mw-hole-list" rows="6" spellcheck="false" placeholder="300, 150&#10;120, 40, 6mm&#10;Fixture1: 0, 400, 0" title="One hole per line: x, y or name: x, y, measured from the reference point (or, with Grid + List, from the first grid's first hole) into the machine's travel, like the insets. A third value is that hole's own diameter; without one it's the first grid's Hole Diameter (with a List alone, Hole Diameter). Values take mm or inches (6.35mm, 1/4&quot;); bare numbers are in the machine's units."></textarea>
           <div class="mw-holes-tools">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-add" title="Jog the bit over the center of a hole and press this to add it to the list.">Add Current Position</button>
             <span class="mw-hint" id="mw-hole-list-note"></span>
@@ -1851,7 +1851,7 @@
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'),
-      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, stockAnchor: holes.stockAnchor
+      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
@@ -2109,8 +2109,8 @@
     });
     if (/^(auto|front-left|front-right|back-left|back-right)$/.test(saved.stockCorner || '')) $('mw-stock-corner').value = saved.stockCorner;
     setStockZero(saved.stockZero);
-    var sa = saved.stockAnchor;
-    holes.stockAnchor = sa && isFinite(sa.x) && isFinite(sa.y) ? { x: +sa.x, y: +sa.y, wcs: String(sa.wcs || 'G54') } : null;
+    // The stock's X0 Y0 anchor is for this session's job only: not saved.
+    holes.stockAnchor = null;
     holes.profiles = Array.isArray(saved.holeProfiles) ? saved.holeProfiles.filter(function(x) { return x && typeof x.name === 'string' && x.name.trim(); }) : [];
     holes.profile = holes.profiles.some(function(x) { return x.name === saved.holeProfile; }) ? saved.holeProfile : '';
     if (probeBlockMm != null) {
@@ -2277,7 +2277,8 @@
   function stockActive() { return !!stockAt({ x: 0, y: 0 }); }
   // With no hole picked, the stock hangs off the work offset's X0 Y0 as it
   // was when Stock was ticked (holes.stockAnchor, machine mm), not as it
-  // is now: setting X0 Y0 on the stock then doesn't move the stock.
+  // is now: setting X0 Y0 on the stock then doesn't move the stock. Only
+  // for this session, and dropped when a hole is picked.
   function anchorStock() {
     var ms = state.machine || {}, z = xyOf(ms[(WCS_NAMES[holeWcs()] || '').toLowerCase()]);
     holes.stockAnchor = z ? { x: z.x, y: z.y, wcs: WCS_NAMES[holeWcs()] } : null;
@@ -2292,7 +2293,7 @@
   }
   function targetText(t) {
     var stock = stockActive();
-    if (!t.p) return 'the stock\u2019s ' + ORIGIN_NOTES[holes.stockZero] + ' (from ' + holes.stockAnchor.wcs + ' X0 Y0)';
+    if (!t.p) return 'the stock\u2019s ' + ORIGIN_NOTES[holes.stockZero] + ' drawn from ' + holes.stockAnchor.wcs + ' X0 Y0';
     var hole = 'the ' + ORIGIN_NOTES[holes.origin] + ' of ' + holeName(t.p).replace(/^Column/, 'column');
     return stock ? 'the stock\u2019s ' + ORIGIN_NOTES[holes.stockZero] + ' (from ' + hole + ')' : hole;
   }
@@ -2912,6 +2913,7 @@
         (outside ? ', ' + outside + ' outside the machine\u2019s travel (not shown)' : '') + '.';
     }
     if (holes.picked >= holes.grid.length) holes.picked = -1;
+    if (holes.picked < 0) holes.nearMm = null;
     // Machine X right and Y up (back at the top). The bed flush with the card's top left, like the Setup heading below;
     // machine X numbers run along the bottom and Y down the right.
     var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = 1;
@@ -3040,7 +3042,9 @@
     }
     var picked = holes.grid[holes.picked], stock = picked ? stockAt(holePoint(picked)) : stockAt(holes.stockAnchor, true);
     if (stock) {
-      add('rect', { class: 'mw-h-stock', x: X(stock.minX), y: Y(stock.maxY), width: ((stock.maxX - stock.minX) * sc).toFixed(1), height: ((stock.maxY - stock.minY) * sc).toFixed(1) });
+      // Clipped to the bed: stock hanging past the travel stops at its edge.
+      var sx0 = Math.max(stock.minX, minX), sx1 = Math.min(stock.maxX, minX + t.xMm), sy0 = Math.max(stock.minY, minY), sy1 = Math.min(stock.maxY, minY + t.yMm);
+      if (sx1 > sx0 && sy1 > sy0) add('rect', { class: 'mw-h-stock', x: X(sx0), y: Y(sy1), width: ((sx1 - sx0) * sc).toFixed(1), height: ((sy1 - sy0) * sc).toFixed(1) });
     }
     var aim = pickTarget();
     if (aim && (holes.origin !== 'center' || stock)) {
@@ -3063,6 +3067,9 @@
     disarmGoto();
     holes.picked = i;
     holes.nearMm = null;
+    // A hole picked replaces any stock hung off X0 Y0, so if the hole is
+    // later excluded or hidden, Set doesn't quietly fall back to it.
+    holes.stockAnchor = null;
     $('mw-hole-status').textContent = '';
     renderHoles();
     nudgeSet();
@@ -3094,6 +3101,7 @@
     if (!near) { status.setAttribute('data-state', 'bad'); status.textContent = 'Needs the hole grid and the machine\u2019s position.'; return; }
     holes.picked = near.index;
     holes.nearMm = near.distanceMm;
+    holes.stockAnchor = null;
     var any = nearestHole(holes.grid.map(function(g) { return { x: g.x, y: g.y, hidden: g.hidden || (g.col != null && !gridNearest(g)) }; }), here.x, here.y);
     var under = any && (holes.grid[any.index].blocked || holes.grid[any.index].suppressed) ? holes.grid[any.index] : null;
     renderHoles();
@@ -3106,7 +3114,7 @@
       return;
     }
     status.setAttribute('data-state', far ? 'bad' : 'ok');
-    status.textContent = far ? 'The spindle is ' + fmt(near.distanceMm) + ' mm from the nearest hole: check it\u2019s the one you meant before setting X0 Y0.'
+    status.textContent = far ? 'The spindle is ' + shown(near.distanceMm) + ' ' + unitName() + ' from the nearest hole: check it\u2019s the one you meant before setting X0 Y0.'
       : '';
   }
   // A length in ncSender's units, for the readouts (the rulers match).
@@ -3130,7 +3138,9 @@
     else if (problem) $('mw-hole-pos').textContent = (onStock || !p ? 'That point on the stock is ' : 'This side of the hole is ') + problem + ': pick another dot or hole.';
     $('mw-hole-pos').classList.toggle('mw-bad-text', !!problem);
     $('mw-hole-pos').classList.toggle('mw-coords', !!aim && !problem);
-    var dist = aim && !problem && holes.nearMm != null;
+    // The spindle's distance from the hole Pick Nearest Hole took: only
+    // when that hole itself is the target, not a point on the stock.
+    var dist = aim && aim.p && !onStock && !problem && holes.nearMm != null;
     $('mw-hole-dist').hidden = !dist;
     $('mw-hole-dist').textContent = dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
@@ -3139,6 +3149,7 @@
     var on = $('mw-stock-on').checked, a = holes.stockAnchor;
     $('mw-stock-note').textContent = !on ? '' : p ? 'Drawn from the picked hole.'
       : a ? 'No hole picked: drawn from ' + a.wcs + ' X0 Y0 as taken (machine X ' + shown(a.x) + ', Y ' + shown(a.y) + ' ' + unitName() + '); it stays put when X0 Y0 changes.'
+      : holeWcs() > 6 ? 'Pick a hole: ncSender doesn\u2019t report ' + WCS_NAMES[holeWcs()] + '\u2019s X0 Y0, so the stock can only hang off G54\u2013G59.'
       : 'Pick a hole, or set X0 Y0 and press From X0 Y0 now.';
     $('mw-stock-anchor').hidden = !on || !!p;
     suppressButtons();
@@ -3375,7 +3386,8 @@
   var HELP_UNITS = '<strong>Typing units:</strong> size and feed fields take mm or inches, whichever you have to hand, and convert to the machine&rsquo;s units when you leave the field: <kbd>1/4"</kbd>, <kbd>5/4"</kbd>, <kbd>.25in</kbd>, <kbd>1-1/2"</kbd>, <kbd>6.35mm</kbd>, and for feeds <kbd>100ipm</kbd>, <kbd>2540mm/min</kbd>, <kbd>25mm/s</kbd>.';
   var HELP_TOPICS = {
     holes: { name: 'XY0 Picker', notes: [
-      '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>ZS: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
+      '<strong>Your spoilboard&rsquo;s holes are a precision fixture; this turns them into work zero.</strong> Jog roughly near a hole, tap <strong>Pick Nearest Hole</strong>, hold <strong>Set</strong>, and X0 Y0 is exactly on its center or edge: no edge finder, no XY probe, nothing typed, and the same zero next time. Type a stock size to zero on its center or any corner instead. Missing holes, T-tracks, several grids, custom pins and a profile per board are all covered below.',
+      '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>ZS: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
@@ -3388,7 +3400,7 @@
       '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
       '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag a box around several; a box around only suppressed holes restores them. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and shown as faint solid circles while it&rsquo;s unlocked; Pick Nearest Hole, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
       '<strong>Live position:</strong> while you jog, the spindle (the silver ring) moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
-      '<strong>Stock:</strong> tick it and type the stock&rsquo;s width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole, running away from the hole (<strong>Corner</strong> overrides which stock corner sits there), and its own box of dots puts X0 Y0 on its center, a corner or an edge. Go to Selected and Set then use that point; the keyboard macros always use the hole. With no hole picked, the stock hangs off X0 Y0 as it was when you ticked Stock (its front left corner there): zero on a corner, tick Stock, and Set its center. It stays put when X0 Y0 changes; <strong>From X0 Y0 now</strong> takes X0 Y0 again.',
+      '<strong>Stock:</strong> tick it and type the stock&rsquo;s width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole, running away from the hole (<strong>Corner</strong> overrides which stock corner sits there), and its own box of dots puts X0 Y0 on its center, a corner or an edge. Go to Selected and Set then use that point; the keyboard macros always use the hole. With no hole picked, the stock hangs off X0 Y0 as it was when you ticked Stock (its front left corner there, unless Corner says otherwise): zero on a corner, tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; <strong>From X0 Y0 now</strong> takes X0 Y0 again. That&rsquo;s for this session only, and picking a hole replaces it.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too).',
@@ -3398,6 +3410,7 @@
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
       HELP_UNITS ] },
     macros: { name: 'Z0 macros', notes: [
+      '<strong>Probe the spoilboard once, and stop re-probing Z on every tool change.</strong> With measured tools (a tool setter or an ATC), one macro puts Z0 on the spoilboard and another on the stock top, for whichever tool is loaded, and a third puts your own Z0 back. Put them on keys and switching Z0 is a single press.',
       'Record the spoilboard height once with a probe block and a measured tool; then the <strong>ZS:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
       '<strong>Run checks</strong> confirms the controller supports the parameters and expressions the macros use. Run it once, and again after a firmware change.',
       'The values are kept in spare work offsets (G59.1&ndash;G59.3 Z by default); pick ones you don&rsquo;t use. Re-record the spoilboard height after surfacing it.',

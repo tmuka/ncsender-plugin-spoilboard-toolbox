@@ -1,0 +1,65 @@
+# Changelog
+
+What's new in each release of Zero Swapper. Install or update from
+[Releases](https://github.com/tmuka/ncsender-plugin-zero-swapper/releases).
+
+## 0.3.34
+
+**Every kind of bed: more grids, pins with their own size, and controls that guide you.**
+
+### ✨ New
+- **More than one grid.** Large dog holes and a small pin grid? Press **+ Grid** under Setup's
+  heading. Each grid has its own name, hole size, spacing, insets, T-tracks and suppressed holes. Pick
+  a grid's chip to edit it, use the eye to show or hide its holes on the map (handy where grids
+  overlap), and untick **Use for Nearest** to keep a grid out of Pick Nearest Hole and the keyboard
+  macros.
+- **Grid + List.** Add extra holes to a grid, such as locating pins or a fixture's holes, measured
+  from the grid's first hole. Give any hole its own diameter as a third value (`pin: 130, 40, 6mm`).
+  The map draws it at that size, and X0 Y0 goes on its own edge.
+- **Stock from X0 Y0.** With no hole picked, ticking **Stock** draws it from your current X0 Y0:
+  zero on a corner, tick Stock, and hold Set to move zero to its center. The stock stays put when
+  X0 Y0 changes (for this session; picking a hole replaces it); **From X0 Y0 now** takes X0 Y0
+  again.
+
+### 🎯 Easier to use
+- **Edit Holes works like a selection box.** Drag a box around holes to suppress them all, drag
+  around suppressed ones to bring them back, or tap one. Suppressed holes show as faint discs.
+- **Set is a hold button**, like Go to Selected, so a stray tap can't move your zero. It pulses after
+  you pick a hole to show it's the next step.
+- **Clearer buttons and labels.** Secondary buttons are tinted so they read as buttons; the dots are
+  captioned "Where X0 Y0 goes on the hole"; the stock controls sit in their own panel; **Pick
+  Nearest Hole** and **Go to Selected** sit side by side in the narrow column.
+- **The spindle looks like ncSender's**: a top-down view of its cutter, with a dot at the bit's
+  center.
+- **Exclude Picks** (was Block Area) says plainly that it only guides this picker: jogging, jobs and
+  the keyboard macros ignore it.
+- The picked point's machine position fits on one line.
+
+### 🐛 Fixes
+- A work offset whose X0 Y0 is off the machine's travel no longer draws outside the map. It's pinned
+  to the nearest edge in red, labelled "off the bed".
+- The Z0 tab's macro preview updates as you edit Setup.
+- Keyboard macros: an extra hole just outside a keepout zone's corner is skipped cleanly instead of
+  stopping the macro, and Create macros says which grid to fix if one can't be read.
+
+## 0.3.33
+
+**Holes your board leaves out, profiles for every board, and zeroing anywhere on your stock.**
+
+### ✨ New
+- **Suppress missing holes** so the map, Pick Nearest Hole, Go to, Set and the keyboard macros skip
+  them.
+- **Profiles**: keep one Setup per spoilboard or fixture plate, with Save and Revert when you
+  experiment.
+- **Stock**: type its size to zero on its center, any corner or any edge.
+- **Exclude areas** of the map for a job, such as a clamp or fixture.
+- **Favorite holes**: starred, ringed on the map and one tap to pick.
+- **Live position**: the spindle and the hole nearest it follow you as you jog.
+
+## Earlier
+
+- **0.3.32**: safety hardening; every move and offset line is guarded by the same checks as the
+  macros' stop lines. Needs ncSender 2.0.163.
+- **0.3.31**: plugin icon. **0.3.30**: map rulers. **0.3.28**: hole lists. **0.3.27**: nearest-hole
+  keyboard macros and G92 guards. **0.3.23**: T-track panels. **0.3.21**: the XY0 Picker.
+- **0.3.4**: first release as Zero Swapper: Z0 on the spoilboard or stock top for any measured tool.

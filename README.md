@@ -1,25 +1,32 @@
 # Zero Swapper
 
-**Probe your spoilboard once. After that, with any measured tool, one click puts Z0 on the
-spoilboard or on top of your stock — no probing, no math. Another click puts your old Z0 back.**
+**Your spoilboard's holes are already a precision fixture. Zero Swapper turns them into work zero.**
 
-**Set X0 Y0 on your spoilboard's dog hole grid (or a lasered / engraved grid) in two taps:** pick a
-hole on a map of your CNC's bed, or jog near one and let the plugin snap to the grid, and the work
-offset lands exactly on it. Extras find X/Y zero at a midpoint and save / restore it for fixtures.
+- **X0 Y0 in seconds, no probe.** Jog roughly near a dog hole, tap **Pick Nearest Hole**, hold
+  **Set**: work zero lands exactly on the hole's center or edge. No edge finder, no XY probe, no
+  coordinates typed into the terminal, and the same holes give the same zero next time. Put it on a
+  key and it's one press near any hole.
+- **Zero anywhere on the stock, no tape measure.** Type the stock's size and put X0 Y0 on its center
+  or any corner or edge, drawn right on the map.
+- **Z0 without re-probing.** Probe the spoilboard once. After that, any measured tool puts Z0 on the
+  spoilboard or the stock top in one click, and another click puts your old Z0 back.
+- **Fits the bed you actually have.** Missing holes, T-track panels, dog holes plus a pin grid, custom
+  locating pins, lasered or V-carved grid lines, keepout zones, and a saved profile for every board.
 
 Zero Swapper is a plugin for [ncSender](https://github.com/siganberg/ncSender), the G-code sender for
-grblHAL CNC routers. Its **XY0 Picker** tab sets the XY work origin (G54–G59.3) on a hole or grid line
-without moving the machine; its **Z0 macros** tab checks your grblHAL controller, then writes ncSender
-macros you run from the Macros tab or, best of all, a keyboard shortcut.
+grblHAL CNC routers. Its **XY0 Picker** shows your machine's bed with every hole on it, live as you jog,
+and sets the work offset (G54–G59.3) without moving the machine. Its **Z0 macros** tab checks your
+grblHAL controller, then writes ncSender macros you run from the Macros tab or, best of all, a
+keyboard shortcut.
 
-![Zero Swapper's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid with a hole picked,
-the ATCi tool rack's keepout zone in red, and the Pick Nearest Hole, Go to Selected and Set G54 XY
-buttons](docs/xy0-picker.png)
+![Zero Swapper's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid between T-tracks, a
+hole picked with a sheet of stock drawn from it, the spindle, the ATCi tool rack's keepout zone in
+red, and the Pick Nearest Hole, Go to Selected and Set G54 XY buttons](docs/xy0-picker.png)
 
 ## What a job looks like
 
 **Zero on a stock corner, no probing.** Push the stock against bench dogs in your spoilboard holes,
-jog roughly near the corner hole (a few mm off is fine), and press **Pick Nearest Hole** then **Set**, or
+jog roughly near the corner hole (a few mm off is fine), and press **Pick Nearest Hole** then hold **Set**, or
 one key with the nearest-hole macro. X0 Y0 lands exactly on the hole's edge or center, with no edge
 finder, no XY probe and nothing typed into the terminal. Use the same holes next time and you get the
 same zero back.
@@ -240,8 +247,9 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   stock's front left corner; **Corner** overrides that). The second box of dots picks where X0 Y0 goes
   on the stock: its center, a corner or an edge. **Go to Selected** and **Set** then use that point.
   With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when you ticked
-  Stock (its front left corner there), so you can zero on a corner, tick Stock, and Set its center.
-  It stays put when X0 Y0 changes; **From X0 Y0 now** takes X0 Y0 again. The keyboard macros always
+  Stock (its front left corner there, unless **Corner** says otherwise), so you can zero on a corner,
+  tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; **From X0 Y0 now** takes
+  X0 Y0 again. That's for the current session only, and picking a hole replaces it. The keyboard macros always
   use the hole itself.
 - **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
   rectangle over it. This map then won't pick its holes, Pick Nearest Hole skips them, and Go to and Set
