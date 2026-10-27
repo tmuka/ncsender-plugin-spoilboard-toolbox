@@ -11,7 +11,17 @@ What's new in each release of Zero Swapper. Install or update from
   on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. Stock
   gains a thickness and a **Z0: spoilboard / stock top** menu, so Z0 can go on the stock's bottom or
   top too. Guarded like the Z0 macros (homed, tool length offset active, spoilboard recorded, no G92
-  Z), and your previous Z0 is kept for **Z0 back to saved**.
+  Z). On the Z0 macros' work offset a probed Z0 is kept for **Z0 back to saved**, and holding Set
+  Z0 again or running a Z0 macro after it doesn't replace it (press **Create macros** once so the Z0
+  macros know about it).
+- **Heights are checked**: one below the spoilboard or more than the machine's Z travel (a unit typo,
+  say) is flagged on its line in the list, and Set Z0 refuses it.
+
+### 🎯 Easier to use
+- Listed points (pins, a vise) sit on top of the grids and their names are clickable, so they're
+  easy to pick even right next to a dog hole.
+- With Grid + List, the list says how many points fall outside the machine's travel.
+- Stock thickness has its own line, so the narrow column never scrolls sideways.
 
 ## 0.3.34
 

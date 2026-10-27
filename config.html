@@ -872,7 +872,11 @@
     var surface = '#5063 + ' + cur + ' - ' + fmt(o.blockMm) + ' - #5403';
     var back = ['G91 G0 Z' + fmt(o.retractMm), 'G90'];
     // 1 when the current Z0 is neither the spoilboard nor the stock top.
-    var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001]';
+    // Also not the last Z0 the XY0 Picker's Set Z0 put down (its height
+    // above the spoilboard is kept in the thickness slot's X), so that
+    // isn't saved over a probed Z0 either.
+    var mark = '#' + (offsetZParam(o.thick) - 2);
+    var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + mark + '] GT 0.001]';
     var saveLine = 'G10 L2 P' + o.backup + ' Z[' + saved + ' + [' + cur + ' - ' + saved + '] * [' + notOurs + ']]';
     // Named "ZS: ..."; the description is the first comment line's text
     // after its "ZS:" prefix, e.g. "record spoilboard height".
@@ -1169,9 +1173,10 @@
   // top: zMm), each value in mm or inches as parseUnitValue reads it
   // (bare numbers in the machine's units). "x, y, , height" keeps Hole
   // Diameter. Blank lines and lines starting with ( or ; are skipped. Returns
-  // the holes in mm and the 1-based numbers of lines it couldn't read.
+  // the holes in mm, the 1-based numbers of lines it couldn't read, and
+  // each hole's line number (lines).
   function parseHoleList(text, imperial) {
-    var holes = [], bad = [];
+    var holes = [], bad = [], lines = [];
     String(text || '').split(/\r?\n/).forEach(function(line, i) {
       var t = line.replace(/\s*(;.*|\([^)]*\))\s*$/, '').trim();
       if (!t || /^[(;]/.test(line.trim())) return;
@@ -1190,8 +1195,9 @@
       if (!dBlank) hole.diaMm = d * k;
       if (parts.length === 4) hole.zMm = z * k;
       holes.push(hole);
+      lines.push(i + 1);
     });
-    return { holes: holes, bad: bad };
+    return { holes: holes, bad: bad, lines: lines };
   }
   // The list written back in the machine's units, so what's saved doesn't
   // depend on how each value was typed.
@@ -1498,22 +1504,33 @@
   // loaded: the spoilboard height recorded by the Z0 macros (in o.slot's
   // Z) plus hMm. Guarded like those macros: homed, a tool length offset
   // active, the spoilboard recorded, no G92 Z; every line that changes
-  // anything is divided by the same checks. The current Z0 is kept in
-  // o.backup's Z for "Z0 back to saved", as the Z0 macros do.
+  // anything is divided by the same checks.
   function zAboveSpoilLines(o, P, hMm) {
     var cur = '#' + offsetZParam(P), spoil = '#' + offsetZParam(o.slot), saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
+    var markX = '#' + (offsetZParam(o.thick) - 2), markY = '#' + (offsetZParam(o.thick) - 1);
     var ok = '[#<_homed_state> AND #<_tool_offset> AND [' + spoil + ' NE 0] AND [ABS[#5213] LT 0.0005]]';
-    var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001]';
+    // The previous Z0 is only kept for the Z0 macros' own work offset
+    // (their "back to saved" restores that one), and not when it's one the
+    // plugin set: the spoilboard, the stock top, this height, or the last
+    // height Set Z0 put down (kept in the thickness slot's X).
+    var save = P === o.wcs;
+    var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + markX + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + fmt(hMm) + '] GT 0.001]';
     return [
       'G21',
       '#1=[1 / #<_homed_state>] (ZS stop: home the machine first)',
       '#1=[1 / #<_tool_offset>] (ZS stop: no tool length offset active)',
       '#1=[1 / [' + spoil + ' NE 0]] (ZS stop: record the spoilboard height first)',
-      '#1=[1 / [ABS[#5213] LT 0.0005]] (ZS stop: a G92 Z offset is active; G92.1 clears it)',
-      'G10 L2 P' + o.backup + ' Z[[' + saved + ' + [' + cur + ' - ' + saved + '] * [' + notOurs + ']] / ' + ok + ']',
+      '#1=[1 / [ABS[#5213] LT 0.0005]] (ZS stop: a G92 Z offset is active; G92.1 clears it)'
+    ].concat(save ? [
+      // Worked out on a line of its own: together they'd pass grblHAL's
+      // line length.
+      '#2=[' + notOurs + ']',
+      'G10 L2 P' + o.backup + ' Z[[' + saved + ' + [' + cur + ' - ' + saved + '] * #2] / ' + ok + ']'
+    ] : [], [
       'G10 L2 P' + P + ' Z[[' + spoil + ' + ' + fmt(hMm) + '] / ' + ok + ']'
-    ];
+    ], save ? ['G10 L2 P' + o.thick + ' X[' + fmt(hMm) + ' / ' + ok + '] Y[' + markY + ']'] : []);
   }
+
 
   // Up to Safe Z (a machine Z; machine Z0 when unset), then across, in
   // machine coordinates. Never down: already above Safe Z, it stays at
@@ -2884,8 +2901,18 @@
       var parsed = parseHoleList($('mw-hole-list').value, state.imperial), need = layout === 'list';
       listOk = !parsed.bad.length && (parsed.holes.length || !need);
       $('mw-hole-list').classList.toggle('mw-invalid', !listOk);
-      $('mw-hole-list-note').textContent = parsed.bad.length ? 'Can\u2019t read line' + (parsed.bad.length > 1 ? 's ' : ' ') + parsed.bad.join(', ') + ': use x, y or name: x, y, with a diameter after if it differs.'
-        : parsed.holes.length + ' hole' + (parsed.holes.length === 1 ? '' : 's') + '.';
+      // Points outside the XY travel (from the reference point, grid 1's
+      // insets) and heights that can't be right, by their line in the box.
+      var t = state.travel, rx = parseUnitValue(r0.ix, state.imperial, 'length') * k, ry = parseUnitValue(r0.iy, state.imperial, 'length') * k;
+      var outside = t && isFinite(rx) && isFinite(ry) ? parsed.holes.filter(function(l) {
+        var u = rx + l.xMm, v = ry + l.yMm;
+        return u < -1e-9 || u > t.xMm + 1e-9 || v < -1e-9 || v > t.yMm + 1e-9;
+      }).length : 0;
+      var zWarn = parsed.holes.map(function(l, i) { var zp = l.zMm != null && zProblem(l.zMm); return zp ? ' Check the height on line ' + parsed.lines[i] + ': ' + zp + '.' : ''; }).join('');
+      var note = $('mw-hole-list-note');
+      note.textContent = parsed.bad.length ? 'Can\u2019t read line' + (parsed.bad.length > 1 ? 's ' : ' ') + parsed.bad.join(', ') + ': use x, y or name: x, y, with a diameter and a height after if they differ.'
+        : parsed.holes.length + ' hole' + (parsed.holes.length === 1 ? '' : 's') + (outside ? ', ' + outside + ' outside the machine\u2019s travel (not shown)' : '') + '.' + zWarn;
+      note.classList.toggle('mw-bad-text', !!zWarn && !parsed.bad.length);
       list = parsed.holes;
     }
     if (layout === 'list') {
@@ -2953,16 +2980,6 @@
     if (holes.grid[holes.picked] && holes.grid[holes.picked].hidden) holes.picked = -1;
     var editing = !holeLocked();
     if (holes.grid[holes.picked] && (holes.grid[holes.picked].blocked || (holes.grid[holes.picked].suppressed && !editing))) holes.picked = -1;
-    if (h && h.layout !== 'grid') {
-      var outside = h.list.length - holes.grid.filter(function(g) { return g.col == null; }).length;
-      // Heights that can't be right: below the spoilboard, or more than
-      // the Z travel (a unit typo, say). Set Z0 refuses them too.
-      var badZ = h.list.map(function(l, i) { return l.zMm != null && zProblem(l.zMm) ? i + 1 : 0; }).filter(Boolean);
-      $('mw-hole-list-note').textContent = h.list.length + ' hole' + (h.list.length === 1 ? '' : 's') +
-        (outside ? ', ' + outside + ' outside the machine\u2019s travel (not shown)' : '') + '.' +
-        badZ.map(function(n) { return ' Check the height on line ' + n + ': ' + zProblem(h.list[n - 1].zMm) + '.'; }).join('');
-      $('mw-hole-list-note').classList.toggle('mw-bad-text', badZ.length > 0);
-    }
     if (holes.picked >= holes.grid.length) holes.picked = -1;
     if (holes.picked < 0) holes.nearMm = null;
     // Machine X right and Y up (back at the top). The bed flush with the card's top left, like the Setup heading below;
@@ -3407,9 +3424,10 @@
   // on a homed, idle machine, since the holes are machine positions.
   // Active asks the controller ($G) which offset is in use: ncSender's
   // machine state only knows G54-G59, so G59.1-G59.3 would read as stale.
-  async function resolveHoleWcs() {
+  // gc: a $G reply already in hand.
+  async function resolveHoleWcs(gc) {
     if ($('mw-hole-wcs').value) return +$('mw-hole-wcs').value;
-    var gc = parseGcState((await ask('$G', 500)).lines);
+    gc = gc || parseGcState((await ask('$G', 500)).lines);
     if (gc && gc.wcs) {
       for (var k in WCS_NAMES) if (WCS_NAMES[k] === gc.wcs) return +k;
     }
@@ -3420,7 +3438,9 @@
   // stock's bottom (on that, or on the spoilboard) or its top. Null when
   // there's nothing to set Z0 on.
   function zTarget() {
-    var p = holes.grid[holes.picked], base = p && p.zMm != null ? p.zMm : null;
+    var p = holes.grid[holes.picked];
+    if (p && (p.suppressed || p.hidden)) p = null;
+    var base = p && p.zMm != null ? p.zMm : null;
     var on = p ? (p.name ? '\u201c' + p.name + '\u201d' : holeName(p).replace(/^Column/, 'column')) : '';
     if ($('mw-stock-on').checked) {
       var top = $('mw-stock-zmode').value === 'top', t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
@@ -3441,11 +3461,11 @@
     var status = $('mw-hole-status');
     await holeAction(async function() {
       try {
-        var z = zTarget(), s = readSettings();
+        var z = zTarget(), s = { wcs: +$('mw-wcs').value, slot: +$('mw-slot').value, backup: +$('mw-backup').value, thick: +$('mw-thick').value };
         if (!z) return;
         var zp = zProblem(z.hMm);
         if (zp) throw new Error('that Z0 is ' + shown(z.hMm) + ' ' + unitName() + ' above the spoilboard, and ' + zp + '; check the height and the stock thickness');
-        if (!s) throw new Error('the Z0 macros tab\u2019s settings need fixing first (its storage offsets)');
+        if (s.slot === s.backup || s.slot === s.thick || s.backup === s.thick) throw new Error('the Z0 macros tab\u2019s three storage offsets must be different');
         await machineReady();
         var hash = parseHashReport((await ask('$#', 900)).lines), spoil = hash[WCS_NAMES[s.slot]], g92 = hash.G92;
         if (!g92) throw new Error('the controller didn\u2019t report its G92 offset ($#), so it isn\u2019t safe to set Z0; try again');
@@ -3453,11 +3473,12 @@
         if (!spoil || !spoil[2]) throw new Error('the spoilboard height isn\u2019t recorded yet: run ZS: Record spoilboard height (Z0 macros tab) once');
         var gc = parseGcState((await ask('$G', 500)).lines);
         if (!gc || !gc.tloActive) throw new Error('no tool length offset is active, so Z0 wouldn\u2019t follow the tool. Measure the tool first');
-        var wcsP = await resolveHoleWcs();
+        var wcsP = await resolveHoleWcs(gc);
         if ([s.slot, s.backup, s.thick].indexOf(wcsP) >= 0) throw new Error(WCS_NAMES[wcsP] + ' holds the Z0 macros\u2019 stored values; pick another work offset in the menu');
         await sendHoleCommands(zAboveSpoilLines(s, wcsP, z.hMm));
         status.setAttribute('data-state', 'ok');
-        status.textContent = WCS_NAMES[wcsP] + ' Z0 is now on ' + z.what + ': the spoilboard + ' + shown(z.hMm) + ' ' + unitName() + '. Your previous Z0 is saved for ZS: Z0 back to saved.';
+        status.textContent = WCS_NAMES[wcsP] + ' Z0 is now on ' + z.what + ': the spoilboard + ' + shown(z.hMm) + ' ' + unitName() + '.' +
+          (wcsP === s.wcs ? ' A probed Z0 you had is kept for ZS: Z0 back to saved.' : ' (Only ' + WCS_NAMES[s.wcs] + ', the Z0 macros\u2019 offset, keeps its previous Z0 for back to saved.)');
         await readMachineState();
         renderHoles();
         readNumbers();
@@ -3523,7 +3544,7 @@
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too).',
       '<strong>Grid + List</strong> adds extra holes to a grid, one per line, measured from the first grid&rsquo;s first hole. A third value is that hole&rsquo;s own diameter, e.g. <kbd>pin: 130, 40, 6mm</kbd>; the map draws it at that size, and the dots put X0 Y0 on its own edge.',
-      '<strong>Fixtures with a height</strong> (a vise, a vertical jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard, e.g. <kbd>vise: 400, 250, , 63.5mm</kbd> (a blank third value keeps Hole Diameter). Pick it and a <strong>Set Z0</strong> hold button appears: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. With <strong>Stock</strong> on, its thickness and the <strong>Z0</strong> menu put Z0 on the stock&rsquo;s bottom or top instead (on the fixture, or on the spoilboard with no fixture picked). Set Z0 needs the spoilboard height recorded and a tool length offset active, stops while a G92 Z offset is active, and keeps your previous Z0 for <strong>ZS: Z0 back to saved</strong>. A height below the spoilboard or more than the machine&rsquo;s Z travel ($132), a unit typo say, is flagged in the list and refused. The keyboard macros only ever set X and Y.',
+      '<strong>Fixtures with a height</strong> (a vise, a vertical jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard, e.g. <kbd>vise: 400, 250, , 63.5mm</kbd> (a blank third value keeps Hole Diameter). Pick it and a <strong>Set Z0</strong> hold button appears: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. With <strong>Stock</strong> on, its thickness and the <strong>Z0</strong> menu put Z0 on the stock&rsquo;s bottom or top instead (on the fixture, or on the spoilboard with no fixture picked). Set Z0 needs the spoilboard height recorded and a tool length offset active, stops while a G92 Z offset is active, and on the Z0 macros&rsquo; work offset keeps a probed Z0 for <strong>ZS: Z0 back to saved</strong> (holding it again, or running a Z0 macro after it, doesn&rsquo;t replace that). A height below the spoilboard or more than the machine&rsquo;s Z travel ($132), a unit typo say, is flagged in the list and refused. The keyboard macros only ever set X and Y.',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',

@@ -81,6 +81,7 @@ Default storage (all three must be different, and not the work offset being set)
 | Value | Offset | Parameter |
 | --- | --- | --- |
 | Spoilboard height | G59.3 Z | #5383 |
+| Last height the XY0 Picker's Set Z0 put down (so the Z0 macros and Set Z0 don't save it over a probed Z0) | G59.1 X | #5341 |
 | Saved (probed) Z0, and saved X/Y for the fixture extra | G59.2 Z, X, Y | #5363, #5361, #5362 |
 | Stock thickness | G59.1 Z | #5343 |
 

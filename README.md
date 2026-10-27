@@ -209,7 +209,8 @@ macros recorded, with no probing at the fixture. With **Stock** ticked, type its
 pick **Z0: spoilboard** or **Z0: stock top** to put Z0 on the stock's bottom or top (on the fixture,
 or on the spoilboard when no fixture is picked). Set Z0 needs the spoilboard height recorded
 (**ZS: Record spoilboard height**) and a tool length offset active, stops while a G92 Z offset is
-active, and keeps your previous Z0 for **ZS: Z0 back to saved**. A height below the spoilboard or more
+active, and, on the Z0 macros' work offset, keeps a probed Z0 for **ZS: Z0 back to saved** (holding it
+again, or running a Z0 macro after it, doesn't replace that). A height below the spoilboard or more
 than the machine's Z travel (`$132`), a unit typo say, is flagged in the list and refused. Re-measure a fixture's height if you
 move it or resurface the spoilboard. The keyboard macros only ever set X and Y.
 

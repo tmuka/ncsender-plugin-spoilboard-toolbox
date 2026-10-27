@@ -936,7 +936,7 @@ test('list lines take a fourth value, the height above the spoilboard; a blank d
 });
 
 test('Z0 above the spoilboard: spoilboard height + h for any tool, saved Z0 kept, guarded', () => {
-  const o = { slot: 9, backup: 8, thick: 7 };
+  const o = { wcs: 2, slot: 9, backup: 8, thick: 7 };
   const lines = zAboveSpoilLines(o, 2, 63.5).join('\n');
   const base = { _homed_state: 1, _tool_offset: 1, 5383: -80, 5243: -40 };
   let p = run(lines, Object.assign({}, base));
@@ -948,5 +948,37 @@ test('Z0 above the spoilboard: spoilboard height + h for any tool, saved Z0 kept
     assert.equal(q[offsetZParam(2)], -40, k + ': Z0 unchanged even if every line is sent');
     assert.equal(q[offsetZParam(8)], undefined, k + ': nothing saved');
   }
-  assert.ok(code(lines).every((l) => l.length < 200));
+  assert.ok(code(lines).every((l) => l.length < 200), 'lines fit grblHAL\'s buffer');
+});
+
+test('Set Z0 keeps a probed Z0 through repeats and the Z0 macros, and only for their own offset', () => {
+  const o = { wcs: 1, slot: 9, backup: 8, thick: 7 };
+  const Z = (p) => offsetZParam(p);
+  const start = () => Object.assign({}, ready, { _homed_state: 1, [Z(9)]: -80, [Z(1)]: -40, [Z(7)]: 19 });
+  // Set Z0 twice: the probed -40 survives.
+  let p = run(zAboveSpoilLines(o, 1, 63.5).join('\n'), start());
+  p = run(zAboveSpoilLines(o, 1, 63.5).join('\n'), p);
+  assert.equal(p[Z(1)], -16.5);
+  assert.equal(p[Z(8)], -40);
+  // Set Z0 on a vise, then another height, then ZS: Z0 on spoilboard: still -40.
+  p = run(zAboveSpoilLines(o, 1, 40).join('\n'), p);
+  assert.equal(p[Z(8)], -40);
+  const m = buildMacros(Object.assign({}, base, { wcs: 1, slot: 9, backup: 8, thick: 7 }));
+  p = run(m.set.body, p);
+  assert.equal(p[Z(1)], -80);
+  assert.equal(p[Z(8)], -40, 'the Z0 macro sees the picker\'s last height as its own');
+  p = run(m.restore.body, p);
+  assert.equal(p[Z(1)], -40, 'back to saved returns the probed Z0');
+  // On another offset: nothing is saved and no marker is written.
+  const other = zAboveSpoilLines(o, 2, 63.5);
+  assert.ok(!other.some((l) => /^G10 L2 P8|^G10 L2 P7/.test(l)));
+  const q = run(other.join('\n'), Object.assign(start(), { [Z(2)]: -30 }));
+  assert.equal(q[Z(2)], -16.5);
+  assert.equal(q[Z(8)], undefined);
+});
+
+test('parseHoleList gives each hole its line number', () => {
+  const r = parseHoleList('( fixtures )\npin: 1, 2\n\nbad line\nvise: 400, 250, , 6350', false);
+  assert.deepEqual(r.lines, [2, 5]);
+  assert.deepEqual(r.bad, [4]);
 });
