@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -706,4 +706,132 @@ test('guards hold even when a stop line is skipped (ncSender before 2.0.161)', (
   // And all clear, they do their job.
   p = runAll(m.goHole.body, Object.assign({}, ready, { _abs_x: 150, _abs_y: 230, _abs_z: -30 }));
   assert.deepEqual([p._rejected, p._mz, p._mx, p._my], [0, -5, 144, 240]);
+});
+
+test('holeGrid marks suppressed holes by column and row; nearestHole skips them', () => {
+  const o = { sxMm: 100, syMm: 100, insetXMm: 50, insetYMm: 50, travelXMm: 300, travelYMm: 200, dirX: 1, dirY: 1, suppressed: ['2,1', '9,9'] };
+  const grid = holeGrid(o);
+  assert.deepEqual(grid.filter((p) => p.suppressed).map((p) => [p.col, p.row]), [[2, 1]]);
+  assert.equal(grid.length, 6, 'suppressed holes stay in the grid, so indices don\'t shift');
+  assert.deepEqual(grid[nearestHole(grid, 150, 50).index], { col: 1, row: 1, x: 50, y: 50 });
+});
+
+test('nearest-hole macros skip suppressed holes, matching the XY0 Picker', () => {
+  const grids = [
+    { name: 'scattered', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1, suppressed: ['1,1', '4,6', '8,13', '5,1'] },
+    { name: 'a block of 3 x 3, homes to max', sxMm: 50, syMm: 40, insetXMm: 20, insetYMm: 15, travelXMm: 800, travelYMm: 600, dirX: -1, dirY: -1,
+      suppressed: ['5,5', '6,5', '7,5', '5,6', '6,6', '7,6', '5,7', '6,7', '7,7'] },
+    { name: 'a missing row across T-track panels', sxMm: 50, syMm: 50, insetXMm: 25, insetYMm: 25, travelXMm: 500, travelYMm: 500, dirX: 1, dirY: 1,
+      trackAxis: 'x', panelHoles: 4, panelPitchMm: 235, suppressed: Array.from({ length: 10 }, (_, i) => (i + 1) + ',5') }
+  ];
+  for (const g0 of grids) {
+    const g = macroGrid(Object.assign({ diaMm: 20, origin: 'center' }, g0));
+    const m = buildMacros(Object.assign({}, base, { safeZMm: -5, extras: { holes: true }, holes: g }));
+    const grid = holeGrid(g);
+    assert.ok(grid.some((p) => p.suppressed), g.name);
+    const minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
+    for (let i = 0; i <= 50; i++) {
+      for (let j = 0; j <= 50; j++) {
+        const x = minX + g.travelXMm * i / 50, y = minY + g.travelYMm * j / 50;
+        const want = grid[nearestHole(grid, x, y).index];
+        const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: x, _abs_y: y }));
+        assert.equal(p._error, undefined, g.name + ' at ' + x + ',' + y);
+        const dWant = Math.hypot(want.x - x, want.y - y);
+        assert.ok(Math.abs(Math.hypot(p.P0_x - x, p.P0_y - y) - dWant) < 1e-3, g.name + ' at ' + x + ',' + y + ': got ' + p.P0_x + ',' + p.P0_y + ' want ' + want.x + ',' + want.y);
+        const hit = grid.find((h) => Math.abs(h.x - p.P0_x) < 1e-3 && Math.abs(h.y - p.P0_y) < 1e-3);
+        assert.ok(hit && !hit.suppressed, g.name + ': not a real hole at ' + x + ',' + y);
+      }
+    }
+  }
+});
+
+test('suppressed holes: short macro without any, a stop when nothing near is usable', () => {
+  const plain = { diaMm: 20, origin: 'center', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 };
+  const without = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: macroGrid(plain) }));
+  const outside = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: macroGrid(Object.assign({ suppressed: ['40,40'] }, plain)) }));
+  assert.equal(without.setHole.body, outside.setHole.body, 'a suppression off the grid changes nothing');
+  assert.ok(!/#11/.test(without.setHole.body));
+  // One suppressed hole adds its check and a scan of its 8 neighbours.
+  const one = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: macroGrid(Object.assign({ suppressed: ['3,3'] }, plain)) }));
+  // 2 index lines per axis, #11 start, one run, #9, 2 position reads, 8 neighbours x 5, the stop.
+  assert.equal(code(one.setHole.body).length - code(without.setHole.body).length, 4 + 1 + 1 + 1 + 2 + 8 * 5 + 2);
+  // Hole 2,2 (144, 144) suppressed and every hole around it in a keepout
+  // zone that stops short of it: stop rather than pick something far.
+  const zones = [{ name: 'ATCi', minX: 0, maxX: 250, minY: 0, maxY: 250 }];
+  const g = macroGrid(Object.assign({}, plain, { suppressed: ['2,2'], zones }));
+  const blocked = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: g }));
+  const p = run(blocked.setHole.body, Object.assign({}, ready, { _abs_x: 144, _abs_y: 144 }));
+  assert.ok(p._error && p.P0_x === undefined);
+});
+
+test('setupFields reads saved Setup in today\'s units; putProfile replaces by name', () => {
+  const saved = { units: 'metric', holeDia: '20', holeSx: '96', holeSy: '96', holeIx: '48', holeIy: '50.8', holeTrack: 'x', holePanelHoles: '5',
+    holePanelPitch: '', holeLayout: 'grid', holeList: 'A: 25.4, 0', holeOrigin: 'back-right', holeSuppressed: ['2,2', 'junk'] };
+  assert.deepEqual(setupFields({ holeFavorites: ['3,4', '#2', 'x'] }, false).favorites, ['3,4', '#2']);
+  const mm = setupFields(saved, false);
+  assert.deepEqual(mm, { dia: 20, sx: 96, sy: 96, ix: 48, iy: 50.8, layout: 'grid', list: 'A: 25.4, 0', track: 'x', panelHoles: '5', pitch: '', origin: 'back-right', suppressed: ['2,2'], favorites: [] });
+  const inch = setupFields(Object.assign({}, saved, { holePanelPitch: '254' }), true);
+  assert.deepEqual([inch.dia, inch.ix, inch.iy, inch.pitch, inch.list], [0.7874, 1.8898, 2, 10, 'A: 1, 0']);
+  const empty = setupFields({}, true);
+  assert.deepEqual([empty.dia, empty.layout, empty.track, empty.panelHoles, empty.pitch, empty.origin, empty.suppressed], [null, 'grid', '', null, '', 'center', []]);
+  let list = putProfile([], ' Spoilboard ', { holeDia: '20' });
+  list = putProfile(list, 'Airweights', { holeDia: '19' });
+  list = putProfile(list, 'spoilboard', { holeDia: '21' });
+  assert.deepEqual(list, [{ name: 'Airweights', holeDia: '19' }, { name: 'spoilboard', holeDia: '21' }]);
+});
+
+test('stock: the corner on the picked point, runs away from the hole; zero on any point of it', () => {
+  assert.equal(stockCornerFor('back-right'), 'front-left');
+  assert.equal(stockCornerFor('front-left'), 'back-right');
+  assert.equal(stockCornerFor('left-center'), 'front-right');
+  assert.equal(stockCornerFor('front-center'), 'back-left');
+  assert.equal(stockCornerFor('center'), 'front-left');
+  const r = stockRect(100, 200, 600, 400, 'front-left');
+  assert.deepEqual(r, { minX: 100, maxX: 700, minY: 200, maxY: 600 });
+  assert.deepEqual(stockRect(100, 200, 600, 400, 'back-right'), { minX: -500, maxX: 100, minY: -200, maxY: 200 });
+  assert.deepEqual(rectPoint(r, 'center'), { x: 400, y: 400 });
+  assert.deepEqual(rectPoint(r, 'back-right'), { x: 700, y: 600 });
+  assert.deepEqual(rectPoint(r, 'left-center'), { x: 100, y: 400 });
+  assert.deepEqual(rectPoint(r, 'front-center'), { x: 400, y: 200 });
+});
+
+test('blocked areas read as such; targetProblem names them', () => {
+  const travel = { xMm: 800, yMm: 600, dirX: 1, dirY: 1 };
+  assert.equal(targetProblem(50, 50, travel, [{ block: true, name: 'Blocked', minX: 0, maxX: 100, minY: 0, maxY: 100 }]), 'in a blocked area');
+  assert.equal(targetProblem(50, 50, travel, [{ name: 'ATCi', minX: 0, maxX: 100, minY: 0, maxY: 100 }]), 'in the ATCi keepout zone');
+});
+
+test('suppressed: a real neighbour in a keepout zone stops the macro, never a far hole', () => {
+  const plain = { diaMm: 20, origin: 'center', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 };
+  const zones = [{ name: 'ATCi', minX: 0, maxX: 250, minY: 0, maxY: 250 }];
+  for (const suppressed of [['2,2'], ['2,2', '8,12']]) {
+    const m = buildMacros(Object.assign({}, base, { safeZMm: -5, extras: { holes: true }, holes: macroGrid(Object.assign({}, plain, { suppressed, zones })) }));
+    let p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: 144, _abs_y: 144 }));
+    assert.ok(p._error && p.P0_x === undefined, JSON.stringify(suppressed) + ': XY0 must stop');
+    p = run(m.goHole.body, Object.assign({}, ready, { _abs_x: 144, _abs_y: 144, _abs_z: -30 }));
+    assert.ok(p._error && p._mx === undefined, JSON.stringify(suppressed) + ': Go must stop');
+  }
+});
+
+test('suppressed: whole missing columns cost a line each, and still pick the nearest real hole', () => {
+  const g0 = { diaMm: 10, origin: 'center', sxMm: 25, syMm: 25, insetXMm: 12.5, insetYMm: 12.5, travelXMm: 1000, travelYMm: 1000, dirX: 1, dirY: 1 };
+  const cols = Math.floor((1000 - 12.5) / 25) + 1, rows = cols, suppressed = [];
+  for (let c = 4; c <= cols; c += 4) for (let r = 1; r <= rows; r++) suppressed.push(c + ',' + r);
+  const g = macroGrid(Object.assign({}, g0, { suppressed }));
+  const m = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: g }));
+  const runs = code(m.setHole.body).filter((l) => /^#11=\[#11 \+/.test(l)).length;
+  assert.equal(runs, Math.floor(cols / 4));
+  const grid = holeGrid(g);
+  for (const [x, y] of [[87.5, 500], [100, 12], [990, 990], [312.5, 700.2]]) {
+    const want = grid[nearestHole(grid, x, y).index];
+    const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: x, _abs_y: y }));
+    assert.equal(p._error, undefined);
+    assert.ok(Math.abs(Math.hypot(p.P0_x - x, p.P0_y - y) - Math.hypot(want.x - x, want.y - y)) < 1e-3, x + ',' + y);
+  }
+});
+
+test('config.html has no duplicate element ids', () => {
+  const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+  const dup = ids.filter((id, i) => ids.indexOf(id) !== i);
+  assert.deepEqual(dup, []);
 });

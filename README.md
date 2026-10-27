@@ -16,6 +16,22 @@ macros you run from the Macros tab or, best of all, a keyboard shortcut.
 the ATCi tool rack's keepout zone in red, and the Select Nearest, Go to Selected and Set G54 XY
 buttons](docs/xy0-picker.png)
 
+## What a job looks like
+
+**Zero on a stock corner, no probing.** Push the stock against bench dogs in your spoilboard holes,
+jog roughly near the corner hole (a few mm off is fine), and press **Select Nearest** then **Set**, or
+one key with the nearest-hole macro. X0 Y0 lands exactly on the hole's edge or center, with no edge
+finder, no XY probe and nothing typed into the terminal. Use the same holes next time and you get the
+same zero back.
+
+**Zero anywhere on the stock, no measuring.** Tick **Stock** and type its size: the map draws it from
+the picked hole, and a second box of dots puts X0 Y0 on its center or any corner or edge. Or, at the
+machine: with X0 Y0 on one corner, jog roughly to the opposite corner and run **Set XY0 to Midpoint**
+for the exact center (**Midpoint XY** moves the spindle there first, at Safe Z).
+
+**New tool, same Z0.** Change to any measured tool and run **Z0 on stock top** (or **Z0 on
+spoilboard** for through-cuts). No re-probing.
+
 ## Who it's for
 
 The **XY0 Picker** works on any homed grblHAL machine with a grid on its spoilboard. You'll get the
@@ -33,7 +49,8 @@ save you that.
 **XY0 Picker:** repeatable XY zero from your spoilboard grid. Use it for bench-dog stops and fences,
 fixtures and jigs that register in the holes, or to get back to the same work origin job after job,
 without an edge finder or XY probe. It shows the keepout zones (ncSender's, or the ATCi tool rack's)
-and won't pick a hole inside one. Optional macros snap to the nearest dog hole from a keyboard shortcut.
+and won't pick a hole inside one. Grids with holes left out, T-tracks between panels, and custom hole
+lists are covered too. Optional macros snap to the nearest dog hole from a keyboard shortcut.
 
 **Z0 macros:** switch work Z zero between the spoilboard (wasteboard) and the stock top, for every
 tool, without re-probing after a tool change:
@@ -121,18 +138,40 @@ works when the first one is less than one spacing from machine X0 Y0). Once save
 Setup opens locked so a stray tap can't change the grid; press **Locked** to unlock it for editing
 (changes save as you go).
 
+**Profiles: one per board, and a safety net for experiments.** The menu beside Setup's title keeps
+a profile for each spoilboard, fixture plate or grid you use (*Spoilboard*, *Airweights sheet*...).
+**New profile…** saves what's in Setup under a name; pick another to load it. Change a number and a
+bar says the profile has changed: **Save** keeps it, **Revert** puts it back, so trying other numbers
+never loses yours. A profile holds the layout, numbers, T-tracks, hole list and suppressed holes; the
+dot (where X0 Y0 goes on the hole) is picked per job. Press **Create macros** after switching if you
+use the nearest-hole macros.
+
 **From the keyboard, without opening the plugin:** tick **Nearest hole** under the Z0 macros tab's
 **Extras** and press **Create macros**. You get **ZS: Go to nearest hole** and **ZS: XY0 on nearest
 hole**: the controller works out the nearest hole to the spindle (grblHAL expressions with the grid
 built in), so you can jog roughly and press a key (see [Put them on keys](#put-them-on-keys)). Go to
 lifts to Safe Z first and never moves down; XY0 sets the active work offset on the side picked with the
-dots. Both stop without changing anything if the machine isn't homed and, on a grid, if the nearest
-hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left
+dots. Suppressed holes are skipped, so the nearest real hole is used. Both stop without changing anything if
+the machine isn't homed and, on a grid, if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left
 out when the macros are made, so the nearest usable one is used). They read and write in whatever
 units the controller is in, so they never switch between G20 and G21. XY0 (and the picker's **Set**) also stop while a **G92 offset**
 is active, since grblHAL adds it on top and X0 Y0 would land away from the hole; send `G92.1` to clear
 it. Go to moves in machine coordinates, which G92 doesn't affect. They use the grid, side and keepout zones as they were when
 created, so press **Create macros** again after changing any of them.
+
+**Which layout?** Use **Grid** whenever your holes are on a regular spacing, even with holes missing
+or T-tracks in between: it's five numbers to set up, and its keyboard macros are short and fast,
+whatever the size of the bed. **List** is for holes with no regular spacing.
+
+**Holes missing from the grid?** If your spoilboard leaves some holes out (under a clamp rail, say,
+or a pattern with gaps), unlock Setup and press **Edit Holes**, then tap each missing hole on the map,
+or drag across a row to do them all at once (starting a drag on a suppressed hole restores instead).
+Press **Done** when finished. Suppressed holes are hidden while Setup is locked and dashed while it's
+unlocked; **Restore All** brings them all back. Select Nearest, Go to, Set and the nearest-hole macros
+skip them and use the nearest real hole. Each gap lengthens the nearest-hole macros, which check the
+real holes around it; a few gaps add a few dozen lines, and Setup shows how many lines they'll be and
+warns when they'd be slow to run. They're kept by column and row, so they stay put if you fine-tune the
+spacing or insets; a change that renumbers the holes (a different first hole) moves them too.
 
 **Holes that aren't a regular grid?** Locating holes, fixture pins, or a custom layout: set the
 **Layout** menu at the top of Setup to **List** and enter one hole per line, as `x, y` or
@@ -171,6 +210,24 @@ left out. It needs a homed, idle machine, since the holes are machine positions.
 direction come from grblHAL's `$130`/`$131` and homing settings
 (`$22`/`$23`).
 
+### Map tools
+
+- **Live position:** while you jog, the spindle dot moves and the hole nearest it gets a dashed ring,
+  with its name and distance under the map, so you can see which hole Select Nearest will take.
+- **Stock:** tick it and type the stock's width (X) and length (Y). The stock is drawn from the picked
+  point of the picked hole, running away from the hole (the back right side of a hole takes the
+  stock's front left corner; **Corner** overrides that). The second box of dots picks where X0 Y0 goes
+  on the stock: its center, a corner or an edge. **Go to Selected** and **Set** then use that point.
+  The keyboard macros always use the hole itself.
+- **Block Area:** a clamp or fixture in the way for this job? Press **Block Area** and drag a
+  rectangle over it. Its holes can't be picked, Select Nearest skips them, and Go to and Set won't
+  use a point inside it. Tap a blocked area to remove it, or **Clear Blocks**. Blocked areas stay
+  until you clear them, but they belong to the job, not the board's profile, and the keyboard macros
+  don't know about them.
+- **Favorites:** tap the star beside the picked hole's name to keep it as a favorite, e.g. your jig's
+  home hole. Favorites are ringed on the map and listed under it; tap one to pick it. They're kept
+  in the board's profile.
+
 ## The wizard, step by step
 
 1. **Check the controller.** The wizard sends `$G`, `$#` and `#1=[1+1]` (nothing moves) and reports:
@@ -192,7 +249,8 @@ direction come from grblHAL's `$130`/`$131` and homing settings
    - **Midpoint XY**: the same lift, then move halfway to X0 Y0, e.g. from the opposite corner of square
      stock.
    - **Set XY0 to Midpoint**: put X0 Y0 halfway to the current spot without moving
-     (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`).
+     (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`), e.g. zero on one corner, jog to the opposite corner,
+     run it, and X0 Y0 is the stock's center.
    - **Nearest hole**: **Go to nearest hole** and **XY0 on nearest hole**, keyboard versions of the
      XY0 Picker's buttons (see the XY0 Picker section above).
    - **Save / restore X/Y**: save the work offset's X and Y (e.g. a fixture or jig) and put them back

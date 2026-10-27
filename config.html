@@ -116,6 +116,36 @@
   .mw-dot[data-origin="back-center"], .mw-dot[data-origin="center"], .mw-dot[data-origin="front-center"] { left: 50%; }
   .mw-dot[data-origin$="right"], .mw-dot[data-origin="right-center"] { left: 100%; }
   .mw-hole-map .mw-h-target { stroke: var(--color-warning, #d9a441); stroke-width: 2; fill: none; }
+  .mw-maptools { flex: 1 1 100%; display: flex; flex-direction: column; gap: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+  .mw-maptools-row, .mw-stock { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+  .mw-stock-on { align-items: center; }
+  .mw-stock-on input { margin-top: 0; }
+  .mw-stock .mw-input.mw-stock-size { width: 72px !important; min-height: 0 !important; padding: 4px 6px !important; }
+  .mw-stock .mw-select.mw-stock-corner { width: auto !important; min-height: 0 !important; padding: 4px 6px !important; }
+  .mw-stock .mw-stock-dots { width: 34px; height: 26px; margin: 6px 8px; border-style: solid; border-radius: 2px; }
+  .mw-stock .mw-stock-dots::before { display: none; }
+  .mw-stock:not(.mw-stock-active) > :not(.mw-stock-on) { display: none; }
+  .mw-stock-wl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .mw-maptools-row .mw-btn { min-height: 0 !important; padding: 4px 10px !important; }
+  .mw-btn.mw-btn-quiet[aria-pressed="true"] { border-color: var(--color-accent) !important; color: var(--color-accent) !important; }
+  .mw-favs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mw-fav-chip { cursor: pointer; font-size: 0.8rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-border); color: var(--color-text-primary); }
+  .mw-fav-chip:hover, .mw-fav-chip:focus-visible { border-color: var(--color-warning, #d9a441); outline: none; }
+  .mw-fav-chip::before { content: '\2605  '; color: var(--color-warning, #d9a441); }
+  .mw-fav { cursor: pointer; margin-left: 8px; color: var(--color-text-secondary); opacity: 0.6; outline: none; }
+  .mw-fav:hover, .mw-fav:focus-visible { opacity: 1; }
+  .mw-fav[aria-pressed="true"] { color: var(--color-warning, #d9a441); opacity: 1; }
+  .mw-pick-card.mw-tall .mw-maptools-row, .mw-pick-card.mw-tall .mw-stock { justify-content: center; }
+  .mw-hole-map.mw-editing { touch-action: none; cursor: crosshair; }
+  .mw-hole-map.mw-editing .mw-h-spot { cursor: crosshair; }
+  .mw-hole-map .mw-h-block {
+    fill: color-mix(in srgb, var(--color-text-secondary) 28%, transparent);
+    stroke: var(--color-text-primary); stroke-opacity: 0.7; stroke-width: 1.5; stroke-dasharray: 5 3;
+  }
+  .mw-hole-map:not([data-mode="block"]) .mw-h-block { pointer-events: none; }
+  .mw-hole-map .mw-h-stock { fill: color-mix(in srgb, var(--color-accent) 10%, transparent); stroke: var(--color-accent); stroke-width: 1.5; pointer-events: none; }
+  .mw-hole-map .mw-h-spot.mw-h-fav .mw-h-hole { stroke: var(--color-warning, #d9a441); stroke-width: 2; }
+  .mw-hole-map .mw-h-spot.mw-h-near .mw-h-halo { stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0.8; }
   .mw-intro { margin: 0; color: var(--color-text-secondary); line-height: 1.45; }
   .mw-diagram { width: 100%; height: auto; display: block; flex: none; }
   .mw-diagram text { font-family: inherit; font-size: 12px; fill: var(--color-text-primary); }
@@ -260,6 +290,13 @@
   }
   .mw-status { margin: 0; font-size: 0.85rem; }
   .mw-holes-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .mw-select.mw-profile { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; margin: -4px 0 -4px 4px; max-width: 220px; }
+  .mw-profile-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding: 6px 6px 6px 10px; border-radius: 8px; background: var(--color-surface-muted); }
+  .mw-profile-bar[hidden] { display: none; }
+  .mw-profile-msg { flex: 1 1 auto; font-size: 0.85rem; color: var(--color-text-secondary); }
+  .mw-profile-bar[data-mode="modified"] .mw-profile-msg::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--color-warning, #d9a441); }
+  .mw-profile-bar .mw-input.mw-profile-name { width: 180px !important; flex: 0 1 180px; text-align: left; font-family: inherit; min-height: 0 !important; padding: 4px 8px !important; }
+  .mw-profile-bar .mw-btn { min-height: 0 !important; padding: 4px 12px !important; }
   /* The map is sized in renderHoles to fill what's left of the panel.
      A machine deeper (Y) than it is wide puts the controls in a column on
      the right; otherwise they sit below the map. */
@@ -294,6 +331,8 @@
   .mw-hole-map .mw-h-spot:hover .mw-h-hole { stroke: var(--color-accent); stroke-width: 2; }
   .mw-hole-map .mw-h-spot[data-picked] .mw-h-hole { fill: var(--color-accent); stroke: var(--color-accent); }
   .mw-hole-map .mw-h-spot[data-picked] .mw-h-halo { stroke: var(--color-accent); stroke-width: 2; opacity: 0.5; }
+  .mw-hole-map .mw-h-suppressed .mw-h-hole { fill: none; stroke-dasharray: 3 2; stroke-width: 1.5; }
+  .mw-hole-map .mw-h-suppressed[data-picked] .mw-h-hole { fill: none; stroke-dasharray: none; opacity: 1; }
   .mw-hole-map .mw-h-wcs { stroke: var(--color-accent); stroke-width: 2; fill: none; }
   .mw-hole-map .mw-h-spindle { fill: var(--color-warning, #d9a441); }
   .mw-hole-map text { font-family: inherit; font-size: 11px; fill: var(--color-text-secondary); }
@@ -337,9 +376,9 @@
       <section class="mw-card mw-pick-card" id="mw-pick-card" aria-label="Pick a hole">
         <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
         <div class="mw-holebar" id="mw-holebar">
-          <div class="mw-hole-origin" role="group" aria-label="Where X0 Y0 goes on the hole"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div>
+          <div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the hole"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div>
           <div class="mw-holebar-info">
-            <span class="mw-holebar-title" id="mw-hole-picked">No hole picked</span>
+            <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
             <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Select Nearest.</span>
           </div>
           <div class="mw-holebar-actions">
@@ -353,17 +392,44 @@
             </select>
             <button type="button" class="mw-btn mw-btn-small" id="mw-hole-set" disabled title="Make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves.">Set <span data-hole-wcs>G54</span> XY</button>
           </div>
+          <div class="mw-maptools">
+            <div class="mw-stock">
+              <label class="mw-extra mw-stock-on"><input type="checkbox" id="mw-stock-on"><span><strong>Stock</strong></span></label>
+              <span class="mw-stock-wl"><input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" placeholder="Width" aria-label="Stock width, along X" title="The stock's size along X. With a size, X0 Y0 goes on the stock (picked with the box of dots) instead of the hole, and the map draws it.">
+              <span class="mw-hint">&times;</span>
+              <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" placeholder="Length" aria-label="Stock length, along Y" title="The stock's size along Y.">
+              <span class="mw-hint mw-unit">mm</span></span>
+              <select class="mw-select mw-stock-corner" id="mw-stock-corner" aria-label="Which stock corner is on the picked point" title="Which corner of the stock sits on the hole's picked point. Auto: the stock runs away from the hole (back right of a hole takes the stock's front left corner).">
+                <option value="auto">Corner: auto</option>
+                <option value="front-left">Front left on hole</option><option value="front-right">Front right on hole</option>
+                <option value="back-left">Back left on hole</option><option value="back-right">Back right on hole</option>
+              </select>
+              <span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span>
+            </div>
+            <div class="mw-maptools-row">
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-area" aria-pressed="false" title="Mark an area as off limits for this job, e.g. a clamp or fixture: drag a rectangle on the map. Its holes can't be picked, and Go to and Set won't use them. Tap a blocked area to remove it.">Block Area</button>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-clear" hidden title="Remove every blocked area.">Clear Blocks</button>
+              <span class="mw-favs" id="mw-favs"></span>
+            </div>
+          </div>
         </div>
         <p class="mw-status" id="mw-hole-status" role="status"></p>
       </section>
       <section class="mw-card" id="mw-setup-card" aria-labelledby="mw-holes-title">
         <div class="mw-card-head">
           <h3 class="mw-card-title" id="mw-holes-title">Setup</h3>
+          <select class="mw-select mw-profile" id="mw-profile" aria-label="Profile" title="Profiles: one per spoilboard, fixture plate or grid you use (Spoilboard, Airweights sheet...). Make one before trying other numbers, and Revert brings it back."></select>
           <select class="mw-select mw-layout" id="mw-hole-layout" aria-label="Layout" title="Grid: holes at a regular spacing. List: holes at the positions you type or capture, e.g. locating holes or a custom layout.">
             <option value="grid">Grid</option>
             <option value="list">List</option>
           </select>
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-lock-btn" id="mw-hole-lock" aria-pressed="true" title="Locked so the grid can't be changed by accident. Unlock to edit; changes save as you go."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="mw-lock-shackle" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span id="mw-hole-lock-text">Locked</span></button>
+        </div>
+        <div class="mw-profile-bar" id="mw-profile-bar" role="group" aria-label="Profile" hidden>
+          <span class="mw-profile-msg" id="mw-profile-msg"></span>
+          <input class="mw-input mw-profile-name" type="text" autocomplete="off" spellcheck="false" maxlength="40" id="mw-profile-name" aria-label="Profile name" hidden>
+          <button type="button" class="mw-btn mw-btn-small" id="mw-profile-ok"></button>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-profile-cancel"></button>
         </div>
         <p class="mw-hint mw-grid-only">Describe your spoilboard&rsquo;s grid once: dog holes, or lines lasered or engraved on it (set Hole Diameter to the line&rsquo;s width). The machine&rsquo;s travel comes from grblHAL.</p>
         <p class="mw-hint mw-list-only">List the holes once (locating holes, fixture pins, a custom layout), from a reference point you choose, usually the first hole. The machine&rsquo;s travel comes from grblHAL.</p>
@@ -392,6 +458,11 @@
             <label aria-hidden="true" class="mw-grid-only">&nbsp;</label>
             <button type="button" class="mw-btn mw-btn-quiet mw-grab-btn" id="mw-hole-here" title="Jog the bit to the center of the first hole and press this: Inset X and Inset Y are filled in from where the machine is. Any hole works as long as the first hole is less than one spacing from machine X0 Y0.">Grab First Hole Center</button>
           </div>
+        </div>
+        <div class="mw-holes-tools mw-grid-only">
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-edit" aria-pressed="false" disabled title="For a grid with holes left out (under a clamp rail, say): tap holes on the map to suppress them, or drag across a row to do many at once; starting on a suppressed hole restores instead. Select Nearest, Go to, Set and the nearest-hole macros skip suppressed holes.">Edit Holes</button>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-restore-all" disabled title="Put back every suppressed hole.">Restore All</button>
+          <span class="mw-hint" id="mw-hole-sup-note"></span>
         </div>
         <div class="mw-row mw-grid-only">
           <div class="mw-field">
@@ -917,13 +988,20 @@
     if (!(o.sxMm > 0 && o.syMm > 0 && o.insetXMm >= 0 && o.insetYMm >= 0 && o.travelXMm > 0 && o.travelYMm > 0)) return out;
     var xs = axisPositions(o.insetXMm, o.sxMm, o.travelXMm, o.trackAxis === 'y' ? o.panelHoles : 0, o.panelPitchMm);
     var ys = axisPositions(o.insetYMm, o.syMm, o.travelYMm, o.trackAxis === 'x' ? o.panelHoles : 0, o.panelPitchMm);
+    var sup = o.suppressed || [];
     for (var r = 0; r < ys.length; r++) {
       for (var c = 0; c < xs.length; c++) {
-        out.push({ col: c + 1, row: r + 1, x: o.dirX * xs[c], y: o.dirY * ys[r] });
+        var p = { col: c + 1, row: r + 1, x: o.dirX * xs[c], y: o.dirY * ys[r] };
+        if (sup.indexOf(holeKey(p)) >= 0) p.suppressed = true;
+        out.push(p);
       }
     }
     return out;
   }
+  // A hole's key in the suppressed and favorite lists: "column,row" on a
+  // grid, so it stays the same hole when the spacing or insets change;
+  // "#n" for the nth line of a list.
+  function holeKey(p) { return p.col == null ? '#' + p.index : p.col + ',' + p.row; }
   // Hole centers along one axis, from machine 0 into the travel. With
   // T-tracks, holes come in panels of `perPanel` at `spacing`, and each
   // panel starts `pitch` after the last (default perPanel x spacing,
@@ -1028,11 +1106,12 @@
     }).join('\n');
   }
   // The hole nearest a machine position: { index, distanceMm }, or null.
-  // Holes marked `blocked` (in a keepout zone) are skipped.
+  // Holes marked `blocked` (in a keepout zone) or `suppressed` (not on the
+  // spoilboard) are skipped.
   function nearestHole(grid, xMm, yMm) {
     var best = null;
     for (var i = 0; i < grid.length; i++) {
-      if (grid[i].blocked) continue;
+      if (grid[i].blocked || grid[i].suppressed) continue;
       var d = Math.hypot(grid[i].x - xMm, grid[i].y - yMm);
       if (!best || d < best.distanceMm) best = { index: i, distanceMm: d };
     }
@@ -1103,7 +1182,7 @@
   var MM_PER_UNIT = '[1 + 24.4 * #<_imperial>]';
   function nearestHoleLines(g) {
     if (g.layout === 'list') return nearestListLines(g);
-    function axis(ax, n, inset, s, P, last, d, out) {
+    function axis(ax, n, inset, s, P, last, d, out, idx) {
       var per = n >= 1 ? Math.floor(n) : 1, pitch = n >= 1 ? (P > 0 ? P : per * s) : s;
       var gap = pitch - (per - 1) * s;
       return [
@@ -1116,13 +1195,21 @@
         '#5=[' + fmt5(inset) + ' + #3 * ' + fmt5(pitch) + ' + #4 * ' + fmt5(s) + ']',
         '#5=[#5 + [' + fmt5(last) + ' - #5] * [#5 GT ' + fmt5(last) + ']]',
         '#' + out + '=[' + (d > 0 ? '' : '-1 * ') + '#5]'
-      ];
+      ].concat(idx ? [
+        // The hole's 0-based place along the axis, for suppressed holes.
+        '#' + idx.out + '=[#3 * ' + per + ' + #4]',
+        '#' + idx.out + '=[#' + idx.out + ' + [' + idx.last + ' - #' + idx.out + '] * [#' + idx.out + ' GT ' + idx.last + ']]'
+      ] : []);
     }
     var ys = g.trackAxis === 'x', xs = g.trackAxis === 'y';
+    var grid = holeGrid(g), any = grid.some(function(p) { return p.suppressed; });
+    var cols = 0, rows = 0;
+    grid.forEach(function(p) { cols = Math.max(cols, p.col); rows = Math.max(rows, p.row); });
     var lines = ['(Nearest hole along X)'].concat(
-      axis('x', xs ? g.panelHoles : 0, g.insetXMm, g.sxMm, g.panelPitchMm, g.lastXMm, g.dirX, 6),
+      axis('x', xs ? g.panelHoles : 0, g.insetXMm, g.sxMm, g.panelPitchMm, g.lastXMm, g.dirX, 6, any && { out: 12, last: cols - 1 }),
       ['(Nearest hole along Y)'],
-      axis('y', ys ? g.panelHoles : 0, g.insetYMm, g.syMm, g.panelPitchMm, g.lastYMm, g.dirY, 7));
+      axis('y', ys ? g.panelHoles : 0, g.insetYMm, g.syMm, g.panelPitchMm, g.lastYMm, g.dirY, 7, any && { out: 13, last: rows - 1 }),
+      suppressedLines(g, grid));
     var r = g.diaMm / 2;
     (g.zones || []).forEach(function(z) {
       lines.push('#10=[#10 * [1 - [[#6 GE ' + fmt5(z.minX - r) + '] AND [#6 LE ' + fmt5(z.maxX + r) + '] AND [#7 GE ' + fmt5(z.minY - r) + '] AND [#7 LE ' + fmt5(z.maxY + r) + ']]]]', '#1=[1 / #10] (ZS stop: nearest hole is in the ' + z.name + ' keepout zone)');
@@ -1135,24 +1222,21 @@
     return { lines: lines, x: tx, y: ty };
   }
 
-  // For a typed list the controller checks each usable hole in turn
-  // (squared distance, keeping the smallest): holes in a keepout zone, or
-  // whose picked side is, or is outside the travel, are left out when the
-  // macro is made. Leaves the hole center in #6 / #7, like the grid.
-  // The listed holes the macros can use: inside the travel, clear of the
-  // keepout zones, with the picked side inside the travel and clear too.
-  function usableListHoles(g) {
-    var travel = { xMm: g.travelXMm, yMm: g.travelYMm, dirX: g.dirX, dirY: g.dirY }, r = g.diaMm / 2;
-    return holeGrid(g).filter(function(p) {
-      return !holeKeepout(p.x, p.y, r, g.zones || []) && !targetProblem(p.x + g.dx, p.y + g.dy, travel, g.zones || []);
-    });
+  // A hole the macros can use: on the spoilboard (not suppressed), inside
+  // the travel, clear of the keepout zones, with the picked side inside
+  // the travel and clear too.
+  function usableHole(g, p) {
+    var travel = { xMm: g.travelXMm, yMm: g.travelYMm, dirX: g.dirX, dirY: g.dirY };
+    return !p.suppressed && !holeKeepout(p.x, p.y, g.diaMm / 2, g.zones || []) && !targetProblem(p.x + g.dx, p.y + g.dy, travel, g.zones || []);
   }
-  function nearestListLines(g) {
-    var usable = usableListHoles(g);
-    var lines = ['(Nearest of ' + usable.length + ' listed holes)'];
-    if (!usable.length) return { lines: lines.concat(['#10=[0]', '#1=[1 / #10] (ZS stop: no listed hole can be used)']), x: '[#6]', y: '[#7]' };
-    lines.push('#4=[#<_abs_x> * ' + MM_PER_UNIT + ']', '#5=[#<_abs_y> * ' + MM_PER_UNIT + ']', '#9=[1000000000]', '#6=[' + fmt5(usable[0].x) + ']', '#7=[' + fmt5(usable[0].y) + ']');
-    usable.forEach(function(p) {
+  function usableListHoles(g) {
+    return holeGrid(g).filter(function(p) { return usableHole(g, p); });
+  }
+  // Lines that check each candidate hole in turn (squared distance, keeping
+  // the smallest below #9) and leave the nearest one's center in #6 / #7.
+  function scanLines(holes) {
+    var lines = ['#4=[#<_abs_x> * ' + MM_PER_UNIT + ']', '#5=[#<_abs_y> * ' + MM_PER_UNIT + ']'];
+    holes.forEach(function(p) {
       lines.push(
         '#2=[[#4 - [' + fmt5(p.x) + ']] * [#4 - [' + fmt5(p.x) + ']] + [#5 - [' + fmt5(p.y) + ']] * [#5 - [' + fmt5(p.y) + ']]]',
         '#3=[#2 LT #9]',
@@ -1161,7 +1245,64 @@
         '#7=[#7 + [[' + fmt5(p.y) + '] - #7] * #3]'
       );
     });
-    return { lines: lines, x: '[#6 + ' + fmt5(g.dx) + ']', y: '[#7 + ' + fmt5(g.dy) + ']' };
+    return lines;
+  }
+  // For a typed list the controller checks every usable hole: holes in a
+  // keepout zone, or whose picked side is, or is outside the travel, are
+  // left out when the macro is made. Leaves the hole center in #6 / #7,
+  // like the grid.
+  function nearestListLines(g) {
+    var usable = usableListHoles(g);
+    var lines = ['(Nearest of ' + usable.length + ' listed holes)'];
+    if (!usable.length) return { lines: lines.concat(['#10=[0]', '#1=[1 / #10] (ZS stop: no listed hole can be used)']), x: '[#6]', y: '[#7]' };
+    lines.push('#9=[1000000000]', '#6=[' + fmt5(usable[0].x) + ']', '#7=[' + fmt5(usable[0].y) + ']');
+    return { lines: lines.concat(scanLines(usable)), x: '[#6 + ' + fmt5(g.dx) + ']', y: '[#7 + ' + fmt5(g.dy) + ']' };
+  }
+  // Runs of suppressed holes along rows or along columns, whichever needs
+  // fewer: [{ at, from, to }] (1-based), at the row (or column) and from /
+  // to the columns (or rows) it spans.
+  function suppressedRuns(sup) {
+    function runs(major, minor) {
+      var by = {}, out = [];
+      sup.forEach(function(p) { (by[p[major]] = by[p[major]] || []).push(p[minor]); });
+      Object.keys(by).forEach(function(k) {
+        var v = by[k].sort(function(a, b) { return a - b; });
+        for (var i = 0; i < v.length; i++) {
+          var j = i;
+          while (j + 1 < v.length && v[j + 1] === v[j] + 1) j++;
+          out.push({ at: +k, from: v[i], to: v[j] });
+          i = j;
+        }
+      });
+      return out;
+    }
+    var byRow = runs('row', 'col'), byCol = runs('col', 'row');
+    return byCol.length < byRow.length ? { alongRows: false, runs: byCol } : { alongRows: true, runs: byRow };
+  }
+  // A grid with suppressed holes (ones the spoilboard doesn't have): when
+  // the grid math lands on one (checked by its column and row, #12 / #13,
+  // a line per run of them), the nearest real hole is one next to a
+  // suppressed hole (the path to anything farther crosses a nearer
+  // cell), so only those are checked, not the whole grid. They're all
+  // checked, usable or not: one in a keepout zone or with its side outside
+  // the travel then stops the macro, as an unsuppressed one would. #9
+  // starts at 0 when it didn't land on one, so no candidate replaces it.
+  function suppressedLines(g, grid) {
+    var sup = grid.filter(function(p) { return p.suppressed; });
+    if (!sup.length) return [];
+    var near = grid.filter(function(p) {
+      return !p.suppressed && sup.some(function(s) { return Math.abs(s.col - p.col) <= 1 && Math.abs(s.row - p.row) <= 1; });
+    });
+    var r = suppressedRuns(sup), at = r.alongRows ? '#13' : '#12', along = r.alongRows ? '#12' : '#13';
+    var lines = ['(Skip ' + sup.length + ' suppressed holes)', '#11=[0]'];
+    r.runs.forEach(function(run) {
+      lines.push('#11=[#11 + [ABS[' + at + ' - ' + (run.at - 1) + '] LT 0.5] * [' + along + ' GT ' + (run.from - 1.5) + '] * [' + along + ' LT ' + (run.to - 0.5) + ']]');
+    });
+    lines.push('#9=[1000000000 * #11]');
+    return lines.concat(scanLines(near), [
+      '#10=[#10 * [#9 LT 100000000]]',
+      '#1=[1 / #10] (ZS stop: nearest hole is suppressed, no real hole near it)'
+    ]);
   }
 
   // Up to Safe Z (a machine Z; machine Z0 when unset), then across, in
@@ -1183,7 +1324,30 @@
     var minX = travel.dirX > 0 ? 0 : -travel.xMm, minY = travel.dirY > 0 ? 0 : -travel.yMm, eps = 1e-6;
     if (xMm < minX - eps || xMm > minX + travel.xMm + eps || yMm < minY - eps || yMm > minY + travel.yMm + eps) return 'outside the machine\u2019s travel';
     var z = holeKeepout(xMm, yMm, 0, zones);
-    return z ? 'in the ' + z.name + ' keepout zone' : null;
+    return z ? 'in ' + zoneText(z) : null;
+  }
+  // How a zone is named in messages: a keepout zone, or an area blocked
+  // on the map for this job (`block`).
+  function zoneText(z) { return z.block ? 'a blocked area' : 'the ' + z.name + ' keepout zone'; }
+
+  // Stock on the map, in machine mm: the rectangle with one corner
+  // (named like the dots, e.g. 'front-left') on the point x, y, wMm
+  // along X and lMm along Y.
+  function stockRect(x, y, wMm, lMm, corner) {
+    var left = !/right/.test(corner), front = !/^back/.test(corner);
+    return { minX: left ? x : x - wMm, maxX: left ? x + wMm : x, minY: front ? y : y - lMm, maxY: front ? y + lMm : y };
+  }
+  // A rectangle's corner, edge middle or center, named like the dots.
+  function rectPoint(r, name) {
+    var n = String(name || 'center');
+    return { x: /right/.test(n) ? r.maxX : /left/.test(n) ? r.minX : (r.minX + r.maxX) / 2,
+             y: /^back/.test(n) ? r.maxY : /^front/.test(n) ? r.minY : (r.minY + r.maxY) / 2 };
+  }
+  // The stock corner that sits on a side of a hole: the stock runs away
+  // from the hole, so the back right side takes the stock's front left.
+  function stockCornerFor(origin) {
+    var o = String(origin || 'center');
+    return (/^front/.test(o) ? 'back' : 'front') + '-' + (/left/.test(o) ? 'right' : 'left');
   }
 
   // What's typed into a length or feed field, in mm or inches whatever the
@@ -1235,6 +1399,33 @@
     return parseFloat(out.toFixed(isImperial ? 4 : 3));
   }
 
+  // A saved Setup (the autosaved one or a named one, as saveSettings
+  // writes it: numbers in the units ncSender used then) as the fields'
+  // values in the machine's units now. Numbers missing from it are null.
+  function setupFields(saved, imperial) {
+    var was = saved.units === 'imperial', conv = imperial === was ? 1 : (imperial ? 1 / MM_PER_INCH : MM_PER_INCH);
+    var num = function(v) { var n = parseFloat(v); return v != null && v !== '' && isFinite(n) ? +(n * conv).toFixed(4) : null; };
+    var pitch = num(saved.holePanelPitch);
+    return {
+      dia: num(saved.holeDia), sx: num(saved.holeSx), sy: num(saved.holeSy), ix: num(saved.holeIx), iy: num(saved.holeIy),
+      layout: saved.holeLayout === 'list' ? 'list' : 'grid',
+      list: typeof saved.holeList === 'string' ? convertHoleList(saved.holeList, was, imperial) : null,
+      track: saved.holeTrack === 'x' || saved.holeTrack === 'y' ? saved.holeTrack : '',
+      panelHoles: saved.holePanelHoles ? String(saved.holePanelHoles) : null,
+      pitch: pitch > 0 ? pitch : '',
+      origin: HOLE_ORIGINS.indexOf(saved.holeOrigin) >= 0 ? saved.holeOrigin : 'center',
+      suppressed: Array.isArray(saved.holeSuppressed) ? saved.holeSuppressed.filter(function(k) { return /^\d+,\d+$/.test(k); }) : [],
+      favorites: Array.isArray(saved.holeFavorites) ? saved.holeFavorites.filter(function(k) { return /^(\d+,\d+|#\d+)$/.test(k); }) : []
+    };
+  }
+  // The profiles with one saved (replacing any of the same name, any
+  // case), sorted by name.
+  function putProfile(list, name, setup) {
+    var key = String(name).trim().toLowerCase();
+    return (list || []).filter(function(x) { return x.name.toLowerCase() !== key; })
+      .concat([Object.assign({}, setup, { name: String(name).trim() })])
+      .sort(function(a, b) { return a.name.localeCompare(b.name); });
+  }
   // END pure
 
   var state = { imperial: false, capturing: null, safeZMm: null };
@@ -1458,20 +1649,30 @@
     });
   }
 
+  function fieldVal(id) { var v = unitVal($(id)); return isFinite(v) ? String(v) : $(id).value; }
+  // Setup as saved, in the machine's units (setupFields reads it back):
+  // what a profile holds. The dot picked is per job, so it's saved apart.
+  function setupBody() {
+    return {
+      holeDia: fieldVal('mw-hole-dia'), holeSx: fieldVal('mw-hole-sx'), holeSy: fieldVal('mw-hole-sy'),
+      holeIx: fieldVal('mw-hole-ix'), holeIy: fieldVal('mw-hole-iy'),
+      holeTrack: $('mw-hole-track').value, holePanelHoles: $('mw-hole-pn').value,
+      holeLayout: $('mw-hole-layout').value, holeList: $('mw-hole-list').value, holeSuppressed: holes.suppressed.slice(), holeFavorites: holes.favorites.slice(),
+      holePanelPitch: $('mw-hole-pp').value.trim() === '' ? '' : fieldVal('mw-hole-pp'),
+      units: state.imperial ? 'imperial' : 'metric'
+    };
+  }
   function saveSettings() {
-    var u = function(id) { var v = unitVal($(id)); return isFinite(v) ? String(v) : $(id).value; };
-    var body = {
+    var u = fieldVal;
+    var body = Object.assign({
       block: u('mw-block'), feed: u('mw-feed'), travel: u('mw-travel'),
       retract: u('mw-retract'), stock: u('mw-stock'), wcs: $('mw-wcs').value,
       slot: $('mw-slot').value, backup: $('mw-backup').value, thick: $('mw-thick').value,
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
-      holeDia: u('mw-hole-dia'), holeSx: u('mw-hole-sx'), holeSy: u('mw-hole-sy'),
-      holeIx: u('mw-hole-ix'), holeIy: u('mw-hole-iy'), holeOrigin: holes.origin,
-      holeTrack: $('mw-hole-track').value, holePanelHoles: $('mw-hole-pn').value,
-      holeLayout: $('mw-hole-layout').value, holeList: $('mw-hole-list').value,
-      holePanelPitch: $('mw-hole-pp').value.trim() === '' ? '' : u('mw-hole-pp'),
-      units: state.imperial ? 'imperial' : 'metric'
-    };
+      holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks,
+      stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'),
+      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero
+    }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
     }).catch(function() {});
@@ -1708,23 +1909,21 @@
       var v = saved[k] != null ? parseFloat(saved[k]) * conv : defaults[k];
       if (isFinite(v)) $('mw-' + k).value = +v.toFixed(4);
     });
-    var holeDefaults = state.imperial ? { Dia: 0.75, Sx: 4, Sy: 4, Ix: 2, Iy: 2 } : {};
-    ['Dia', 'Sx', 'Sy', 'Ix', 'Iy'].forEach(function(k) {
-      var v = saved['hole' + k] != null ? parseFloat(saved['hole' + k]) * conv : holeDefaults[k];
-      if (isFinite(v)) $('mw-hole-' + k.toLowerCase()).value = +v.toFixed(4);
+    if (state.imperial) [['dia', 0.75], ['sx', 4], ['sy', 4], ['ix', 2], ['iy', 2]].forEach(function(d) { $('mw-hole-' + d[0]).value = d[1]; });
+    applySetup(setupFields(saved, state.imperial));
+    setHoleOrigin(saved.holeOrigin);
+    holes.blocks = Array.isArray(saved.holeBlocks) ? saved.holeBlocks.filter(function(z) {
+      return z && [z.minX, z.maxX, z.minY, z.maxY].every(function(v) { return typeof v === 'number' && isFinite(v); });
+    }).map(function(z) { return { block: true, name: 'Blocked', minX: z.minX, maxX: z.maxX, minY: z.minY, maxY: z.maxY }; }) : [];
+    $('mw-stock-on').checked = !!saved.stockOn;
+    ['W', 'L'].forEach(function(k) {
+      var v = parseFloat(saved['stock' + k]);
+      if (isFinite(v) && v > 0) $('mw-stock-' + k.toLowerCase()).value = +(v * conv).toFixed(4);
     });
-    if (saved.holeTrack === 'x' || saved.holeTrack === 'y') $('mw-hole-track').value = saved.holeTrack;
-    if (saved.holeLayout === 'list') $('mw-hole-layout').value = 'list';
-    if (typeof saved.holeList === 'string') {
-      // Bare numbers are in the units they were saved in; rewrite them
-      // when ncSender's units have changed since.
-      var savedImperial = saved.units === 'imperial';
-      $('mw-hole-list').value = convertHoleList(saved.holeList, savedImperial, state.imperial);
-    }
-    holeLayout();
-    if (saved.holePanelHoles) $('mw-hole-pn').value = saved.holePanelHoles;
-    var pitch = parseFloat(saved.holePanelPitch);
-    if (isFinite(pitch) && pitch > 0) $('mw-hole-pp').value = +(pitch * conv).toFixed(4);
+    if (/^(auto|front-left|front-right|back-left|back-right)$/.test(saved.stockCorner || '')) $('mw-stock-corner').value = saved.stockCorner;
+    setStockZero(saved.stockZero);
+    holes.profiles = Array.isArray(saved.holeProfiles) ? saved.holeProfiles.filter(function(x) { return x && typeof x.name === 'string' && x.name.trim(); }) : [];
+    holes.profile = holes.profiles.some(function(x) { return x.name === saved.holeProfile; }) ? saved.holeProfile : '';
     if (probeBlockMm != null) {
       $('mw-block').value = +(probeBlockMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
       $('mw-block-source').hidden = false;
@@ -1769,15 +1968,51 @@
     gotoBtn.addEventListener('blur', function() { stopGotoHold(false); });
     $('mw-hole-wcs').addEventListener('change', renderHoles);
     setHoleLock(saved.holeDia != null);
-    $('mw-hole-lock').addEventListener('click', function() { setHoleLock($('mw-hole-lock').getAttribute('aria-pressed') !== 'true'); });
+    $('mw-hole-lock').addEventListener('click', function() {
+      setHoleLock(!holeLocked());
+      if (holeLocked() && holes.mode === 'paint') setMapMode('paint'); else renderHoles();
+    });
+    $('mw-hole-edit').addEventListener('click', function() { setMapMode('paint'); });
+    $('mw-block-area').addEventListener('click', function() { setMapMode('block'); });
+    $('mw-block-clear').addEventListener('click', function() { holes.blocks = []; saveSettings(); renderHoles(); });
+    var map = $('mw-hole-map');
+    map.addEventListener('pointerdown', mapDown);
+    map.addEventListener('pointermove', mapMove);
+    map.addEventListener('pointerup', function(evt) { mapUp(evt, false); });
+    map.addEventListener('pointercancel', function(evt) { mapUp(evt, true); });
+    ROOT.addEventListener('keydown', function(evt) { if (evt.key === 'Escape' && holes.mode && !holes.drag) setMapMode(holes.mode); });
+    var fav = $('mw-hole-fav');
+    fav.addEventListener('click', toggleFavorite);
+    fav.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); toggleFavorite(); } });
+    function stockSync() { $('mw-stock-on').closest('.mw-stock').classList.toggle('mw-stock-active', $('mw-stock-on').checked); renderHoles(); saveSettings(); }
+    ['mw-stock-on', 'mw-stock-corner'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
+    ['mw-stock-w', 'mw-stock-l'].forEach(function(id) {
+      $(id).addEventListener('input', function() { renderHoles(); });
+      $(id).addEventListener('change', stockSync);
+    });
+    $('mw-stock-on').closest('.mw-stock').classList.toggle('mw-stock-active', $('mw-stock-on').checked);
+    ROOT.querySelectorAll('#mw-stock-dots .mw-dot').forEach(function(d) {
+      d.addEventListener('click', function() { setStockZero(d.getAttribute('data-origin')); renderHoles(); saveSettings(); });
+      d.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); d.click(); } });
+    });
+    startLive();
+    $('mw-hole-restore-all').addEventListener('click', restoreAllSuppressed);
     var resizeTimer = null;
     window.addEventListener('resize', function onResize() {
       if (!rootAlive()) { window.removeEventListener('resize', onResize); return; }
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() { if (!$('mw-pick-card').closest('[hidden]')) renderHoles(); }, 150);
     });
-    setHoleOrigin(saved.holeOrigin);
-    ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
+    $('mw-profile').addEventListener('change', profileMenu);
+    $('mw-profile-ok').addEventListener('click', profileOk);
+    $('mw-profile-cancel').addEventListener('click', profileCancel);
+    $('mw-profile-name').addEventListener('input', function() { $('mw-profile-ok').disabled = !$('mw-profile-name').value.trim(); });
+    $('mw-profile-name').addEventListener('keydown', function(evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); if (!$('mw-profile-ok').disabled) profileOk(); }
+      if (evt.key === 'Escape') { evt.preventDefault(); profileCancel(); }
+    });
+    showProfile();
+    ROOT.querySelectorAll('#mw-hole-dots .mw-dot').forEach(function(d) {
       d.addEventListener('click', function() { setHoleOrigin(d.getAttribute('data-origin')); renderHoles(); saveSettings(); });
       d.addEventListener('keydown', function(evt) {
         if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); d.click(); }
@@ -1791,6 +2026,9 @@
     $('mw-close').addEventListener('click', function() { window.postMessage({ type: 'close-plugin-dialog' }, '*'); });
     $('mw-unit-badge').textContent = state.imperial ? 'IMPERIAL (in)' : 'METRIC (mm)';
     $('mw-hole-map').addEventListener('click', function(evt) {
+      // Not the click a paint or block gesture ends with, even if Escape
+      // left the mode mid-drag.
+      if (holes.mode || holes.skipClick) return;
       var el = evt.target.closest && evt.target.closest('[data-hole]');
       if (el) pickHole(+el.getAttribute('data-hole'));
     });
@@ -1801,7 +2039,8 @@
   // XY0 Picker: spoilboard holes. The machine's travel and which way it runs
   // come from grblHAL's settings ($130 / $131, $22 / $23); the work offset's
   // X0 Y0 and the spindle position from ncSender's machine state.
-  var holes = { grid: [], picked: -1, origin: 'center' };
+  var holes = { grid: [], picked: -1, origin: 'center', suppressed: [], profiles: [], profile: '', ask: null,
+                mode: '', drag: null, blocks: [], favorites: [], stockZero: 'center', view: null, liveNear: null, liveKey: '' };
   var ORIGIN_NOTES = {
     center: 'center', 'back-center': 'back side', 'front-center': 'front side', 'left-center': 'left side', 'right-center': 'right side',
     'back-left': 'back left', 'back-right': 'back right', 'front-left': 'front left', 'front-right': 'front right'
@@ -1820,14 +2059,38 @@
     var s = readSettings();
     return s ? s.wcs : 1;
   }
-  function holeTarget(p) {
+  // The picked side of a hole, and the target: that point, or the point
+  // picked on the stock when Stock is on with a size.
+  function holePoint(p) {
     var h = readHoles();
     var o = holeOriginOffset(holes.origin, h ? h.diaMm / 2 : 0);
     return { x: p.x + o.dx, y: p.y + o.dy };
   }
+  function holeTarget(p) {
+    var pt = holePoint(p), r = stockAt(pt);
+    return r ? rectPoint(r, holes.stockZero) : pt;
+  }
+  // The stock's rectangle with its corner on pt, or null when Stock is
+  // off or its size isn't set.
+  function stockAt(pt) {
+    if (!$('mw-stock-on').checked) return null;
+    var k = state.imperial ? MM_PER_INCH : 1, w = unitVal($('mw-stock-w')) * k, l = unitVal($('mw-stock-l')) * k;
+    if (!(w > 0 && l > 0)) return null;
+    var c = $('mw-stock-corner').value;
+    return stockRect(pt.x, pt.y, w, l, c === 'auto' ? stockCornerFor(holes.origin) : c);
+  }
+  function stockActive() { return !!stockAt({ x: 0, y: 0 }); }
+  function setStockZero(name) {
+    holes.stockZero = HOLE_ORIGINS.indexOf(name) >= 0 ? name : 'center';
+    ROOT.querySelectorAll('#mw-stock-dots .mw-dot').forEach(function(d) {
+      d.setAttribute('aria-pressed', d.getAttribute('data-origin') === holes.stockZero ? 'true' : 'false');
+    });
+  }
+  // Keepout zones plus the areas blocked on the map for this job.
+  function uiZones() { return (state.keepouts || []).concat(holes.blocks); }
   function setHoleOrigin(origin) {
     holes.origin = HOLE_ORIGINS.indexOf(origin) >= 0 ? origin : 'center';
-    ROOT.querySelectorAll('.mw-dot').forEach(function(d) {
+    ROOT.querySelectorAll('#mw-hole-dots .mw-dot').forEach(function(d) {
       d.setAttribute('aria-pressed', d.getAttribute('data-origin') === holes.origin ? 'true' : 'false');
     });
   }
@@ -1860,11 +2123,310 @@
     HOLE_FIELDS.concat(['mw-hole-here', 'mw-hole-add']).forEach(function(id) { $(id).disabled = locked; });
     $('mw-hole-lock').setAttribute('aria-pressed', locked ? 'true' : 'false');
     holePanelFields();
+    suppressButtons();
     $('mw-hole-lock-text').textContent = locked ? 'Locked' : 'Unlocked';
+  }
+  function holeLocked() { return $('mw-hole-lock').getAttribute('aria-pressed') === 'true'; }
+  // Suppressed holes (ones a grid leaves out) are edited with Setup
+  // unlocked: then they show dashed so they can be picked and restored.
+  function suppressButtons() {
+    var locked = holeLocked(), n = holes.grid.filter(function(g) { return g.suppressed; }).length, editing = holes.mode === 'paint';
+    var btn = $('mw-hole-edit');
+    btn.textContent = editing ? 'Done' : 'Edit Holes';
+    btn.setAttribute('aria-pressed', editing ? 'true' : 'false');
+    btn.disabled = locked;
+    $('mw-hole-restore-all').disabled = locked || !holes.suppressed.length;
+    // Suppressed holes lengthen the nearest-hole macros, sent a line at a
+    // time on every keypress: say how long, and warn when it'll be slow.
+    var mg = n && holeMacroGrid(), size = mg ? nearestHoleLines(mg).lines.length : 0;
+    var sizeNote = size ? ' Nearest-hole macros: ' + size + ' lines' + (size > 400 ? ', slow to run; fewer gaps, or a List, keeps them quick.' : '.') : '';
+    $('mw-hole-sup-note').textContent = editing ? 'Tap holes to suppress them, or drag across many; start on a dashed one to restore.'
+      : n ? n + ' hole' + (n === 1 ? '' : 's') + ' suppressed' + (locked ? ', hidden while locked.' : '.') + sizeNote
+      : locked ? '' : 'Holes your spoilboard leaves out? Edit Holes, then tap them.';
+    var b = $('mw-block-area');
+    b.textContent = holes.mode === 'block' ? 'Done' : 'Block Area';
+    b.setAttribute('aria-pressed', holes.mode === 'block' ? 'true' : 'false');
+    $('mw-block-clear').hidden = !holes.blocks.length;
+  }
+  // The map's modes: 'paint' (Edit Holes: tap or drag to suppress) and
+  // 'block' (drag a rectangle to block an area, tap one to remove it).
+  function setMapMode(mode) {
+    holes.mode = holes.mode === mode ? '' : mode;
+    holes.drag = null;
+    var status = $('mw-hole-status');
+    status.removeAttribute('data-state');
+    status.textContent = holes.mode === 'block' ? 'Drag a rectangle over a clamp or fixture to block it for this job; tap a blocked area to remove it. Done when finished.'
+      : holes.mode === 'paint' ? 'Editing holes: tap or drag on the map. Done when finished.' : '';
+    renderHoles();
+  }
+  // Map coordinates of a pointer event: machine mm and the SVG's px.
+  function mapPoint(evt) {
+    var svg = $('mw-hole-map'), rect = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, v = holes.view;
+    if (!v || !rect.width || !vb) return null;
+    var px = (evt.clientX - rect.left) * vb.width / rect.width, py = (evt.clientY - rect.top) * vb.height / rect.height;
+    return { x: v.minX + (px - v.pad) / v.sc, y: v.minY + v.yMm - (py - v.padT) / v.sc, px: px, py: py };
+  }
+  function holeNear(pt) {
+    var best = -1, bd = Infinity;
+    holes.grid.forEach(function(p, i) { var d = Math.hypot(p.x - pt.x, p.y - pt.y); if (d < bd) { bd = d; best = i; } });
+    return bd <= holes.view.hitMm ? best : -1;
+  }
+  function paintAt(pt) {
+    var d = holes.drag, last = d.last || pt, steps = Math.max(1, Math.ceil(Math.hypot(pt.x - last.x, pt.y - last.y) / (holes.view.hitMm / 2)));
+    var changed = false;
+    for (var k = 1; k <= steps; k++) {
+      var i = holeNear({ x: last.x + (pt.x - last.x) * k / steps, y: last.y + (pt.y - last.y) * k / steps }), p = holes.grid[i];
+      if (!p || p.col == null) continue;
+      var key = holeKey(p), at = holes.suppressed.indexOf(key);
+      if (d.value === null) d.value = at < 0;
+      if (d.value && at < 0) { holes.suppressed.push(key); changed = true; }
+      if (!d.value && at >= 0) { holes.suppressed.splice(at, 1); changed = true; }
+    }
+    d.last = pt;
+    if (changed) renderHoles(true);
+  }
+  function blockRectPx(d) {
+    var v = holes.view, x0 = Math.min(d.a.x, d.b.x), x1 = Math.max(d.a.x, d.b.x), y0 = Math.min(d.a.y, d.b.y), y1 = Math.max(d.a.y, d.b.y);
+    return { x: v.pad + (x0 - v.minX) * v.sc, y: v.padT + (v.minY + v.yMm - y1) * v.sc, w: (x1 - x0) * v.sc, h: (y1 - y0) * v.sc, minX: x0, maxX: x1, minY: y0, maxY: y1 };
+  }
+  function clampToTravel(pt) {
+    var v = holes.view;
+    return { x: Math.min(Math.max(pt.x, v.minX), v.minX + v.xMm), y: Math.min(Math.max(pt.y, v.minY), v.minY + v.yMm) };
+  }
+  function mapDown(evt) {
+    if (!holes.mode || evt.button > 0) return;
+    var pt = mapPoint(evt);
+    if (!pt) return;
+    evt.preventDefault();
+    $('mw-hole-map').setPointerCapture(evt.pointerId);
+    if (holes.mode === 'paint') { holes.drag = { value: null }; paintAt(pt); return; }
+    var a = clampToTravel(pt);
+    holes.drag = { a: a, b: a, tap: pt };
+    var r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    r.setAttribute('class', 'mw-h-block');
+    $('mw-hole-map').appendChild(r);
+    holes.drag.el = r;
+  }
+  function mapMove(evt) {
+    var d = holes.drag, pt = d && mapPoint(evt);
+    if (!pt) return;
+    if (holes.mode === 'paint') return paintAt(pt);
+    d.b = clampToTravel(pt);
+    var r = blockRectPx(d);
+    d.el.setAttribute('x', r.x.toFixed(1)); d.el.setAttribute('y', r.y.toFixed(1));
+    d.el.setAttribute('width', r.w.toFixed(1)); d.el.setAttribute('height', r.h.toFixed(1));
+  }
+  // A cancelled gesture (the browser took it over) ends a paint stroke
+  // but never adds or removes a blocked area.
+  function mapUp(evt, cancel) {
+    var d = holes.drag;
+    if (!d) return;
+    holes.drag = null;
+    // The click this gesture ends with comes in the same turn: skip it.
+    holes.skipClick = true;
+    setTimeout(function() { holes.skipClick = false; }, 0);
+    if (cancel) {
+      if (d.el) d.el.remove();
+      if (holes.mode === 'paint') { saveSettings(); render(); renderHoles(); }
+      return;
+    }
+    if (holes.mode === 'block') {
+      var r = blockRectPx(d);
+      if (r.w > 6 && r.h > 6) {
+        holes.blocks.push({ block: true, name: 'Blocked', minX: r.minX, maxX: r.maxX, minY: r.minY, maxY: r.maxY });
+      } else {
+        // A tap: remove the blocked area under it.
+        holes.blocks = holes.blocks.filter(function(z) { return !(d.tap.x >= z.minX && d.tap.x <= z.maxX && d.tap.y >= z.minY && d.tap.y <= z.maxY); });
+      }
+      saveSettings();
+      return renderHoles();
+    }
+    saveSettings(); render(); renderHoles();
+  }
+  function toggleFavorite() {
+    var p = holes.grid[holes.picked];
+    if (!p) return;
+    var key = holeKey(p), at = holes.favorites.indexOf(key);
+    if (at >= 0) holes.favorites.splice(at, 1); else holes.favorites.push(key);
+    // Favorites belong to the board, so they go into its profile straight
+    // away, without marking it changed.
+    var prof = profileOf(holes.profile);
+    if (prof) prof.holeFavorites = holes.favorites.slice();
+    saveSettings(); renderHoles();
+  }
+  function renderFavs() {
+    var box = $('mw-favs');
+    box.textContent = '';
+    holes.grid.forEach(function(p, i) {
+      if (holes.favorites.indexOf(holeKey(p)) < 0 || p.suppressed) return;
+      var c = document.createElement('span');
+      c.className = 'mw-fav-chip';
+      c.setAttribute('role', 'button'); c.tabIndex = 0;
+      c.textContent = p.col == null ? holeLabel(p) : 'C' + p.col + ' R' + p.row;
+      c.title = 'Pick ' + holeLabel(p);
+      c.addEventListener('click', function() { if (!p.blocked) pickHole(i); });
+      c.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); c.click(); } });
+      box.appendChild(c);
+    });
+  }
+  // Live position: ncSender's state messages when it sends them (the tool
+  // menu dialog), and a poll while the XY0 Picker is showing (the Plugins
+  // tab never gets the messages). The map redraws only when it changed.
+  function liveKey() {
+    var ms = state.machine || {}, w = WCS_NAMES[holeWcs()] || '';
+    return [ms.MPos, ms[w.toLowerCase()], ms.workspace, ms.homed, ms.connected].join('|');
+  }
+  // At most every 300 ms, and not while a finger or button is down, so a
+  // tap on a hole or favorite isn't lost to a redraw mid-jog.
+  function liveRender() {
+    if (holes.drag || holes.pressing || $('mw-pick-card').closest('[hidden]') || liveKey() === holes.liveKey) return;
+    var wait = 300 - (Date.now() - (holes.liveAt || 0));
+    if (wait > 0) { if (!holes.liveTimer) holes.liveTimer = setTimeout(function() { holes.liveTimer = null; if (rootAlive()) liveRender(); }, wait); return; }
+    holes.liveAt = Date.now();
+    renderHoles(true);
+  }
+  function startLive() {
+    ROOT.addEventListener('pointerdown', function() { holes.pressing = true; }, true);
+    window.addEventListener('pointerup', function onUp() {
+      if (!rootAlive()) { window.removeEventListener('pointerup', onUp); return; }
+      setTimeout(function() { holes.pressing = false; }, 0);
+    }, true);
+    window.addEventListener('message', function onState(evt) {
+      if (!rootAlive()) { window.removeEventListener('message', onState); return; }
+      var ms = evt.data && evt.data.type === 'server-state-update' && evt.data.state && evt.data.state.machineState;
+      if (!ms) return;
+      state.machine = Object.assign({}, state.machine || {}, ms);
+      liveRender();
+    });
+    var timer = setInterval(async function() {
+      if (!rootAlive()) { clearInterval(timer); return; }
+      if (document.hidden || holes.busy || holes.polling || $('mw-pick-card').closest('[hidden]')) return;
+      holes.polling = true;
+      try { await readMachineState(); } finally { holes.polling = false; }
+      liveRender();
+    }, 500);
+  }
+  function restoreAllSuppressed() {
+    holes.suppressed = [];
+    renderHoles(); saveSettings(); render();
+  }
+  // Setup's fields from setupFields; numbers it doesn't have are left as
+  // they are.
+  function applySetup(f) {
+    [['dia', f.dia], ['sx', f.sx], ['sy', f.sy], ['ix', f.ix], ['iy', f.iy]].forEach(function(d) {
+      if (d[1] != null) $('mw-hole-' + d[0]).value = d[1];
+    });
+    $('mw-hole-layout').value = f.layout;
+    if (f.list != null) $('mw-hole-list').value = f.list;
+    $('mw-hole-track').value = f.track;
+    if (f.panelHoles != null) $('mw-hole-pn').value = f.panelHoles;
+    $('mw-hole-pp').value = f.pitch;
+    holes.suppressed = f.suppressed;
+    holes.favorites = f.favorites;
+    holeLayout();
+  }
+  // Profiles: one per spoilboard or fixture plate. The profile picked is
+  // the one Setup came from; editing marks it Modified, with Save and
+  // Revert. holes.ask is the question the bar is asking, if any.
+  function profileOf(name) { return holes.profiles.filter(function(x) { return x.name === name; })[0]; }
+  function sameSetup(a, b) {
+    var f = function(x) { var v = setupFields(x, state.imperial); v.suppressed = v.suppressed.slice().sort(); delete v.origin; delete v.favorites; return JSON.stringify(v); };
+    return f(a) === f(b);
+  }
+  function profileModified() {
+    var p = profileOf(holes.profile);
+    return !!p && !sameSetup(p, setupBody());
+  }
+  function showProfile() {
+    var sel = $('mw-profile'), cur = holes.profile, ask = holes.ask, modified = profileModified();
+    sel.textContent = '';
+    if (!cur) sel.add(new Option(holes.profiles.length ? 'No profile' : 'Profiles', ''));
+    holes.profiles.forEach(function(x) { sel.add(new Option(x.name + (x.name === cur && modified ? ' \u2022' : ''), x.name)); });
+    var line = new Option('\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500', '');
+    line.disabled = true;
+    sel.add(line);
+    sel.add(new Option('New profile\u2026', ':new'));
+    if (cur) { sel.add(new Option('Rename\u2026', ':rename')); sel.add(new Option('Delete \u201c' + cur + '\u201d', ':delete')); }
+    sel.value = cur;
+    var bar = $('mw-profile-bar'), msg = $('mw-profile-msg'), name = $('mw-profile-name'), ok = $('mw-profile-ok'), cancel = $('mw-profile-cancel');
+    var mode = ask ? ask.kind : modified ? 'modified' : '';
+    bar.hidden = !mode;
+    bar.setAttribute('data-mode', mode);
+    name.hidden = !(mode === 'new' || mode === 'rename');
+    ok.classList.toggle('mw-btn-danger', mode === 'delete');
+    ok.disabled = !name.hidden && !name.value.trim();
+    var text = {
+      modified: ['Changed since \u201c' + cur + '\u201d was saved', 'Save', 'Revert'],
+      'new': ['New profile from Setup:', 'Create', 'Cancel'],
+      rename: ['Rename \u201c' + cur + '\u201d to:', 'Rename', 'Cancel'],
+      'delete': ['Delete the profile \u201c' + cur + '\u201d? Setup stays as it is.', 'Delete', 'Cancel'],
+      'switch': [ask && ask.to ? 'Discard the changes to \u201c' + cur + '\u201d and load \u201c' + ask.to + '\u201d?' : '', 'Load', 'Cancel']
+    }[mode];
+    if (text) { msg.textContent = text[0]; ok.textContent = text[1]; cancel.textContent = text[2]; }
+    if (mode === 'switch' && ask.to) ok.textContent = 'Load \u201c' + ask.to + '\u201d';
+  }
+  function askProfile(kind, extra) {
+    holes.ask = Object.assign({ kind: kind }, extra || {});
+    $('mw-profile-name').value = kind === 'rename' ? holes.profile : '';
+    showProfile();
+    if (kind === 'new' || kind === 'rename') { $('mw-profile-name').focus(); $('mw-profile-name').select(); }
+  }
+  function profileMenu() {
+    var v = $('mw-profile').value;
+    $('mw-profile').value = holes.profile;
+    if (v === ':new' || v === ':rename' || v === ':delete') return askProfile(v.slice(1));
+    if (v === holes.profile) return;
+    if (!v) { holes.profile = ''; holes.ask = null; saveSettings(); return showProfile(); }
+    if (profileModified()) return askProfile('switch', { to: v });
+    loadProfile(v);
+  }
+  function loadProfile(name) {
+    var p = profileOf(name);
+    if (!p) return;
+    holes.profile = name;
+    holes.ask = null;
+    applySetup(setupFields(p, state.imperial));
+    holes.picked = -1; holes.nearMm = null;
+    $('mw-hole-status').textContent = '';
+    holePanelFields(); renderHoles(); saveSettings(); render();
+  }
+  function profileOk() {
+    var ask = holes.ask, name = $('mw-profile-name').value.trim();
+    var taken = function(n) { return holes.profiles.some(function(x) { return x.name.toLowerCase() === n.toLowerCase() && x.name !== holes.profile; }); };
+    if (!ask) {
+      // Save over the active profile.
+      if (!readHoles()) { $('mw-profile-msg').textContent = 'Fix the highlighted fields first.'; return; }
+      holes.profiles = putProfile(holes.profiles, holes.profile, setupBody());
+    } else if (/^:/.test(name)) {
+      $('mw-profile-msg').textContent = 'A name can\u2019t start with a colon.'; return;
+    } else if (ask.kind === 'new') {
+      if (!readHoles()) { $('mw-profile-msg').textContent = 'Fix the highlighted fields first.'; return; }
+      if (holes.profiles.some(function(x) { return x.name.toLowerCase() === name.toLowerCase(); })) { $('mw-profile-msg').textContent = '\u201c' + name + '\u201d is taken: pick another name.'; return; }
+      holes.profiles = putProfile(holes.profiles, name, setupBody());
+      holes.profile = name;
+    } else if (ask.kind === 'rename') {
+      if (taken(name)) { $('mw-profile-msg').textContent = '\u201c' + name + '\u201d is taken: pick another name.'; return; }
+      var old = profileOf(holes.profile);
+      holes.profiles = putProfile(holes.profiles.filter(function(x) { return x !== old; }), name, old);
+      holes.profile = name;
+    } else if (ask.kind === 'delete') {
+      holes.profiles = holes.profiles.filter(function(x) { return x.name !== holes.profile; });
+      holes.profile = '';
+    } else if (ask.kind === 'switch') {
+      return loadProfile(ask.to);
+    }
+    holes.ask = null;
+    saveSettings();
+    showProfile();
+  }
+  function profileCancel() {
+    if (holes.ask) { holes.ask = null; return showProfile(); }
+    // Revert: back to the active profile as saved.
+    loadProfile(holes.profile);
   }
   // Holes per Panel and Panel Pitch only mean something with T-tracks.
   function holePanelFields() {
-    var off = !$('mw-hole-track').value || $('mw-hole-lock').getAttribute('aria-pressed') === 'true';
+    var off = !$('mw-hole-track').value || holeLocked();
     ['mw-hole-pn', 'mw-hole-pp'].forEach(function(id) { $(id).disabled = off; });
   }
   // The closest two holes come (for tap areas and "far from a hole"): the
@@ -1924,6 +2486,7 @@
     if (!pnGood || !ppGood) ok = false;
     h.panelHoles = h.trackAxis ? n : 0;
     h.panelPitchMm = h.trackAxis ? pp : 0;
+    h.suppressed = holes.suppressed.slice();
     return ok ? h : null;
   }
   // The space the map can fill, in px, after choosing the layout: the
@@ -1940,9 +2503,14 @@
     if (t.yMm <= t.xMm) below += $('mw-holebar').offsetHeight + Math.max($('mw-hole-status').offsetHeight, 18) + 20;
     return { w: w, h: Math.max(260, panel.clientHeight - top - below) };
   }
-  function renderHoles() {
+  // live: only the machine moved (the position poll), so Setup's
+  // profile menu is left alone.
+  function renderHoles(live) {
     var svg = $('mw-hole-map'), note = $('mw-hole-note'), t = state.travel, h = readHoles();
     svg.textContent = '';
+    svg.setAttribute('data-mode', holes.mode);
+    svg.classList.toggle('mw-editing', !!holes.mode);
+    if (!live) showProfile();
     if (!t) {
       note.textContent = 'Couldn\u2019t read the machine\u2019s travel and homing ($130/$131, $22/$23), so the holes can\u2019t be placed.';
       holes.grid = []; updatePicked();
@@ -1952,12 +2520,13 @@
       (holes.grid.some(function(g) { return g.col >= HOLE_GRID_MAX || g.row >= HOLE_GRID_MAX; })
         ? ' Only the first ' + HOLE_GRID_MAX + ' columns and rows are shown: check the spacings.' : '');
     holes.grid = h ? holeGrid(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h)) : [];
-    var zones = state.keepouts || [];
+    var zones = uiZones();
     holes.grid.forEach(function(p) {
       var z = holeKeepout(p.x, p.y, h.diaMm / 2, zones);
-      if (z) { p.blocked = true; p.zone = z.name; }
+      if (z) { p.blocked = true; p.zone = zoneText(z); }
     });
-    if (holes.grid[holes.picked] && holes.grid[holes.picked].blocked) holes.picked = -1;
+    var editing = !holeLocked();
+    if (holes.grid[holes.picked] && (holes.grid[holes.picked].blocked || (holes.grid[holes.picked].suppressed && !editing))) holes.picked = -1;
     if (h && h.layout === 'list') {
       var outside = h.list.length - holes.grid.length;
       $('mw-hole-list-note').textContent = h.list.length + ' hole' + (h.list.length === 1 ? '' : 's') +
@@ -1973,6 +2542,7 @@
     svg.style.width = w.toFixed(0) + 'px';
     svg.style.height = ht.toFixed(0) + 'px';
     var X = function(x) { return (pad + (x - minX) * sc).toFixed(1); }, Y = function(y) { return (padT + (minY + t.yMm - y) * sc).toFixed(1); };
+    holes.view = { pad: pad, padT: padT, sc: sc, minX: minX, minY: minY, xMm: t.xMm, yMm: t.yMm, hitMm: h ? Math.max(h.diaMm / 2, holeSpacingMm(h) * 0.45) : 10 };
     svg.setAttribute('viewBox', '0 0 ' + w.toFixed(1) + ' ' + ht.toFixed(1));
     var ns = 'http://www.w3.org/2000/svg';
     var add = function(tag, attrs, text) {
@@ -2010,7 +2580,7 @@
         : { class: 'mw-h-track', x: X(band.from), y: Y(minY + t.yMm), width: ((band.to - band.from) * sc).toFixed(1), height: (t.yMm * sc).toFixed(1) });
     });
     // Keepout zones, clipped to the travel; their holes can't be picked.
-    zones.forEach(function(z) {
+    (state.keepouts || []).forEach(function(z) {
       var x0 = Math.max(z.minX, minX), x1 = Math.min(z.maxX, minX + t.xMm);
       var y0 = Math.max(z.minY, minY), y1 = Math.min(z.maxY, minY + t.yMm);
       if (x1 <= x0 || y1 <= y0) return;
@@ -2020,6 +2590,19 @@
       zr.appendChild(zt);
       add('text', { class: 'mw-h-keepout-label', x: ((+X(x0) + +X(x1)) / 2).toFixed(1), y: (+Y(y1) + 13).toFixed(1), 'text-anchor': 'middle' }, z.name);
     });
+    // Areas blocked for this job (Block Area), tapped to remove.
+    holes.blocks.forEach(function(z, i) {
+      var x0 = Math.max(z.minX, minX), x1 = Math.min(z.maxX, minX + t.xMm);
+      var y0 = Math.max(z.minY, minY), y1 = Math.min(z.maxY, minY + t.yMm);
+      if (x1 <= x0 || y1 <= y0) return;
+      var br = add('rect', { class: 'mw-h-block', 'data-block': i, x: X(x0), y: Y(y1), width: ((x1 - x0) * sc).toFixed(1), height: ((y1 - y0) * sc).toFixed(1) });
+      var bt = document.createElementNS(ns, 'title');
+      bt.textContent = 'Blocked for this job: Block Area, then tap it to remove.';
+      br.appendChild(bt);
+    });
+    // The hole nearest the spindle, live while jogging.
+    var ms0 = state.machine || {}, here0 = ms0.homed ? xyOf(ms0.MPos) : null, near0 = here0 && nearestHole(holes.grid, here0.x, here0.y);
+    holes.liveNear = near0 || null;
     if (holes.grid.length > 2500) {
       add('text', { x: (w / 2).toFixed(1), y: (ht / 2).toFixed(1), 'text-anchor': 'middle' }, holes.grid.length + ' holes: too many to draw');
     } else if (h) {
@@ -2027,8 +2610,10 @@
       // small holes are easy to tap.
       var r = Math.max(3, h.diaMm / 2 * sc), hit = Math.max(r, holeSpacingMm(h) * sc * 0.45);
       holes.grid.forEach(function(p, i) {
+        if (p.suppressed && !editing) return;
         var g = document.createElementNS(ns, 'g');
-        g.setAttribute('class', p.blocked ? 'mw-h-spot mw-h-blocked' : 'mw-h-spot');
+        g.setAttribute('class', (p.blocked ? 'mw-h-spot mw-h-blocked' : p.suppressed ? 'mw-h-spot mw-h-suppressed' : 'mw-h-spot') +
+          (holes.favorites.indexOf(holeKey(p)) >= 0 ? ' mw-h-fav' : '') + (near0 && near0.index === i ? ' mw-h-near' : ''));
         if (!p.blocked) g.setAttribute('data-hole', i);
         if (i === holes.picked) g.setAttribute('data-picked', '');
         svg.appendChild(g);
@@ -2047,7 +2632,7 @@
         }
         var tip = document.createElementNS(ns, 'title');
         tip.textContent = holeLabel(p) + ': machine X ' + fmt(p.x) + ', Y ' + fmt(p.y) + ' mm' +
-          (p.blocked ? ' (in the ' + p.zone + ' keepout zone)' : '');
+          (p.blocked ? ' (in ' + p.zone + ')' : p.suppressed ? ' (suppressed)' : '');
         g.appendChild(tip);
       });
     }
@@ -2061,18 +2646,24 @@
       add('path', { class: 'mw-h-wcs', d: 'M' + (zx - 9) + ' ' + zy + 'H' + (zx + 9) + 'M' + zx + ' ' + (zy - 9) + 'V' + (zy + 9) });
       add('text', { x: (zx + 11).toFixed(1), y: (zy - 6).toFixed(1) }, wcs + ' X0 Y0');
     }
-    var picked = holes.grid[holes.picked];
-    if (picked && holes.origin !== 'center') {
+    var picked = holes.grid[holes.picked], stock = picked && stockAt(holePoint(picked));
+    if (stock) {
+      add('rect', { class: 'mw-h-stock', x: X(stock.minX), y: Y(stock.maxY), width: ((stock.maxX - stock.minX) * sc).toFixed(1), height: ((stock.maxY - stock.minY) * sc).toFixed(1) });
+    }
+    if (picked && (holes.origin !== 'center' || stock)) {
       var tg = holeTarget(picked), tx = +X(tg.x), ty = +Y(tg.y);
       add('path', { class: 'mw-h-target', d: 'M' + (tx - 6) + ' ' + ty + 'H' + (tx + 6) + 'M' + tx + ' ' + (ty - 6) + 'V' + (ty + 6) });
     }
     if (here) add('circle', { class: 'mw-h-spindle', cx: X(here.x), cy: Y(here.y), r: 3.5 });
+    holes.liveKey = liveKey();
+    renderFavs();
     updatePicked();
   }
   function pickHole(i) {
     disarmGoto();
     holes.picked = i;
     holes.nearMm = null;
+    $('mw-hole-status').textContent = '';
     renderHoles();
   }
   // Jog roughly over a hole, then take the grid's exact position for it.
@@ -2094,13 +2685,13 @@
     holes.picked = near.index;
     holes.nearMm = near.distanceMm;
     var any = nearestHole(holes.grid.map(function(g) { return { x: g.x, y: g.y }; }), here.x, here.y);
-    var under = any && holes.grid[any.index].blocked ? holes.grid[any.index] : null;
+    var under = any && (holes.grid[any.index].blocked || holes.grid[any.index].suppressed) ? holes.grid[any.index] : null;
     renderHoles();
     // Further than a third of the spacing: probably not over the hole meant.
     var h = readHoles(), far = h && near.distanceMm > holeSpacingMm(h) / 3;
     if (under) {
       status.setAttribute('data-state', 'bad');
-      status.textContent = 'The hole nearest the spindle is in the ' + under.zone + ' keepout zone, so the nearest one outside it is picked (' + fmt(near.distanceMm) + ' mm away).';
+      status.textContent = 'The hole nearest the spindle is ' + (under.blocked ? 'in ' + under.zone + ', so the nearest one outside it' : 'suppressed, so the nearest real one') + ' is picked (' + shown(near.distanceMm) + ' ' + unitName() + ' away).';
       return;
     }
     status.setAttribute('data-state', far ? 'bad' : 'ok');
@@ -2112,15 +2703,22 @@
   function unitName() { return state.imperial ? 'in' : 'mm'; }
   function updatePicked() {
     var p = holes.grid[holes.picked], tg = p && holeTarget(p);
-    $('mw-hole-picked').textContent = p ? holeLabel(p) + ' \u00b7 ' + ORIGIN_NOTES[holes.origin] : 'No hole picked';
+    var onStock = p && stockActive(), live = holes.liveNear && holes.grid[holes.liveNear.index];
+    $('mw-hole-picked').textContent = p ? holeLabel(p) + ' \u00b7 ' + ORIGIN_NOTES[holes.origin] + (onStock ? ' \u00b7 stock ' + ORIGIN_NOTES[holes.stockZero] : '') : 'No hole picked';
+    $('mw-hole-fav').hidden = !p;
+    $('mw-hole-fav').setAttribute('aria-pressed', p && holes.favorites.indexOf(holeKey(p)) >= 0 ? 'true' : 'false');
     $('mw-hole-pos').textContent = p ? 'Machine X ' + shown(tg.x) + '  Y ' + shown(tg.y) + ' ' + unitName() +
-      (holes.nearMm != null ? ' \u00b7 ' + shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '') : 'Click a hole, or jog near one and press Select Nearest.';
-    var problem = p && state.travel ? targetProblem(tg.x, tg.y, state.travel, state.keepouts || []) : null;
-    if (problem) $('mw-hole-pos').textContent = 'This side of the hole is ' + problem + ': pick another dot or hole.';
+      (holes.nearMm != null ? ' \u00b7 ' + shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '')
+      : live ? 'Nearest the spindle: ' + holeLabel(live) + ', ' + shown(holes.liveNear.distanceMm) + ' ' + unitName() + ' away. Click a hole, or press Select Nearest.'
+      : 'Click a hole, or jog near one and press Select Nearest.';
+    var problem = p && p.suppressed ? 'suppressed' : p && state.travel ? targetProblem(tg.x, tg.y, state.travel, uiZones()) : null;
+    if (problem === 'suppressed') $('mw-hole-pos').textContent = 'This hole is suppressed: Edit Holes in Setup to restore it.';
+    else if (problem) $('mw-hole-pos').textContent = (onStock ? 'That point on the stock is ' : 'This side of the hole is ') + problem + ': pick another dot or hole.';
     $('mw-hole-pos').classList.toggle('mw-bad-text', !!problem);
     $('mw-hole-set').disabled = !p || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !p || !!problem || holes.busy;
     if (!p || problem || holes.busy) disarmGoto();
+    suppressButtons();
   }
   // One hole action at a time (Go, Set, Select Nearest, Grab), so their
   // commands never interleave.
@@ -2148,8 +2746,8 @@
   // The picked hole and its target, or why it can't be used.
   function usableTarget() {
     var p = holes.grid[holes.picked];
-    if (!p || p.blocked) return null;
-    var tg = holeTarget(p), problem = state.travel ? targetProblem(tg.x, tg.y, state.travel, state.keepouts || []) : 'unknown travel';
+    if (!p || p.blocked || p.suppressed) return null;
+    var tg = holeTarget(p), problem = state.travel ? targetProblem(tg.x, tg.y, state.travel, uiZones()) : 'unknown travel';
     if (problem) throw new Error('that point is ' + problem);
     return { p: p, tg: tg };
   }
@@ -2340,6 +2938,7 @@
   var HELP_UNITS = '<strong>Typing units:</strong> size and feed fields take mm or inches, whichever you have to hand, and convert to the machine&rsquo;s units when you leave the field: <kbd>1/4"</kbd>, <kbd>5/4"</kbd>, <kbd>.25in</kbd>, <kbd>1-1/2"</kbd>, <kbd>6.35mm</kbd>, and for feeds <kbd>100ipm</kbd>, <kbd>2540mm/min</kbd>, <kbd>25mm/s</kbd>.';
   var HELP_TOPICS = {
     holes: { name: 'XY0 Picker', notes: [
+      '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Select Nearest</strong> and <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>ZS: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: <strong>Set</strong> sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Select Nearest</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
@@ -2348,7 +2947,13 @@
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Select Nearest skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
+      '<strong>Profiles:</strong> the menu beside Setup&rsquo;s title keeps one per spoilboard, fixture plate or grid you use. <strong>New profile&hellip;</strong> saves what&rsquo;s in Setup under a name; pick another to load it. Change a number and the bar says it&rsquo;s changed: <strong>Save</strong> keeps it, <strong>Revert</strong> puts the profile back, so you can try other numbers safely. A profile holds the layout, numbers, T-tracks, list and suppressed holes (the dot is picked per job). Press Create macros after switching if you use the nearest-hole macros.',
       '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
+      '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag across a row to do many at once; starting a drag on a suppressed hole restores instead. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and dashed while it&rsquo;s unlocked; Select Nearest, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
+      '<strong>Live position:</strong> while you jog, the spindle dot moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
+      '<strong>Stock:</strong> tick it and type the stock&rsquo;s width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole, running away from the hole (<strong>Corner</strong> overrides which stock corner sits there), and its own box of dots puts X0 Y0 on its center, a corner or an edge. Go to Selected and Set then use that point; the keyboard macros always use the hole.',
+      '<strong>Block Area:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. Its holes can&rsquo;t be picked, and Go to and Set won&rsquo;t use a point inside it. Tap a blocked area to remove it, or Clear Blocks. Blocked areas aren&rsquo;t part of a profile, and the keyboard macros don&rsquo;t know about them.',
+      '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Select Nearest, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',

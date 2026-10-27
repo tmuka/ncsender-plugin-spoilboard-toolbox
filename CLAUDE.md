@@ -42,6 +42,18 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
   - `storeThicknessCommand`, `MACRO_PREFIX` (`ZS: `), `OLD_PREFIXES` (`MW: `, `Macro Wiz: `, the names earlier versions used).
   - Spoilboard holes: `holeGrid`, `travelDirs`, `insetFromPosition`, `nearestHole`, `holeOriginOffset` (where X0 Y0
     goes on a hole, one radius out in machine X / Y), `holeCommands`; and `parseUnitValue`.
+  - Suppressed grid holes (`holeKey` "col,row", saved as `holeSuppressed`) stay in `holeGrid` marked
+    `suppressed`, so indices don't shift. The grid macro keeps its FIX/ROUND math and, only when that
+    lands on a suppressed hole, scans the usable holes next to any suppressed one (`suppressedLines`):
+    the nearest real hole is always one of those, so the macro stays short (lines go one at a time).
+  - Map tools (UI only, not in the macros): Edit Holes / Block Area modes (`setMapMode`, pointer
+    handlers `mapDown`/`mapMove`/`mapUp`, `mapPoint` inverts `holes.view`); blocked areas are zones with
+    `block: true` (`uiZones`, `zoneText`); Stock (`stockRect`, `rectPoint`, `stockCornerFor`; `holeTarget`
+    is the stock point when on); favorites (`holeKey`, in the profile, saved without marking it
+    changed); live position (`startLive`: 'server-state-update' messages plus a 500 ms poll,
+    `renderHoles(true)` when `liveKey` changes, which leaves the profile menu alone).
+  - Profiles (`holeProfiles`, `holeProfile`): `setupBody` is what one holds (not the origin dot);
+    `sameSetup` ignores favorites; `showProfile` draws the menu and the changes bar.
 - **Layout** follows QuickCut's: the dialog header is hidden, and a sidebar has the tabs (**XY0 Picker**, first;
   **Z0 macros**), **Help** (notes in `HELP_TOPICS` plus the tab's tooltips) and **Close** (`close-plugin-dialog`).
   Keep `HELP_TOPICS` in step with the README.
