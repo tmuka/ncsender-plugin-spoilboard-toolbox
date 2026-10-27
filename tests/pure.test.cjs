@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -619,8 +619,11 @@ test('nearest-hole macros: Go lifts (never down), then moves; stops for keepouts
 });
 
 test('parseHoleList reads names, mixed units and skips comments; formatHoleList writes it back', () => {
-  const r = parseHoleList('A: 0, 0\n( locating pins )\n\nB: 300, 12.5\n12-1/2", 6"\n1: 2in, 50.8mm\nnot a hole\n5, 6, 7', false);
-  assert.deepEqual(r.bad, [7, 8]);
+  const r = parseHoleList('A: 0, 0\n( locating pins )\n\nB: 300, 12.5\n12-1/2", 6"\n1: 2in, 50.8mm\nnot a hole\n5, 6, 7, 8\npin: 5, 6, 1/4"\n7, 8, -2', false);
+  assert.deepEqual(r.bad, [7, 8, 10]);
+  assert.deepEqual(r.holes[4], { name: 'pin', xMm: 5, yMm: 6, diaMm: 6.35 });
+  assert.equal(formatHoleList([r.holes[4]], false), 'pin: 5, 6, 6.35');
+  r.holes.pop();
   assert.deepEqual(r.holes, [
     { name: 'A', xMm: 0, yMm: 0 }, { name: 'B', xMm: 300, yMm: 12.5 },
     { name: '', xMm: 317.5, yMm: 152.4 }, { name: '1', xMm: 50.8, yMm: 50.8 }]);
@@ -769,7 +772,11 @@ test('setupFields reads saved Setup in today\'s units; putProfile replaces by na
     holePanelPitch: '', holeLayout: 'grid', holeList: 'A: 25.4, 0', holeOrigin: 'back-right', holeSuppressed: ['2,2', 'junk'] };
   assert.deepEqual(setupFields({ holeFavorites: ['3,4', '#2', 'x'] }, false).favorites, ['3,4', '#2']);
   const mm = setupFields(saved, false);
-  assert.deepEqual(mm, { dia: 20, sx: 96, sy: 96, ix: 48, iy: 50.8, layout: 'grid', list: 'A: 25.4, 0', track: 'x', panelHoles: '5', pitch: '', origin: 'back-right', suppressed: ['2,2'], favorites: [] });
+  assert.deepEqual(mm, { dia: 20, sx: 96, sy: 96, ix: 48, iy: 50.8, layout: 'grid', name1: '', nearest1: true, grids: [], list: 'A: 25.4, 0', track: 'x', panelHoles: '5', pitch: '', origin: 'back-right', suppressed: ['2,2'], favorites: [] });
+  const two = setupFields({ units: 'metric', holeLayout: 'both', holeGridName: 'Dogs', holeNearest: false, holeSuppressed: ['g2:3,4', 'g2:#1'],
+    holeGrids: [{ name: 'Pins', dia: '6.35', sx: '25.4', sy: '25.4', ix: '12.7', iy: '0', track: 'q', pn: '', pp: '0', nearest: false }] }, true);
+  assert.deepEqual([two.layout, two.name1, two.nearest1, two.suppressed], ['both', 'Dogs', false, ['g2:3,4', 'g2:#1']]);
+  assert.deepEqual(two.grids, [{ name: 'Pins', dia: 0.25, sx: 1, sy: 1, ix: 0.5, iy: 0, track: '', pn: '5', pp: '', nearest: false }]);
   const inch = setupFields(Object.assign({}, saved, { holePanelPitch: '254' }), true);
   assert.deepEqual([inch.dia, inch.ix, inch.iy, inch.pitch, inch.list], [0.7874, 1.8898, 2, 10, 'A: 1, 0']);
   const empty = setupFields({}, true);
@@ -834,4 +841,86 @@ test('config.html has no duplicate element ids', () => {
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
   const dup = ids.filter((id, i) => ids.indexOf(id) !== i);
   assert.deepEqual(dup, []);
+});
+
+// The macro's pick against the picker's, over a sweep of spindle positions.
+function sweep(g, label, n = 30) {
+  const m = buildMacros(Object.assign({}, base, { safeZMm: -5, extras: { holes: true }, holes: g }));
+  const holes = allHoles(g).filter((p) => !p.suppressed && !(p.layer && g.grids[p.layer - 1].nearest === false));
+  const minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
+  let checked = 0;
+  for (let i = 0; i <= n; i++) for (let j = 0; j <= n; j++) {
+    const x = minX + g.travelXMm * i / n, y = minY + g.travelYMm * j / n;
+    const want = holes[nearestHole(holes, x, y).index];
+    const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: x, _abs_y: y }));
+    const r = (want.diaMm != null ? want.diaMm : g.diaMm) / 2, o = holeOriginOffset(g.origin, r);
+    const tx = want.x + o.dx, ty = want.y + o.dy;
+    const inside = tx >= minX - 1e-6 && tx <= minX + g.travelXMm + 1e-6 && ty >= minY - 1e-6 && ty <= minY + g.travelYMm + 1e-6;
+    if (!inside) continue;
+    assert.equal(p._error, undefined, label + ' at ' + x + ',' + y);
+    // Ties (equally near holes) may go either way; compare distances, then the side offset.
+    const got = holes.find((h) => { const rr = (h.diaMm != null ? h.diaMm : g.diaMm) / 2, oo = holeOriginOffset(g.origin, rr); return Math.abs(h.x + oo.dx - p.P0_x) < 1e-3 && Math.abs(h.y + oo.dy - p.P0_y) < 1e-3; });
+    assert.ok(got, label + ': not a hole\'s side at ' + x + ',' + y + ' got ' + p.P0_x + ',' + p.P0_y);
+    assert.ok(Math.abs(Math.hypot(got.x - x, got.y - y) - Math.hypot(want.x - x, want.y - y)) < 1e-3, label + ' at ' + x + ',' + y);
+    checked++;
+  }
+  return checked;
+}
+
+test('grid + extra holes with their own diameters: the nearest of both, side offset by its own radius', () => {
+  const list = [{ name: 'pin', xMm: 130, yMm: 40, diaMm: 6 }, { name: 'big', xMm: 500, yMm: 700 }, { name: 'A', xMm: 20, yMm: 300, diaMm: 8 }];
+  for (const origin of ['center', 'back-right', 'front-left']) {
+    const g = macroGrid({ layout: 'both', list, diaMm: 20, origin, sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 });
+    assert.ok(sweep(g, 'both ' + origin) > 500);
+  }
+  // Pin at reference + (130, 40) = (178, 88): back-right side is 3 mm out each way.
+  const g = macroGrid({ layout: 'both', list, diaMm: 20, origin: 'back-right', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 });
+  const m = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: g }));
+  const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: 179, _abs_y: 87 }));
+  assert.deepEqual([p.P0_x, p.P0_y], [181, 91]);
+});
+
+test('several grids: dog holes and a pin grid, suppressed holes in each, one left out of Nearest', () => {
+  const dogs = { diaMm: 20, sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48 };
+  const pins = { diaMm: 6, sxMm: 32, syMm: 32, insetXMm: 16, insetYMm: 600, trackAxis: null, panelHoles: 0, panelPitchMm: 0 };
+  for (const [dirX, dirY] of [[1, 1], [-1, -1]]) {
+    const g = macroGrid(Object.assign({ layout: 'grid', origin: 'back-right', travelXMm: 812, travelYMm: 1230, dirX, dirY, suppressed: ['2,2', '3,7', 'g2:1,1', 'g2:5,3'] }, dogs));
+    g.grids = [pins];
+    assert.ok(sweep(g, 'two grids ' + dirX) > 500);
+    // The pins left out of Nearest: only dog holes.
+    const g2 = Object.assign({}, g, { grids: [Object.assign({ nearest: false }, pins)] });
+    const m = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: g2 }));
+    const at = { x: dirX * (16 + 32 * 4), y: dirY * (600 + 32 * 2) };
+    const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: at.x, _abs_y: at.y }));
+    const dogsOnly = allHoles(Object.assign({}, g2, { grids: [] })).filter((h) => !h.suppressed);
+    const want = dogsOnly[nearestHole(dogsOnly, at.x, at.y).index];
+    assert.deepEqual([p.P0_x, p.P0_y], [want.x + 10, want.y + 10]);
+  }
+  // The first grid left out, with a second one: only its holes.
+  const g3 = macroGrid(Object.assign({ layout: 'grid', origin: 'center', travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1, nearest: false }, dogs));
+  g3.grids = [pins];
+  const m3 = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: g3 }));
+  const p3 = run(m3.setHole.body, Object.assign({}, ready, { _abs_x: 48, _abs_y: 48 }));
+  assert.deepEqual([p3.P0_x, p3.P0_y], [48, 600]);
+  assert.ok(code(m3.setHole.body).every((l) => l.length <= 200));
+});
+
+test('allHoles: keys for later grids start g2:, and keep their own diameter', () => {
+  const g = { layout: 'grid', diaMm: 20, sxMm: 100, syMm: 100, insetXMm: 50, insetYMm: 50, travelXMm: 300, travelYMm: 200, dirX: 1, dirY: 1,
+    suppressed: ['g2:1,1'], grids: [{ diaMm: 6, sxMm: 50, syMm: 50, insetXMm: 25, insetYMm: 25 }] };
+  const h = allHoles(g);
+  assert.equal(h.filter((p) => !p.layer).length, 6);
+  const second = h.filter((p) => p.layer === 1);
+  assert.equal(second.length, 6 * 4);
+  assert.ok(second[0].suppressed && second[0].diaMm === 6 && !second[1].suppressed);
+});
+
+test('a listed hole near a keepout corner is left out the way the macro tests it, so the next one is used', () => {
+  const list = [{ name: 'corner', xMm: 292, yMm: 292 }, { name: 'far', xMm: 100, yMm: 100 }];
+  const g = Object.assign(macroGrid({ layout: 'list', list, insetXMm: 0, insetYMm: 0, diaMm: 20, origin: 'center', travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1,
+    zones: [{ name: 'ATCi', minX: 300, maxX: 400, minY: 300, maxY: 400 }] }), { lastXMm: 0, lastYMm: 0 });
+  const m = buildMacros(Object.assign({}, base, { extras: { holes: true }, holes: g }));
+  const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: 290, _abs_y: 290 }));
+  assert.equal(p._error, undefined);
+  assert.deepEqual([p.P0_x, p.P0_y], [100, 100]);
 });

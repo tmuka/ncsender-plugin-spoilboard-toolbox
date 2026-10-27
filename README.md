@@ -161,7 +161,26 @@ created, so press **Create macros** again after changing any of them.
 
 **Which layout?** Use **Grid** whenever your holes are on a regular spacing, even with holes missing
 or T-tracks in between: it's five numbers to set up, and its keyboard macros are short and fast,
-whatever the size of the bed. **List** is for holes with no regular spacing.
+whatever the size of the bed. **Grid + List** adds a few extra holes to a grid (locating pins, a
+fixture's holes), and **List** alone is for holes with no regular spacing. Two regular patterns, like
+large dog holes and a small pin grid? Press **+ Grid** for a second grid rather than listing every pin.
+
+**More than one grid.** The chips under Setup's heading list your grids; press one to edit it in the
+fields below, and **+ Grid** (with Setup unlocked) to add another, starting as a copy of the one
+you're on. Each grid has its own name, hole diameter, spacing, insets, T-tracks and suppressed holes.
+**Use for Nearest** decides whether Select Nearest and the keyboard macros snap to its holes (untick
+it for a pin grid you only ever pick on the map), and **Remove Grid** deletes it. The eye on each chip
+shows or hides that grid's holes on the map, handy for picking or suppressing holes where two grids
+overlap. Hidden holes can't be picked on the map or by Select Nearest, but the keyboard macros still
+use them (untick Use for Nearest to leave a grid out of those too). More than one grid makes the macros
+about 50 lines longer, plus about 30 per further grid.
+
+**Extra holes with their own size.** With **Grid + List**, list extra holes one per line, measured
+from the first grid's first hole (so **Grab First Hole Center**, with the first grid selected, moves
+them with it). A third
+value is that hole's own diameter, e.g. `pin: 130, 40, 6mm`; without one it's the first grid's Hole
+Diameter. The map draws each hole at its size, and the dots put X0 Y0 on each hole's own edge (a back
+right point on a 6 mm pin is 3 mm out each way). Extra holes can be suppressed too.
 
 **Holes missing from the grid?** If your spoilboard leaves some holes out (under a clamp rail, say,
 or a pattern with gaps), unlock Setup and press **Edit Holes**, then tap each missing hole on the map,
@@ -175,7 +194,8 @@ spacing or insets; a change that renumbers the holes (a different first hole) mo
 
 **Holes that aren't a regular grid?** Locating holes, fixture pins, or a custom layout: set the
 **Layout** menu at the top of Setup to **List** and enter one hole per line, as `x, y` or
-`name: x, y` (e.g. `A: 0, 0`, `pin: 12-1/2", 6"`), measured from a **reference point** (Reference X /
+`name: x, y` (e.g. `A: 0, 0`, `pin: 12-1/2", 6"`, with an optional third value for that hole's
+diameter), measured from a **reference point** (Reference X /
 Y) into the machine's travel, the same way the grid's insets are. Easiest: set the reference, then jog
 over each hole and press **Add Current Position**. Positions are relative so that if the board or the
 machine's homing ever shifts, jogging to the first listed hole and pressing **Grab First Hole Center**
@@ -218,7 +238,10 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   point of the picked hole, running away from the hole (the back right side of a hole takes the
   stock's front left corner; **Corner** overrides that). The second box of dots picks where X0 Y0 goes
   on the stock: its center, a corner or an edge. **Go to Selected** and **Set** then use that point.
-  The keyboard macros always use the hole itself.
+  With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when you ticked
+  Stock (its front left corner there), so you can zero on a corner, tick Stock, and Set its center.
+  It stays put when X0 Y0 changes; **From X0 Y0 now** takes X0 Y0 again. The keyboard macros always
+  use the hole itself.
 - **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
   rectangle over it. This map then won't pick its holes, Select Nearest skips them, and Go to and Set
   won't target a point inside it. **That's all it does: it's a note for the picker, not a keepout

@@ -52,6 +52,14 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
     is the stock point when on); favorites (`holeKey`, in the profile, saved without marking it
     changed); live position (`startLive`: 'server-state-update' messages plus a 500 ms poll,
     `renderHoles(true)` when `liveKey` changes, which leaves the profile menu alone).
+  - Layouts: 'grid', 'list', 'both' (grid + extra holes listed from grid 1's first hole). List lines take
+    an optional third value, the hole's diameter (`diaMm`). Further grids live in `holeGrids` (grid 1
+    keeps the old top-level keys, so old settings load as one grid); `allHoles` flattens them with
+    `layer` 1, 2... and keys `g2:c,r`. The UI keeps every grid's typed values in `holes.gridRaw`; the
+    fields show `holes.activeGrid` (`syncGrid`/`gridToDom`/`parseGrid`). `holes.hidden` (eye, by layer
+    or 'list') is map-only; `nearest: false` leaves a grid out of Select Nearest and the macros.
+    Macros: one grid (+ extras) keeps the single-grid math; several grids, a list alone, or grid 1 left
+    out go to `severalGridLines` (best so far in #19-#21, side offset and radius in #14-#16).
   - Profiles (`holeProfiles`, `holeProfile`): `setupBody` is what one holds (not the origin dot);
     `sameSetup` ignores favorites; `showProfile` draws the menu and the changes bar.
 - **Layout** follows QuickCut's: the dialog header is hidden, and a sidebar has the tabs (**XY0 Picker**, first;
