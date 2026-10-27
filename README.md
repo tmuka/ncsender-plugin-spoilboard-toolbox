@@ -233,7 +233,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 
 ### Map tools
 
-- **Live position:** while you jog, the spindle dot moves and the hole nearest it gets a dashed ring,
+- **Live position:** while you jog, the spindle (a silver ring, as ncSender's Top view shows it) moves and the hole nearest it gets a dashed ring,
   with its name and distance under the map, so you can see which hole Pick Nearest will take.
 - **Stock:** tick it and type the stock's width (X) and length (Y). The stock is drawn from the picked
   point of the picked hole, running away from the hole (the back right side of a hole takes the
