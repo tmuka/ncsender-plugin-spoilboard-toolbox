@@ -365,7 +365,7 @@
   .mw-hole-map .mw-h-tick { stroke: var(--color-accent); stroke-width: 1.5; }
   .mw-hole-map text.mw-h-ruler { font-size: 10px; font-variant-numeric: tabular-nums; }
   .mw-hole-map text.mw-h-axis { font-weight: 700; }
-  .mw-hole-map text.mw-h-name { fill: var(--color-text-primary); font-weight: 600; pointer-events: none; }
+  .mw-hole-map text.mw-h-name { fill: var(--color-text-primary); font-weight: 600; cursor: pointer; }
   .mw-hole-map .mw-h-track { fill: color-mix(in srgb, var(--color-text-secondary) 22%, transparent); pointer-events: none; }
   .mw-hole-map .mw-h-keepout {
     fill: color-mix(in srgb, var(--color-danger, #e74c3c) 12%, transparent);
@@ -3037,10 +3037,16 @@
     } else if (h) {
       // Each hole sits in a hit area most of the way to its neighbours, so
       // small holes are easy to tap.
+      // Listed points (pins, a vise) are drawn after the grids, so where
+      // they overlap a grid hole they're on top and take the click, with a
+      // hit area of at least 12 px and their name clickable too.
       var hit0 = holeSpacingMm(h) * sc * 0.45;
-      holes.grid.forEach(function(p, i) {
+      var order = holes.grid.map(function(p, i) { return i; });
+      order.sort(function(a, b) { return (holes.grid[a].col == null) - (holes.grid[b].col == null) || a - b; });
+      order.forEach(function(i) {
+        var p = holes.grid[i];
         if ((p.suppressed && !editing) || p.hidden) return;
-        var r = Math.max(p.diaMm != null && p.diaMm < h.diaMm ? 2 : 3, holeR(p, h) * sc), hit = Math.max(r, hit0);
+        var r = Math.max(p.diaMm != null && p.diaMm < h.diaMm ? 2 : 3, holeR(p, h) * sc), hit = Math.max(r, hit0, p.col == null ? 12 : 0);
         var g = document.createElementNS(ns, 'g');
         g.setAttribute('class', (p.blocked ? 'mw-h-spot mw-h-blocked' : p.suppressed ? 'mw-h-spot mw-h-suppressed' : 'mw-h-spot') +
           (holes.favorites.indexOf(holeKey(p)) >= 0 ? ' mw-h-fav' : '') + (near0 && near0.index === i ? ' mw-h-near' : ''));
