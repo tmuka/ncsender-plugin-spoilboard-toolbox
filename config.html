@@ -136,12 +136,12 @@
   .mw-maptools-row, .mw-stock { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
   .mw-stock-on { align-items: center; }
   .mw-stock-on input { margin-top: 0; }
-  .mw-stock .mw-input.mw-stock-size { width: 72px !important; min-height: 0 !important; padding: 4px 6px !important; }
+  .mw-stock .mw-input.mw-stock-size { width: 62px !important; min-width: 0 !important; min-height: 0 !important; padding: 4px 6px !important; }
   .mw-stock .mw-select.mw-stock-corner { width: auto !important; min-height: 0 !important; padding: 4px 6px !important; }
   .mw-stock .mw-stock-dots { width: 34px; height: 26px; margin: 6px 8px; border-style: solid; border-radius: 2px; }
   .mw-stock .mw-stock-dots::before { display: none; }
   .mw-stock:not(.mw-stock-active) > :not(.mw-stock-on) { display: none; }
-  .mw-stock-wl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .mw-stock-wl { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   .mw-maptools-row .mw-btn { min-height: 0 !important; padding: 4px 10px !important; }
   .mw-btn.mw-btn-quiet[aria-pressed="true"] { background: color-mix(in srgb, var(--color-accent) 32%, transparent) !important; border-color: var(--color-accent) !important; }
   .mw-favs { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -346,6 +346,8 @@
     gap: 10px 16px; align-items: start;
   }
   .mw-pick-card.mw-tall .mw-hole-map { grid-row: 1 / span 2; }
+  /* Nothing in the narrow column may push it wider than its 230 px. */
+  .mw-pick-card.mw-tall > *, .mw-pick-card.mw-tall .mw-holebar > *, .mw-maptools > * { min-width: 0; max-width: 100%; }
   .mw-pick-card.mw-tall .mw-holebar { flex-direction: column; align-items: stretch; }
   .mw-pick-card.mw-tall .mw-dots-wrap { align-self: center; }
   .mw-pick-card.mw-tall .mw-holebar-info { flex: none; text-align: center; }
@@ -454,7 +456,8 @@
               <span class="mw-stock-wl"><input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" placeholder="Width" aria-label="Stock width, along X" title="The stock's size along X. With a size, X0 Y0 goes on the stock (picked with the box of dots) instead of the hole, and the map draws it.">
               <span class="mw-hint">&times;</span>
               <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" placeholder="Length" aria-label="Stock length, along Y" title="The stock's size along Y.">
-              <span class="mw-hint">&times;</span>
+              <span class="mw-hint mw-unit">mm</span></span>
+              <span class="mw-stock-wl"><span class="mw-hint">T</span>
               <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
               <span class="mw-hint mw-unit">mm</span></span>
               <select class="mw-select mw-stock-corner" id="mw-stock-zmode" aria-label="Where Set Z0 puts Z0" title="Where Set Z0 puts Z0: on what the stock sits on (the spoilboard, or a picked fixture point's surface), or on the stock's top (that plus its thickness).">
