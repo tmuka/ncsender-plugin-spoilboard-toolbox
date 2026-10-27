@@ -136,7 +136,7 @@
   .mw-maptools-row, .mw-stock { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
   .mw-stock-on { align-items: center; }
   .mw-stock-on input { margin-top: 0; }
-  .mw-stock .mw-input.mw-stock-size { width: 62px !important; min-width: 0 !important; min-height: 0 !important; padding: 4px 6px !important; }
+  .mw-stock .mw-input.mw-stock-size { width: 72px !important; min-width: 0 !important; min-height: 0 !important; padding: 4px 6px !important; }
   .mw-stock .mw-select.mw-stock-corner { width: auto !important; min-height: 0 !important; padding: 4px 6px !important; }
   .mw-stock .mw-stock-dots { width: 34px; height: 26px; margin: 6px 8px; border-style: solid; border-radius: 2px; }
   .mw-stock .mw-stock-dots::before { display: none; }
@@ -470,7 +470,7 @@
                 <option value="back-left">Back left at point</option><option value="back-right">Back right at point</option>
               </select>
               <span class="mw-dots-wrap"><span class="mw-dots-cap">X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
-              <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-anchor" title="With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when Stock was ticked, so setting X0 Y0 on the stock doesn't move it. Press this to take X0 Y0 as it is now.">From X0 Y0 now</button></span>
+              <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the corner on the picked point (or X0 Y0) to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-anchor" title="With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when Stock was ticked, so setting X0 Y0 on the stock doesn't move it. Press this to take X0 Y0 as it is now.">From X0 Y0 now</button></span>
             </div>
             <div class="mw-maptools-row">
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-area" aria-pressed="false" title="Mark a clamp or fixture on the map for this job: drag a rectangle. This map then won't pick its holes, and Go to and Set won't target a point inside it. It's only a reminder for this picker: jogging, jobs and the keyboard macros don't know about it. Tap an excluded area to remove it.">Exclude Picks</button>
@@ -2118,6 +2118,7 @@
     var set = function(key, text) { ROOT.querySelectorAll('[data-val="' + key + '"]').forEach(function(el) { el.textContent = text; }); };
     set('spoil', spoil ? ' \u2014 height ' + mm(spoil) : spoil === 0 ? ' \u2014 height not recorded yet' : '');
     set('thick', thick ? mm(thick) + ' thick' : thick === 0 ? 'thickness not stored yet' : '');
+    if (thick != null) { takeMeasuredThickness(thick); updatePicked(); }
     set('saved', saved ? WCS_NAMES[s.backup] + ' Z: ' + mm(saved) : saved === 0 ? 'nothing saved yet' : '');
     set('tlo', hash.TLO != null ? (state.loadedTool ? 'T' + state.loadedTool + ': ' : 'Loaded tool: ') + mm(hash.TLO) : '');
     var near = function(a, b) { return a != null && b != null && Math.abs(a - b) <= 0.001; };
@@ -2239,6 +2240,8 @@
     function stockSync() { $('mw-stock-on').closest('.mw-stock').classList.toggle('mw-stock-active', $('mw-stock-on').checked); renderHoles(); saveSettings(); }
     $('mw-stock-on').addEventListener('change', function() { if ($('mw-stock-on').checked) anchorStock(); }, true);
     $('mw-stock-anchor').addEventListener('click', function() { readMachineState().then(function() { anchorStock(); stockSync(); }); });
+    $('mw-stock-far').addEventListener('click', function() { readMachineState().then(function() { stockFromSpindle(); stockSync(); }); });
+    $('mw-stock-t').addEventListener('input', function() { holes.thickFrom = 'typed'; });
     ['mw-stock-on', 'mw-stock-corner', 'mw-stock-zmode'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
     ['mw-stock-w', 'mw-stock-l', 'mw-stock-t'].forEach(function(id) {
       $(id).addEventListener('input', function() { renderHoles(); });
@@ -2336,6 +2339,38 @@
     return stockRect(pt.x, pt.y, w, l, c !== 'auto' ? c : fromZero ? 'front-left' : stockCornerFor(holes.origin));
   }
   function stockActive() { return !!stockAt({ x: 0, y: 0 }); }
+  // The stock's Thick field follows the thickness slot (what Measure stock
+  // thickness or Store wrote) until it's typed in this session.
+  function takeMeasuredThickness(mm) {
+    if (!(mm > 0) || holes.thickFrom === 'typed') return;
+    var el = $('mw-stock-t'), v = +(mm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
+    holes.thickFrom = 'measured';
+    if (unitVal(el) === v) return;
+    el.value = v;
+    el.classList.remove('mw-invalid');
+    saveSettings();
+  }
+  // Width and length from the spindle over the stock's far corner: the
+  // corner on the picked point (or X0 Y0) is the one facing away from it.
+  function stockFromSpindle() {
+    var status = $('mw-hole-status'), ms = state.machine || {}, here = ms.homed ? xyOf(ms.MPos) : null;
+    var p = holes.grid[holes.picked], pt = p ? holePoint(p) : holes.stockAnchor;
+    var bad = function(text) { status.setAttribute('data-state', 'bad'); status.textContent = text; };
+    if (!here) return bad('Home the machine first: the stock size comes from the spindle’s machine position.');
+    if (!pt) return bad('Pick the hole the stock is aligned on (or set X0 Y0 on its corner) first.');
+    var dx = here.x - pt.x, dy = here.y - pt.y;
+    if (Math.abs(dx) < 1 || Math.abs(dy) < 1) return bad('Jog the bit over the stock’s opposite corner first, then press Far Corner Here.');
+    var corner = (dy > 0 ? 'front' : 'back') + '-' + (dx > 0 ? 'left' : 'right');
+    var auto = p ? stockCornerFor(holes.origin) : 'front-left';
+    $('mw-stock-corner').value = corner === auto ? 'auto' : corner;
+    var k = state.imperial ? MM_PER_INCH : 1, d = state.imperial ? 4 : 3;
+    $('mw-stock-w').value = +(Math.abs(dx) / k).toFixed(d);
+    $('mw-stock-l').value = +(Math.abs(dy) / k).toFixed(d);
+    ['mw-stock-w', 'mw-stock-l'].forEach(function(id) { $(id).classList.remove('mw-invalid'); });
+    status.setAttribute('data-state', 'ok');
+    status.textContent = 'Stock size from the spindle: ' + shown(Math.abs(dx)) + ' × ' + shown(Math.abs(dy)) + ' ' + unitName() +
+      ', its ' + corner.replace('-', ' ') + ' corner on ' + (p ? 'the picked point' : holes.stockAnchor.wcs + ' X0 Y0') + '.';
+  }
   // With no hole picked, the stock hangs off the work offset's X0 Y0 as it
   // was when Stock was ticked (holes.stockAnchor, machine mm), not as it
   // is now: setting X0 Y0 on the stock then doesn't move the stock. Only
@@ -3250,14 +3285,16 @@
   }
   // Sends the lines in order; an imperial machine gets G20 back even if
   // one is rejected.
-  async function sendHoleCommands(cmds) {
+  // imperial: whether the controller was in G20 ($G), when known; else
+  // ncSender's units.
+  async function sendHoleCommands(cmds, imperial) {
     try {
       for (var i = 0; i < cmds.length; i++) {
         var r = await sendCommand(cmds[i]);
         if (!r.ok) throw new Error('the controller rejected ' + cmds[i]);
       }
     } finally {
-      if (state.imperial) await sendCommand('G20').catch(function() {});
+      if (imperial == null ? state.imperial : imperial) await sendCommand('G20').catch(function() {});
     }
   }
   // The picked hole and its target, or why it can't be used.
@@ -3446,7 +3483,8 @@
       var top = $('mw-stock-zmode').value === 'top', t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
       if (top && !(t > 0)) return null;
       var under = base != null ? on : 'the spoilboard';
-      return { hMm: (base || 0) + (top ? t : 0), what: top ? 'the stock top (on ' + under + ')' : base != null ? 'the stock bottom (on ' + on + ')' : 'the spoilboard' };
+      var from = holes.thickFrom === 'measured' ? 'measured' : holes.thickFrom === 'typed' ? 'typed' : 'from last time';
+      return { hMm: (base || 0) + (top ? t : 0), what: top ? 'the stock top (' + shown(t) + ' ' + unitName() + ' ' + from + ', on ' + under + ')' : base != null ? 'the stock bottom (on ' + on + ')' : 'the spoilboard' };
     }
     return base != null ? { hMm: base, what: 'the surface of ' + on } : null;
   }
@@ -3463,11 +3501,14 @@
       try {
         var z = zTarget(), s = { wcs: +$('mw-wcs').value, slot: +$('mw-slot').value, backup: +$('mw-backup').value, thick: +$('mw-thick').value };
         if (!z) return;
-        var zp = zProblem(z.hMm);
-        if (zp) throw new Error('that Z0 is ' + shown(z.hMm) + ' ' + unitName() + ' above the spoilboard, and ' + zp + '; check the height and the stock thickness');
         if (s.slot === s.backup || s.slot === s.thick || s.backup === s.thick) throw new Error('the Z0 macros tab\u2019s three storage offsets must be different');
         await machineReady();
         var hash = parseHashReport((await ask('$#', 900)).lines), spoil = hash[WCS_NAMES[s.slot]], g92 = hash.G92;
+        if (hash[WCS_NAMES[s.thick]]) takeMeasuredThickness(hash[WCS_NAMES[s.thick]][2]);
+        z = zTarget();
+        if (!z) return;
+        var zp = zProblem(z.hMm);
+        if (zp) throw new Error('that Z0 is ' + shown(z.hMm) + ' ' + unitName() + ' above the spoilboard, and ' + zp + '; check the height and the stock thickness');
         if (!g92) throw new Error('the controller didn\u2019t report its G92 offset ($#), so it isn\u2019t safe to set Z0; try again');
         if (Math.abs(g92[2] || 0) > 0.0005) throw new Error('a G92 Z offset is active, which would shift Z0. Send G92.1 in the terminal to clear it, then try again');
         if (!spoil || !spoil[2]) throw new Error('the spoilboard height isn\u2019t recorded yet: run ZS: Record spoilboard height (Z0 macros tab) once');
@@ -3475,7 +3516,7 @@
         if (!gc || !gc.tloActive) throw new Error('no tool length offset is active, so Z0 wouldn\u2019t follow the tool. Measure the tool first');
         var wcsP = await resolveHoleWcs(gc);
         if ([s.slot, s.backup, s.thick].indexOf(wcsP) >= 0) throw new Error(WCS_NAMES[wcsP] + ' holds the Z0 macros\u2019 stored values; pick another work offset in the menu');
-        await sendHoleCommands(zAboveSpoilLines(s, wcsP, z.hMm));
+        await sendHoleCommands(zAboveSpoilLines(s, wcsP, z.hMm), gc.imperial);
         status.setAttribute('data-state', 'ok');
         status.textContent = WCS_NAMES[wcsP] + ' Z0 is now on ' + z.what + ': the spoilboard + ' + shown(z.hMm) + ' ' + unitName() + '.' +
           (wcsP === s.wcs ? ' A probed Z0 you had is kept for ZS: Z0 back to saved.' : ' (Only ' + WCS_NAMES[s.wcs] + ', the Z0 macros\u2019 offset, keeps its previous Z0 for back to saved.)');
@@ -3500,8 +3541,9 @@
         if (Math.abs(g92[0] || 0) > 0.0005 || Math.abs(g92[1] || 0) > 0.0005) {
           throw new Error('a G92 offset is active (X ' + fmt(g92[0]) + ', Y ' + fmt(g92[1]) + ' in the controller\u2019s units), which would shift X0 Y0 away from the hole. Send G92.1 in the terminal to clear it, then Set again');
         }
-        var wcsP = await resolveHoleWcs();
-        await sendHoleCommands(holeCommands(wcsP, t.tg.x, t.tg.y));
+        var gc = parseGcState((await ask('$G', 500)).lines);
+        var wcsP = await resolveHoleWcs(gc);
+        await sendHoleCommands(holeCommands(wcsP, t.tg.x, t.tg.y), gc ? gc.imperial : null);
         status.setAttribute('data-state', 'ok');
         status.textContent = WCS_NAMES[wcsP] + ' X0 Y0 is now on ' + targetText(t) + ' (machine X ' + fmt(t.tg.x) + ', Y ' + fmt(t.tg.y) + ' mm).';
         await readMachineState();

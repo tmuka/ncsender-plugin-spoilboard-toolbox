@@ -14,6 +14,11 @@ What's new in each release of Zero Swapper. Install or update from
   Z). On the Z0 macros' work offset a probed Z0 is kept for **Z0 back to saved**, and holding Set
   Z0 again or running a Z0 macro after it doesn't replace it (press **Create macros** once so the Z0
   macros know about it).
+- **Stock size without a tape.** Jog the bit over the stock's opposite corner and press **Far
+  Corner Here**: width, length and which corner sits on the point come from the spindle.
+- **Thick follows Measure stock thickness.** The stock's thickness fills in from what the measure
+  macro (or Store) recorded, until you type one, and Set Z0 says whether it used a measured, typed
+  or last-time thickness.
 - **Heights are checked**: one below the spoilboard or more than the machine's Z travel (a unit typo,
   say) is flagged on its line in the list, and Set Z0 refuses it.
 
@@ -21,7 +26,12 @@ What's new in each release of Zero Swapper. Install or update from
 - Listed points (pins, a vise) sit on top of the grids and their names are clickable, so they're
   easy to pick even right next to a dog hole.
 - With Grid + List, the list says how many points fall outside the machine's travel.
-- Stock thickness has its own line, so the narrow column never scrolls sideways.
+- Stock thickness has its own line, so the narrow column never scrolls sideways, and the stock fields
+  are wide enough for 4–5 digit sizes.
+
+### 🐛 Fixes
+- Set and Set Z0 put the controller back in inches only if it was in inches (asked with `$G`), not
+  by ncSender's unit setting.
 
 ## 0.3.34
 
