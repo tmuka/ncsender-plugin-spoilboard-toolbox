@@ -43,7 +43,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
   - Cut Holes: `holeCutMethod`, `holesToCut`, `cutOrder`, `holeCutProblems`, `cutStart` / `cutEnd`, `holeCutProgram`
     (each hole may carry its own `depthMm`; `safeEach` lifts to Safe Z between hole centers; `zStop` adds a stop
     line for the work offset's Z0), `engraveProgram`, `chamferProgram`, `fitTestHoles`, `fitGrid`. Stock holes:
-    `stockHoleCandidates`, `stockBoltHoles`, `flipPins`, `flipRect`. Map zoom: `zoomWindow`, `labelEvery`.
+    `stockHoleCandidates`, `stockBoltHoles`, `flipPins`, `flipRect`. T-track slots: `clipToRect`, `trackSlots`, `trackProgram`. Map zoom: `zoomWindow`, `labelEvery`.
   - Turned grids: `turnHoles` (holeGrid turns a grid's holes about its first hole by `turnDeg`) and `turnLines` (the macros
     turn the spindle position into the grid's square frame in #22 / #23, run the grid math, and turn #6 / #7 back).
   - `storeThicknessCommand`, `MACRO_PREFIX` (`SBT: `), `OLD_PREFIXES` (`ZS: `, `MW: `, `Macro Wiz: `, the names earlier versions used; Create macros renames them in place by ID, so ncSender's `Macro:<id>` shortcuts survive).

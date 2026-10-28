@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1400,4 +1400,45 @@ test('cut programs: M6 to the tool Bit Diameter came from, after Safe Z and befo
   assert.ok(stop < safe && safe < m6 && m6 < m3, JSON.stringify([stop, safe, m6, m3]));
   assert.ok(!holeCutProgram(cutBase()).some(l => /^M6/.test(l)));
   assert.ok(!engraveProgram(Object.assign(cutBase({ tool: 3 }), { labels: [], textMm: 5, laser: true, power: 100 })).some(l => /^M6/.test(l)));
+});
+
+// The Onefinity QCW layout on an 800 x 1200 travel: T-tracks along X every 5 rows.
+const qcw = (over) => Object.assign({ sxMm: 48.6004, syMm: 48.6004, insetXMm: 6.858, insetYMm: 21.846, travelXMm: 800, travelYMm: 1200,
+  dirX: 1, dirY: 1, trackAxis: 'x', panelHoles: 5, panelPitchMm: 0 }, over);
+
+test('T-track slots: centered between panels, the whole travel less the bit, split by zones', () => {
+  const slots = trackSlots([qcw()], 19.05 / 2, 3.175, []);
+  const mid = 21.846 + 4 * 48.6004 + 48.6004 / 2;
+  assert.ok(slots.length >= 3);
+  assert.ok(Math.abs(slots[0].a.y - mid) < 1e-6 && Math.abs(slots[0].b.y - mid) < 1e-6, JSON.stringify(slots[0]));
+  assert.ok(Math.abs(slots[0].a.x - 3.175) < 1e-6 && Math.abs(slots[0].b.x - (800 - 3.175)) < 1e-6);
+  // A zone across the first slot splits it, the slot's half width and the bit clear of it.
+  const z = { minX: 300, maxX: 400, minY: mid - 5, maxY: mid + 5 };
+  const cut = trackSlots([qcw()], 19.05 / 2, 3.175, [z]).filter(sl => Math.abs(sl.a.y - mid) < 1e-6);
+  assert.equal(cut.length, 2);
+  assert.ok(Math.abs(cut[0].b.x - (300 - 3.175 - 19.05 / 2)) < 1e-6 && Math.abs(cut[1].a.x - (400 + 3.175 + 19.05 / 2)) < 1e-6);
+  // A turned grid's slots turn with it, about the first hole.
+  const t = trackSlots([qcw({ turnDeg: 0.5 })], 19.05 / 2, 3.175, [])[0], a = 0.5 * Math.PI / 180;
+  assert.ok(Math.abs(Math.atan2(t.b.y - t.a.y, t.b.x - t.a.x) - a) < 1e-9);
+});
+
+test('T-track program: never deeper than asked, every pass inside the slot and the travel', () => {
+  const slots = trackSlots([qcw()], 19.05 / 2, 3.175, []);
+  const o = cutBase({ slots, widthMm: 19.05, depthMm: 12.7, stepMm: 3, wcs: { p: 1, x: 0, y: 0 } });
+  const L = trackProgram(o), { pts, deepest } = cutTrace(L);
+  assert.equal(deepest, -12.7);
+  const spare = (19.05 - 6.35) / 2;
+  for (const [x, y] of pts) {
+    const near = slots.some(sl => {
+      const ux = sl.b.x - sl.a.x, uy = sl.b.y - sl.a.y, len = Math.hypot(ux, uy), t = ((x - sl.a.x) * ux + (y - sl.a.y) * uy) / len / len;
+      const d = Math.abs((x - sl.a.x) * sl.nx + (y - sl.a.y) * sl.ny);
+      return t >= -1e-6 && t <= 1 + 1e-6 && d <= spare + 1e-3;
+    });
+    assert.ok(near, x + ',' + y);
+    assert.ok(x >= 3.175 - 1e-6 && x <= 800 - 3.175 + 1e-6 && y >= 0 && y <= 1200);
+  }
+  // A bit the track's width: one pass down the middle.
+  const one = trackProgram(cutBase({ slots: slots.slice(0, 1), widthMm: 6.35, depthMm: 6, stepMm: 3, wcs: { p: 1, x: 0, y: 0 } }));
+  assert.equal(one.filter(l => /^G1 X/.test(l)).length, 2);
+  for (const l of L) assert.ok(l.length < 190, l);
 });

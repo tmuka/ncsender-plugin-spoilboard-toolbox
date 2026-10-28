@@ -24,6 +24,9 @@ file names start SBT too.
   beside the holes with a V-bit or a laser.
 - **Tool change from the loaded tool:** click Bit Diameter to take ncSender's loaded tool and the hole
   programs start with `M6` to it; a typed diameter means you load the bit.
+- **Cut the T-tracks** (Cut Holes tab): just the T-track slots in a sacrificial top layer, so the tracks
+  and threaded inserts live in a lower layer that's never cut, and the top can be surfaced off or
+  replaced. Through the top layer, or dados to set new track in.
 - **Holes through the stock** (Cut Holes tab): drill the stock right over spoilboard holes, either bolt
   holes (with an optional counterbore) to bolt it to threaded inserts, or two flip pins so a stock
   flipped for its second side drops back exactly where it was.

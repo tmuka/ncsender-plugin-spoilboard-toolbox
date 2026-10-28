@@ -353,6 +353,17 @@ the plugin reminds you to re-record the spoilboard height.
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
   V-bit or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
 
+**Cut the T-tracks (a two-layer spoilboard):** install the T-tracks and threaded inserts once, in a lower
+layer of MDF, and lay a thinner sacrificial layer over it. **Cut the T-tracks** cuts just the slots, along
+each of Setup's T-tracks at your **Track Width** (19.05 mm, 3/4", to start), so the tracks below show;
+then Cut Holes cuts the dog holes through the same layer, over the inserts. When the top gets chewed up,
+surface it off or replace it and cut it again, and the tracks and inserts are never touched.
+- **Depth** blank goes the **Spoilboard Thickness**, which must be the top layer's thickness alone; a
+  smaller Depth cuts dados to set new track into the layer itself. It can never go deeper than the
+  Spoilboard Thickness, so the lower layer and its inserts are safe.
+- Slots wider than the bit are cut in passes side by side, a Depth per Pass at a time; they stop short of
+  the travel's ends, keepout zones and Exclude Picks areas, and follow a turned grid.
+
 **Holes through the stock:** drill the stock right over spoilboard holes, with Z0 on the stock's top and
 the stock clamped some other way while it drills. The stock is the XY0 Picker's (tick **Stock**, with its
 size and thickness); the holes come from the grid picked in Setup.
