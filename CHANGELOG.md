@@ -12,29 +12,29 @@ place, keeping their numbers, so keyboard shortcuts on them still work. Generate
 file names start SBT too.
 
 ### ✨ New
-- **Cut Holes:** a new tab writes the program that cuts the dog holes you set up, every grid and each
+- **Spoilboard:** a new tab writes the program that cuts the dog holes you set up, every grid and each
   hole at its own size, and opens it in ncSender's visualizer. Holes the bit's size are drilled, up to
   twice its size spiralled down, bigger ones cleared in rings (QuickCut's circle milling). Suppressed,
   hidden and keepout holes are left out; it hops 5 mm between holes and lifts to Safe Z over keepout
   zones and Exclude Picks areas; Hole Depth can't pass the spoilboard's thickness; and it stops before
   moving if the work offset's X0 Y0 changed since you generated it.
 
-- **Dowel fit test, chamfers and labels** (Cut Holes tab): a row of test holes in scrap to find the size
+- **Dowel fit test, chamfers and labels** (Spoilboard tab): a row of test holes in scrap to find the size
   your dowels fit; a V-bit chamfer round each hole's top edge; and the fixture table's names engraved
   beside the holes with a V-bit or a laser.
 - **Tool change from the loaded tool:** click Bit Diameter to take ncSender's loaded tool and the hole
   programs start with `M6` to it; a typed diameter means you load the bit.
-- **Cut the T-tracks** (Cut Holes tab): just the T-track slots in a sacrificial top layer, so the tracks
+- **Cut the T-tracks** (Spoilboard tab): just the T-track slots in a sacrificial top layer, so the tracks
   and threaded inserts live in a lower layer that's never cut, and the top can be surfaced off or
   replaced. Through the top layer, or dados to set new track in.
-- **Holes through the stock** (Cut Holes tab): drill the stock right over spoilboard holes, either bolt
+- **Stock** (a new tab): drill the stock right over spoilboard holes, either bolt
   holes (with an optional counterbore) to bolt it to threaded inserts, or two flip pins so a stock
   flipped for its second side drops back exactly where it was.
 - **Measure Holes:** probe a few real holes and Setup's spacing and insets are fitted to them, with how
   far the spoilboard is turned.
 - **Turned spoilboards:** a grid's **Turn** (degrees, from Measure Holes) turns its holes about the first
   one, for the map, Pick Nearest Hole, Set, the keyboard macros (press **Create macros** again after
-  changing it) and Cut Holes. On an 8 ft bed, 0.1° is about 4 mm at the far end.
+  changing it) and the Spoilboard and Stock programs. On an 8 ft bed, 0.1° is about 4 mm at the far end.
 - **Presets:** load a shared grid layout (Onefinity QCW first) from the Profiles menu; you grab or
   measure the insets.
 - **After surfacing:** when a wasteboard surfacing job finishes, a note says to re-record the
@@ -46,7 +46,8 @@ file names start SBT too.
   drawn.
 - Two-letter row names (AA on) fit beside the map, and column numbers thin out so they never run
   together. Holes right on the edge of the travel show whole, with room before the row letters.
-- **The menu** runs XY0 Picker, Cut Holes, then Z0 macros.
+- **The menu** runs XY0 Picker, Spoilboard (dog holes, T-tracks, fit test, chamfers and labels, one at a
+  time with chips), Stock, then Z0 macros.
 - **Grab any hole:** pick a hole on the map, jog over it, and **Grab B3 Center** sets the insets so that
   hole is under the bit, instead of guessing from the first hole.
 - **SBT: Set XY0 at nearest hole (no move)** is the new name of XY0 on nearest hole, so it's not mistaken

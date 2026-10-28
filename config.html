@@ -206,6 +206,10 @@
   .mw-grid-chip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; padding: 3px 6px 3px 10px; border-radius: 999px; border: 1px solid var(--color-border); color: var(--color-text-primary); outline: none; }
   .mw-grid-chip[aria-pressed="true"] { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, transparent); }
   .mw-grid-chip.mw-chip-static { cursor: default; }
+  .mw-secs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+  .mw-sec { cursor: pointer; font: inherit; font-size: 0.9rem; min-height: 34px; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-primary); }
+  .mw-sec[aria-selected="true"] { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, transparent); font-weight: 600; }
+  .mw-tab[data-tab="cut"] .mw-card[data-sec][hidden] { display: none; }
   .mw-grid-chip.mw-chip-bad { border-color: var(--color-danger, #e74c3c); }
   .mw-grid-chip.mw-chip-add { padding: 3px 12px; font-weight: 600; background: color-mix(in srgb, var(--color-accent) 14%, transparent); border-color: color-mix(in srgb, var(--color-accent) 35%, transparent); }
   .mw-grid-chip.mw-chip-add:hover:not([aria-disabled="true"]) { background: color-mix(in srgb, var(--color-accent) 24%, transparent); }
@@ -428,7 +432,11 @@
         </button>
         <button type="button" class="mw-nav-btn" data-tab="cut">
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="6"/><path d="M12 2v9"/><path d="M9 8l3 3 3-3"/></svg></span>
-          <span class="mw-nav-label">Cut Holes</span>
+          <span class="mw-nav-label">Spoilboard</span>
+        </button>
+        <button type="button" class="mw-nav-btn" data-tab="stock">
+          <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="1.5"/><circle cx="7.5" cy="12" r="1.5"/><circle cx="16.5" cy="12" r="1.5"/></svg></span>
+          <span class="mw-nav-label">Stock</span>
         </button>
         <button type="button" class="mw-nav-btn" data-tab="macros">
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14L5 19h14"/></svg></span>
@@ -823,15 +831,19 @@
       </section>
     </div>
     <div class="mw-tab" data-tab="cut" hidden>
-      <p class="mw-intro"><strong>Cut the dog holes you set up in the XY0 Picker</strong>, so the spoilboard and the map come from the
-        same numbers. Load the bit and put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it), then
-        <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run. It uses the active work offset&rsquo;s X0 Y0.</p>
-      <section class="mw-card">
-        <h3 class="mw-card-title">Holes</h3>
-        <p class="mw-hint" id="mw-cut-holes"></p>
-        <label class="mw-extra"><input type="checkbox" id="mw-cut-list"><span>Also cut the listed holes (Grid + List or List). Points with a height, such as a vise, are never cut.</span></label>
-      </section>
-      <section class="mw-card">
+      <p class="mw-intro"><strong>Make or remake the spoilboard</strong> from the holes you set up in the XY0 Picker, so the board and
+        the map come from the same numbers. Put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it), pick
+        what to cut, and <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run. It uses the active
+        work offset&rsquo;s X0 Y0. Surfacing is QuickCut&rsquo;s.</p>
+      <div class="mw-secs" id="mw-cut-secs" role="tablist" aria-label="What to cut">
+        <button type="button" class="mw-sec" role="tab" data-sec="holes" aria-selected="true">Dog holes</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="tracks" aria-selected="false">T-tracks</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="fit" aria-selected="false">Fit test</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="chamfer" aria-selected="false">Chamfers</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="labels" aria-selected="false">Labels</button>
+      </div>
+      <div id="mw-cut-common-slot">
+      <section class="mw-card" id="mw-cut-common">
         <h3 class="mw-card-title">Bit and depth</h3>
         <div class="mw-row">
           <div class="mw-field">
@@ -876,12 +888,18 @@
         <label class="mw-extra"><input type="checkbox" id="mw-cut-mist"><span>Mist (M7)</span></label>
         <label class="mw-extra"><input type="checkbox" id="mw-cut-flood"><span>Flood (M8)</span></label>
       </section>
-      <section class="mw-card">
+      </div>
+      <section class="mw-card" data-sec="holes">
+        <h3 class="mw-card-title">Holes</h3>
+        <p class="mw-hint" id="mw-cut-holes"></p>
+        <label class="mw-extra"><input type="checkbox" id="mw-cut-list"><span>Also cut the listed holes (Grid + List or List). Points with a height, such as a vise, are never cut.</span></label>
+      </section>
+      <section class="mw-card" data-sec="holes">
         <p class="mw-hint" id="mw-cut-summary"></p>
         <p class="mw-status" id="mw-cut-note" role="status"></p>
         <div><button type="button" class="mw-btn" id="mw-cut-generate">Generate</button></div>
       </section>
-      <section class="mw-card">
+      <section class="mw-card" data-sec="tracks">
         <h3 class="mw-card-title">Cut the T-tracks</h3>
         <p class="mw-hint">Just the T-track slots, no holes: for a sacrificial layer laid over a lower one that keeps the tracks and
           threaded inserts, so the top can be surfaced off and replaced without touching them. A slot along each of Setup&rsquo;s
@@ -902,6 +920,97 @@
         <p class="mw-status" id="mw-trk-note" role="status"></p>
         <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-trk-generate">Generate T-tracks</button></div>
       </section>
+      <section class="mw-card" data-sec="fit">
+        <h3 class="mw-card-title">Dowel fit test</h3>
+        <p class="mw-hint">Before cutting them all, find the size your dowels fit: a row of test holes in scrap, smallest on the left.
+          Put X0 Y0 on the scrap&rsquo;s front left corner and Z0 on its top. It uses the bit, feeds and spindle above.</p>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-fit-size">Middle Size (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-size" value="8" title="The size in the middle of the row; the others go up and down from it by Step.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-fit-step">Step (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-step" value="0.05" title="How much bigger each hole is than the one on its left.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-fit-count">Holes</label>
+            <input class="mw-input" type="number" id="mw-fit-count" min="2" max="9" step="1" value="5" title="How many test holes, 2 to 9.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-fit-edge">Edge Distance (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-edge" value="10" title="How far the holes' edges stay from the scrap's front and left edges (X0 Y0 is its front left corner), so no hole breaks out of the side.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-fit-depth">Depth (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-depth" value="10" title="How deep the test holes go into the scrap.">
+          </div>
+        </div>
+        <p class="mw-hint" id="mw-fit-sizes"></p>
+        <p class="mw-status" id="mw-fit-note" role="status"></p>
+        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-fit-generate">Generate Fit Test</button></div>
+      </section>
+      <section class="mw-card" data-sec="chamfer">
+        <h3 class="mw-card-title">Chamfer the holes</h3>
+        <p class="mw-hint">With a V-bit, after cutting: a small bevel round each hole&rsquo;s top edge, so dowels start easily and the edge doesn&rsquo;t crumble. The same holes as above; Z0 on the spoilboard&rsquo;s top.</p>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-chm-angle">V-bit Angle (&deg;)</label>
+            <input class="mw-input" type="number" id="mw-chm-angle" min="10" max="170" step="1" value="90" title="The V-bit's included angle: 90 for a 90&deg; bit.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-chm-width">Chamfer Width (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-chm-width" value="0.8" title="How far out from the hole's edge the bevel reaches on the surface.">
+          </div>
+        </div>
+        <p class="mw-status" id="mw-chm-note" role="status"></p>
+        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-chm-generate">Generate Chamfers</button></div>
+      </section>
+      <section class="mw-card" data-sec="labels">
+        <h3 class="mw-card-title">Engrave the labels</h3>
+        <p class="mw-hint">The fixture table&rsquo;s names beside the holes, with a V-bit or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top (for a laser: focused on it).</p>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-lab-mode">Labels</label>
+            <select class="mw-select" id="mw-lab-mode" title="Every hole: each one's name (B3). Edges: the first row's column numbers and the first column's row letters.">
+              <option value="every" selected>Every hole</option>
+              <option value="edges">First row and column</option>
+            </select>
+          </div>
+          <div class="mw-field">
+            <label for="mw-lab-tool">With</label>
+            <select class="mw-select" id="mw-lab-tool" title="A V-bit in the spindle, or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
+              <option value="vbit" selected>V-bit</option>
+              <option value="laser">Laser</option>
+            </select>
+          </div>
+          <div class="mw-field">
+            <label for="mw-lab-height">Text Height (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-height" value="5" title="How tall the letters are.">
+          </div>
+          <div class="mw-field mw-lab-vbit">
+            <label for="mw-lab-depth">Depth (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-depth" value="0.4" title="How deep the V-bit cuts the letters.">
+          </div>
+          <div class="mw-field mw-lab-laser" hidden>
+            <label for="mw-lab-power">Laser Power (S)</label>
+            <input class="mw-input" type="number" id="mw-lab-power" min="1" step="1" value="1000" title="The laser's power, as the S value grblHAL uses (up to its $30).">
+          </div>
+          <div class="mw-field">
+            <label for="mw-lab-feed">Feed (<span class="mw-unit">mm</span>/min)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-lab-feed" value="1000" title="How fast the letters are drawn.">
+          </div>
+        </div>
+        <p class="mw-hint" id="mw-lab-summary"></p>
+        <p class="mw-status" id="mw-lab-note" role="status"></p>
+        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-lab-generate">Generate Labels</button></div>
+      </section>
+    </div>
+    <div class="mw-tab" data-tab="stock" hidden>
+      <p class="mw-intro"><strong>Holes through the stock, right over spoilboard holes</strong>: bolt holes to hold it down on threaded
+        inserts, or flip pins so a stock turned over for its second side drops back exactly where it was. Tick Stock in the XY0 Picker
+        (size and thickness), clamp it some other way while it drills, and put Z0 on its top.</p>
+      <div id="mw-stock-common-slot"></div>
       <section class="mw-card">
         <h3 class="mw-card-title">Holes through the stock</h3>
         <p class="mw-hint">Drill the stock right over spoilboard holes: for <strong>bolts</strong> into threaded inserts below,
@@ -959,91 +1068,6 @@
         <p class="mw-hint" id="mw-sh-summary"></p>
         <p class="mw-status" id="mw-sh-note" role="status"></p>
         <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-sh-generate">Generate Stock Holes</button></div>
-      </section>
-      <section class="mw-card">
-        <h3 class="mw-card-title">Dowel fit test</h3>
-        <p class="mw-hint">Before cutting them all, find the size your dowels fit: a row of test holes in scrap, smallest on the left.
-          Put X0 Y0 on the scrap&rsquo;s front left corner and Z0 on its top. It uses the bit, feeds and spindle above.</p>
-        <div class="mw-row">
-          <div class="mw-field">
-            <label for="mw-fit-size">Middle Size (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-size" value="8" title="The size in the middle of the row; the others go up and down from it by Step.">
-          </div>
-          <div class="mw-field">
-            <label for="mw-fit-step">Step (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-step" value="0.05" title="How much bigger each hole is than the one on its left.">
-          </div>
-          <div class="mw-field">
-            <label for="mw-fit-count">Holes</label>
-            <input class="mw-input" type="number" id="mw-fit-count" min="2" max="9" step="1" value="5" title="How many test holes, 2 to 9.">
-          </div>
-          <div class="mw-field">
-            <label for="mw-fit-edge">Edge Distance (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-edge" value="10" title="How far the holes' edges stay from the scrap's front and left edges (X0 Y0 is its front left corner), so no hole breaks out of the side.">
-          </div>
-          <div class="mw-field">
-            <label for="mw-fit-depth">Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-depth" value="10" title="How deep the test holes go into the scrap.">
-          </div>
-        </div>
-        <p class="mw-hint" id="mw-fit-sizes"></p>
-        <p class="mw-status" id="mw-fit-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-fit-generate">Generate Fit Test</button></div>
-      </section>
-      <section class="mw-card">
-        <h3 class="mw-card-title">Chamfer the holes</h3>
-        <p class="mw-hint">With a V-bit, after cutting: a small bevel round each hole&rsquo;s top edge, so dowels start easily and the edge doesn&rsquo;t crumble. The same holes as above; Z0 on the spoilboard&rsquo;s top.</p>
-        <div class="mw-row">
-          <div class="mw-field">
-            <label for="mw-chm-angle">V-bit Angle (&deg;)</label>
-            <input class="mw-input" type="number" id="mw-chm-angle" min="10" max="170" step="1" value="90" title="The V-bit's included angle: 90 for a 90&deg; bit.">
-          </div>
-          <div class="mw-field">
-            <label for="mw-chm-width">Chamfer Width (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-chm-width" value="0.8" title="How far out from the hole's edge the bevel reaches on the surface.">
-          </div>
-        </div>
-        <p class="mw-status" id="mw-chm-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-chm-generate">Generate Chamfers</button></div>
-      </section>
-      <section class="mw-card">
-        <h3 class="mw-card-title">Engrave the labels</h3>
-        <p class="mw-hint">The fixture table&rsquo;s names beside the holes, with a V-bit or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top (for a laser: focused on it).</p>
-        <div class="mw-row">
-          <div class="mw-field">
-            <label for="mw-lab-mode">Labels</label>
-            <select class="mw-select" id="mw-lab-mode" title="Every hole: each one's name (B3). Edges: the first row's column numbers and the first column's row letters.">
-              <option value="every" selected>Every hole</option>
-              <option value="edges">First row and column</option>
-            </select>
-          </div>
-          <div class="mw-field">
-            <label for="mw-lab-tool">With</label>
-            <select class="mw-select" id="mw-lab-tool" title="A V-bit in the spindle, or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
-              <option value="vbit" selected>V-bit</option>
-              <option value="laser">Laser</option>
-            </select>
-          </div>
-          <div class="mw-field">
-            <label for="mw-lab-height">Text Height (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-height" value="5" title="How tall the letters are.">
-          </div>
-          <div class="mw-field mw-lab-vbit">
-            <label for="mw-lab-depth">Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-depth" value="0.4" title="How deep the V-bit cuts the letters.">
-          </div>
-          <div class="mw-field mw-lab-laser" hidden>
-            <label for="mw-lab-power">Laser Power (S)</label>
-            <input class="mw-input" type="number" id="mw-lab-power" min="1" step="1" value="1000" title="The laser's power, as the S value grblHAL uses (up to its $30).">
-          </div>
-          <div class="mw-field">
-            <label for="mw-lab-feed">Feed (<span class="mw-unit">mm</span>/min)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-lab-feed" value="1000" title="How fast the letters are drawn.">
-          </div>
-        </div>
-        <p class="mw-hint" id="mw-lab-summary"></p>
-        <p class="mw-status" id="mw-lab-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-lab-generate">Generate Labels</button></div>
       </section>
     </div>
     <div class="mw-tab" data-tab="help" hidden>
@@ -5265,6 +5289,8 @@
     $('mw-cut-bit').addEventListener('input', function() { state.cutTool = null; }, true);
     $('mw-cut-generate').addEventListener('click', generateCut);
     $('mw-sh-generate').addEventListener('click', generateStockHoles);
+    ROOT.querySelectorAll('#mw-cut-secs .mw-sec').forEach(function(b) { b.addEventListener('click', function() { showCutSection(b.getAttribute('data-sec')); }); });
+    showCutSection('holes');
     $('mw-trk-generate').addEventListener('click', generateTracks);
     $('mw-fit-generate').addEventListener('click', generateFit);
     $('mw-chm-generate').addEventListener('click', generateChamfer);
@@ -5446,7 +5472,7 @@
       holes.surfaceKey = done.key;
       $('mw-surface-text').textContent = 'A wasteboard surfacing job finished ' + new Date(job.jobEndTime).toLocaleString() +
         (done.depthMm ? ', taking ' + shown(done.depthMm) + ' ' + unitName() + ' off' : '') +
-        ': the spoilboard is thinner now. Run SBT: Record spoilboard height again before setting Z0 from it (the Z0 macros, Set Z0 and Cut Holes all measure from it).';
+        ': the spoilboard is thinner now. Run SBT: Record spoilboard height again before setting Z0 from it (the Z0 macros, Set Z0 and the Spoilboard programs all measure from it).';
       $('mw-surface').hidden = false;
     } catch (e) { /* no job status: nothing to say */ }
   }
@@ -5467,7 +5493,7 @@
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. Two or more holes far apart fit the spacing too, and how far the spoilboard is turned. <strong>Apply to Setup</strong> writes them in, Turn included.',
-      '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and Cut Holes all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
+      '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and the Spoilboard and Stock programs all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
       'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>, counted from machine zero&rsquo;s corner, so <strong>A1</strong> is the hole nearest machine X0 Y0 (front left on a machine that homes there). The column numbers run along the top of the map and the row letters down its left side.',
@@ -5492,7 +5518,8 @@
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
       HELP_UNITS ] },
-    cut: { name: 'Cut Holes', notes: [
+    cut: { name: 'Spoilboard', notes: [
+      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, a <strong>Fit test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The bit, feeds and spindle card is shared by all of them (and by the Stock tab).',
       '<strong>Cut the dog holes you set up in the XY0 Picker</strong>, so the spoilboard and the map come from the same numbers. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
@@ -5501,10 +5528,12 @@
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
       'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table: the hole, T-track, stock-hole and fit-test programs then start with a tool change to that tool (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',
-      '<strong>Holes through the stock:</strong> drill the stock right over spoilboard holes, Z0 on the stock&rsquo;s top, with the stock clamped some other way first. <strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under the stock, with an optional counterbore for the head, to bolt into threaded inserts. <strong>Flip pins:</strong> two holes on the grid row (or column) nearest the stock&rsquo;s middle, for dowels, so the stock flipped over that line drops back exactly where it was; the summary gives the line to mirror the second side across, and where the flipped stock lands when it isn&rsquo;t centered on it. Each goes Break Through below the stock into the spoilboard hole, and can&rsquo;t be bigger than that hole, so the spoilboard isn&rsquo;t cut; threaded inserts must sit at least that far below the surface. It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard rather than the stock&rsquo;s top (once the Z0 macros have recorded the spoilboard height), and the program stops before moving if Z0 changed since. The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, Edge Distance in from its edges, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
       '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.' ] },
+    stock: { name: 'Stock', notes: [
+      '<strong>Holes through the stock:</strong> drill the stock right over spoilboard holes, Z0 on the stock&rsquo;s top, with the stock clamped some other way first. <strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under the stock, with an optional counterbore for the head, to bolt into threaded inserts. <strong>Flip pins:</strong> two holes on the grid row (or column) nearest the stock&rsquo;s middle, for dowels, so the stock flipped over that line drops back exactly where it was; the summary gives the line to mirror the second side across, and where the flipped stock lands when it isn&rsquo;t centered on it. Each goes Break Through below the stock into the spoilboard hole, and can&rsquo;t be bigger than that hole, so the spoilboard isn&rsquo;t cut; threaded inserts must sit at least that far below the surface. It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard rather than the stock&rsquo;s top (once the Z0 macros have recorded the spoilboard height), and the program stops before moving if Z0 changed since. The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.',
+      'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table: the hole, T-track, stock-hole and fit-test programs then start with a tool change to that tool (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.' ] },
     macros: { name: 'Z0 macros', notes: [
       '<strong>Probe the spoilboard once, and stop re-probing Z on every tool change.</strong> With measured tools (a tool setter or an ATC), one macro puts Z0 on the spoilboard and another on the stock top, for whichever tool is loaded, and a third puts your own Z0 back. Put them on keys and switching Z0 is a single press.',
       'Record the spoilboard height once with a probe block and a measured tool; then the <strong>SBT:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
@@ -5548,7 +5577,18 @@
     $('mw-help-btn').classList.toggle('active', name === 'help');
     ROOT.querySelector('.mw-panel').scrollTop = 0;
     if (name === 'holes') renderHoles();
-    if (name === 'cut') readMachineState().then(readNumbers).then(renderCutTab);
+    // The bit, feeds and spindle card is shared: it moves to whichever of
+    // Spoilboard and Stock is showing.
+    if (name === 'cut' || name === 'stock') {
+      $(name === 'stock' ? 'mw-stock-common-slot' : 'mw-cut-common-slot').appendChild($('mw-cut-common'));
+      readMachineState().then(readNumbers).then(renderCutTab);
+    }
+  }
+  // Spoilboard's sections: one at a time, picked with the chips.
+  function showCutSection(name) {
+    holes.cutSec = name;
+    ROOT.querySelectorAll('#mw-cut-secs .mw-sec').forEach(function(b) { b.setAttribute('aria-selected', b.getAttribute('data-sec') === name ? 'true' : 'false'); });
+    ROOT.querySelectorAll('.mw-tab[data-tab="cut"] .mw-card[data-sec]').forEach(function(c) { c.hidden = c.getAttribute('data-sec') !== name; });
   }
 
   init().then(readNumbers);

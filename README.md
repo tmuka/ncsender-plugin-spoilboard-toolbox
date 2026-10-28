@@ -259,7 +259,7 @@ turned; **Apply to Setup** writes them in.
 **A spoilboard that isn't square to the machine:** **Turn** is how far it's turned, in degrees
 (counterclockwise seen from above), about the grid's first hole. Measure Holes fills it in. On a big bed
 it matters: 0.1° over 2.4 m is about 4 mm at the far end. The map, Pick Nearest Hole, Set, the keyboard
-macros and every Cut Holes program use the turned positions; holes the turn takes outside the travel
+macros and every Spoilboard and Stock program use the turned positions; holes the turn takes outside the travel
 are left out. With a turn, pick the hole before grabbing (with none picked, Grab uses the hole Setup puts
 nearest the bit, so Setup must be close already). The Profiles menu can also **load a
 preset** layout (an Onefinity QCW, say): everything but the insets, which you then grab or measure.
@@ -321,12 +321,14 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   home hole. Favorites are ringed on the map and listed under it; tap one to pick it. They're kept
   in the board's profile.
 
-## Cut Holes: cut the dog holes you set up
+## Spoilboard: cut the dog holes, T-tracks, chamfers and labels
 
-The **Cut Holes** tab writes a program that cuts the XY0 Picker's holes, so the spoilboard and the map
-come from the same numbers. Load the bit, put Z0 on the spoilboard's top (**SBT: Z0 on spoilboard** does
-it, or touch off), set the depth and feeds, and press **Generate**: the program opens in ncSender's
-visualizer to check and run.
+The **Spoilboard** tab writes the programs that make (or remake) the spoilboard from the XY0 Picker's
+holes, so the board and the map come from the same numbers. Pick what to cut with the chips at its top
+(**Dog holes**, **T-tracks**, **Fit test**, **Chamfers**, **Labels**). Load the bit, put Z0 on the
+spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the depth and feeds in the shared
+**Bit and depth** card, and press **Generate**: the program opens in ncSender's visualizer to check and
+run.
 
 **Surfacing isn't here, on purpose.** Flattening the spoilboard is left to the
 [QuickCut](https://github.com/siganberg/ncsender-plugin-quickcut) plugin's **Wasteboard Surfacing**, which
@@ -361,7 +363,7 @@ the plugin reminds you to re-record the spoilboard height.
 **Cut the T-tracks (a two-layer spoilboard):** install the T-tracks and threaded inserts once, in a lower
 layer of MDF, and lay a thinner sacrificial layer over it. **Cut the T-tracks** cuts just the slots, along
 each of Setup's T-tracks at your **Track Width** (19.05 mm, 3/4", to start), so the tracks below show;
-then Cut Holes cuts the dog holes through the same layer, over the inserts. When the top gets chewed up,
+then **Dog holes** cuts the holes through the same layer, over the inserts. When the top gets chewed up,
 surface it off or replace it and cut it again, and the tracks and inserts are never touched.
 - **Depth** blank goes the **Spoilboard Thickness**, which must be the top layer's thickness alone; a
   smaller Depth cuts dados to set new track into the layer itself. It can never go deeper than the
@@ -369,7 +371,14 @@ surface it off or replace it and cut it again, and the tracks and inserts are ne
 - Slots wider than the bit are cut in passes side by side, a Depth per Pass at a time; they stop short of
   the travel's ends, keepout zones and Exclude Picks areas, and follow a turned grid.
 
-**Holes through the stock:** drill the stock right over spoilboard holes, with Z0 on the stock's top and
+**A setup that works:** a grid of 8 mm holes with
+[8 mm wooden dowel pins](https://www.amazon.com/dp/B0DJ5GZR9H) as dogs: cheap, and a bit that clips
+one is unharmed. [Flanged 1/4-20 threaded inserts](https://www.amazon.com/dp/B091L3Y6VJ) installed from the back, behind the holes, give clamps
+something to screw into.
+
+## Stock: bolt holes and flip pins
+
+The **Stock** tab drills the stock right over spoilboard holes, with Z0 on the stock's top and
 the stock clamped some other way while it drills. The stock is the XY0 Picker's (tick **Stock**, with its
 size and thickness); the holes come from the grid picked in Setup.
 - **Bolts:** a clearance hole (6.9 mm, 0.272", for 1/4-20) over the spoilboard hole nearest each corner
@@ -385,11 +394,6 @@ size and thickness); the holes come from the grid picked in Setup.
 - It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard
   rather than the stock top (once the Z0 macros have recorded the spoilboard height), and the program
   stops before moving if Z0 changed since it was generated.
-
-**A setup that works:** a grid of 8 mm holes with
-[8 mm wooden dowel pins](https://www.amazon.com/dp/B0DJ5GZR9H) as dogs: cheap, and a bit that clips
-one is unharmed. [Flanged 1/4-20 threaded inserts](https://www.amazon.com/dp/B091L3Y6VJ) installed from the back, behind the holes, give clamps
-something to screw into.
 
 ## The wizard, step by step
 
