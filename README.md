@@ -230,6 +230,13 @@ columns) and set **Holes per Panel**. Leave **Panel Pitch** blank when the hole 
 on across a track; if a track pushes the next panel over, measure from the first hole of one panel to
 the first hole of the next. The tracks show as grey bands on the map.
 
+**Example: Onefinity QCW (Journeyman X-50).** One layout that comes out even over every panel and T-track
+on its quick-change wasteboard: 8 mm holes (for 8 mm dowel dogs) **48.6004 mm** (1.9134") apart both
+ways, **T-tracks: Along X**, **Holes per Panel 5**, and **Panel Pitch** blank, since that spacing carries
+straight on across each track. The insets depend on where your bed sits, so jog over your first hole and
+press **Grab First Hole Center** rather than copying someone else's (6.858 and 21.846 mm on the machine
+this was worked out on).
+
 **No holes, just a lasered or engraved grid?** Treat each line crossing as a hole: set **Hole
 Diameter** to the line's width (the laser line's width, or the V-bit's kerf width at the surface; 0 for
 a hairline), and the spacings and insets to the lines' centers. The center dot then puts X0 Y0 on the
