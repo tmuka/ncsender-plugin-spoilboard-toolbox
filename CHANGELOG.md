@@ -13,6 +13,16 @@ What's new in each release of Zero Swapper. Install or update from
   zones and Exclude Picks areas; Hole Depth can't pass the spoilboard's thickness; and it stops before
   moving if the work offset's X0 Y0 changed since you generated it.
 
+- **Dowel fit test, chamfers and labels** (Cut Holes tab): a row of test holes in scrap to find the size
+  your dowels fit; a V-bit chamfer round each hole's top edge; and the fixture table's names engraved
+  beside the holes with a V-bit or a laser.
+- **Measure Holes:** probe a few real holes and Setup's spacing and insets are fitted to them, with how
+  far the spoilboard is turned.
+- **Presets:** load a shared grid layout (Onefinity QCW first) from the Profiles menu; you grab or
+  measure the insets.
+- **After surfacing:** when a wasteboard surfacing job finishes, a note says to re-record the
+  spoilboard's height.
+
 ### 🎯 Easier to use
 - **Holes are named like a fixture table**: a row letter and a column number (**B3**), like a
   Fireball fixture table, counted from machine zero's corner: **A1** is the hole nearest machine X0 Y0

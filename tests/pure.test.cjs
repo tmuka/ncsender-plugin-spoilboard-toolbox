@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1103,4 +1103,115 @@ test('cut holes: hops 5 mm between holes, lifting to Safe Z over a keepout', () 
 test('cut holes: minutes from moves and dwells', () => {
   assert.ok(Math.abs(programMinutes(['G4 P30', 'G1 X100 F1000', 'G0 X0'], 5000) - (0.5 + 0.1 + 0.02)) < 1e-9);
   assert.ok(Math.abs(programMinutes(['G1 X10 Y0 F100', 'G3 X-10 Y0 I-10 J0'], 1000) - (10 + Math.PI * 10) / 100) < 1e-9);
+});
+
+// ---------- Labels, chamfers, a fit test, calibration ----------
+
+test('stroke font: every letter and digit, inside its 4 x 6 box', () => {
+  for (const ch of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-') {
+    assert.ok(STROKE_FONT[ch] && STROKE_FONT[ch].length, ch);
+    for (const line of STROKE_FONT[ch]) for (const [x, y] of line) assert.ok(x >= 0 && x <= 4 && y >= 0 && y <= 6, ch);
+  }
+  assert.equal(textWidth('B12', 6), 16);
+  const s = textStrokes('A1', 10, 20, 6);
+  assert.deepEqual(s[0][0], { x: 10, y: 20 });
+  assert.ok(s.every(st => st.every(p => p.x >= 10 && p.x <= 26 && p.y >= 20 && p.y <= 26)));
+});
+
+const labelGrid = () => holeGrid({ sxMm: 48.6, syMm: 48.6, insetXMm: 6.858, insetYMm: 21.846, travelXMm: 300, travelYMm: 200, dirX: 1, dirY: 1, diaMm: 8 });
+const labelOpts = (g, over) => Object.assign({ textMm: 5, gapMm: 2, travel: { xMm: 300, yMm: 200, dirX: 1, dirY: 1 }, zones: [], holeR: () => 4, all: g }, over);
+
+test('labels: every hole beside it toward the next column, or the edges only', () => {
+  const g = labelGrid(), every = labelPlacements(g, 'every', labelOpts(g));
+  assert.equal(every.labels.length, g.length);
+  const a1 = every.labels.find(l => l.tag === 'A1');
+  assert.deepEqual([a1.text, +a1.x.toFixed(3), +a1.y.toFixed(3)], ['A1', 6.858 + 4 + 2, 21.846 - 2.5]);
+  const edges = labelPlacements(g, 'edges', labelOpts(g));
+  // 7 columns, 4 rows: A1 at the corner, numbers 2-7 along row A, letters B-D up column 1.
+  assert.deepEqual(edges.labels.map(l => l.text).sort(), ['2', '3', '4', '5', '6', '7', 'A1', 'B', 'C', 'D']);
+  // Homing to the right (columns count up along -X): labels go on the -X side.
+  const neg = holeGrid({ sxMm: 48.6, syMm: 48.6, insetXMm: 6.858, insetYMm: 21.846, travelXMm: 300, travelYMm: 200, dirX: -1, dirY: 1, diaMm: 8 });
+  const n1 = labelPlacements(neg, 'every', labelOpts(neg, { travel: { xMm: 300, yMm: 200, dirX: -1, dirY: 1 } })).labels.find(l => l.tag === 'A1');
+  assert.ok(n1.x + textWidth('A1', 5) <= -6.858 - 4 - 2 + 1e-9);
+});
+
+test('labels: too big for the gap, in a zone, or off the travel are left out', () => {
+  const g = labelGrid();
+  assert.equal(labelPlacements(g, 'every', labelOpts(g, { textMm: 30 })).labels.length, 0);
+  const z = labelPlacements(g, 'every', labelOpts(g, { zones: [{ minX: 0, maxX: 30, minY: 0, maxY: 40 }] }));
+  assert.deepEqual(z.skipped.map(s => s.tag + ' ' + s.why), ['A1 in a keepout zone or Exclude Picks area']);
+  // The last column's labels go on its other side.
+  const last = labelPlacements(g, 'every', labelOpts(g)).labels.find(l => l.tag === 'A7'), a7 = g.find(p => p.tag === 'A7');
+  assert.ok(last.x + textWidth('A7', 5) <= a7.x - 4 - 2 + 1e-9);
+});
+
+test('engraving: V-bit strokes at depth, a laser without Z moves', () => {
+  const base = { labels: [{ text: 'A1', x: 20, y: 30 }], textMm: 6, depthMm: 0.4, feed: 800, plunge: 300, rpm: 18000, delayS: 2,
+    wcs: { p: 1, x: 10, y: 10 }, safeZMm: -5, zones: [], imperial: false, pause: false };
+  const v = engraveProgram(base);
+  assert.ok(v.includes('G1 Z-0.400 F300'));
+  assert.ok(v.includes('G0 X10.000 Y20.000'), 'A starts at its bottom left, in G54');
+  assert.ok(v.some(l => /^M3 S18000/.test(l)));
+  const laser = engraveProgram(Object.assign({}, base, { laser: true, power: 600 }));
+  assert.ok(laser.includes('M4 S600'));
+  assert.ok(!laser.some(l => /Z/.test(l.replace(/\(.*\)/, '')) && !/^#1=/.test(l)), 'no Z moves');
+  assert.ok(!laser.some(l => /^M3 /.test(l)));
+  assert.deepEqual(laser.slice(-2), ['M5', 'M30']);
+});
+
+test('chamfer: the V-bit’s flank on each hole’s edge', () => {
+  const o = { holes: [{ x: 50, y: 50, diaMm: 8, label: 'A1' }, { x: 100, y: 50, diaMm: 0.4, label: 'pin' }], vAngleDeg: 90, chamferMm: 0.8,
+    feed: 1000, plunge: 300, rpm: 18000, delayS: 0, wcs: { p: 1, x: 0, y: 0 }, safeZMm: null, zones: [], imperial: false };
+  const L = chamferProgram(o);
+  // 90 degrees: tip 0.8 + 0.5 deep, 0.5 inside the edge (radius 3.5); the cone meets the surface 0.8 out.
+  assert.ok(L.includes('G0 X53.500 Y50.000'));
+  assert.ok(L.includes('G1 Z-1.300 F300'));
+  const tipR = 3.5, depth = 1.3; assert.ok(Math.abs(tipR + depth * Math.tan(Math.PI / 4) - (4 + 0.8)) < 1e-9);
+  // A hole too small for that is countersunk at its middle: (0.2 + 0.8) deep at 90 degrees.
+  assert.ok(L.includes('G1 Z-1.000 F300'));
+});
+
+test('fit test: a row of sizes from the scrap’s corner, smallest first', () => {
+  const t = fitTestHoles(8, 0.05, 5);
+  assert.deepEqual(t.map(h => h.diaMm), [7.9, 7.95, 8, 8.05, 8.1]);
+  assert.deepEqual([t[0].x, t[0].y, +(t[1].x - t[0].x).toFixed(3)], [9.05, 9.05, 14.1]);
+  const L = holeCutProgram({ holes: t.map(h => Object.assign({}, h, { x: h.x + 100, y: h.y + 50 })), bitMm: 6.35, depthMm: 10, stepMm: 3, stepoverPct: 40,
+    feed: 1500, plunge: 500, rpm: 18000, delayS: 0, wcs: { p: 1, x: 100, y: 50 }, safeZMm: null, zones: [], zWhat: 'the scrap', title: 'dowel fit test' });
+  assert.match(L[0], /dowel fit test/);
+  assert.match(L[1], /Z0 must be on the scrap/);
+});
+
+test('calibration: spacing, insets and turn from probed holes', () => {
+  // A 48.6 grid at insets 6.9 / 21.8, turned 0.1 degree, probed at three holes.
+  const turn = 0.1 * Math.PI / 180, at = (c, r) => {
+    const x = 6.9 + (c - 1) * 48.6, y = 21.8 + (r - 1) * 48.6;
+    return { col: c, row: r, x: x * Math.cos(turn) - y * Math.sin(turn), y: x * Math.sin(turn) + y * Math.cos(turn) };
+  };
+  const f = fitGrid([at(1, 1), at(15, 1), at(1, 20)], 1, 1, 48, 48);
+  assert.ok(Math.abs(f.sx - 48.6) < 0.01 && Math.abs(f.sy - 48.6) < 0.01, JSON.stringify(f));
+  assert.ok(Math.abs(f.turnDeg - 0.1) < 1e-6);
+  assert.ok(f.missMm < 1e-6, 'the turn taken out, the grid fits');
+  // The insets are where the first hole really is.
+  assert.ok(Math.abs(f.ix - at(1, 1).x) < 1e-6 && Math.abs(f.iy - at(1, 1).y) < 1e-6);
+  // One hole: the inset only, spacing kept.
+  const one = fitGrid([{ col: 3, row: 2, x: 6.9 + 2 * 48.6 + 0.3, y: 21.8 + 48.6 }], 1, 1, 48.6, 48.6);
+  assert.deepEqual([+one.ix.toFixed(3), +one.sx.toFixed(3), one.fittedX], [7.2, 48.6, false]);
+  const pc = probedCenter(10, 18, 30, 38.2);
+  assert.deepEqual([pc.x, pc.y, pc.diaX, +pc.diaY.toFixed(6)], [14, 34.1, 8, 8.2]);
+});
+
+test('surfacing: a finished Wasteboard Surfacing job, and how much it took off', () => {
+  const head = '(QuickCut: Planer)\n(Mode: Wasteboard Surfacing)\n(Depth: 0.5mm, Step: 0.5mm)';
+  const job = { filename: 'QuickCut-Planer_x.nc', status: 'completed', jobEndTime: '2026-10-28T03:00:00Z' };
+  assert.deepEqual(surfacingDone(job, head), { key: 'QuickCut-Planer_x.nc@2026-10-28T03:00:00Z', depthMm: 0.5 });
+  assert.equal(surfacingDone(Object.assign({}, job, { status: 'stopped' }), head), null);
+  assert.equal(surfacingDone(job, head.replace('Wasteboard Surfacing', 'Target Depth')), null);
+  assert.equal(surfacingDone(job, '(Mode: Wasteboard Surfacing)\n(Depth: 0.02inch, Step: 0.02inch)').depthMm, 0.508);
+});
+
+test('program comments are plain ASCII', () => {
+  const L = chamferProgram({ holes: [{ x: 50, y: 50, diaMm: 8, label: 'Pins \u00b7 A1' }], vAngleDeg: 90, chamferMm: 0.8, feed: 1000, plunge: 300,
+    rpm: 0, delayS: 0, wcs: { p: 1, x: 0, y: 0 }, safeZMm: null, zones: [], imperial: false, pause: true });
+  for (const l of L) assert.match(l, /^[\x20-\x7e]*$/, l);
+  assert.ok(L.some(l => /90 deg V-bit/.test(l)) && L.some(l => /Pins - A1/.test(l)));
 });

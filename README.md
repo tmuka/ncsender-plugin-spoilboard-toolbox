@@ -242,6 +242,12 @@ spacing, T-track direction, holes per panel and panel pitch. The plan, once ther
 them as presets to load from the Profiles menu: everything but the insets, which you'd still grab on your
 own machine.
 
+**Measure Holes** fits the grid to the real thing with a probe: put a probe pin (or touch probe) in the
+spindle, jog its tip into a hole below the top, and press **Probe This Hole**. It touches the sides in X
+and Y and finds the center. Two or more holes far apart fit the spacing as well as the insets, and say how
+far the spoilboard is turned; **Apply to Setup** writes them in. The Profiles menu can also **load a
+preset** layout (an Onefinity QCW, say): everything but the insets, which you then grab or measure.
+
 **No holes, just a lasered or engraved grid?** Treat each line crossing as a hole: set **Hole
 Diameter** to the line's width (the laser line's width, or the V-bit's kerf width at the surface; 0 for
 a hairline), and the spacings and insets to the lines' centers. The center dot then puts X0 Y0 on the
@@ -313,6 +319,14 @@ visualizer to check and run.
 - **Safety:** Hole Depth can't be more than the Spoilboard Thickness (0.75" to start). Between holes it hops
   5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. **Pause**
   (on to start) stops before the spindle starts so you can check the bit and Z0.
+
+**Before and after:**
+- **Dowel fit test:** cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top),
+  smallest on the left, find the one your dowels fit, and set Hole Diameter to it.
+- **Chamfer the holes:** after cutting, a V-bit puts a small bevel round each hole's top edge, so dowels
+  start easily and the edge doesn't crumble.
+- **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
+  V-bit or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
 
 **A setup that works:** a grid of 8 mm holes with
 [8 mm wooden dowel pins](https://www.amazon.com/dp/B0DJ5GZR9H) as dogs: cheap, and a bit that clips
