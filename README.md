@@ -342,8 +342,9 @@ the plugin reminds you to re-record the spoilboard height.
   tool change. Type a diameter instead and there's no tool change: load that bit yourself before running
   it. The stock-hole and fit-test programs work the same way; chamfers and labels never change tools.
 - **Safety:** Hole Depth can't be more than the Spoilboard Thickness (0.75" to start). Between holes it hops
-  5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. **Pause**
-  (on to start) stops before the spindle starts so you can check the bit and Z0.
+  5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. There's
+  no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck), so
+  check the bit and Z0 before pressing Start.
 
 **Before and after:**
 - **Dowel fit test:** cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top),

@@ -1099,7 +1099,8 @@ test('cut holes: hops 5 mm between holes, lifting to Safe Z over a keepout', () 
   assert.equal(L[L.length - 1], 'M30');
   assert.deepEqual(L.slice(-3), ['G53 G0 Z-5.000', 'M5', 'M30']);
   assert.ok(holeCutProgram(cutBase({ imperial: true, pause: true })).includes('G20'));
-  assert.ok(holeCutProgram(cutBase({ pause: true })).some(l => /^M0 \(SBT: check/.test(l)));
+  // No pause: ncSender shows no prompt for M0.
+  assert.ok(!holeCutProgram(cutBase({ pause: true })).some(l => /^M0/.test(l)));
 });
 
 test('cut holes: minutes from moves and dwells', () => {
@@ -1398,6 +1399,7 @@ test('cut programs: M6 to the tool Bit Diameter came from, after Safe Z and befo
   const L = holeCutProgram(cutBase({ tool: 3, rpm: 18000, pause: true }));
   const m6 = L.indexOf('M6 T3'), safe = L.findIndex(l => /^G53 G0 Z/.test(l)), m3 = L.findIndex(l => /^M3 /.test(l)), stop = L.map((l, i) => /SBT stop/.test(l) ? i : -1).filter(i => i >= 0).pop();
   assert.ok(stop < safe && safe < m6 && m6 < m3, JSON.stringify([stop, safe, m6, m3]));
+  assert.ok(!L.some(l => /^M0/.test(l)));
   assert.ok(!holeCutProgram(cutBase()).some(l => /^M6/.test(l)));
   assert.ok(!engraveProgram(Object.assign(cutBase({ tool: 3 }), { labels: [], textMm: 5, laser: true, power: 100 })).some(l => /^M6/.test(l)));
 });
