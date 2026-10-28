@@ -324,6 +324,11 @@ come from the same numbers. Load the bit, put Z0 on the spoilboard's top (**ZS: 
 it, or touch off), set the depth and feeds, and press **Generate**: the program opens in ncSender's
 visualizer to check and run.
 
+**Surfacing isn't here, on purpose.** Flattening the spoilboard is left to the
+[QuickCut](https://github.com/siganberg/ncsender-plugin-quickcut) plugin's **Wasteboard Surfacing**, which
+already does it well. Surface first, then cut the holes. When a surfacing job finishes, a note at the top of
+the plugin reminds you to re-record the spoilboard height.
+
 - **Which holes:** every grid, each hole its own size, row by row and back and forth. Suppressed holes,
   hidden grids and holes in a keepout zone or Exclude Picks area are left out. Listed holes are cut when
   ticked; points with a height (a vise, a fixture) never are.
