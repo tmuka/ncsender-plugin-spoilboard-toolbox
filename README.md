@@ -161,8 +161,8 @@ dot (where X0 Y0 goes on the hole) is picked per job. Press **Create macros** af
 use the nearest-hole macros.
 
 **From the keyboard, without opening the plugin:** tick **Nearest hole** under the Z0 macros tab's
-**Extras** and press **Create macros**. You get **SBT: Go to nearest hole** and **SBT: XY0 on nearest
-hole**: the controller works out the nearest hole to the spindle (grblHAL expressions with the grid
+**Extras** and press **Create macros**. You get **SBT: Go to nearest hole** and **SBT: Set XY0 at nearest
+hole (no move)**: the controller works out the nearest hole to the spindle (grblHAL expressions with the grid
 built in), so you can jog roughly and press a key (see [Put them on keys](#put-them-on-keys)). Go to
 lifts to Safe Z first and never moves down; XY0 sets the active work offset on the side picked with the
 dots. Suppressed holes are skipped, so the nearest real hole is used. Both stop without changing anything if
@@ -347,7 +347,7 @@ the plugin reminds you to re-record the spoilboard height.
 
 **Before and after:**
 - **Dowel fit test:** cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top),
-  smallest on the left, find the one your dowels fit, and set Hole Diameter to it.
+  **Edge Distance** (10 mm) in from its edges so none breaks out of the side, smallest on the left, find the one your dowels fit, and set Hole Diameter to it.
 - **Chamfer the holes:** after cutting, a V-bit puts a small bevel round each hole's top edge, so dowels
   start easily and the edge doesn't crumble.
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
@@ -398,7 +398,7 @@ something to screw into.
    - **Set XY0 to Midpoint**: put X0 Y0 halfway to the current spot without moving
      (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`), e.g. zero on one corner, jog to the opposite corner,
      run it, and X0 Y0 is the stock's center.
-   - **Nearest hole**: **Go to nearest hole** and **XY0 on nearest hole**, keyboard versions of the
+   - **Nearest hole**: **Go to nearest hole** and **Set XY0 at nearest hole (no move)**, keyboard versions of the
      XY0 Picker's buttons (see the XY0 Picker section above).
    - **Save / restore X/Y**: save the work offset's X and Y (e.g. a fixture or jig) and put them back
      later. They're kept in the saved-Z0 slot's X/Y, which that slot doesn't otherwise use; restore

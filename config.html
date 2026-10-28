@@ -958,6 +958,10 @@
             <input class="mw-input" type="number" id="mw-fit-count" min="2" max="9" step="1" value="5" title="How many test holes, 2 to 9.">
           </div>
           <div class="mw-field">
+            <label for="mw-fit-edge">Edge Distance (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-edge" value="10" title="How far the holes' edges stay from the scrap's front and left edges (X0 Y0 is its front left corner), so no hole breaks out of the side.">
+          </div>
+          <div class="mw-field">
             <label for="mw-fit-depth">Depth (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-fit-depth" value="10" title="How deep the test holes go into the scrap.">
           </div>
@@ -1243,7 +1247,7 @@
         'G53 G90 G0 Z' + inUnits('#8') + ' (Safe Z, never down)',
         'G53 G90 G0 X' + inUnits(calc.x) + ' Y' + inUnits(calc.y)
       ]));
-      m.setHole = macro('XY0 on nearest hole', [
+      m.setHole = macro('Set XY0 at nearest hole (no move)', [
         '(SBT: X0 Y0 on the nearest hole\'s ' + side + ', no move)',
         '(Sets the active work offset.)',
         '(Create macros again after changing the grid.)',
@@ -1251,6 +1255,7 @@
         noG92,
         '#10=[#<_homed_state> * ' + G92XY + ']'
       ].concat(calc.lines, ['G10 L2 P0 X' + inUnits(calc.x) + ' Y' + inUnits(calc.y)]));
+      m.setHole.aliases = ['XY0 on nearest hole'];  // its name before 0.3.36
     }
     if (x.center) {
       m.center = macro('Set XY0 to Midpoint', [
@@ -2397,11 +2402,12 @@
 
   // A dowel fit test: count holes in a row along +X from X0 Y0 (a scrap's
   // front left corner), sizes centerMm - (count - 1) / 2 steps up to
-  // + that, smallest on the left, 6 mm of wall between them.
-  function fitTestHoles(centerMm, stepMm, count) {
-    var dias = [];
+  // + that, smallest on the left, 6 mm of wall between them and edgeMm
+  // (10 unless given) between the holes and the scrap's edges.
+  function fitTestHoles(centerMm, stepMm, count, edgeMm) {
+    var dias = [], edge = edgeMm >= 0 ? edgeMm : 10;
     for (var i = 0; i < count; i++) dias.push(+(centerMm + (i - (count - 1) / 2) * stepMm).toFixed(4));
-    var big = Math.max.apply(null, dias), pitch = big + 6, m = big / 2 + 5;
+    var big = Math.max.apply(null, dias), pitch = big + 6, m = big / 2 + edge;
     return dias.map(function(d, i) { return { x: m + i * pitch, y: m, diaMm: d, label: fmt(d) + ' mm' }; });
   }
 
@@ -2522,6 +2528,111 @@
   function flipRect(rect, axis, lineMm) {
     return axis === 'x' ? { minX: rect.minX, maxX: rect.maxX, minY: 2 * lineMm - rect.maxY, maxY: 2 * lineMm - rect.minY }
       : { minX: 2 * lineMm - rect.maxX, maxX: 2 * lineMm - rect.minX, minY: rect.minY, maxY: rect.maxY };
+  }
+
+  // ---------- T-track slots ----------
+  //
+  // Slots along a grid's T-track bands, for a sacrificial layer laid over
+  // a lower one that holds the tracks and threaded inserts: through the
+  // top layer so the tracks below show, or a dado to set new track in.
+  // Machine mm.
+
+  // The part of the line a to b (t from 0 to 1) inside rect r, or null.
+  function clipToRect(a, b, r) {
+    var t0 = 0, t1 = 1, dx = b.x - a.x, dy = b.y - a.y;
+    var p = [-dx, dx, -dy, dy], q = [a.x - r.minX, r.maxX - a.x, a.y - r.minY, r.maxY - a.y];
+    for (var i = 0; i < 4; i++) {
+      if (p[i] === 0) { if (q[i] < 0) return null; continue; }
+      var t = q[i] / p[i];
+      if (p[i] < 0) t0 = Math.max(t0, t); else t1 = Math.min(t1, t);
+      if (t0 > t1) return null;
+    }
+    return [t0, t1];
+  }
+  // Each track's slot centerline, as segments the bit can run along: the
+  // band's middle across the whole travel (turned with its grid), cut
+  // short so the slot (half width w2 either side, plus the bit's radius
+  // r at its ends) stays inside the travel and clear of the zones.
+  // grids: as allHoles takes them (travel, dir, insets, tracks, turnDeg).
+  function trackSlots(grids, w2, r, zones) {
+    var out = [];
+    grids.forEach(function(g, gi) {
+      var minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm, big = 2 * (g.travelXMm + g.travelYMm);
+      var a = (g.turnDeg || 0) * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a), px = g.dirX * g.insetXMm, py = g.dirY * g.insetYMm;
+      var turn = function(x, y) { var dx = x - px, dy = y - py; return { x: px + dx * c - dy * sn, y: py + dx * sn + dy * c }; };
+      var travel = { minX: minX + r, maxX: minX + g.travelXMm - r, minY: minY + r, maxY: minY + g.travelYMm - r };
+      trackBands(g).forEach(function(band, bi) {
+        var mid = (band.from + band.to) / 2, alongX = g.trackAxis === 'x';
+        var A = alongX ? turn(minX - big, mid) : turn(mid, minY - big), B = alongX ? turn(minX + big, mid) : turn(mid, minY + big);
+        var len = Math.hypot(B.x - A.x, B.y - A.y), ux = (B.x - A.x) / len, uy = (B.y - A.y) / len;
+        // The slot's sides must stay in the travel too: shrink it by how far
+        // a side sits out from the centerline along each axis.
+        var sx = Math.abs(uy) * w2, sy = Math.abs(ux) * w2;
+        var keep = clipToRect(A, B, { minX: travel.minX + sx, maxX: travel.maxX - sx, minY: travel.minY + sy, maxY: travel.maxY - sy });
+        if (!keep) return;
+        var spans = [keep];
+        (zones || []).forEach(function(z) {
+          var grow = r + w2, hit = clipToRect(A, B, { minX: z.minX - grow, maxX: z.maxX + grow, minY: z.minY - grow, maxY: z.maxY + grow });
+          if (!hit) return;
+          spans = spans.reduce(function(acc, sp) {
+            if (hit[1] <= sp[0] || hit[0] >= sp[1]) return acc.concat([sp]);
+            if (hit[0] > sp[0]) acc.push([sp[0], hit[0]]);
+            if (hit[1] < sp[1]) acc.push([hit[1], sp[1]]);
+            return acc;
+          }, []);
+        });
+        spans.forEach(function(sp) {
+          if ((sp[1] - sp[0]) * len < 1) return;
+          out.push({ grid: gi, track: bi + 1, a: { x: A.x + (B.x - A.x) * sp[0], y: A.y + (B.y - A.y) * sp[0] },
+                     b: { x: A.x + (B.x - A.x) * sp[1], y: A.y + (B.y - A.y) * sp[1] }, nx: -uy, ny: ux, lenMm: (sp[1] - sp[0]) * len });
+        });
+      });
+    });
+    return out;
+  }
+  // The slots cut: each a Depth per Pass at a time, plunging at its start;
+  // a slot wider than the bit in passes side by side (no further apart
+  // than Stepover), back and forth. Hops 5 mm between slots, to Safe Z over
+  // a zone. o as holeCutProgram's, plus slots, widthMm.
+  function trackProgram(o) {
+    var r = o.bitMm / 2, hop = 5, f3 = function(v) { return gf(v, 3); }, c = gComment, n = o.slots.length;
+    var L = cutStart(o, 'cut ' + n + ' T-track slot' + (n === 1 ? '' : 's') + ', ' + fmt(o.widthMm) + ' mm wide, ' + fmt(o.depthMm) + ' mm deep, ' + fmt(o.bitMm) + ' mm bit',
+      'a ' + fmt(o.bitMm) + ' mm bit is loaded and Z0 is on the spoilboard');
+    var spare = Math.max(0, o.widthMm - o.bitMm), k = spare > 0.05 ? Math.ceil(spare / (o.bitMm * o.stepoverPct / 100)) : 0, offs = [];
+    for (var i = 0; i <= k; i++) offs.push(k ? -spare / 2 + spare * i / k : 0);
+    var levels = [];
+    for (var d = 0; d < o.depthMm - 1e-6; ) { d = Math.min(o.depthMm, d + o.stepMm); levels.push(d); }
+    var at = null;
+    o.slots.forEach(function(sl, si) {
+      L.push(c('SBT slot ' + (si + 1) + '/' + n + ': track ' + sl.track + ', ' + fmt(sl.lenMm) + ' mm long'));
+      var pt = function(t, off) { var p = t ? sl.b : sl.a; return { x: p.x + sl.nx * off - o.wcs.x, y: p.y + sl.ny * off - o.wcs.y }; };
+      var s0 = pt(0, offs[0]), m0 = { x: s0.x + o.wcs.x, y: s0.y + o.wcs.y };
+      if (at && (o.zones || []).some(function(z) { return lineCrossesZone(at, m0, z, r + o.widthMm / 2); })) L.push(cutSafe(o));
+      L.push('G0 X' + f3(s0.x) + ' Y' + f3(s0.y));
+      L.push('G0 Z' + fmt(hop));
+      L.push('G0 Z2.000');
+      var end = 0;
+      levels.forEach(function(lv) {
+        L.push('G1 Z' + f3(-lv) + ' F' + o.plunge);
+        offs.forEach(function(off, j) {
+          if (j) { var side = pt(end, off); L.push('G1 X' + f3(side.x) + ' Y' + f3(side.y) + ' F' + o.feed); }
+          end = 1 - end;
+          var q = pt(end, off);
+          L.push('G1 X' + f3(q.x) + ' Y' + f3(q.y) + ' F' + o.feed);
+        });
+        // Back to the slot's start corner for the next level, at depth (it's
+        // already cut), so each level plunges where the first did.
+        if (end || offs.length > 1) {
+          var back = pt(0, offs[0]);
+          if (offs.length > 1) { var s1 = pt(end, offs[0]); L.push('G1 X' + f3(s1.x) + ' Y' + f3(s1.y) + ' F' + o.feed); }
+          if (end) L.push('G1 X' + f3(back.x) + ' Y' + f3(back.y) + ' F' + o.feed);
+          end = 0;
+        }
+      });
+      L.push('G0 Z' + fmt(hop));
+      at = { x: s0.x + o.wcs.x, y: s0.y + o.wcs.y };
+    });
+    return cutEnd(o, L);
   }
   // END pure
 
@@ -4754,13 +4865,13 @@
   // The Cut Holes tab's fields, saved by id (less "mw-") in the machine's
   // units then (settings.units).
   var CUT_SAVED = {
-    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
+    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-margin', 'sh-break'],
     plain: ['cut-stepover', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis'],
     checks: ['cut-list', 'cut-pause', 'cut-mist', 'cut-flood']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-thick': 0.75, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
-    'fit-step': 0.002, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
+    'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
     'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-margin': 0.4, 'sh-break': 0.04 };
   function cutBody() {
     var b = { 'cut-tool': state.cutTool || null };
@@ -4846,7 +4957,9 @@
     var probs = [];
     if (!(size > 0) || !(step > 0)) probs.push('Middle Size and Step must be more than 0');
     if (!(count >= 2 && count <= 9)) probs.push('Holes must be 2 to 9');
-    var local = probs.length ? [] : fitTestHoles(size, step, count);
+    var edge = cutMm('mw-fit-edge');
+    if (!(edge >= 0)) probs.push('Edge Distance must be 0 or more');
+    var local = probs.length ? [] : fitTestHoles(size, step, count, edge);
     if (local.length && !(local[0].diaMm > 0)) { probs.push('The smallest hole would be 0 or less'); local = []; }
     var fo = Object.assign({}, o, { depthMm: cutMm('mw-fit-depth'), thickMm: 0, zWhat: 'the scrap',
       title: 'dowel fit test, ' + local.map(function(h) { return fmt(h.diaMm); }).join(', ') + ' mm, left to right',
@@ -4858,7 +4971,7 @@
   function renderFit() {
     var f = fitSettings(), last = f.local[f.local.length - 1];
     $('mw-fit-sizes').textContent = f.local.length ? 'Left to right: ' + f.local.map(function(h) { return shown(h.diaMm); }).join(', ') + ' ' + unitName() +
-      ', on a strip of scrap about ' + shown(last.x + last.diaMm / 2 + 5) + ' \u00d7 ' + shown(2 * f.local[0].y) + ' ' + unitName() + '.' + toolText(f.o) : '';
+      ', on a strip of scrap about ' + shown(last.x + f.local[0].y) + ' \u00d7 ' + shown(2 * f.local[0].y) + ' ' + unitName() + '.' + toolText(f.o) : '';
     showProblems($('mw-fit-note'), f.probs);
     $('mw-fit-generate').disabled = !!f.probs.length;
   }
@@ -5256,7 +5369,7 @@
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
       '<strong>Profiles:</strong> the menu beside Setup&rsquo;s title keeps one per spoilboard, fixture plate or grid you use. <strong>New profile&hellip;</strong> saves what&rsquo;s in Setup under a name; pick another to load it. Change a number and the bar says it&rsquo;s changed: <strong>Save</strong> keeps it, <strong>Revert</strong> puts the profile back, so you can try other numbers safely. A profile holds the layout, numbers, T-tracks, list and suppressed holes (the dot is picked per job). Press Create macros after switching if you use the nearest-hole macros.',
-      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>SBT: Go to nearest hole</strong> and <strong>SBT: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
+      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>SBT: Go to nearest hole</strong> and <strong>SBT: Set XY0 at nearest hole (no move)</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down), then moves; Set XY0 only sets the active work offset and never moves. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
       '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag a box around several; a box around only suppressed holes restores them. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and shown as faint solid circles while it&rsquo;s unlocked; Pick Nearest Hole, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
       '<strong>Live position:</strong> while you jog, the spindle (the silver ring) moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
       '<strong>Stock:</strong> tick it and type the stock&rsquo;s width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole, running away from the hole (<strong>Corner</strong> overrides which stock corner sits there), and its own box of dots puts X0 Y0 on its center, a corner or an edge. Go to Selected and Set then use that point; the keyboard macros always use the hole. With no hole picked, the stock hangs off X0 Y0 as it was when you ticked Stock (its front left corner there, unless Corner says otherwise): zero on a corner, tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; <strong>From X0 Y0 now</strong> takes X0 Y0 again, and picking a hole replaces it. Closing and reopening the plugin keeps the stock where it was. No tape measure? Jog the bit over the stock&rsquo;s opposite corner and press <strong>Far Corner Here</strong> for its width and length; its thickness fills in from <strong>SBT: Measure stock thickness</strong> until you type one.',
@@ -5279,7 +5392,7 @@
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
       'With <strong>Pause</strong> ticked it stops (M0) before starting the spindle, so you can check the bit and Z0; resume to go on. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table: the hole, stock-hole and fit-test programs then start with a tool change to that tool (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
       '<strong>Holes through the stock:</strong> drill the stock right over spoilboard holes, Z0 on the stock&rsquo;s top, with the stock clamped some other way first. <strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under the stock, with an optional counterbore for the head, to bolt into threaded inserts. <strong>Flip pins:</strong> two holes on the grid row (or column) nearest the stock&rsquo;s middle, for dowels, so the stock flipped over that line drops back exactly where it was; the summary gives the line to mirror the second side across, and where the flipped stock lands when it isn&rsquo;t centered on it. Each goes Break Through below the stock into the spoilboard hole, and can&rsquo;t be bigger than that hole, so the spoilboard isn&rsquo;t cut; threaded inserts must sit at least that far below the surface. It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard rather than the stock&rsquo;s top (once the Z0 macros have recorded the spoilboard height), and the program stops before moving if Z0 changed since. The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.',
-      '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, and see which size your dowels fit. Set Hole Diameter to that.',
+      '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, Edge Distance in from its edges, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
       '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.' ] },
     macros: { name: 'Z0 macros', notes: [

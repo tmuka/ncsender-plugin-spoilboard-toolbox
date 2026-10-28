@@ -609,7 +609,8 @@ test('nearest-hole macros: Go lifts (never down), then moves; stops for keepouts
   assert.equal(p._mx, 144, 'Go to ignores G92 (machine coordinates)');
   p = run(m.setHole.body, { _homed_state: 0, _abs_x: 150, _abs_y: 230 });
   assert.ok(p._error && p.P0_x === undefined, 'unhomed stops');
-  assert.match(m.setHole.name, /XY0 on nearest hole$/);
+  assert.match(m.setHole.name, /Set XY0 at nearest hole \(no move\)$/);
+  assert.deepEqual(m.setHole.aliases, ['XY0 on nearest hole']);
   // Inch mode: no unit switch at all; reads and writes inches.
   const imperial = buildMacros(Object.assign({}, base, { imperial: true, safeZMm: -5, extras: { holes: true }, holes: g }));
   assert.ok(!code(imperial.setHole.body).some((l) => /G2[01]/.test(l)) && !code(imperial.goHole.body).some((l) => /G2[01]/.test(l)));
@@ -1175,7 +1176,10 @@ test('chamfer: the V-bit’s flank on each hole’s edge', () => {
 test('fit test: a row of sizes from the scrap’s corner, smallest first', () => {
   const t = fitTestHoles(8, 0.05, 5);
   assert.deepEqual(t.map(h => h.diaMm), [7.9, 7.95, 8, 8.05, 8.1]);
-  assert.deepEqual([t[0].x, t[0].y, +(t[1].x - t[0].x).toFixed(3)], [9.05, 9.05, 14.1]);
+  // 10 mm from the scrap's edges to the biggest hole's edge, 6 mm of wall between holes.
+  assert.deepEqual([t[0].x, t[0].y, +(t[1].x - t[0].x).toFixed(3)], [14.05, 14.05, 14.1]);
+  const e = fitTestHoles(8, 0.05, 5, 3);
+  assert.deepEqual([e[0].x, e[0].y], [7.05, 7.05]);
   const L = holeCutProgram({ holes: t.map(h => Object.assign({}, h, { x: h.x + 100, y: h.y + 50 })), bitMm: 6.35, depthMm: 10, stepMm: 3, stepoverPct: 40,
     feed: 1500, plunge: 500, rpm: 18000, delayS: 0, wcs: { p: 1, x: 100, y: 50 }, safeZMm: null, zones: [], zWhat: 'the scrap', title: 'dowel fit test' });
   assert.match(L[0], /dowel fit test/);
