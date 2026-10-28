@@ -44,6 +44,8 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
     (each hole may carry its own `depthMm`; `safeEach` lifts to Safe Z between hole centers; `zStop` adds a stop
     line for the work offset's Z0), `engraveProgram`, `chamferProgram`, `fitTestHoles`, `fitGrid`. Stock holes:
     `stockHoleCandidates`, `stockBoltHoles`, `flipPins`, `flipRect`. Map zoom: `zoomWindow`, `labelEvery`.
+  - Turned grids: `turnHoles` (holeGrid turns a grid's holes about its first hole by `turnDeg`) and `turnLines` (the macros
+    turn the spindle position into the grid's square frame in #22 / #23, run the grid math, and turn #6 / #7 back).
   - `storeThicknessCommand`, `MACRO_PREFIX` (`ZS: `), `OLD_PREFIXES` (`MW: `, `Macro Wiz: `, the names earlier versions used).
   - Spoilboard holes: `holeGrid`, `travelDirs`, `insetFromPosition`, `nearestHole`, `holeOriginOffset` (where X0 Y0
     goes on a hole, one radius out in machine X / Y), `holeCommands`; and `parseUnitValue`.

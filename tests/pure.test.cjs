@@ -552,7 +552,8 @@ test('trackBands sit between panels, along the right axis and direction', () => 
 
 // The grid as config.html's holeMacroGrid builds it.
 function macroGrid(o) {
-  const grid = holeGrid(o);
+  // The last holes before any turn, as the app takes them from axisPositions.
+  const grid = holeGrid(Object.assign({}, o, { turnDeg: 0 }));
   const xs = [...new Set(grid.map((p) => o.dirX * p.x))].sort((a, b) => a - b);
   const ys = [...new Set(grid.map((p) => o.dirY * p.y))].sort((a, b) => a - b);
   const off = holeOriginOffset(o.origin || 'center', o.diaMm / 2);
@@ -779,11 +780,11 @@ test('setupFields reads saved Setup in today\'s units; putProfile replaces by na
     holePanelPitch: '', holeLayout: 'grid', holeList: 'A: 25.4, 0', holeOrigin: 'back-right', holeSuppressed: ['2,2', 'junk'] };
   assert.deepEqual(setupFields({ holeFavorites: ['3,4', '#2', 'x'] }, false).favorites, ['3,4', '#2']);
   const mm = setupFields(saved, false);
-  assert.deepEqual(mm, { dia: 20, sx: 96, sy: 96, ix: 48, iy: 50.8, layout: 'grid', name1: '', nearest1: true, grids: [], list: 'A: 25.4, 0', track: 'x', panelHoles: '5', pitch: '', origin: 'back-right', suppressed: ['2,2'], favorites: [] });
+  assert.deepEqual(mm, { dia: 20, sx: 96, sy: 96, ix: 48, iy: 50.8, layout: 'grid', name1: '', turn1: '', nearest1: true, grids: [], list: 'A: 25.4, 0', track: 'x', panelHoles: '5', pitch: '', origin: 'back-right', suppressed: ['2,2'], favorites: [] });
   const two = setupFields({ units: 'metric', holeLayout: 'both', holeGridName: 'Dogs', holeNearest: false, holeSuppressed: ['g2:3,4', 'g2:#1'],
     holeGrids: [{ name: 'Pins', dia: '6.35', sx: '25.4', sy: '25.4', ix: '12.7', iy: '0', track: 'q', pn: '', pp: '0', nearest: false }] }, true);
   assert.deepEqual([two.layout, two.name1, two.nearest1, two.suppressed], ['both', 'Dogs', false, ['g2:3,4', 'g2:#1']]);
-  assert.deepEqual(two.grids, [{ name: 'Pins', dia: 0.25, sx: 1, sy: 1, ix: 0.5, iy: 0, track: '', pn: '5', pp: '', nearest: false }]);
+  assert.deepEqual(two.grids, [{ name: 'Pins', dia: 0.25, sx: 1, sy: 1, ix: 0.5, iy: 0, track: '', pn: '5', pp: '', nearest: false, turn: '' }]);
   const inch = setupFields(Object.assign({}, saved, { holePanelPitch: '254' }), true);
   assert.deepEqual([inch.dia, inch.ix, inch.iy, inch.pitch, inch.list], [0.7874, 1.8898, 2, 10, 'A: 1, 0']);
   const empty = setupFields({}, true);
@@ -1189,12 +1190,22 @@ test('calibration: spacing, insets and turn from probed holes', () => {
   };
   const f = fitGrid([at(1, 1), at(15, 1), at(1, 20)], 1, 1, 48, 48);
   assert.ok(Math.abs(f.sx - 48.6) < 0.01 && Math.abs(f.sy - 48.6) < 0.01, JSON.stringify(f));
-  assert.ok(Math.abs(f.turnDeg - 0.1) < 1e-6);
-  assert.ok(f.fitMissMm < 1e-6, 'the turn taken out, the grid fits');
-  // Setup's grid can't turn: it misses the far hole by about its distance times the turn.
-  assert.ok(Math.abs(f.missMm - 19 * 48.6 * 0.1 * Math.PI / 180) < 0.01, String(f.missMm));
-  // The insets are where the first hole really is.
+  assert.ok(Math.abs(f.turnDeg - 0.1) < 1e-6 && f.turnMeasured);
+  // Turned, the grid fits every measured hole.
+  assert.ok(f.missMm < 1e-6, String(f.missMm));
+  // The insets are where the first hole really is, and holeGrid with them and the turn puts every hole back.
   assert.ok(Math.abs(f.ix - at(1, 1).x) < 1e-6 && Math.abs(f.iy - at(1, 1).y) < 1e-6);
+  const g = holeGrid({ sxMm: f.sx, syMm: f.sy, insetXMm: f.ix, insetYMm: f.iy, turnDeg: f.turnDeg, travelXMm: 1300, travelYMm: 1300, dirX: 1, dirY: 1 });
+  for (const [c, r] of [[1, 1], [15, 1], [1, 20], [9, 13]]) {
+    const h = g.find((p) => p.col === c && p.row === r), w = at(c, r);
+    assert.ok(Math.hypot(h.x - w.x, h.y - w.y) < 1e-6, c + ',' + r);
+  }
+  // Measured from a hole that isn't the first, the turn still comes out about the first hole.
+  const f2 = fitGrid([at(4, 3), at(10, 3), at(4, 9)], 1, 1, 48.6, 48.6);
+  assert.ok(Math.abs(f2.ix - at(1, 1).x) < 1e-6 && Math.abs(f2.iy - at(1, 1).y) < 1e-6 && f2.missMm < 1e-6);
+  // One hole can't show a turn: Setup's is kept.
+  const kept = fitGrid([at(3, 2)], 1, 1, 48.6, 48.6, 0.1);
+  assert.ok(!kept.turnMeasured && Math.abs(kept.turnDeg - 0.1) < 1e-9 && Math.abs(kept.ix - at(1, 1).x) < 1e-6 && kept.missMm < 1e-6);
   // One hole: the inset only, spacing kept.
   const one = fitGrid([{ col: 3, row: 2, x: 6.9 + 2 * 48.6 + 0.3, y: 21.8 + 48.6 }], 1, 1, 48.6, 48.6);
   assert.deepEqual([+one.ix.toFixed(3), +one.sx.toFixed(3), one.fittedX], [7.2, 48.6, false]);
@@ -1327,4 +1338,54 @@ test('stock holes: Safe Z between holes, not between a counterbore and its hole,
   assert.throws(() => evalExpr(check, { 5223: -12.4 }), /error:72/);
   // Dog holes are unchanged: no Z0 stop line, no Safe Z between holes.
   assert.ok(!holeCutProgram(cutBase()).some(l => /Z0 moved/.test(l)));
+});
+
+test('a turned grid: holes turned about the first hole, ones the turn takes off the travel left out', () => {
+  const o = { sxMm: 50, syMm: 40, insetXMm: 2, insetYMm: 15, travelXMm: 800, travelYMm: 600, dirX: 1, dirY: 1 };
+  const flat = holeGrid(o), turned = holeGrid(Object.assign({}, o, { turnDeg: 0.5 })), a = 0.5 * Math.PI / 180;
+  const h11 = turned.find((p) => p.col === 1 && p.row === 1), h21 = turned.find((p) => p.col === 2 && p.row === 1);
+  assert.deepEqual([h11.x, h11.y], [2, 15]);
+  assert.ok(Math.abs(h21.x - (2 + 50 * Math.cos(a))) < 1e-9 && Math.abs(h21.y - (15 + 50 * Math.sin(a))) < 1e-9);
+  // The first column leans left as it goes back, 2 mm from X0: its back holes fall off the travel.
+  assert.ok(turned.length < flat.length && turned.every((p) => p.x >= 0 && p.x <= 800 && p.y >= 0 && p.y <= 600));
+  // Negative space: still about the first hole.
+  const n = holeGrid(Object.assign({}, o, { dirX: -1, dirY: -1, turnDeg: -1 }));
+  assert.deepEqual([n.find((p) => p.col === 1 && p.row === 1).x, n[0].y], [-2, -15]);
+});
+
+test('nearest-hole macros on a turned grid find the same hole as the XY0 Picker', () => {
+  const grids = [
+    { name: 'plain, turned 0.3', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1, turnDeg: 0.3 },
+    { name: 'homes to max, turned -0.7', sxMm: 50, syMm: 40, insetXMm: 20, insetYMm: 15, travelXMm: 800, travelYMm: 600, dirX: -1, dirY: -1, turnDeg: -0.7 },
+    { name: 'T-tracks along X, turned 0.2', sxMm: 48.6, syMm: 48.6, insetXMm: 8.001, insetYMm: 28.265, travelXMm: 2440, travelYMm: 1525, dirX: 1, dirY: 1, trackAxis: 'x', panelHoles: 5, panelPitchMm: 0, turnDeg: 0.2 }
+  ];
+  for (const g0 of grids) {
+    const g = macroGrid(Object.assign({ diaMm: 20, origin: 'center' }, g0));
+    const m = buildMacros(Object.assign({}, base, { safeZMm: -5, extras: { holes: true }, holes: g }));
+    for (const l of m.setHole.body.split('\n')) assert.ok(l.length < 200, l);
+    const grid = holeGrid(g);
+    const minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
+    // Inside the travel, away from its edges (where the turn leaves holes out).
+    for (let i = 2; i <= 38; i++) {
+      for (let j = 2; j <= 38; j++) {
+        const x = minX + g.travelXMm * i / 40, y = minY + g.travelYMm * j / 40;
+        const want = grid[nearestHole(grid, x, y).index];
+        const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: x, _abs_y: y, _abs_z: -20 }));
+        assert.equal(p._error, undefined, g.name + ' at ' + x + ',' + y);
+        const got = { x: p.P0_x, y: p.P0_y };
+        assert.ok(Math.abs(Math.hypot(got.x - x, got.y - y) - Math.hypot(want.x - x, want.y - y)) < 1e-3,
+          g.name + ' at ' + x + ',' + y + ': got ' + JSON.stringify(got) + ' want ' + JSON.stringify(want));
+      }
+    }
+    // Anywhere, edges too: it stops, or snaps to a hole the XY0 Picker has (never one the turn took off the travel).
+    for (let i = 0; i <= 40; i++) {
+      for (const y of [minY, minY + g.travelYMm * i / 40, minY + g.travelYMm]) {
+        for (const x of [minX, minX + g.travelXMm * i / 40, minX + g.travelXMm]) {
+          const p = run(m.setHole.body, Object.assign({}, ready, { _abs_x: x, _abs_y: y, _abs_z: -20 }));
+          if (p._error) continue;
+          assert.ok(grid.some((h) => Math.abs(h.x - p.P0_x) < 1e-3 && Math.abs(h.y - p.P0_y) < 1e-3), g.name + ': not a hole at ' + x + ',' + y);
+        }
+      }
+    }
+  }
 });

@@ -426,13 +426,13 @@
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
           <span class="mw-nav-label">XY0 Picker</span>
         </button>
-        <button type="button" class="mw-nav-btn" data-tab="macros">
-          <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14L5 19h14"/></svg></span>
-          <span class="mw-nav-label">Z0 macros</span>
-        </button>
         <button type="button" class="mw-nav-btn" data-tab="cut">
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="6"/><path d="M12 2v9"/><path d="M9 8l3 3 3-3"/></svg></span>
           <span class="mw-nav-label">Cut Holes</span>
+        </button>
+        <button type="button" class="mw-nav-btn" data-tab="macros">
+          <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14L5 19h14"/></svg></span>
+          <span class="mw-nav-label">Z0 macros</span>
         </button>
       </nav>
       <div class="mw-sidebar-footer">
@@ -565,6 +565,10 @@
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-iy" step="0.01" min="0" value="48" title="From machine Y0 to the center of the first row of holes, into the machine's travel.">
           </div>
           <div class="mw-field">
+            <label for="mw-hole-turn">Turn (&deg;)</label>
+            <input class="mw-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" id="mw-hole-turn" placeholder="0" title="How far the spoilboard is turned from square to the machine, in degrees, counterclockwise seen from above, about the first hole. Measure Holes finds it. Blank or 0 when it's square; up to 10.">
+          </div>
+          <div class="mw-field">
             <label aria-hidden="true" class="mw-grid-only">&nbsp;</label>
             <button type="button" class="mw-btn mw-btn-quiet mw-grab-btn" id="mw-hole-here" title="Jog the bit to the center of the first hole and press this: Inset X and Inset Y are filled in from where the machine is. Any hole works as long as the first hole is less than one spacing from machine X0 Y0.">Grab First Hole Center</button>
           </div>
@@ -572,14 +576,14 @@
         <div class="mw-holes-tools mw-grid-only">
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-edit" aria-pressed="false" disabled title="For a grid with holes left out (under a clamp rail, say): tap a hole on the map to suppress it, or drag a box around several; a box around only suppressed holes restores them. Pick Nearest Hole, Go to, Set and the nearest-hole macros skip suppressed holes.">Edit Holes</button>
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-restore-all" disabled title="Put back every suppressed hole.">Restore All</button>
-          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-open" aria-pressed="false" disabled title="Fit the spacing and insets to real holes, by probing a few with an XY probe pin or a touch probe.">Measure Holes</button>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-open" aria-pressed="false" disabled title="Fit the spacing, insets and Turn to real holes, by probing a few with a touch probe.">Measure Holes</button>
           <span class="mw-hint" id="mw-hole-sup-note"></span>
         </div>
         <div class="mw-cal mw-grid-only" id="mw-cal" hidden>
           <p class="mw-hint">With a touch probe (a 3D probe that triggers when its tip is pushed sideways; wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t) in the spindle and connected: jog its tip into a hole, below the spoilboard&rsquo;s top
             and roughly centered, and press <strong>Probe This Hole</strong>. It touches the hole&rsquo;s sides in X and Y at the Z0 macros&rsquo; Probe Feed and
             finds its center. Probe two or more holes far apart (along a row and up a column) to fit the spacing and insets, and how far the
-            spoilboard is turned; one fits the insets only.</p>
+            spoilboard is turned (Turn); one fits the insets only, keeping Setup&rsquo;s Turn.</p>
           <div class="mw-inline-row">
             <button type="button" class="mw-btn mw-btn-small" id="mw-cal-probe">Probe This Hole</button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-apply" disabled>Apply to Setup</button>
@@ -1335,7 +1339,22 @@
         out.push(p);
       }
     }
-    return out.concat(listed);
+    return turnHoles(o, out.concat(listed));
+  }
+  // A grid turned turnDeg (counterclockwise, seen from above) about its
+  // first hole, as a spoilboard not quite square to the machine is: its
+  // holes (and listed holes, measured from that hole) turned with it,
+  // and ones the turn takes outside the travel left out.
+  function turnHoles(o, pts) {
+    if (!o.turnDeg) return pts;
+    var a = o.turnDeg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), px = o.dirX * o.insetXMm, py = o.dirY * o.insetYMm;
+    var minX = o.dirX > 0 ? 0 : -o.travelXMm, minY = o.dirY > 0 ? 0 : -o.travelYMm, e = 1e-9;
+    return pts.filter(function(p) {
+      var dx = p.x - px, dy = p.y - py;
+      p.x = px + dx * c - dy * s;
+      p.y = py + dx * s + dy * c;
+      return p.x >= minX - e && p.x <= minX + o.travelXMm + e && p.y >= minY - e && p.y <= minY + o.travelYMm + e;
+    });
   }
   // A hole's key in the suppressed and favorite lists: "column,row" on a
   // grid, so it stays the same hole when the spacing or insets change;
@@ -1564,11 +1583,11 @@
   // along in #14 / #15 / #16. A list alone, several grids, or a first grid
   // left out of Nearest go to severalGridLines.
   function nearestHoleLines(g) {
-    function axis(ax, n, inset, s, P, last, d, out, idx) {
+    function axis(ax, n, inset, s, P, last, d, out, idx, src) {
       var per = n >= 1 ? Math.floor(n) : 1, pitch = n >= 1 ? (P > 0 ? P : per * s) : s;
       var gap = pitch - (per - 1) * s;
       return [
-        '#2=[' + (d > 0 ? '' : '-1 * ') + '#<_abs_' + ax + '> * ' + MM_PER_UNIT + ']',
+        '#2=[' + (d > 0 ? '' : '-1 * ') + (src || '#<_abs_' + ax + '> * ' + MM_PER_UNIT) + ']',
         '#3=[FIX[[#2 - ' + fmt5(inset) + ' + ' + fmt5(gap / 2) + '] / ' + fmt5(pitch) + ']]',
         '#3=[#3 * [#3 GT 0]]',
         '#4=[ROUND[[#2 - ' + fmt5(inset) + ' - #3 * ' + fmt5(pitch) + '] / ' + fmt5(s) + ']]',
@@ -1601,11 +1620,12 @@
       sup = grid.some(function(p) { return p.suppressed; });
       var cols = 0, rows = 0;
       grid.forEach(function(p) { cols = Math.max(cols, p.col); rows = Math.max(rows, p.row); });
-      lines = lines.concat(['(Nearest hole along X)'],
-        axis('x', xs ? g.panelHoles : 0, g.insetXMm, g.sxMm, g.panelPitchMm, g.lastXMm, g.dirX, 6, sup && { out: 12, last: cols - 1 }),
+      var tn = turnLines(g);
+      lines = lines.concat(tn.into, ['(Nearest hole along X)'],
+        axis('x', xs ? g.panelHoles : 0, g.insetXMm, g.sxMm, g.panelPitchMm, g.lastXMm, g.dirX, 6, sup && { out: 12, last: cols - 1 }, tn.x),
         ['(Nearest hole along Y)'],
-        axis('y', ys ? g.panelHoles : 0, g.insetYMm, g.syMm, g.panelPitchMm, g.lastYMm, g.dirY, 7, sup && { out: 13, last: rows - 1 }),
-        suppressedLines(g, grid));
+        axis('y', ys ? g.panelHoles : 0, g.insetYMm, g.syMm, g.panelPitchMm, g.lastYMm, g.dirY, 7, sup && { out: 13, last: rows - 1 }, tn.y),
+        tn.back, suppressedLines(g, grid));
       if (listed.length) {
         // The grid's hole as the one to beat; none when the grid math landed
         // on a suppressed hole with no real one beside it (#9 over 1e8).
@@ -1626,7 +1646,7 @@
     });
     var minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
     var tx = vary ? '[#6 + #14]' : '[#6 + ' + fmt5(g.dx) + ']', ty = vary ? '[#7 + #15]' : '[#7 + ' + fmt5(g.dy) + ']';
-    if (hasGrid && (vary || g.dx || g.dy)) {
+    if (hasGrid && (vary || g.dx || g.dy || g.turnDeg)) {
       lines.push('#10=[#10 * [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]]', '#1=[1 / #10] (ZS stop: that side of the hole is outside the travel)');
     }
     return { lines: lines, x: tx, y: ty };
@@ -1649,13 +1669,16 @@
     var lines = ['#19=[1000000000]', '#20=[0]', '#21=[0]', '#14=[0]', '#15=[0]', '#16=[0]'];
     srcs.forEach(function(src) {
       var L = src.L, holes = src.holes, sup = holes.some(function(p) { return p.suppressed; });
+      // The last hole along each axis, before any turn (the grid math runs
+      // in the grid's own square frame).
       var cols = 0, rows = 0, lastX = -Infinity, lastY = -Infinity;
-      holes.forEach(function(p) { cols = Math.max(cols, p.col); rows = Math.max(rows, p.row); lastX = Math.max(lastX, L.dirX * p.x); lastY = Math.max(lastY, L.dirY * p.y); });
-      var ys = L.trackAxis === 'x', xs = L.trackAxis === 'y', d = function(v) { return fmt5(v); };
-      lines = lines.concat(['(Nearest hole of ' + src.name + ')'],
-        axis('x', xs ? L.panelHoles : 0, L.insetXMm, L.sxMm, L.panelPitchMm, lastX, L.dirX, 6, sup && { out: 12, last: cols - 1 }),
-        axis('y', ys ? L.panelHoles : 0, L.insetYMm, L.syMm, L.panelPitchMm, lastY, L.dirY, 7, sup && { out: 13, last: rows - 1 }),
-        suppressedLines(L, holes), [
+      holes.forEach(function(p) { cols = Math.max(cols, p.col); rows = Math.max(rows, p.row); });
+      holeGrid(Object.assign({}, L, { turnDeg: 0 })).forEach(function(p) { lastX = Math.max(lastX, L.dirX * p.x); lastY = Math.max(lastY, L.dirY * p.y); });
+      var ys = L.trackAxis === 'x', xs = L.trackAxis === 'y', d = function(v) { return fmt5(v); }, tn = turnLines(L);
+      lines = lines.concat(['(Nearest hole of ' + src.name + ')'], tn.into,
+        axis('x', xs ? L.panelHoles : 0, L.insetXMm, L.sxMm, L.panelPitchMm, lastX, L.dirX, 6, sup && { out: 12, last: cols - 1 }, tn.x),
+        axis('y', ys ? L.panelHoles : 0, L.insetYMm, L.syMm, L.panelPitchMm, lastY, L.dirY, 7, sup && { out: 13, last: rows - 1 }, tn.y),
+        tn.back, suppressedLines(L, holes), [
           '#4=[#<_abs_x> * ' + MM_PER_UNIT + ']', '#5=[#<_abs_y> * ' + MM_PER_UNIT + ']',
           '#18=[[#4 - #6] * [#4 - #6] + [#5 - #7] * [#5 - #7]' + (sup ? ' + 1000000000 * [#9 GT 100000000]' : '') + ']',
           '#3=[#18 LT #19]',
@@ -1673,6 +1696,23 @@
     var minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm, tx = '[#6 + #14]', ty = '[#7 + #15]';
     lines.push('#10=[#10 * [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]]', '#1=[1 / #10] (ZS stop: that side of the hole is outside the travel)');
     return { lines: lines, x: tx, y: ty };
+  }
+  // A turned grid in the macros: the spindle's position turned back about
+  // the grid's first hole into the grid's square frame (#22 / #23) for
+  // the grid math, and the hole it finds (#6 / #7) turned out again.
+  // Nothing for a grid that isn't turned.
+  function turnLines(g) {
+    if (!g.turnDeg) return { into: [], back: [], x: null, y: null };
+    var a = g.turnDeg * Math.PI / 180, c = Math.cos(a).toFixed(9), s = Math.sin(a).toFixed(9);
+    var px = fmt5(g.dirX * g.insetXMm), py = fmt5(g.dirY * g.insetYMm);
+    return {
+      into: ['(Grid turned ' + g.turnDeg + ' deg about its first hole)',
+        '#22=[#<_abs_x> * ' + MM_PER_UNIT + ' - ' + px + ']', '#23=[#<_abs_y> * ' + MM_PER_UNIT + ' - ' + py + ']',
+        '#24=[' + px + ' + #22 * ' + c + ' + #23 * ' + s + ']', '#23=[' + py + ' - #22 * ' + s + ' + #23 * ' + c + ']', '#22=[#24]'],
+      back: ['#22=[#6 - ' + px + ']', '#23=[#7 - ' + py + ']',
+        '#6=[' + px + ' + #22 * ' + c + ' - #23 * ' + s + ']', '#7=[' + py + ' + #22 * ' + s + ' + #23 * ' + c + ']'],
+      x: '#22', y: '#23'
+    };
   }
   // A hole the macros can use: on the spoilboard (not suppressed), inside
   // the travel, clear of the keepout zones, with the picked side inside
@@ -1899,6 +1939,8 @@
   // A saved Setup (the autosaved one or a named one, as saveSettings
   // writes it: numbers in the units ncSender used then) as the fields'
   // values in the machine's units now. Numbers missing from it are null.
+  // A saved Turn: degrees (no units to convert), '' for none.
+  function turnText(v) { var n = Number(v); return v != null && String(v).trim() !== '' && isFinite(n) && n !== 0 ? String(n) : ''; }
   function setupFields(saved, imperial) {
     var was = saved.units === 'imperial', conv = imperial === was ? 1 : (imperial ? 1 / MM_PER_INCH : MM_PER_INCH);
     var num = function(v) { var n = parseFloat(v); return v != null && v !== '' && isFinite(n) ? +(n * conv).toFixed(4) : null; };
@@ -1907,11 +1949,13 @@
       dia: num(saved.holeDia), sx: num(saved.holeSx), sy: num(saved.holeSy), ix: num(saved.holeIx), iy: num(saved.holeIy),
       layout: saved.holeLayout === 'list' || saved.holeLayout === 'both' ? saved.holeLayout : 'grid',
       name1: typeof saved.holeGridName === 'string' ? saved.holeGridName : '',
+      turn1: turnText(saved.holeTurn),
       nearest1: saved.holeNearest !== false,
       grids: Array.isArray(saved.holeGrids) ? saved.holeGrids.filter(function(r) { return r && typeof r === 'object'; }).map(function(r) {
         var pp = num(r.pp);
         return { name: typeof r.name === 'string' ? r.name : '', dia: num(r.dia), sx: num(r.sx), sy: num(r.sy), ix: num(r.ix), iy: num(r.iy),
-                 track: r.track === 'x' || r.track === 'y' ? r.track : '', pn: r.pn ? String(r.pn) : '5', pp: pp > 0 ? pp : '', nearest: r.nearest !== false };
+                 track: r.track === 'x' || r.track === 'y' ? r.track : '', pn: r.pn ? String(r.pn) : '5', pp: pp > 0 ? pp : '', nearest: r.nearest !== false,
+                 turn: turnText(r.turn) };
       }) : [],
       list: typeof saved.holeList === 'string' ? convertHoleList(saved.holeList, was, imperial) : null,
       track: saved.holeTrack === 'x' || saved.holeTrack === 'y' ? saved.holeTrack : '',
@@ -2363,7 +2407,7 @@
   // the inset, keeping spacing, with fewer than two columns or rows), how
   // far the rows are turned (degrees, from holes in the same row), and the
   // worst miss of the fitted grid.
-  function fitGrid(meas, dirX, dirY, sxMm, syMm) {
+  function fitGrid(meas, dirX, dirY, sxMm, syMm, turn0Deg) {
     function axis(pts, sp) {
       var n = pts.length, kk = pts.map(function(p) { return p.k; }), uu = pts.map(function(p) { return p.u; });
       var mk = kk.reduce(function(a, b) { return a + b; }, 0) / n, mu = uu.reduce(function(a, b) { return a + b; }, 0) / n;
@@ -2382,11 +2426,12 @@
         else if (a.col === b.col && a.row !== b.row) turns.push(Math.atan2(b.y - a.y, b.x - a.x) - Math.PI / 2);
       });
     });
+    // Without two holes in a row or column, Setup's turn is kept.
     var turn = turns.length ? turns.map(function(t) {
       while (t > Math.PI / 2) t -= Math.PI;
       while (t < -Math.PI / 2) t += Math.PI;
       return t;
-    }).reduce(function(a, b) { return a + b; }, 0) / turns.length : 0;
+    }).reduce(function(a, b) { return a + b; }, 0) / turns.length : (turn0Deg || 0) * Math.PI / 180;
     var c = Math.cos(-turn), s = Math.sin(-turn), o0 = meas[0];
     var flat = meas.map(function(p) {
       var dx = p.x - o0.x, dy = p.y - o0.y;
@@ -2394,16 +2439,17 @@
     });
     var fx = axis(flat.map(function(p) { return { k: p.col - 1, u: dirX * p.x }; }), sxMm);
     var fy = axis(flat.map(function(p) { return { k: p.row - 1, u: dirY * p.y }; }), syMm);
-    // How far Setup's grid (which can't turn) misses the measured holes,
-    // and how far the fit itself does once the turn is taken out.
-    var miss = 0, fitMiss = 0;
-    meas.forEach(function(p, i) {
-      var x = dirX * (fx.inset + (p.col - 1) * fx.spacing), y = dirY * (fy.inset + (p.row - 1) * fy.spacing);
-      miss = Math.max(miss, Math.hypot(p.x - x, p.y - y));
-      fitMiss = Math.max(fitMiss, Math.hypot(flat[i].x - x, flat[i].y - y));
+    // The first hole, turned back out of the flat frame, is where the
+    // turned grid starts: its insets. Then how far that grid misses the
+    // measured holes.
+    var c2 = Math.cos(turn), s2 = Math.sin(turn), fpx = dirX * fx.inset - o0.x, fpy = dirY * fy.inset - o0.y;
+    var p0 = { x: o0.x + fpx * c2 - fpy * s2, y: o0.y + fpx * s2 + fpy * c2 }, miss = 0;
+    meas.forEach(function(p) {
+      var u = dirX * (p.col - 1) * fx.spacing, v = dirY * (p.row - 1) * fy.spacing;
+      miss = Math.max(miss, Math.hypot(p.x - (p0.x + u * c2 - v * s2), p.y - (p0.y + u * s2 + v * c2)));
     });
-    return { sx: fx.spacing, sy: fy.spacing, ix: fx.inset, iy: fy.inset, fittedX: fx.fitted, fittedY: fy.fitted,
-             turnDeg: turns.length ? turn * 180 / Math.PI : null, missMm: miss, fitMissMm: fitMiss };
+    return { sx: fx.spacing, sy: fy.spacing, ix: dirX * p0.x, iy: dirY * p0.y, fittedX: fx.fitted, fittedY: fy.fitted,
+             turnDeg: turn * 180 / Math.PI, turnMeasured: turns.length > 0, missMm: miss };
   }
   // The center of a hole from four probe touches (machine mm): the middle
   // of the X pair and of the Y pair.
@@ -2461,7 +2507,9 @@
       var l = lines[k];
       if (l.length < 2) return;
       l.sort(function(a, b) { return a[along] - b[along]; });
-      var at = l[0][across], pick = { pins: [l[0], l[l.length - 1]], lineMm: at, offMm: mid - at, axis: axis };
+      // On a turned grid the pins aren't quite level: the line is taken
+      // midway between them.
+      var at = (l[0][across] + l[l.length - 1][across]) / 2, pick = { pins: [l[0], l[l.length - 1]], lineMm: at, offMm: mid - at, axis: axis };
       var span = function(c) { return c.pins[1][along] - c.pins[0][along]; };
       if (!best || Math.abs(pick.offMm) < Math.abs(best.offMm) - 1e-6 || (Math.abs(Math.abs(pick.offMm) - Math.abs(best.offMm)) <= 1e-6 && span(pick) > span(best))) best = pick;
     });
@@ -2705,9 +2753,9 @@
     var r0 = holes.gridRaw[0];
     return {
       holeDia: nv(r0.dia), holeSx: nv(r0.sx), holeSy: nv(r0.sy), holeIx: nv(r0.ix), holeIy: nv(r0.iy),
-      holeTrack: r0.track, holePanelHoles: r0.pn, holePanelPitch: pitch(r0.pp), holeGridName: r0.name, holeNearest: r0.nearest,
+      holeTrack: r0.track, holePanelHoles: r0.pn, holePanelPitch: pitch(r0.pp), holeGridName: r0.name, holeNearest: r0.nearest, holeTurn: String(r0.turn || '').trim(),
       holeGrids: holes.gridRaw.slice(1).map(function(r) {
-        return { name: r.name, dia: nv(r.dia), sx: nv(r.sx), sy: nv(r.sy), ix: nv(r.ix), iy: nv(r.iy), track: r.track, pn: r.pn, pp: pitch(r.pp), nearest: r.nearest };
+        return { name: r.name, dia: nv(r.dia), sx: nv(r.sx), sy: nv(r.sy), ix: nv(r.ix), iy: nv(r.iy), track: r.track, pn: r.pn, pp: pitch(r.pp), nearest: r.nearest, turn: String(r.turn || '').trim() };
       }),
       holeLayout: $('mw-hole-layout').value, holeList: $('mw-hole-list').value, holeSuppressed: holes.suppressed.slice(), holeFavorites: holes.favorites.slice(),
       units: state.imperial ? 'imperial' : 'metric'
@@ -3303,7 +3351,7 @@
   }
   // Setup is locked on open once a grid has been saved, so a stray tap
   // can't change (and autosave) it; Unlock to edit.
-  var HOLE_FIELDS = ['mw-hole-layout', 'mw-hole-dia', 'mw-hole-sx', 'mw-hole-sy', 'mw-hole-ix', 'mw-hole-iy', 'mw-hole-track', 'mw-hole-pn', 'mw-hole-pp', 'mw-hole-list', 'mw-grid-name', 'mw-grid-nearest'];
+  var HOLE_FIELDS = ['mw-hole-layout', 'mw-hole-dia', 'mw-hole-sx', 'mw-hole-sy', 'mw-hole-ix', 'mw-hole-iy', 'mw-hole-track', 'mw-hole-pn', 'mw-hole-pp', 'mw-hole-turn', 'mw-hole-list', 'mw-grid-name', 'mw-grid-nearest'];
   function setHoleLock(locked) {
     HOLE_FIELDS.concat(['mw-hole-here', 'mw-hole-add', 'mw-grid-remove', 'mw-cal-open']).forEach(function(id) { $(id).disabled = locked; });
     if (locked) showCal(false);
@@ -3584,10 +3632,11 @@
     if (f.panelHoles != null) r0.pn = f.panelHoles;
     r0.pp = String(f.pitch);
     r0.name = f.name1 || '';
+    r0.turn = f.turn1 || '';
     r0.nearest = f.nearest1 !== false || !(f.grids || []).length;
     var str = function(v) { return v == null ? '' : String(v); };
     holes.gridRaw = [r0].concat((f.grids || []).map(function(r) {
-      return { name: r.name, dia: str(r.dia), sx: str(r.sx), sy: str(r.sy), ix: str(r.ix), iy: str(r.iy), track: r.track, pn: r.pn, pp: str(r.pp), nearest: r.nearest };
+      return { name: r.name, dia: str(r.dia), sx: str(r.sx), sy: str(r.sy), ix: str(r.ix), iy: str(r.iy), track: r.track, pn: r.pn, pp: str(r.pp), nearest: r.nearest, turn: r.turn || '' };
     }));
     holes.activeGrid = 0;
     gridToDom(r0);
@@ -3599,7 +3648,7 @@
   }
   // Grids: the fields show the one picked in the grid bar (holes.activeGrid);
   // every grid's values, as typed, live in holes.gridRaw.
-  var GRID_FIELDS = { dia: 'mw-hole-dia', sx: 'mw-hole-sx', sy: 'mw-hole-sy', ix: 'mw-hole-ix', iy: 'mw-hole-iy', track: 'mw-hole-track', pn: 'mw-hole-pn', pp: 'mw-hole-pp' };
+  var GRID_FIELDS = { dia: 'mw-hole-dia', sx: 'mw-hole-sx', sy: 'mw-hole-sy', ix: 'mw-hole-ix', iy: 'mw-hole-iy', track: 'mw-hole-track', pn: 'mw-hole-pn', pp: 'mw-hole-pp', turn: 'mw-hole-turn' };
   function gridFromDom() {
     var r = {};
     Object.keys(GRID_FIELDS).forEach(function(k) { r[k] = $(GRID_FIELDS[k]).value; });
@@ -3616,6 +3665,13 @@
   function gridName(k) { var r = holes.gridRaw[k]; return r && r.name ? r.name : 'Grid ' + (k + 1); }
   // One grid's values in mm, or null when they can't be read; mark: show
   // which fields are wrong (the grid in the fields).
+  // A grid's Turn in degrees: blank is 0; null when it can't be read or
+  // is more than 10 (a typo, not a spoilboard).
+  function parseTurn(v, mark) {
+    var t = String(v == null ? '' : v).trim(), n = t === '' ? 0 : Number(t), good = isFinite(n) && Math.abs(n) <= 10;
+    if (mark) $('mw-hole-turn').classList.toggle('mw-invalid', !good);
+    return good ? n : null;
+  }
   function parseGrid(r, mark) {
     var k = state.imperial ? MM_PER_INCH : 1, ok = true;
     function num(key, min) {
@@ -3637,6 +3693,8 @@
     h.panelHoles = h.trackAxis ? n : 0;
     h.panelPitchMm = h.trackAxis ? pp : 0;
     h.nearest = r.nearest !== false;
+    h.turnDeg = parseTurn(r.turn, mark);
+    if (h.turnDeg == null) ok = false;
     return ok ? h : null;
   }
   // The grid bar: a chip per grid (pick it to edit it; the eye shows or
@@ -3917,7 +3975,8 @@
         return v * k;
       };
       var hl = { layout: 'list', list: list, diaMm: val('dia', 0), insetXMm: val('ix', -Infinity), insetYMm: val('iy', -Infinity),
-                 trackAxis: null, panelHoles: 0, panelPitchMm: 0, suppressed: holes.suppressed.slice() };
+                 trackAxis: null, panelHoles: 0, panelPitchMm: 0, turnDeg: parseTurn(r0.turn, true), suppressed: holes.suppressed.slice() };
+      if (hl.turnDeg == null) ok = false;
       holes.gridBad = [];
       return ok && listOk ? hl : null;
     }
@@ -3985,8 +4044,13 @@
     var letters = holes.grid.reduce(function(n, p) { return p.tag ? Math.max(n, /^[A-Z]+/.exec(p.tag)[0].length) : n; }, 1);
     var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = labelled ? 10 + 6 * letters : 1;
     var padT = labelled ? 14 : 1, padB = 20, padR = 46;
-    var box = holeMapBox(t), sc0 = Math.min((box.w - pad - padR) / t.xMm, (box.h - padT - padB) / t.yMm);
-    var w = t.xMm * sc0 + pad + padR, ht = t.yMm * sc0 + padT + padB;
+    // A margin (m px) round the travel inside the bed, so holes right on
+    // its edge show whole, clear of the row letters and column numbers:
+    // the largest hole's radius at full view, 6 to 16 px.
+    var box = holeMapBox(t), rMax = h ? holes.grid.reduce(function(a, p) { return Math.max(a, holeR(p, h)); }, h.diaMm / 2) : 0;
+    var sc1 = Math.min((box.w - pad - padR) / t.xMm, (box.h - padT - padB) / t.yMm), m = Math.min(16, Math.max(6, Math.max(3, rMax * sc1) + 2));
+    var sc0 = Math.min((box.w - pad - padR - 2 * m) / t.xMm, (box.h - padT - padB - 2 * m) / t.yMm);
+    var w = t.xMm * sc0 + pad + padR + 2 * m, ht = t.yMm * sc0 + padT + padB + 2 * m;
     svg.style.width = w.toFixed(0) + 'px';
     svg.style.height = ht.toFixed(0) + 'px';
     // Zoomed in, the map shows part of the travel (vw) at k times the
@@ -3997,9 +4061,9 @@
     var vw = zoomWindow(t, zm.k, zm.cx != null ? zm.cx : minX + t.xMm / 2, zm.cy != null ? zm.cy : minY + t.yMm / 2);
     zm.cx = vw.x0 + vw.w / 2; zm.cy = vw.y0 + vw.h / 2;
     var sc = sc0 * zm.k;
-    var X = function(x) { return (pad + (x - vw.x0) * sc).toFixed(1); }, Y = function(y) { return (padT + (vw.y0 + vw.h - y) * sc).toFixed(1); };
+    var X = function(x) { return (pad + m + (x - vw.x0) * sc).toFixed(1); }, Y = function(y) { return (padT + m + (vw.y0 + vw.h - y) * sc).toFixed(1); };
     var inView = function(x, y, m) { return x >= vw.x0 - m && x <= vw.x0 + vw.w + m && y >= vw.y0 - m && y <= vw.y0 + vw.h + m; };
-    holes.view = { pad: pad, padT: padT, sc: sc, minX: vw.x0, minY: vw.y0, xMm: vw.w, yMm: vw.h, hitMm: h ? Math.max(h.diaMm / 2, holeSpacingMm(h) * 0.45) : 10 };
+    holes.view = { pad: pad + m, padT: padT + m, sc: sc, minX: vw.x0, minY: vw.y0, xMm: vw.w, yMm: vw.h, hitMm: h ? Math.max(h.diaMm / 2, holeSpacingMm(h) * 0.45) : 10 };
     svg.setAttribute('viewBox', '0 0 ' + w.toFixed(1) + ' ' + ht.toFixed(1));
     var ns = 'http://www.w3.org/2000/svg', into = svg;
     var add = function(tag, attrs, text) {
@@ -4009,7 +4073,8 @@
       into.appendChild(el);
       return el;
     };
-    add('rect', { class: 'mw-h-area', x: pad, y: padT, width: (t.xMm * sc0).toFixed(1), height: (t.yMm * sc0).toFixed(1), rx: 3 });
+    var bedW = (t.xMm * sc0 + 2 * m).toFixed(1), bedH = (t.yMm * sc0 + 2 * m).toFixed(1);
+    add('rect', { class: 'mw-h-area', x: pad, y: padT, width: bedW, height: bedH, rx: 3 });
     // What's on the bed is clipped to it, so a zoomed map doesn't spill
     // over the rulers.
     var clipId = 'mw-bed-clip-' + (holes.clipSeq = (holes.clipSeq || 0) + 1);
@@ -4017,13 +4082,13 @@
     cp.setAttribute('id', clipId);
     defs.appendChild(cp);
     var cr = document.createElementNS(ns, 'rect');
-    [['x', pad], ['y', padT], ['width', (t.xMm * sc0).toFixed(1)], ['height', (t.yMm * sc0).toFixed(1)]].forEach(function(a) { cr.setAttribute(a[0], a[1]); });
+    [['x', pad], ['y', padT], ['width', bedW], ['height', bedH]].forEach(function(a) { cr.setAttribute(a[0], a[1]); });
     cp.appendChild(cr);
     var bed = document.createElementNS(ns, 'g');
     bed.setAttribute('clip-path', 'url(#' + clipId + ')');
     // Rulers in ncSender's units: machine coordinates, 0 at machine X0 Y0.
     var uk = state.imperial ? MM_PER_INCH : 1, unit = state.imperial ? 'in' : 'mm';
-    var bottom = padT + t.yMm * sc0, right = pad + t.xMm * sc0;
+    var bottom = padT + t.yMm * sc0 + 2 * m, right = pad + t.xMm * sc0 + 2 * m;
     var tx = axisTicks(vw.x0 / uk, (vw.x0 + vw.w) / uk, sc * uk, 56);
     tx.values.forEach(function(v) {
       var px = +X(v * uk);
@@ -4049,11 +4114,14 @@
     function tableLabels() {
       var layer = holes.grid.some(function(p) { return p.tag && !p.hidden && (p.layer || 0) === holes.activeGrid; }) ? holes.activeGrid
         : (holes.grid.filter(function(p) { return p.tag && !p.hidden; })[0].layer || 0);
-      var cols = {}, rows = {};
+      // A turned grid's columns lean: each number goes at its column's
+      // hole nearest the top, each letter at its row's leftmost.
+      var cols = {}, rows = {}, top = {}, left = {};
       holes.grid.forEach(function(p) {
         if (!p.tag || (p.layer || 0) !== layer) return;
         var m = /^([A-Z]+)(\d+)$/.exec(p.tag);
-        cols[m[2]] = p.x; rows[m[1]] = p.y;
+        if (!(top[m[2]] >= p.y)) { top[m[2]] = p.y; cols[m[2]] = p.x; }
+        if (!(left[m[1]] <= p.x)) { left[m[1]] = p.x; rows[m[1]] = p.y; }
       });
       function every(pos, labelPx) {
         var gap = Infinity;
@@ -4076,10 +4144,11 @@
     if (h && h.layout !== 'list') [h].concat(h.grids || []).forEach(function(gr, gi) {
       if (holes.hidden[String(gi)]) return;
       trackBands(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, gr)).forEach(function(band) {
-      var alongX = gr.trackAxis === 'x';
-      add('rect', alongX
+      // Turned with its grid, about the first hole.
+      var alongX = gr.trackAxis === 'x', tr = gr.turnDeg ? { transform: 'rotate(' + (-gr.turnDeg) + ' ' + X(t.dirX * gr.insetXMm) + ' ' + Y(t.dirY * gr.insetYMm) + ')' } : {};
+      add('rect', Object.assign(tr, alongX
         ? { class: 'mw-h-track', x: X(minX), y: Y(band.to), width: (t.xMm * sc).toFixed(1), height: ((band.to - band.from) * sc).toFixed(1) }
-        : { class: 'mw-h-track', x: X(band.from), y: Y(minY + t.yMm), width: ((band.to - band.from) * sc).toFixed(1), height: (t.yMm * sc).toFixed(1) });
+        : { class: 'mw-h-track', x: X(band.from), y: Y(minY + t.yMm), width: ((band.to - band.from) * sc).toFixed(1), height: (t.yMm * sc).toFixed(1) }));
       });
     });
     // Keepout zones, clipped to the travel; their holes can't be picked.
@@ -4398,8 +4467,22 @@
     if (!h) { status.setAttribute('data-state', 'bad'); status.textContent = 'Fix this grid\u2019s highlighted fields first.'; return; }
     var px = h.trackAxis === 'y' ? (h.panelPitchMm || h.panelHoles * h.sxMm) : h.sxMm;
     var py = h.trackAxis === 'x' ? (h.panelPitchMm || h.panelHoles * h.syMm) : h.syMm;
-    $('mw-hole-ix').value = +(insetFromPosition(here.x, px, t.dirX) / k).toFixed(4);
-    $('mw-hole-iy').value = +(insetFromPosition(here.y, py, t.dirY) / k).toFixed(4);
+    var tg = Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY, layout: 'grid' }, h);
+    var near = h.turnDeg ? nearestHole(holeGrid(tg), here.x, here.y) : null;
+    if (near) {
+      // Turned: the hole the spindle is over is taken to be the nearest
+      // one Setup has, and the first hole is put where the turn says it is
+      // from there.
+      var flat = holeGrid(Object.assign({}, tg, { turnDeg: 0 })), q = holeGrid(tg)[near.index], f0 = null;
+      flat.forEach(function(p) { if (p.col === q.col && p.row === q.row) f0 = p; });
+      var a = h.turnDeg * Math.PI / 180, ux = f0.x - t.dirX * h.insetXMm, uy = f0.y - t.dirY * h.insetYMm;
+      var p0x = here.x - (ux * Math.cos(a) - uy * Math.sin(a)), p0y = here.y - (ux * Math.sin(a) + uy * Math.cos(a));
+      $('mw-hole-ix').value = +(t.dirX * p0x / k).toFixed(4);
+      $('mw-hole-iy').value = +(t.dirY * p0y / k).toFixed(4);
+    } else {
+      $('mw-hole-ix').value = +(insetFromPosition(here.x, px, t.dirX) / k).toFixed(4);
+      $('mw-hole-iy').value = +(insetFromPosition(here.y, py, t.dirY) / k).toFixed(4);
+    }
     status.setAttribute('data-state', 'ok');
     status.textContent = 'Insets set from machine X ' + fmt(here.x) + ', Y ' + fmt(here.y) + ' mm.';
     holes.picked = -1;
@@ -5035,7 +5118,7 @@
     var t = state.travel, r0 = holes.gridRaw[holes.activeGrid] || {}, k = state.imperial ? MM_PER_INCH : 1;
     if (!cal.meas.length || !t) return null;
     if (String(r0.pp || '').trim()) return { pitch: true };
-    return fitGrid(cal.meas, t.dirX, t.dirY, parseFloat(r0.sx) * k, parseFloat(r0.sy) * k);
+    return fitGrid(cal.meas, t.dirX, t.dirY, parseFloat(r0.sx) * k, parseFloat(r0.sy) * k, parseTurn(r0.turn) || 0);
   }
   function renderCal() {
     var list = $('mw-cal-list');
@@ -5055,10 +5138,9 @@
     if (f.pitch) { fit.textContent = 'With a Panel Pitch set, the spacing can\u2019t be fitted this way yet.'; return; }
     var u = ' ' + unitName();
     fit.textContent = 'Fitted: spacing X ' + (f.fittedX ? shown(f.sx) + u : 'kept') + ', Y ' + (f.fittedY ? shown(f.sy) + u : 'kept') +
-      '; insets X ' + shown(f.ix) + ', Y ' + shown(f.iy) + u + (f.turnDeg != null ? '; the rows are turned ' + f.turnDeg.toFixed(3) + '\u00b0' +
-      (Math.abs(f.turnDeg) > 0.05 ? ' (square the spoilboard to the machine for holes far from these)' : '') : '') +
-      '. Setup\u2019s grid can\u2019t turn, so it misses the measured holes by up to ' + shown(f.missMm) + u +
-      (f.turnDeg != null && f.missMm > f.fitMissMm + 0.01 ? ' (' + shown(f.fitMissMm) + u + ' with the turn taken out)' : '') + '.';
+      '; insets X ' + shown(f.ix) + ', Y ' + shown(f.iy) + u + '; turned ' + f.turnDeg.toFixed(4) + '\u00b0' +
+      (f.turnMeasured ? '' : ' (kept: measure two holes in a row or a column to find it)') +
+      '. That grid misses the measured holes by up to ' + shown(f.missMm) + u + '.';
   }
   function applyCal() {
     var f = calFit(), k = state.imperial ? MM_PER_INCH : 1;
@@ -5068,6 +5150,10 @@
     if (f.fittedY) put('mw-hole-sy', f.sy);
     put('mw-hole-ix', f.ix);
     put('mw-hole-iy', f.iy);
+    if (f.turnMeasured) {
+      $('mw-hole-turn').value = Math.abs(f.turnDeg) < 0.00005 ? '' : String(+f.turnDeg.toFixed(4));
+      ['input', 'change'].forEach(function(type) { $('mw-hole-turn').dispatchEvent(new Event(type, { bubbles: true })); });
+    }
     cal.meas = [];
     $('mw-cal-note').setAttribute('data-state', 'ok');
     $('mw-cal-note').textContent = 'Setup updated. Measure a hole or two again to check.';
@@ -5138,7 +5224,8 @@
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>ZS: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
-      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a probe pin or touch probe connected, jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. Two or more holes far apart fit the spacing too, and say how far the spoilboard is turned. <strong>Apply to Setup</strong> writes them in.',
+      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. Two or more holes far apart fit the spacing too, and how far the spoilboard is turned. <strong>Apply to Setup</strong> writes them in, Turn included.',
+      '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and Cut Holes all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, Grab First Hole Center works from the hole Setup puts nearest the bit, so get Setup close first.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
       'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>, counted from machine zero&rsquo;s corner, so <strong>A1</strong> is the hole nearest machine X0 Y0 (front left on a machine that homes there). The column numbers run along the top of the map and the row letters down its left side.',

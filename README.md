@@ -246,10 +246,18 @@ spacing, T-track direction, holes per panel and panel pitch. The plan, once ther
 them as presets to load from the Profiles menu: everything but the insets, which you'd still grab on your
 own machine.
 
-**Measure Holes** fits the grid to the real thing with a probe: put a probe pin (or touch probe) in the
-spindle, jog its tip into a hole below the top, and press **Probe This Hole**. It touches the sides in X
-and Y and finds the center. Two or more holes far apart fit the spacing as well as the insets, and say how
-far the spoilboard is turned; **Apply to Setup** writes them in. The Profiles menu can also **load a
+**Measure Holes** fits the grid to the real thing with a probe: put a touch probe in the spindle (wood
+doesn't conduct, so a plain probe pin can't trigger), jog its tip into a hole below the top, and press
+**Probe This Hole**. It touches the sides in X and Y and finds the center. Two or more holes far apart
+(along a row and up a column) fit the spacing as well as the insets, and how far the spoilboard is
+turned; **Apply to Setup** writes them in.
+
+**A spoilboard that isn't square to the machine:** **Turn** is how far it's turned, in degrees
+(counterclockwise seen from above), about the grid's first hole. Measure Holes fills it in. On a big bed
+it matters: 0.1° over 2.4 m is about 4 mm at the far end. The map, Pick Nearest Hole, Set, the keyboard
+macros and every Cut Holes program use the turned positions; holes the turn takes outside the travel
+are left out. With a turn, **Grab First Hole Center** works from whichever hole the bit is over (the one
+Setup puts nearest), so get Setup close first. The Profiles menu can also **load a
 preset** layout (an Onefinity QCW, say): everything but the insets, which you then grab or measure.
 
 **No holes, just a lasered or engraved grid?** Treat each line crossing as a hole: set **Hole

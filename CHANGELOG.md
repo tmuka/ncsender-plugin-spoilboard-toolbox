@@ -24,6 +24,9 @@ same plugin: updates, settings and macros carry over, and the macros keep their 
   flipped for its second side drops back exactly where it was.
 - **Measure Holes:** probe a few real holes and Setup's spacing and insets are fitted to them, with how
   far the spoilboard is turned.
+- **Turned spoilboards:** a grid's **Turn** (degrees, from Measure Holes) turns its holes about the first
+  one, for the map, Pick Nearest Hole, Set, the keyboard macros (press **Create macros** again after
+  changing it) and Cut Holes. On an 8 ft bed, 0.1° is about 4 mm at the far end.
 - **Presets:** load a shared grid layout (Onefinity QCW first) from the Profiles menu; you grab or
   measure the insets.
 - **After surfacing:** when a wasteboard surfacing job finishes, a note says to re-record the
@@ -34,7 +37,8 @@ same plugin: updates, settings and macros carry over, and the macros keep their 
   **Fit** for the whole travel and **Follow** to keep the spindle in view. Only the holes in view are
   drawn.
 - Two-letter row names (AA on) fit beside the map, and column numbers thin out so they never run
-  together.
+  together. Holes right on the edge of the travel show whole, with room before the row letters.
+- **The menu** runs XY0 Picker, Cut Holes, then Z0 macros.
 - **Holes are named like a fixture table**: a row letter and a column number (**B3**), like a
   Fireball fixture table, counted from machine zero's corner: **A1** is the hole nearest machine X0 Y0
   (front left on a machine that homes there). The column numbers run along the top of the map and the row letters
