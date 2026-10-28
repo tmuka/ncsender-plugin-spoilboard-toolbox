@@ -364,6 +364,7 @@
   .mw-hole-map .mw-h-spot { cursor: pointer; }
   .mw-hole-map .mw-h-tick { stroke: var(--color-accent); stroke-width: 1.5; }
   .mw-hole-map text.mw-h-ruler { font-size: 10px; font-variant-numeric: tabular-nums; }
+  .mw-hole-map text.mw-h-table { font-weight: 600; }
   .mw-hole-map text.mw-h-axis { font-weight: 700; }
   .mw-hole-map text.mw-h-name { fill: var(--color-text-primary); font-weight: 600; cursor: pointer; }
   .mw-hole-map .mw-h-track { fill: color-mix(in srgb, var(--color-text-secondary) 22%, transparent); pointer-events: none; }
@@ -1077,9 +1078,13 @@
     if (!(o.sxMm > 0 && o.syMm > 0 && o.insetXMm >= 0 && o.insetYMm >= 0 && o.travelXMm > 0 && o.travelYMm > 0)) return listed;
     var xs = axisPositions(o.insetXMm, o.sxMm, o.travelXMm, o.trackAxis === 'y' ? o.panelHoles : 0, o.panelPitchMm);
     var ys = axisPositions(o.insetYMm, o.syMm, o.travelYMm, o.trackAxis === 'x' ? o.panelHoles : 0, o.panelPitchMm);
+    // tag: its name on a fixture table, as on a Fireball's: a row letter
+    // (A at the back, the map's top) and a column number (1 at the left),
+    // whichever corner the machine homes to.
     for (var r = 0; r < ys.length; r++) {
       for (var c = 0; c < xs.length; c++) {
-        var p = { col: c + 1, row: r + 1, x: o.dirX * xs[c], y: o.dirY * ys[r] };
+        var p = { col: c + 1, row: r + 1, x: o.dirX * xs[c], y: o.dirY * ys[r],
+                  tag: rowLetters(o.dirY > 0 ? ys.length - r : r + 1) + (o.dirX > 0 ? c + 1 : xs.length - c) };
         if (o.layer) p.layer = o.layer;
         if (sup.indexOf(holeKey(p)) >= 0) p.suppressed = true;
         out.push(p);
@@ -1162,10 +1167,17 @@
     for (var v = Math.ceil(lo / step - 1e-9) * step; v <= hi + 1e-9 && out.length < 500; v += step) out.push(+v.toFixed(6));
     return { step: step, values: out };
   }
-  // How the UI names a hole: its list name, list number, or grid place.
+  // How the UI names a hole: its list name, list number, or grid place
+  // (B3: row B, column 3).
   function holeLabel(p) {
     if (p.col == null) return p.name ? p.name : 'Hole ' + p.index;
-    return 'Column ' + p.col + ', row ' + p.row;
+    return p.tag || 'Column ' + p.col + ', row ' + p.row;
+  }
+  // A, B ... Z, AA, AB ...: the nth row's letters.
+  function rowLetters(n) {
+    var s = '';
+    for (; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s;
+    return s;
   }
   // A typed hole list: one per line, "x, y" or "name: x, y", with an
   // optional third value for that hole's own diameter and a fourth for the
@@ -2596,7 +2608,7 @@
       var c = document.createElement('span');
       c.className = 'mw-fav-chip';
       c.setAttribute('role', 'button'); c.tabIndex = 0;
-      c.textContent = p.col == null ? holeLabel(p) : (holes.gridRaw.length > 1 ? gridName(p.layer || 0) + ' ' : '') + 'C' + p.col + ' R' + p.row;
+      c.textContent = p.col == null ? holeLabel(p) : (holes.gridRaw.length > 1 ? gridName(p.layer || 0) + ' ' : '') + holeLabel(p);
       c.title = 'Pick ' + holeName(p);
       c.addEventListener('click', function() { if (!p.blocked) pickHole(i); });
       c.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); c.click(); } });
@@ -3045,8 +3057,11 @@
     if (holes.picked < 0) holes.nearMm = null;
     // Machine X right and Y up (back at the top). The bed flush with the card's top left, like the Setup heading below;
     // machine X numbers run along the bottom and Y down the right.
-    var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = 1;
-    var padT = pad, padB = 20, padR = 46;
+    // The fixture table's column numbers sit above the bed and its row
+    // letters left of it, when a grid is shown.
+    var labelled = holes.grid.some(function(p) { return p.tag && !p.hidden; });
+    var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = labelled ? 16 : 1;
+    var padT = labelled ? 14 : 1, padB = 20, padR = 46;
     var box = holeMapBox(t), sc = Math.min((box.w - pad - padR) / t.xMm, (box.h - padT - padB) / t.yMm);
     var w = t.xMm * sc + pad + padR, ht = t.yMm * sc + padT + padB;
     svg.style.width = w.toFixed(0) + 'px';
@@ -3082,6 +3097,36 @@
       add('text', { class: 'mw-h-ruler', x: (right + 7).toFixed(1), y: Math.max(py + 4, 9).toFixed(1) }, String(v));
     });
     add('text', { class: 'mw-h-ruler mw-h-axis', x: (right + 7).toFixed(1), y: (bottom + 15).toFixed(1) }, unit);
+    if (labelled) tableLabels();
+    // Column numbers and row letters of the grid being edited (else the
+    // first one shown), at its holes; every second, fifth... when they'd
+    // crowd.
+    function tableLabels() {
+      var layer = holes.grid.some(function(p) { return p.tag && !p.hidden && (p.layer || 0) === holes.activeGrid; }) ? holes.activeGrid
+        : (holes.grid.filter(function(p) { return p.tag && !p.hidden; })[0].layer || 0);
+      var cols = {}, rows = {};
+      holes.grid.forEach(function(p) {
+        if (!p.tag || (p.layer || 0) !== layer) return;
+        var m = /^([A-Z]+)(\d+)$/.exec(p.tag);
+        cols[m[2]] = p.x; rows[m[1]] = p.y;
+      });
+      function every(pos) {
+        var gap = Infinity;
+        for (var i = 1; i < pos.length; i++) gap = Math.min(gap, Math.abs(pos[i] - pos[i - 1]) * sc);
+        var need = 14 / gap;
+        return [1, 2, 5, 10, 20, 50].filter(function(k) { return k >= need; })[0] || 100;
+      }
+      var cn = Object.keys(cols).sort(function(a, b) { return a - b; }), kc = every(cn.map(function(k) { return cols[k]; }));
+      cn.forEach(function(k) {
+        if ((k - 1) % kc) return;
+        add('text', { class: 'mw-h-ruler mw-h-table', x: X(cols[k]), y: (padT - 4).toFixed(1), 'text-anchor': 'middle' }, k);
+      });
+      var rn = Object.keys(rows).sort(function(a, b) { return a.length - b.length || (a < b ? -1 : 1); }), kr = every(rn.map(function(k) { return rows[k]; }));
+      rn.forEach(function(k, i) {
+        if (i % kr) return;
+        add('text', { class: 'mw-h-ruler mw-h-table', x: (pad - 4).toFixed(1), y: (+Y(rows[k]) + 3.5).toFixed(1), 'text-anchor': 'end' }, k);
+      });
+    }
     // T-tracks between panels, across the whole travel.
     if (h && h.layout !== 'list') [h].concat(h.grids || []).forEach(function(gr, gi) {
       if (holes.hidden[String(gi)]) return;
@@ -3599,6 +3644,7 @@
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>ZS: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
+      'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>. The column numbers run along the top of the map and the row letters down its left side, A at the back and 1 at the left, whichever corner your machine homes to.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
       '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the silver ring with a dot in it is the spindle, as ncSender&rsquo;s Top view shows it from above (the dot is the bit&rsquo;s center). The numbers along the bottom (X) and right (Y) are machine coordinates in ncSender&rsquo;s units.',

@@ -236,7 +236,9 @@ a hairline), and the spacings and insets to the lines' centers. The center dot t
 middle of a crossing, and a corner dot on the edges of the two lines (back right for the +X +Y edges).
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
-spindle, with machine-coordinate rulers along the bottom (X) and right (Y) in ncSender's units. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
+spindle, with machine-coordinate rulers along the bottom (X) and right (Y) in ncSender's units. Grid
+holes are named like a fixture table, a row letter and a column number (**B3**): the column numbers
+run along the top and the row letters down the left, A at the back and 1 at the left. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
 `$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole,
 or jog roughly over one and press **Pick Nearest Hole** (it picks the hole closest
 to the spindle and says how far off it is, so you get the grid's exact position without centering

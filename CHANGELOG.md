@@ -3,6 +3,13 @@
 What's new in each release of Zero Swapper. Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-zero-swapper/releases).
 
+## Unreleased
+
+### 🎯 Easier to use
+- **Holes are named like a fixture table**: a row letter and a column number (**B3**), with the
+  column numbers along the top of the map and the row letters down its left, A at the back and 1 at
+  the left, like a Fireball fixture table. (Thanks, Francis.)
+
 ## 0.3.35
 
 **Z0 on a vise, a fixture or the stock top, and stock measured with the spindle, not a tape.**

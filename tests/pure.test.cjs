@@ -341,10 +341,14 @@ test('hole grid: as many as fit in the travel, from the inset, in machine coordi
   const g = holeGrid({ sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 30, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 });
   // X: 48, 144, ... 816 is past 812, so 8 columns (48 + 7 * 96 = 720); Y: 30 + 12 * 96 = 1182, 13 rows.
   assert.equal(g.length, 8 * 13);
-  assert.deepEqual(g[0], { col: 1, row: 1, x: 48, y: 30 });
-  assert.deepEqual(g[g.length - 1], { col: 8, row: 13, x: 720, y: 1182 });
+  // Named like a fixture table: row A at the back (the map's top), column 1 at the left.
+  assert.deepEqual(g[0], { col: 1, row: 1, x: 48, y: 30, tag: 'M1' });
+  assert.deepEqual(g[g.length - 1], { col: 8, row: 13, x: 720, y: 1182, tag: 'A8' });
   const neg = holeGrid({ sxMm: 100, syMm: 100, insetXMm: 50, insetYMm: 50, travelXMm: 300, travelYMm: 200, dirX: -1, dirY: -1 });
   assert.deepEqual(neg.map(h => [h.x, h.y]), [[-50, -50], [-150, -50], [-250, -50], [-50, -150], [-150, -150], [-250, -150]]);
+  // Homing back right: the first hole is the back right one, A3.
+  assert.deepEqual(neg.map(h => h.tag), ['A3', 'A2', 'A1', 'B3', 'B2', 'B1']);
+  assert.deepEqual(neg.map(holeLabel), ['A3', 'A2', 'A1', 'B3', 'B2', 'B1']);
   assert.deepEqual(holeGrid({ sxMm: 0, syMm: 96, insetXMm: 0, insetYMm: 0, travelXMm: 800, travelYMm: 800, dirX: 1, dirY: 1 }), [], 'no spacing, no holes');
 });
 
@@ -640,6 +644,9 @@ test('holeGrid with a list: reference point plus x, y into the travel; outside d
   assert.deepEqual(holeGrid(Object.assign({}, o, { dirX: -1, dirY: -1 })).map((p) => [p.x, p.y]), [[-20, -30], [-120, -80]]);
   assert.deepEqual(holeGrid(o).map(holeLabel), ['A', 'Hole 2']);
   assert.equal(holeLabel({ col: 3, row: 2 }), 'Column 3, row 2');
+  // Past Z, rows go on AA, AB...
+  const tall = holeGrid({ sxMm: 10, syMm: 10, insetXMm: 5, insetYMm: 5, travelXMm: 20, travelYMm: 300, dirX: 1, dirY: 1 });
+  assert.deepEqual([tall[tall.length - 1].tag, tall[0].tag, tall[(30 - 27) * 2].tag], ['A2', 'AD1', 'AA1']);
 });
 
 test('nearest-hole macros with a list pick the nearest usable listed hole', () => {
@@ -716,7 +723,7 @@ test('holeGrid marks suppressed holes by column and row; nearestHole skips them'
   const grid = holeGrid(o);
   assert.deepEqual(grid.filter((p) => p.suppressed).map((p) => [p.col, p.row]), [[2, 1]]);
   assert.equal(grid.length, 6, 'suppressed holes stay in the grid, so indices don\'t shift');
-  assert.deepEqual(grid[nearestHole(grid, 150, 50).index], { col: 1, row: 1, x: 50, y: 50 });
+  assert.deepEqual(grid[nearestHole(grid, 150, 50).index], { col: 1, row: 1, x: 50, y: 50, tag: 'B1' });
 });
 
 test('nearest-hole macros skip suppressed holes, matching the XY0 Picker', () => {
