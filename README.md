@@ -237,6 +237,11 @@ straight on across each track. The insets depend on where your bed sits, so jog 
 press **Grab First Hole Center** rather than copying someone else's (6.858 and 21.846 mm on the machine
 this was worked out on).
 
+**Share your layout.** If your spoilboard has a layout that works well, open an issue with its hole size,
+spacing, T-track direction, holes per panel and panel pitch. The plan, once there are a few, is to ship
+them as presets to load from the Profiles menu: everything but the insets, which you'd still grab on your
+own machine.
+
 **No holes, just a lasered or engraved grid?** Treat each line crossing as a hole: set **Hole
 Diameter** to the line's width (the laser line's width, or the V-bit's kerf width at the surface; 0 for
 a hairline), and the spacings and insets to the lines' centers. The center dot then puts X0 Y0 on the
