@@ -148,7 +148,11 @@ Describe your spoilboard's grid once under **Setup** on that tab: **Hole Diamete
 and **Y Spacing** (center to center), and **Inset X** / **Inset Y** (from machine X0 Y0 to the center
 of the first hole, into the machine's travel). Or jog the bit to the center of the first hole and press
 **Grab First Hole Center** to fill the insets in (with the machine connected and homed; any hole
-works when the first one is less than one spacing from machine X0 Y0). Once saved,
+works when the first one is less than one spacing from machine X0 Y0). Better: **pick any hole on the
+map** first (one that's easy to reach, say), jog the bit over its real center, and press the button,
+which then reads **Grab B3 Center**: the insets are set so that hole is exactly under the bit, with no
+guessing which hole you meant. It warns when the bit is more than half a spacing from where Setup had
+that hole (probably the wrong one). Then pick a far hole and **Go to Selected** to check. Once saved,
 Setup opens locked so a stray tap can't change the grid; press **Locked** to unlock it for editing
 (changes save as you go).
 
@@ -256,8 +260,8 @@ turned; **Apply to Setup** writes them in.
 (counterclockwise seen from above), about the grid's first hole. Measure Holes fills it in. On a big bed
 it matters: 0.1° over 2.4 m is about 4 mm at the far end. The map, Pick Nearest Hole, Set, the keyboard
 macros and every Cut Holes program use the turned positions; holes the turn takes outside the travel
-are left out. With a turn, **Grab First Hole Center** works from whichever hole the bit is over (the one
-Setup puts nearest), so get Setup close first. The Profiles menu can also **load a
+are left out. With a turn, pick the hole before grabbing (with none picked, Grab uses the hole Setup puts
+nearest the bit, so Setup must be close already). The Profiles menu can also **load a
 preset** layout (an Onefinity QCW, say): everything but the insets, which you then grab or measure.
 
 **No holes, just a lasered or engraved grid?** Treat each line crossing as a hole: set **Hole

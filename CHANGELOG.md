@@ -47,6 +47,8 @@ file names start SBT too.
 - Two-letter row names (AA on) fit beside the map, and column numbers thin out so they never run
   together. Holes right on the edge of the travel show whole, with room before the row letters.
 - **The menu** runs XY0 Picker, Cut Holes, then Z0 macros.
+- **Grab any hole:** pick a hole on the map, jog over it, and **Grab B3 Center** sets the insets so that
+  hole is under the bit, instead of guessing from the first hole.
 - **SBT: Set XY0 at nearest hole (no move)** is the new name of XY0 on nearest hole, so it's not mistaken
   for Go to nearest hole (which moves); Create macros renames it in place.
 - **Dowel fit test:** an **Edge Distance** (10 mm to start) keeps the test holes off the scrap's edges.

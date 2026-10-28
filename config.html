@@ -570,7 +570,7 @@
           </div>
           <div class="mw-field">
             <label aria-hidden="true" class="mw-grid-only">&nbsp;</label>
-            <button type="button" class="mw-btn mw-btn-quiet mw-grab-btn" id="mw-hole-here" title="Jog the bit to the center of the first hole and press this: Inset X and Inset Y are filled in from where the machine is. Any hole works as long as the first hole is less than one spacing from machine X0 Y0.">Grab First Hole Center</button>
+            <button type="button" class="mw-btn mw-btn-quiet mw-grab-btn" id="mw-hole-here" title="Pick a hole on the map, jog the bit over its real center, and press this: the insets are set so that hole is under the bit (the button names it). With no hole picked: the bit over the first hole, or any hole as long as the first is less than one spacing from machine X0 Y0.">Grab First Hole Center</button>
           </div>
         </div>
         <div class="mw-holes-tools mw-grid-only">
@@ -4456,6 +4456,8 @@
   function unitName() { return state.imperial ? 'in' : 'mm'; }
   function updatePicked() {
     var p = holes.grid[holes.picked], aim = pickTarget(), tg = aim && aim.tg;
+    var grabbable = p && p.col != null && (p.layer || 0) === holes.activeGrid && $('mw-hole-layout').value !== 'list';
+    $('mw-hole-here').textContent = grabbable ? 'Grab ' + holeLabel(p) + ' Center' : 'Grab First Hole Center';
     var onStock = p && stockActive(), live = holes.liveNear && holes.grid[holes.liveNear.index];
     $('mw-hole-picked').textContent = p ? holeName(p) + ' \u00b7 ' + ORIGIN_NOTES[holes.origin] + (onStock ? ' \u00b7 stock ' + ORIGIN_NOTES[holes.stockZero] : '')
       : aim ? 'Stock ' + ORIGIN_NOTES[holes.stockZero] + ' \u00b7 from ' + holes.stockAnchor.wcs + ' X0 Y0' : 'No hole picked';
@@ -4595,26 +4597,48 @@
     var px = h.trackAxis === 'y' ? (h.panelPitchMm || h.panelHoles * h.sxMm) : h.sxMm;
     var py = h.trackAxis === 'x' ? (h.panelPitchMm || h.panelHoles * h.syMm) : h.syMm;
     var tg = Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h, { layout: 'grid' });
-    var near = h.turnDeg ? nearestHole(holeGrid(tg), here.x, here.y) : null;
+    // A grid hole picked on the map (of the grid being edited) is the one
+    // the bit is over: the insets put it there. Else, turned, the nearest
+    // hole Setup has; else the first hole within a spacing of machine zero.
+    var pk = holes.grid[holes.picked], usePick = !!(pk && pk.col != null && (pk.layer || 0) === holes.activeGrid);
+    var near = usePick ? { index: -1 } : h.turnDeg ? nearestHole(holeGrid(tg), here.x, here.y) : null, off = usePick ? Math.hypot(here.x - pk.x, here.y - pk.y) : 0;
     if (near) {
-      // Turned: the hole the spindle is over is taken to be the nearest
-      // one Setup has, and the first hole is put where the turn says it is
-      // from there.
-      var flat = holeGrid(Object.assign({}, tg, { turnDeg: 0 })), q = holeGrid(tg)[near.index], f0 = null;
+      // From that hole, the first hole is put where the spacing (and the
+      // turn) say it is.
+      var flat = holeGrid(Object.assign({}, tg, { turnDeg: 0 })), q = usePick ? pk : holeGrid(tg)[near.index], f0 = null;
       flat.forEach(function(p) { if (p.col != null && p.col === q.col && p.row === q.row) f0 = p; });
       var a = h.turnDeg * Math.PI / 180, ux = f0.x - t.dirX * h.insetXMm, uy = f0.y - t.dirY * h.insetYMm;
       var p0x = here.x - (ux * Math.cos(a) - uy * Math.sin(a)), p0y = here.y - (ux * Math.sin(a) + uy * Math.cos(a));
-      $('mw-hole-ix').value = +(t.dirX * p0x / k).toFixed(4);
-      $('mw-hole-iy').value = +(t.dirY * p0y / k).toFixed(4);
+      // Square to the machine, a first hole past machine zero means a
+      // column or row the travel doesn't have: the next one in is first.
+      // Turned, it steps in along the turned grid's own axes, a whole
+      // spacing (or panel pitch) at a time.
+      var ix = t.dirX * p0x, iy = t.dirY * p0y;
+      if (!h.turnDeg) { ix = insetFromPosition(p0x, px, t.dirX); iy = insetFromPosition(p0y, py, t.dirY); }
+      for (var guard = 0; (ix < 0 || iy < 0) && guard < 2 * HOLE_GRID_MAX; guard++) {
+        var sx = ix < 0 ? t.dirX * px : 0, sy = ix < 0 ? 0 : t.dirY * py;
+        p0x += sx * Math.cos(a) - sy * Math.sin(a);
+        p0y += sx * Math.sin(a) + sy * Math.cos(a);
+        ix = t.dirX * p0x; iy = t.dirY * p0y;
+      }
+      $('mw-hole-ix').value = +(ix / k).toFixed(4);
+      $('mw-hole-iy').value = +(iy / k).toFixed(4);
     } else {
       $('mw-hole-ix').value = +(insetFromPosition(here.x, px, t.dirX) / k).toFixed(4);
       $('mw-hole-iy').value = +(insetFromPosition(here.y, py, t.dirY) / k).toFixed(4);
     }
-    status.setAttribute('data-state', 'ok');
-    status.textContent = 'Insets set from machine X ' + fmt(here.x) + ', Y ' + fmt(here.y) + ' mm.';
+    var far = usePick && off > holeSpacingMm(h) / 2, was = usePick ? holeName(pk) : '';
     holes.picked = -1;
     holes.nearMm = null;
     renderHoles();
+    // Named as Setup now has it: a first row or column the travel doesn't
+    // have moves the names along.
+    var own = holes.grid.filter(function(g) { return g.col != null && (g.layer || 0) === holes.activeGrid; });
+    var nh = nearestHole(own, here.x, here.y), now = nh && nh.distanceMm < 0.01 ? holeName(own[nh.index]) : null;
+    status.setAttribute('data-state', far || !now ? 'bad' : 'ok');
+    status.textContent = 'Insets set' + (now ? ' so ' + now + ' is under the bit' + (usePick && now !== was ? ' (it was ' + was + ': a first row or column moved, so the names moved along)' : '') : '') +
+      ', from machine X ' + fmt(here.x) + ', Y ' + fmt(here.y) + ' mm.' +
+      (far ? ' That\u2019s ' + shown(off) + ' ' + unitName() + ' from where Setup had ' + was + ': check it\u2019s the hole you picked.' : '');
     saveSettings();
   }
   // The holes are machine positions, so moves and offsets need a homed,
@@ -5443,7 +5467,7 @@
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. Two or more holes far apart fit the spacing too, and how far the spoilboard is turned. <strong>Apply to Setup</strong> writes them in, Turn included.',
-      '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and Cut Holes all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, Grab First Hole Center works from the hole Setup puts nearest the bit, so get Setup close first.',
+      '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and Cut Holes all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
       'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>, counted from machine zero&rsquo;s corner, so <strong>A1</strong> is the hole nearest machine X0 Y0 (front left on a machine that homes there). The column numbers run along the top of the map and the row letters down its left side.',
@@ -5451,7 +5475,7 @@
       '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the silver ring with a dot in it is the spindle, as ncSender&rsquo;s Top view shows it from above (the dot is the bit&rsquo;s center). The numbers along the bottom (X) and right (Y) are machine coordinates in ncSender&rsquo;s units.',
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Pick Nearest Hole skips them.',
-      '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
+      '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, pick any hole on the map, jog the bit over its real center and press <strong>Grab B3 Center</strong> (the button names the picked hole): the insets are set so that hole is under the bit, with a warning if that&rsquo;s more than half a spacing from where Setup had it. With no hole picked it&rsquo;s <strong>Grab First Hole Center</strong>: the bit over the first hole, or any hole when the first is less than one spacing from machine X0 Y0. The machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
       '<strong>Profiles:</strong> the menu beside Setup&rsquo;s title keeps one per spoilboard, fixture plate or grid you use. <strong>New profile&hellip;</strong> saves what&rsquo;s in Setup under a name; pick another to load it. Change a number and the bar says it&rsquo;s changed: <strong>Save</strong> keeps it, <strong>Revert</strong> puts the profile back, so you can try other numbers safely. A profile holds the layout, numbers, T-tracks, list and suppressed holes (the dot is picked per job). Press Create macros after switching if you use the nearest-hole macros.',
       '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>SBT: Go to nearest hole</strong> and <strong>SBT: Set XY0 at nearest hole (no move)</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down), then moves; Set XY0 only sets the active work offset and never moves. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
