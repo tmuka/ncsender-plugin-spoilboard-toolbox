@@ -1,4 +1,4 @@
-# Zero Swapper: notes for working on this plugin
+# Spoilboard Toolbox (formerly Zero Swapper): notes for working on this plugin
 
 Zero Swapper (`com.tmuka.zeroswapper`; called Macro Wiz before 0.3.1, with id `com.tmuka.macrowiz` before 0.3.3) is a
 client-only ncSender plugin. It runs a wizard that checks a
@@ -167,11 +167,12 @@ npm run build    # dist/com.tmuka.zeroswapper_v<version>.zip from the last commi
 - Bump `version` in both `manifest.json` and `package.json` for a release build.
 - The UI was checked in headless Chrome against a stand-in for the ncSender API that stubs `fetch` and
   posts `cnc-data` replies. The harness isn't in the repo; a fresh one only needs to stub the APIs above.
-- Install a build from ncSender's Plugin Manager. The wizard opens from **Zero Swapper** in the plugin tool menu.
+- Install a build from ncSender's Plugin Manager. The wizard opens from **Spoilboard Toolbox** in the plugin tool menu.
 
 ## How it was built
 
-(As Macro Wiz; renamed Zero Swapper in 0.3.1, with the `ZS:` macro prefix.)
+(As Macro Wiz; renamed Zero Swapper in 0.3.1, with the `ZS:` macro prefix; renamed Spoilboard Toolbox in 0.3.36, keeping the ID
+`com.tmuka.zeroswapper` and the `ZS:` prefix so updates, settings and macros carry over.)
 
 Built in one Claude Code session (2026-10-16), version 0.1 to 0.2.8, driven by requests from the author:
 

@@ -1,9 +1,12 @@
 # Changelog
 
-What's new in each release of Zero Swapper. Install or update from
+What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-zero-swapper/releases).
 
 ## Unreleased
+
+**Zero Swapper is now Spoilboard Toolbox**, since it cuts the holes as well as zeroing on them. It's the
+same plugin: updates, settings and macros carry over, and the macros keep their `ZS:` names.
 
 ### ✨ New
 - **Cut Holes:** a new tab writes the program that cuts the dog holes you set up, every grid and each

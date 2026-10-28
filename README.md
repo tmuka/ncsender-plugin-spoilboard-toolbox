@@ -1,6 +1,8 @@
-# Zero Swapper
+# Spoilboard Toolbox
 
-**Your spoilboard's holes are already a precision fixture. Zero Swapper turns them into work zero.**
+*Formerly **Zero Swapper**: same plugin, same settings and macros, a name for everything it does now.*
+
+**Your spoilboard's holes are already a precision fixture. Spoilboard Toolbox turns them into work zero, and cuts them in the first place.**
 
 - **X0 Y0 in seconds, no probe.** Jog roughly near a dog hole, tap **Pick Nearest Hole**, hold
   **Set**: work zero lands exactly on the hole's center or edge. No edge finder, no XY probe, no
@@ -15,14 +17,16 @@
   jaw or the stock top for any measured tool.
 - **Fits the bed you actually have.** Missing holes, T-track panels, dog holes plus a pin grid, custom
   locating pins, lasered or V-carved grid lines, keepout zones, and a saved profile for every board.
+- **Cut the holes from the same numbers.** Cut the dog holes, chamfer them, engrave their fixture
+  table labels, and drill bolt or flip-pin holes through your stock right over them.
 
-Zero Swapper is a plugin for [ncSender](https://github.com/siganberg/ncSender), the G-code sender for
+Spoilboard Toolbox is a plugin for [ncSender](https://github.com/siganberg/ncSender), the G-code sender for
 grblHAL CNC routers. Its **XY0 Picker** shows your machine's bed with every hole on it, live as you jog,
 and sets the work offset (G54–G59.3) without moving the machine. Its **Z0 macros** tab checks your
 grblHAL controller, then writes ncSender macros you run from the Macros tab or, best of all, a
 keyboard shortcut.
 
-![Zero Swapper's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid between T-tracks, a
+![Spoilboard Toolbox's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid between T-tracks, a
 hole picked with a sheet of stock drawn from it, the spindle, the ATCi tool rack's keepout zone in
 red, and the Pick Nearest Hole, Go to Selected and Set G54 XY buttons](docs/xy0-picker.png)
 
@@ -51,7 +55,7 @@ most from the **Z0 macros** if:
   changer (ATC) such as RapidChange), so each tool has a tool length offset (TLO), and
 - your controller runs **grblHAL** (the wizard checks it can do the math the macros need).
 
-Without measured tool lengths, every tool change needs a new Z probe anyway, and Zero Swapper can't
+Without measured tool lengths, every tool change needs a new Z probe anyway, and Spoilboard Toolbox can't
 save you that.
 
 ## What you get
@@ -97,7 +101,7 @@ center of round or square stock), set X0 Y0 at that midpoint, and save / restore
 
 ## First time
 
-1. Open **Zero Swapper** from the plugin tool menu, run the check, and press **Create macros**.
+1. Open **Spoilboard Toolbox** from the plugin tool menu, run the check, and press **Create macros**.
 2. With a measured tool loaded, put your probe block (touch plate) on the spoilboard, jog the bit just above it,
    and run **Record spoilboard height**. It probes straight down.
 3. Check it once against ncSender's own probe. With the block still on the spoilboard, run ncSender's
@@ -117,7 +121,7 @@ Re-record after surfacing the spoilboard.
 
 - **Same stock thickness as last time:** load any measured tool and run **Z0 on stock top**. No
   probing.
-- **New stock thickness:** tell Zero Swapper once, then run **Z0 on stock top**. Either:
+- **New stock thickness:** tell Spoilboard Toolbox once, then run **Z0 on stock top**. Either:
   - put the block on the stock and run **Measure stock thickness** (one probe, good for every tool in
     the job), or
   - type the thickness in the wizard and press **Store**, if you trust the material's nominal size
@@ -387,7 +391,7 @@ something to screw into.
      spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
-   - **Delete Zero Swapper macros** removes every macro whose name starts with "ZS:" (for example
+   - **Delete ZS: macros** removes every macro whose name starts with "ZS:" (the prefix is from its old name, Zero Swapper; for example
      ones left over from older settings or another work offset) and nothing else. The first press lists
      them and turns into **Confirm delete**; a second press within a few seconds deletes. Keyboard
      shortcuts set on deleted macros stop working (recreated macros get new numbers), so to change
@@ -491,7 +495,7 @@ macros only move straight down from where you put the bit, then back off upward.
    [Releases](https://github.com/tmuka/ncsender-plugin-zero-swapper/releases).
 2. In ncSender: **Settings → Plugins → Install Plugin → ZIP**, pick the file and press **Install from
    File**, or paste the zip's link and press **Install from URL**.
-3. Open **Zero Swapper** from the plugin tool menu.
+3. Open **Spoilboard Toolbox** from the plugin tool menu.
 
 Later versions show up under ncSender's plugin **Update** button. To build the zip yourself, see
 Development below.
@@ -509,7 +513,7 @@ can't load other files. The macro builder and the `$#` / `$G` parsers sit betwee
 
 ## License
 
-Zero Swapper is licensed under the [GNU General Public License v3.0](LICENSE), the same license as
+Spoilboard Toolbox is licensed under the [GNU General Public License v3.0](LICENSE), the same license as
 ncSender's open-source edition. Copyright (c) 2026 tmuka.
 
 ## Status

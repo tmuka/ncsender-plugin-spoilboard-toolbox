@@ -412,7 +412,7 @@
     <aside class="mw-sidebar">
       <div class="mw-sidebar-header">
         <span class="mw-sidebar-eyebrow">ncSender</span>
-        <span class="mw-sidebar-title">Zero Swapper</span>
+        <span class="mw-sidebar-title">Spoilboard Toolbox</span>
         <span class="mw-sidebar-unit" id="mw-unit-badge">METRIC (mm)</span>
       </div>
       <nav class="mw-sidebar-nav">
@@ -777,7 +777,7 @@
         <div class="mw-card-head">
           <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">4</span>Macros</h3>
           <div class="mw-head-actions">
-            <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete Zero Swapper macros</button>
+            <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete ZS: macros</button>
             <button type="button" class="mw-btn" id="mw-save">Create macros</button>
           </div>
         </div>
@@ -2742,7 +2742,7 @@
     var btn = $('mw-delete');
     if (deleteArmed && deleteArmed.timer) clearTimeout(deleteArmed.timer);
     deleteArmed = null;
-    if (btn) { btn.textContent = 'Delete Zero Swapper macros'; btn.classList.remove('mw-btn-danger'); }
+    if (btn) { btn.textContent = 'Delete ZS: macros'; btn.classList.remove('mw-btn-danger'); }
   }
   async function deleteMacros() {
     var status = $('mw-save-status'), btn = $('mw-delete');
@@ -2752,7 +2752,7 @@
         var mine = (lres.ok ? await lres.json() : []).filter(isOurs);
         if (!mine.length) {
           status.removeAttribute('data-state');
-          status.textContent = 'There are no Zero Swapper macros to delete.';
+          status.textContent = 'There are no ZS: macros to delete.';
           return;
         }
         deleteArmed = { macros: mine, timer: setTimeout(function() {
@@ -2787,7 +2787,7 @@
     }
     btn.disabled = false;
     status.setAttribute('data-state', failed.length ? 'bad' : 'ok');
-    status.textContent = 'Deleted ' + gone + ' Zero Swapper macro' + (gone === 1 ? '' : 's') + '.' +
+    status.textContent = 'Deleted ' + gone + ' ZS: macro' + (gone === 1 ? '' : 's') + '.' +
       (failed.length ? ' Couldn\'t delete ' + failed.join(', ') + '.' : ' Press Create macros to make fresh ones, then set any keyboard shortcuts on them again.');
   }
 
