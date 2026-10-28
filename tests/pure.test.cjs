@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1238,4 +1238,58 @@ test('cut holes: a spiral down a hole just bigger than the bit goes no faster th
     p = q;
   }
   assert.ok(worst <= 500 + 1, 'Z speed ' + worst);
+});
+
+// A 4 x 3 grid 50 apart from (50, 50), and a 300 x 200 stock from (20, 30).
+const stockGrid = () => {
+  const g = [];
+  for (let r = 1; r <= 4; r++) for (let c = 1; c <= 6; c++) g.push({ col: c, row: r, x: c * 50, y: r * 50, tag: String.fromCharCode(64 + r) + c });
+  return g;
+};
+const stockBox = { minX: 20, maxX: 320, minY: 30, maxY: 230 };
+
+test('stock holes: only holes whose edge is the margin inside the stock', () => {
+  const c = stockHoleCandidates(stockGrid(), stockBox, 4, 10);
+  assert.equal(c.length, 24);
+  // 3 mm more drops the last column (300 + 21 > 320) and the first row (50 - 21 < 30).
+  assert.equal(stockHoleCandidates(stockGrid(), stockBox, 4, 17).length, 15);
+  // A wider margin drops the first column (50 - 20 = 30 < 4 + 30) and the top row.
+  assert.deepEqual(stockHoleCandidates(stockGrid(), stockBox, 4, 30).map(p => p.tag), ['B2', 'B3', 'B4', 'B5', 'C2', 'C3', 'C4', 'C5']);
+});
+
+test('stock holes: bolts nearest each corner, or every one', () => {
+  const c = stockHoleCandidates(stockGrid(), stockBox, 4, 10);
+  assert.deepEqual(stockBoltHoles(c, stockBox, 'corners').map(p => p.tag), ['A1', 'A6', 'D6', 'D1']);
+  assert.equal(stockBoltHoles(c, stockBox, 'all').length, 24);
+  // One hole inside: it's the only bolt.
+  assert.deepEqual(stockBoltHoles([c[0]], stockBox, 'corners').map(p => p.tag), ['A1']);
+});
+
+test('stock holes: flip pins on the line nearest the middle, as far apart as fit', () => {
+  const c = stockHoleCandidates(stockGrid(), stockBox, 4, 10);
+  // The stock's middle is at Y 130: rows B (100) and C (150) are 30 and 20 off.
+  const fx = flipPins(c, stockBox, 'x');
+  assert.deepEqual(fx.pins.map(p => p.tag), ['C1', 'C6']);
+  assert.equal(fx.lineMm, 150);
+  assert.equal(fx.offMm, -20);
+  // Across X the middle is 170: column 3 (150) is 20 off, column 4 (200) 30.
+  const fy = flipPins(c, stockBox, 'y');
+  assert.deepEqual(fy.pins.map(p => p.tag), ['A3', 'D3']);
+  assert.equal(fy.offMm, 20);
+  assert.equal(flipPins([c[0]], stockBox, 'x'), null);
+  // Flipped over the line, the stock moves by twice how far its middle is off.
+  assert.deepEqual(flipRect(stockBox, 'x', 150), { minX: 20, maxX: 320, minY: 70, maxY: 270 });
+  assert.deepEqual(flipRect(stockBox, 'y', 170), stockBox);
+});
+
+test('stock holes: each hole can have its own depth (a counterbore, then the hole through)', () => {
+  const L = holeCutProgram(cutBase({ holes: [{ x: 100, y: 100, diaMm: 12, depthMm: 4, label: 'A1 counterbore' }, { x: 100, y: 100, diaMm: 6.35, depthMm: 20, label: 'A1' }] }));
+  const depths = [], at = [];
+  let hole = -1;
+  for (const l of L) {
+    if (/^\(ZS hole/.test(l)) { hole++; depths[hole] = 0; }
+    const z = /Z(-[\d.]+)/.exec(l);
+    if (hole >= 0 && z && /^G[13]/.test(l)) depths[hole] = Math.min(depths[hole], +z[1]);
+  }
+  assert.deepEqual(depths, [-4, -20]);
 });

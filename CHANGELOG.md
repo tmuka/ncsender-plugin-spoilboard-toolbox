@@ -16,6 +16,9 @@ What's new in each release of Zero Swapper. Install or update from
 - **Dowel fit test, chamfers and labels** (Cut Holes tab): a row of test holes in scrap to find the size
   your dowels fit; a V-bit chamfer round each hole's top edge; and the fixture table's names engraved
   beside the holes with a V-bit or a laser.
+- **Holes through the stock** (Cut Holes tab): drill the stock right over spoilboard holes, either bolt
+  holes (with an optional counterbore) to bolt it to threaded inserts, or two flip pins so a stock
+  flipped for its second side drops back exactly where it was.
 - **Measure Holes:** probe a few real holes and Setup's spacing and insets are fitted to them, with how
   far the spoilboard is turned.
 - **Presets:** load a shared grid layout (Onefinity QCW first) from the Profiles menu; you grab or

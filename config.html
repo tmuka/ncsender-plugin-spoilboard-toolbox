@@ -252,7 +252,7 @@
   .mw-banner { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 8px; line-height: 1.4;
     border: 1px solid color-mix(in srgb, var(--color-warning, #d9a441) 60%, transparent);
     background: color-mix(in srgb, var(--color-warning, #d9a441) 14%, transparent); }
-  .mw-banner[hidden], .mw-cal[hidden], .mw-lab-vbit[hidden], .mw-lab-laser[hidden] { display: none !important; }
+  .mw-banner[hidden], .mw-cal[hidden], .mw-lab-vbit[hidden], .mw-lab-laser[hidden], .mw-sh-bolt[hidden], .mw-sh-pins[hidden] { display: none !important; }
   .mw-banner span { flex: 1; }
   .mw-cal { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; }
   .mw-cal-list { margin: 0; padding-left: 18px; font-variant-numeric: tabular-nums; }
@@ -864,6 +864,63 @@
         <p class="mw-hint" id="mw-cut-summary"></p>
         <p class="mw-status" id="mw-cut-note" role="status"></p>
         <div><button type="button" class="mw-btn" id="mw-cut-generate">Generate</button></div>
+      </section>
+      <section class="mw-card">
+        <h3 class="mw-card-title">Holes through the stock</h3>
+        <p class="mw-hint">Drill the stock right over spoilboard holes: for <strong>bolts</strong> into threaded inserts below,
+          or for <strong>flip pins</strong>, so a stock flipped for its second side drops back exactly where it was. The stock is the
+          XY0 Picker&rsquo;s (tick Stock, with its size and thickness) and the holes come from the grid picked in Setup. Clamp the stock
+          down some other way first, and put Z0 on its top. It uses the bit, feeds and spindle above.</p>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-sh-mode">For</label>
+            <select class="mw-select" id="mw-sh-mode" title="Bolts: clearance holes for bolts into threaded inserts in the spoilboard holes. Flip pins: two holes on one grid line for dowels, so the stock can be flipped over that line and land where it was.">
+              <option value="bolt" selected>Bolts</option>
+              <option value="pins">Flip pins</option>
+            </select>
+          </div>
+          <div class="mw-field mw-sh-bolt">
+            <label for="mw-sh-which">Holes</label>
+            <select class="mw-select" id="mw-sh-which" title="The spoilboard hole nearest each corner of the stock, or every hole inside it.">
+              <option value="corners" selected>Nearest the corners</option>
+              <option value="all">Every one inside</option>
+            </select>
+          </div>
+          <div class="mw-field mw-sh-bolt">
+            <label for="mw-sh-bolt">Hole Size (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-bolt" value="6.9" title="The bolt's clearance hole: 6.9 mm (0.272&quot;) for 1/4-20. No bigger than the spoilboard holes, so breaking through doesn't cut the spoilboard.">
+          </div>
+          <div class="mw-field mw-sh-bolt">
+            <label for="mw-sh-cb">Counterbore (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-cb" value="" placeholder="none" title="Optional: a wider, shallow hole on top for the bolt's head and washer, so it sits below the surface. Leave blank for none.">
+          </div>
+          <div class="mw-field mw-sh-bolt">
+            <label for="mw-sh-cbd">Counterbore Depth (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-cbd" value="6" title="How deep the counterbore goes below the stock's top.">
+          </div>
+          <div class="mw-field mw-sh-pins" hidden>
+            <label for="mw-sh-axis">Flip</label>
+            <select class="mw-select" id="mw-sh-axis" title="Front to back: the stock turns over a grid row (a line along X). Left to right: over a grid column (along Y). Pins go on the line nearest the stock's middle.">
+              <option value="x" selected>Front to back (a row)</option>
+              <option value="y">Left to right (a column)</option>
+            </select>
+          </div>
+          <div class="mw-field mw-sh-pins" hidden>
+            <label for="mw-sh-pin">Pin Size (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-pin" value="8" title="The hole for each pin through the stock: the size the dowel fits snugly (the Dowel fit test below finds it). No bigger than the spoilboard holes.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-sh-margin">Edge Margin (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-margin" value="10" title="How far inside the stock's edge a hole's edge must be.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-sh-break">Break Through (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-break" value="1" title="How far below the stock's bottom the hole goes, into the spoilboard hole under it, so it comes out clean.">
+          </div>
+        </div>
+        <p class="mw-hint" id="mw-sh-summary"></p>
+        <p class="mw-status" id="mw-sh-note" role="status"></p>
+        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-sh-generate">Generate Stock Holes</button></div>
       </section>
       <section class="mw-card">
         <h3 class="mw-card-title">Dowel fit test</h3>
@@ -1951,7 +2008,7 @@
   }
 
   // The program, as lines. o: holes (in cutting order, machine mm, each
-  // with diaMm and a label), bitMm, depthMm, stepMm (depth per pass),
+  // with diaMm, a label and optionally its own depthMm), bitMm, depthMm, stepMm (depth per pass),
   // stepoverPct (between clearing rings), feed and plunge (mm/min), rpm,
   // delayS, mist, flood, wcs { p, x, y } (the work offset and its X0 Y0
   // in machine mm), safeZMm (machine; null: machine Z0), zones (keepouts
@@ -2007,10 +2064,14 @@
     var f5 = function(v) { return gf(v, 5); }, f3 = function(v) { return gf(v, 3); }, c = gComment, safe = cutSafe(o);
     var L = cutStart(o, (o.title || 'cut ' + n + ' dog hole' + (n === 1 ? '' : 's')) + ', ' + fmt(o.bitMm) + ' mm bit, ' + fmt(o.depthMm) + ' mm deep, ' + fmt(o.stepMm) + ' mm a pass',
       'a ' + fmt(o.bitMm) + ' mm bit is loaded and Z0 is on ' + (o.zWhat || 'the spoilboard'));
-    var levels = [];
-    for (var d = 0; d < o.depthMm - 1e-6; ) { d = Math.min(o.depthMm, d + o.stepMm); levels.push(d); }
+    var levelsTo = function(depth) {
+      var out = [];
+      for (var d = 0; d < depth - 1e-6; ) { d = Math.min(depth, d + o.stepMm); out.push(d); }
+      return out;
+    };
     var at = null;
     o.holes.forEach(function(h, i) {
+      var levels = levelsTo(h.depthMm || o.depthMm);
       var method = holeCutMethod(h.diaMm, o.bitMm), cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, pr = h.diaMm / 2 - r;
       var helixR = Math.min(r * 0.6, pr - 0.001), start = method === 'drill' ? { x: cx, y: cy } : { x: cx + (method === 'helix' ? pr : helixR), y: cy };
       L.push(c('ZS hole ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40) + ', ' + fmt(h.diaMm) + ' mm, ' + method));
@@ -2323,6 +2384,61 @@
     if (!/\(Mode: Wasteboard Surfacing\)/.test(programHead || '')) return null;
     var d = /\(Depth: ([\d.]+)(mm|inch)/.exec(programHead);
     return { key: job.filename + '@' + job.jobEndTime, depthMm: d ? +d[1] * (d[2] === 'inch' ? MM_PER_INCH : 1) : null };
+  }
+
+  // ---------- Holes through the stock ----------
+  //
+  // Holes drilled through the stock right over spoilboard holes: for bolts
+  // into threaded inserts, or for pins that put the stock back exactly
+  // when it's flipped for a second side. The stock and holes in machine mm.
+
+  // The spoilboard holes a hole of radius rMm can go over: its edge at
+  // least marginMm inside the stock.
+  function stockHoleCandidates(holes, rect, rMm, marginMm) {
+    var m = rMm + marginMm;
+    return holes.filter(function(p) {
+      return p.x - m >= rect.minX - 1e-9 && p.x + m <= rect.maxX + 1e-9 && p.y - m >= rect.minY - 1e-9 && p.y + m <= rect.maxY + 1e-9;
+    });
+  }
+  // Bolt holes: 'corners' takes the hole nearest each corner of the stock
+  // (one to four, as many as differ), 'all' every one.
+  function stockBoltHoles(cands, rect, which) {
+    if (which === 'all') return cands.slice();
+    var out = [];
+    [[rect.minX, rect.minY], [rect.maxX, rect.minY], [rect.maxX, rect.maxY], [rect.minX, rect.maxY]].forEach(function(c) {
+      var best = null;
+      cands.forEach(function(p) { if (!best || Math.hypot(p.x - c[0], p.y - c[1]) < Math.hypot(best.x - c[0], best.y - c[1]) - 1e-9) best = p; });
+      if (best && out.indexOf(best) < 0) out.push(best);
+    });
+    return out;
+  }
+  // Flip pins: two holes on the grid line nearest the stock's middle, as
+  // far apart as fit. axis 'x': the stock flips front to back over a row
+  // (a line along X); 'y': left to right over a column. offMm: how far
+  // the stock's middle is off that line (+ toward +Y or +X); centered on
+  // it, the flipped stock covers the same rectangle. null when no line
+  // has two.
+  function flipPins(cands, rect, axis) {
+    var lines = {}, along = axis === 'x' ? 'x' : 'y', across = axis === 'x' ? 'y' : 'x';
+    cands.forEach(function(p) {
+      var k = (p.layer || 0) + ':' + (axis === 'x' ? p.row : p.col);
+      (lines[k] = lines[k] || []).push(p);
+    });
+    var mid = axis === 'x' ? (rect.minY + rect.maxY) / 2 : (rect.minX + rect.maxX) / 2, best = null;
+    Object.keys(lines).forEach(function(k) {
+      var l = lines[k];
+      if (l.length < 2) return;
+      l.sort(function(a, b) { return a[along] - b[along]; });
+      var at = l[0][across], pick = { pins: [l[0], l[l.length - 1]], lineMm: at, offMm: mid - at, axis: axis };
+      var span = function(c) { return c.pins[1][along] - c.pins[0][along]; };
+      if (!best || Math.abs(pick.offMm) < Math.abs(best.offMm) - 1e-6 || (Math.abs(Math.abs(pick.offMm) - Math.abs(best.offMm)) <= 1e-6 && span(pick) > span(best))) best = pick;
+    });
+    return best;
+  }
+  // The stock after flipping over a line.
+  function flipRect(rect, axis, lineMm) {
+    return axis === 'x' ? { minX: rect.minX, maxX: rect.maxX, minY: 2 * lineMm - rect.maxY, maxY: 2 * lineMm - rect.minY }
+      : { minX: 2 * lineMm - rect.maxX, maxX: 2 * lineMm - rect.minX, minY: rect.minY, maxY: rect.maxY };
   }
   // END pure
 
@@ -4367,12 +4483,14 @@
   // The Cut Holes tab's fields, saved by id (less "mw-") in the machine's
   // units then (settings.units).
   var CUT_SAVED = {
-    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed'],
-    plain: ['cut-stepover', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool'],
+    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
+      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-margin', 'sh-break'],
+    plain: ['cut-stepover', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis'],
     checks: ['cut-list', 'cut-pause', 'cut-mist', 'cut-flood']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-thick': 0.75, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
-    'fit-step': 0.002, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40 };
+    'fit-step': 0.002, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
+    'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-margin': 0.4, 'sh-break': 0.04 };
   function cutBody() {
     var b = {};
     CUT_SAVED.lengths.forEach(function(k) { b[k] = fieldVal('mw-' + k); });
@@ -4388,6 +4506,7 @@
       else if (state.imperial && CUT_INCH_DEFAULTS[k] != null) $('mw-' + k).value = CUT_INCH_DEFAULTS[k];
     });
     if (!isFinite(parseFloat(c['fit-size']))) $('mw-fit-size').value = $('mw-hole-dia').value;
+    if (!isFinite(parseFloat(c['sh-pin']))) $('mw-sh-pin').value = $('mw-hole-dia').value;
     CUT_SAVED.plain.forEach(function(k) { if (c[k] != null && c[k] !== '') $('mw-' + k).value = c[k]; });
     CUT_SAVED.checks.forEach(function(k) { if (typeof c[k] === 'boolean') $('mw-' + k).checked = c[k]; });
   }
@@ -4541,7 +4660,82 @@
     await loadProgram('ZS-Labels_' + l.o.labels.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '_H-' + shown(l.o.textMm) + '_' + unitName() + '.nc',
       engraveProgram(l.o), $('mw-lab-note'), $('mw-lab-generate'));
   }
-  function renderCutTab() { renderCut(); renderFit(); renderChamfer(); renderLabels(); }
+  // Holes through the stock, over the spoilboard holes of the grid picked
+  // in Setup: bolt clearance holes (with an optional counterbore) or two
+  // flip pins. Z0 on the stock's top.
+  function stockHoleSettings() {
+    var o = cutSettings(), probs = placeProblems(o), hh = readHoles(), k = state.imperial ? MM_PER_INCH : 1;
+    var p = holes.grid[holes.picked], rect = p ? stockAt(holePoint(p)) : stockAt(holes.stockAnchor, true);
+    var thick = unitVal($('mw-stock-t')) * k, pins = $('mw-sh-mode').value === 'pins';
+    var size = cutMm(pins ? 'mw-sh-pin' : 'mw-sh-bolt'), cb = pins ? NaN : cutMm('mw-sh-cb'), cbd = cutMm('mw-sh-cbd');
+    var margin = cutMm('mw-sh-margin'), brk = cutMm('mw-sh-break'), depth = thick + brk;
+    var res = { o: o, probs: probs, rect: rect, pins: pins, chosen: [], flip: null };
+    if (!rect) probs.push('Tick Stock in the XY0 Picker and give its width and length');
+    else if (p && p.zMm != null) probs.push('The stock sits on a fixture point, not over the spoilboard holes');
+    if (!(thick > 0)) probs.push('Give the stock a thickness (T) in the XY0 Picker');
+    if (!(size > 0)) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' must be more than 0');
+    if (!(margin >= 0)) probs.push('Edge Margin must be 0 or more');
+    if (!(brk >= 0)) probs.push('Break Through must be 0 or more');
+    else if (o.depthMm > 0 && brk >= o.depthMm) probs.push('Break Through must be less than Hole Depth (how deep the spoilboard holes are)');
+    var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '';
+    if (hasCb && !(cb > size)) probs.push('Counterbore must be bigger than Hole Size');
+    if (hasCb && !(cbd > 0 && cbd < thick)) probs.push('Counterbore Depth must be more than 0 and less than the stock\u2019s thickness');
+    if (!rect || !hh || !(size > 0) || !(margin >= 0)) return res;
+    var grid = holes.grid.filter(function(q) { return q.col != null && (q.layer || 0) === holes.activeGrid && !q.suppressed && !q.hidden && !q.blocked; });
+    var cands = stockHoleCandidates(grid, rect, (hasCb ? cb : size) / 2, margin);
+    if (pins) {
+      res.flip = flipPins(cands, rect, $('mw-sh-axis').value);
+      res.chosen = res.flip ? res.flip.pins : [];
+      if (!res.flip) probs.push('No grid ' + ($('mw-sh-axis').value === 'x' ? 'row' : 'column') + ' inside the stock has two holes clear of its edge: try a smaller Edge Margin or the other flip');
+    } else {
+      res.chosen = stockBoltHoles(cands, rect, $('mw-sh-which').value);
+      if (!res.chosen.length) probs.push('No spoilboard hole is under the stock, clear of its edge: try a smaller Edge Margin');
+    }
+    var small = res.chosen.filter(function(q) { return size > 2 * holeR(q, hh) + 0.05; });
+    if (small.length) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' is bigger than the spoilboard hole under it (' + holeName(small[0]) + '): breaking through would cut the spoilboard');
+    o.holes = [];
+    cutOrder(res.chosen).forEach(function(q) {
+      if (hasCb) o.holes.push({ x: q.x, y: q.y, diaMm: cb, depthMm: cbd, label: holeName(q) + ' counterbore' });
+      o.holes.push({ x: q.x, y: q.y, diaMm: size, depthMm: depth, label: holeName(q) });
+    });
+    var n = res.chosen.length;
+    Object.assign(o, { depthMm: depth, thickMm: 0, zWhat: 'the stock\u2019s top',
+      title: (pins ? 'flip pin holes' : n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '')) + ' through the stock' });
+    if (!probs.length) res.probs = probs.concat(holeCutProblems(o));
+    return res;
+  }
+  function renderStockHoles() {
+    var s = stockHoleSettings(), o = s.o, u = ' ' + unitName(), text = '';
+    ROOT.querySelectorAll('.mw-sh-bolt').forEach(function(el) { el.hidden = s.pins; });
+    ROOT.querySelectorAll('.mw-sh-pins').forEach(function(el) { el.hidden = !s.pins; });
+    if (s.chosen.length) {
+      text = (s.pins ? 'Pins at ' : 'Bolts at ') + s.chosen.map(holeName).join(', ') + '.';
+      if (s.flip && o.wcs) {
+        var ax = s.flip.axis === 'x' ? 'Y' : 'X', line = s.flip.lineMm - (ax === 'Y' ? o.wcs.y : o.wcs.x), off = s.flip.offMm;
+        text += ' The flip line is ' + ax + ' ' + shown(line) + u + ' in ' + o.wcsName + ': mirror the second side\u2019s toolpaths across it.';
+        text += Math.abs(off) < 0.01 ? ' The stock is centered on it, so flipped it covers the same place.'
+          : ' The stock\u2019s middle is ' + shown(Math.abs(off)) + u + (ax === 'Y' ? (off > 0 ? ' behind' : ' in front of') : (off > 0 ? ' right of' : ' left of')) +
+            ' it, so flipped it lands ' + shown(2 * Math.abs(off)) + u + ' ' + (ax === 'Y' ? (off > 0 ? 'further forward' : 'further back') : (off > 0 ? 'further left' : 'further right')) +
+            ': set the second side\u2019s X0 Y0 on the flipped stock, or center the stock on the line to flip in place.';
+      }
+      if (!s.probs.length) {
+        var lines = holeCutProgram(o);
+        text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.';
+      }
+      if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths.';
+    }
+    $('mw-sh-summary').textContent = text;
+    showProblems($('mw-sh-note'), s.probs);
+    $('mw-sh-generate').disabled = !!s.probs.length;
+  }
+  async function generateStockHoles() {
+    await readMachineState();
+    var s = stockHoleSettings();
+    if (s.probs.length) { renderStockHoles(); return; }
+    await loadProgram('ZS-Stock' + (s.pins ? 'Pins' : 'Bolts') + '_' + s.chosen.length + 'x_D-' + shown(s.o.depthMm) + '_' + unitName() + '.nc',
+      holeCutProgram(s.o), $('mw-sh-note'), $('mw-sh-generate'));
+  }
+  function renderCutTab() { renderCut(); renderStockHoles(); renderFit(); renderChamfer(); renderLabels(); }
   function wireCut() {
     CUT_SAVED.lengths.concat(CUT_SAVED.plain).forEach(function(k) {
       $('mw-' + k).addEventListener('input', renderCutTab);
@@ -4552,6 +4746,7 @@
     });
     $('mw-cut-bit-label').addEventListener('click', function(evt) { evt.preventDefault(); cutLoadedBit(); });
     $('mw-cut-generate').addEventListener('click', generateCut);
+    $('mw-sh-generate').addEventListener('click', generateStockHoles);
     $('mw-fit-generate').addEventListener('click', generateFit);
     $('mw-chm-generate').addEventListener('click', generateChamfer);
     $('mw-lab-generate').addEventListener('click', generateLabels);
@@ -4780,6 +4975,7 @@
       'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, or X0 Y0 has moved since you generated it. Z0 must be on the spoilboard&rsquo;s top.',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
       'With <strong>Pause</strong> ticked it stops (M0) before starting the spindle, so you can check the bit and Z0; resume to go on. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table.',
+      '<strong>Holes through the stock:</strong> drill the stock right over spoilboard holes, Z0 on the stock&rsquo;s top, with the stock clamped some other way first. <strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under the stock, with an optional counterbore for the head, to bolt into threaded inserts. <strong>Flip pins:</strong> two holes on the grid row (or column) nearest the stock&rsquo;s middle, for dowels, so the stock flipped over that line drops back exactly where it was; the summary gives the line to mirror the second side across, and where the flipped stock lands when it isn&rsquo;t centered on it. Each goes Break Through below the stock into the spoilboard hole, and can&rsquo;t be bigger than that hole, so the spoilboard isn&rsquo;t cut. The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
       '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.' ] },

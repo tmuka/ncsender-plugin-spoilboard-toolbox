@@ -328,6 +328,19 @@ visualizer to check and run.
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
   V-bit or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
 
+**Holes through the stock:** drill the stock right over spoilboard holes, with Z0 on the stock's top and
+the stock clamped some other way while it drills. The stock is the XY0 Picker's (tick **Stock**, with its
+size and thickness); the holes come from the grid picked in Setup.
+- **Bolts:** a clearance hole (6.9 mm, 0.272", for 1/4-20) over the spoilboard hole nearest each corner
+  of the stock, or every one under it, with an optional counterbore for the head. Bolt the stock to
+  threaded inserts in the spoilboard; keep the bolts out of the part's toolpaths.
+- **Flip pins:** two holes for dowels on the grid row (or column) nearest the stock's middle. Flip the
+  stock over that line for its second side and the pins drop it back exactly where it was. The summary
+  gives the line to mirror the second side's toolpaths across in your CAM, and, when the stock isn't
+  centered on it, how far the flipped stock lands from where it was.
+- Each hole goes **Break Through** (1 mm) below the stock into the spoilboard hole, and can't be bigger
+  than that hole, so the spoilboard isn't cut.
+
 **A setup that works:** a grid of 8 mm holes with
 [8 mm wooden dowel pins](https://www.amazon.com/dp/B0DJ5GZR9H) as dogs: cheap, and a bit that clips
 one is unharmed. [Flanged 1/4-20 threaded inserts](https://www.amazon.com/dp/B091L3Y6VJ) installed from the back, behind the holes, give clamps
