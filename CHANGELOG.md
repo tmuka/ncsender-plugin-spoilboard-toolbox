@@ -30,6 +30,11 @@ same plugin: updates, settings and macros carry over, and the macros keep their 
   spoilboard's height.
 
 ### 🎯 Easier to use
+- **Zoom the map** for big machines: **+** / **−**, the mouse wheel or a pinch, drag to look around,
+  **Fit** for the whole travel and **Follow** to keep the spindle in view. Only the holes in view are
+  drawn.
+- Two-letter row names (AA on) fit beside the map, and column numbers thin out so they never run
+  together.
 - **Holes are named like a fixture table**: a row letter and a column number (**B3**), like a
   Fireball fixture table, counted from machine zero's corner: **A1** is the hole nearest machine X0 Y0
   (front left on a machine that homes there). The column numbers run along the top of the map and the row letters

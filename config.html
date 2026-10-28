@@ -153,6 +153,12 @@
   .mw-fav[aria-pressed="true"] { color: var(--color-warning, #d9a441); opacity: 1; }
   .mw-pick-card.mw-tall .mw-maptools-row, .mw-pick-card.mw-tall .mw-stock { justify-content: center; }
   .mw-hole-map.mw-editing { touch-action: none; cursor: crosshair; }
+  .mw-hole-map { touch-action: pan-x pan-y; }
+  .mw-hole-map.mw-zoomed { touch-action: none; cursor: grab; }
+  .mw-hole-map.mw-zoomed.mw-editing { cursor: crosshair; }
+  .mw-zoom { display: inline-flex; align-items: center; gap: 4px; }
+  .mw-zoom .mw-btn { min-width: 34px; }
+  .mw-zoom-level { min-width: 2.6em; text-align: center; }
   .mw-hole-map.mw-editing .mw-h-spot { cursor: crosshair; }
   .mw-hole-map .mw-h-block {
     fill: color-mix(in srgb, var(--color-text-secondary) 28%, transparent);
@@ -491,6 +497,13 @@
               <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the corner on the picked point (or X0 Y0) to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-anchor" title="With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when Stock was ticked, so setting X0 Y0 on the stock doesn't move it. Press this to take X0 Y0 as it is now.">From X0 Y0 now</button></span>
             </div>
             <div class="mw-maptools-row">
+              <span class="mw-zoom" role="group" aria-label="Zoom the map">
+                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-out" title="Zoom out (or the mouse wheel, or pinch).">&minus;</button>
+                <span class="mw-hint mw-zoom-level" id="mw-zoom-level">1&times;</span>
+                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-in" title="Zoom in on the spindle, or on the middle when it isn't homed (or the mouse wheel over a spot, or pinch). Drag the map to look around.">+</button>
+                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-fit" title="Show the whole travel again.">Fit</button>
+                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-follow" aria-pressed="false" title="While zoomed in, keep the spindle in the middle as you jog. Dragging the map turns it off.">Follow</button>
+              </span>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-area" aria-pressed="false" title="Mark a clamp or fixture on the map for this job: drag a rectangle. This map then won't pick its holes, and Go to and Set won't target a point inside it. It's only a reminder for this picker: jogging, jobs and the keyboard macros don't know about it. Tap an excluded area to remove it.">Exclude Picks</button>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-clear" hidden title="Remove every excluded area.">Clear Exclusions</button>
               <span class="mw-favs" id="mw-favs"></span>
@@ -1807,6 +1820,19 @@
     var left = !/right/.test(corner), front = !/^back/.test(corner);
     return { minX: left ? x : x - wMm, maxX: left ? x + wMm : x, minY: front ? y : y - lMm, maxY: front ? y + lMm : y };
   }
+  // The part of the travel the map shows zoomed in k times about cx, cy
+  // (machine mm), kept inside the travel: { x0, y0, w, h }.
+  function zoomWindow(t, k, cx, cy) {
+    var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, w = t.xMm / k, h = t.yMm / k;
+    var clamp = function(v, lo, hi) { return Math.min(Math.max(v, lo), hi); };
+    return { x0: clamp(cx - w / 2, minX, minX + t.xMm - w), y0: clamp(cy - h / 2, minY, minY + t.yMm - h), w: w, h: h };
+  }
+  // Every how many grid lines a label goes, so labels labelPx wide (or
+  // tall) at least 4 px apart don't crowd: 1, 2, 5, 10...
+  function labelEvery(gapPx, labelPx) {
+    var need = (labelPx + 4) / gapPx;
+    return [1, 2, 5, 10, 20, 50].filter(function(k) { return k >= need; })[0] || 100;
+  }
   // A rectangle's corner, edge middle or center, named like the dots.
   function rectPoint(r, name) {
     var n = String(name || 'center');
@@ -3019,6 +3045,21 @@
     map.addEventListener('pointermove', mapMove);
     map.addEventListener('pointerup', function(evt) { mapUp(evt, false); });
     map.addEventListener('pointercancel', function(evt) { mapUp(evt, true); });
+    map.addEventListener('pointerleave', function(evt) { if (holes.pan && !holes.pan.moved && holes.ptrs[evt.pointerId]) panUp(evt); });
+    // The wheel zooms at the pointer; past either end it scrolls the page.
+    map.addEventListener('wheel', function(evt) {
+      var t = state.travel, k = holes.zoom.k, nk = k * (evt.deltaY < 0 ? 1.25 : 0.8);
+      if (!t || (nk < k && k <= 1) || (nk > k && k >= zoomMax(t, readHoles()) - 1e-9)) return;
+      evt.preventDefault();
+      setZoom(nk, mapPoint(evt));
+    }, { passive: false });
+    $('mw-zoom-in').addEventListener('click', function() { setZoom(holes.zoom.k * 2); });
+    $('mw-zoom-out').addEventListener('click', function() { setZoom(holes.zoom.k / 2); });
+    $('mw-zoom-fit').addEventListener('click', function() { holes.zoom.follow = false; setZoom(1); });
+    $('mw-zoom-follow').addEventListener('click', function() {
+      holes.zoom.follow = !holes.zoom.follow;
+      if (holes.zoom.follow && holes.zoom.k <= 1) setZoom(4); else renderHoles(true);
+    });
     ROOT.addEventListener('keydown', function(evt) { if (evt.key === 'Escape' && holes.mode && !holes.drag) setMapMode(holes.mode); });
     var fav = $('mw-hole-fav');
     fav.addEventListener('click', toggleFavorite);
@@ -3084,7 +3125,8 @@
   // X0 Y0 and the spindle position from ncSender's machine state.
   var holes = { grid: [], picked: -1, origin: 'center', suppressed: [], profiles: [], profile: '', ask: null,
                 gridRaw: [], activeGrid: 0, hidden: {}, gridBad: [],
-                mode: '', drag: null, blocks: [], favorites: [], stockZero: 'center', view: null, liveNear: null, liveKey: '' };
+                mode: '', drag: null, blocks: [], favorites: [], stockZero: 'center', view: null, liveNear: null, liveKey: '',
+                zoom: { k: 1, cx: null, cy: null, follow: false }, ptrs: {}, pan: null };
   var ORIGIN_NOTES = {
     center: 'center', 'back-center': 'back side', 'front-center': 'front side', 'left-center': 'left side', 'right-center': 'right side',
     'back-left': 'back left', 'back-right': 'back right', 'front-left': 'front left', 'front-right': 'front right'
@@ -3289,6 +3331,82 @@
       : holes.mode === 'paint' ? 'Editing holes: tap a hole or drag a box on the map. Done when finished.' : '';
     renderHoles();
   }
+  // Zoom: as far as a view about three hole spacings across the shorter
+  // side, up to 20 times.
+  function zoomMax(t, h) {
+    return Math.max(1, Math.min(20, Math.min(t.xMm, t.yMm) / Math.max(40, 3 * (h ? holeSpacingMm(h) : 50))));
+  }
+  // Zoom to k, keeping the machine point at (or else the spindle, or the
+  // middle) where it is on screen.
+  function setZoom(k, at) {
+    var t = state.travel, zm = holes.zoom, v = holes.view;
+    if (!t || !v) return;
+    var nk = Math.min(Math.max(k, 1), zoomMax(t, readHoles()));
+    if (!at) {
+      var ms = state.machine || {}, here = ms.homed ? xyOf(ms.MPos) : null;
+      at = here && here.x >= v.minX && here.x <= v.minX + v.xMm && here.y >= v.minY && here.y <= v.minY + v.yMm ? here
+        : { x: v.minX + v.xMm / 2, y: v.minY + v.yMm / 2 };
+    }
+    var fx = (at.x - v.minX) / v.xMm, fy = (at.y - v.minY) / v.yMm, nw = t.xMm / nk, nh = t.yMm / nk;
+    zm.cx = at.x - fx * nw + nw / 2;
+    zm.cy = at.y - fy * nh + nh / 2;
+    zm.k = nk;
+    renderHoles(true);
+  }
+  // Zoomed in, a point Pick Nearest Hole or a favorite picks off screen
+  // comes into the middle.
+  function showOnMap(pt) {
+    var v = holes.view;
+    if (holes.zoom.k <= 1 || !v || !pt) return;
+    if (pt.x < v.minX || pt.x > v.minX + v.xMm || pt.y < v.minY || pt.y > v.minY + v.yMm) { holes.zoom.cx = pt.x; holes.zoom.cy = pt.y; holes.zoom.follow = false; }
+  }
+  // Outside Edit Holes and Exclude Picks: one finger (or the mouse) drags
+  // a zoomed map, two pinch it. A drag isn't a click on a hole.
+  function panDown(evt) {
+    holes.ptrs[evt.pointerId] = { x: evt.clientX, y: evt.clientY };
+    var ids = Object.keys(holes.ptrs), v = holes.view;
+    if (!v) return;
+    if (ids.length === 2) {
+      var a = holes.ptrs[ids[0]], b = holes.ptrs[ids[1]];
+      holes.pan = { pinch: true, dist: Math.hypot(a.x - b.x, a.y - b.y), k: holes.zoom.k, moved: true };
+    } else if (ids.length === 1) {
+      holes.pan = { x: evt.clientX, y: evt.clientY, cx: holes.zoom.cx, cy: holes.zoom.cy, moved: false, id: evt.pointerId };
+    }
+  }
+  function panMove(evt) {
+    var pan = holes.pan, svg = $('mw-hole-map');
+    if (!pan || !holes.ptrs[evt.pointerId]) return;
+    holes.ptrs[evt.pointerId] = { x: evt.clientX, y: evt.clientY };
+    var rect = svg.getBoundingClientRect(), k = svg.viewBox.baseVal.width / rect.width;
+    if (pan.pinch) {
+      var ids = Object.keys(holes.ptrs);
+      if (ids.length < 2) return;
+      var a = holes.ptrs[ids[0]], b = holes.ptrs[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y);
+      evt.preventDefault();
+      var mid = mapPoint({ clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 });
+      if (pan.dist > 0 && Math.abs(pan.k * d / pan.dist - holes.zoom.k) > 0.05) setZoom(pan.k * d / pan.dist, mid);
+      return;
+    }
+    var dx = evt.clientX - pan.x, dy = evt.clientY - pan.y;
+    if (!pan.moved && Math.hypot(dx, dy) < 6) return;
+    if (holes.zoom.k <= 1) return;
+    if (!pan.moved) { pan.moved = true; svg.setPointerCapture(evt.pointerId); holes.zoom.follow = false; }
+    evt.preventDefault();
+    holes.zoom.cx = pan.cx - dx * k / holes.view.sc;
+    holes.zoom.cy = pan.cy + dy * k / holes.view.sc;
+    if (!holes.panFrame) holes.panFrame = requestAnimationFrame(function() { holes.panFrame = null; if (rootAlive()) renderHoles(true); });
+  }
+  function panUp(evt) {
+    delete holes.ptrs[evt.pointerId];
+    var pan = holes.pan;
+    if (!pan) return;
+    if (pan.moved) {
+      holes.skipClick = true;
+      setTimeout(function() { holes.skipClick = false; }, 0);
+    }
+    // A pinch ends when either finger lifts; the other doesn't start a drag.
+    if (pan.pinch || !Object.keys(holes.ptrs).length) holes.pan = Object.keys(holes.ptrs).length ? { pinch: false, moved: true, x: 0, y: 0, ignore: true } : null;
+  }
   // Map coordinates of a pointer event: machine mm and the SVG's px.
   function mapPoint(evt) {
     var svg = $('mw-hole-map'), rect = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, v = holes.view;
@@ -3310,7 +3428,8 @@
     return { x: Math.min(Math.max(pt.x, v.minX), v.minX + v.xMm), y: Math.min(Math.max(pt.y, v.minY), v.minY + v.yMm) };
   }
   function mapDown(evt) {
-    if (!holes.mode || evt.button > 0) return;
+    if (!holes.mode) { if (!(evt.button > 0)) panDown(evt); return; }
+    if (evt.button > 0) return;
     var pt = mapPoint(evt);
     if (!pt) return;
     evt.preventDefault();
@@ -3323,6 +3442,7 @@
     holes.drag.el = r;
   }
   function mapMove(evt) {
+    if (holes.pan) { if (!holes.pan.ignore) panMove(evt); return; }
     var d = holes.drag, pt = d && mapPoint(evt);
     if (!pt) return;
     d.b = clampToTravel(pt);
@@ -3333,6 +3453,7 @@
   // A cancelled gesture (the browser took it over) ends a paint stroke
   // but never adds or removes an excluded area.
   function mapUp(evt, cancel) {
+    if (holes.ptrs[evt.pointerId]) panUp(evt);
     var d = holes.drag;
     if (!d) return;
     holes.drag = null;
@@ -3838,29 +3959,52 @@
     // machine X numbers run along the bottom and Y down the right.
     // The fixture table's column numbers sit above the bed and its row
     // letters left of it, when a grid is shown.
+    // Row letters are about 6 px a character, so two-letter rows (AA on)
+    // get room.
     var labelled = holes.grid.some(function(p) { return p.tag && !p.hidden; });
-    var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = labelled ? 16 : 1;
+    var letters = holes.grid.reduce(function(n, p) { return p.tag ? Math.max(n, /^[A-Z]+/.exec(p.tag)[0].length) : n; }, 1);
+    var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm, pad = labelled ? 10 + 6 * letters : 1;
     var padT = labelled ? 14 : 1, padB = 20, padR = 46;
-    var box = holeMapBox(t), sc = Math.min((box.w - pad - padR) / t.xMm, (box.h - padT - padB) / t.yMm);
-    var w = t.xMm * sc + pad + padR, ht = t.yMm * sc + padT + padB;
+    var box = holeMapBox(t), sc0 = Math.min((box.w - pad - padR) / t.xMm, (box.h - padT - padB) / t.yMm);
+    var w = t.xMm * sc0 + pad + padR, ht = t.yMm * sc0 + padT + padB;
     svg.style.width = w.toFixed(0) + 'px';
     svg.style.height = ht.toFixed(0) + 'px';
-    var X = function(x) { return (pad + (x - minX) * sc).toFixed(1); }, Y = function(y) { return (padT + (minY + t.yMm - y) * sc).toFixed(1); };
-    holes.view = { pad: pad, padT: padT, sc: sc, minX: minX, minY: minY, xMm: t.xMm, yMm: t.yMm, hitMm: h ? Math.max(h.diaMm / 2, holeSpacingMm(h) * 0.45) : 10 };
+    // Zoomed in, the map shows part of the travel (vw) at k times the
+    // scale, following the spindle when Follow is on.
+    var zm = holes.zoom, ms0 = state.machine || {}, here0 = ms0.homed ? xyOf(ms0.MPos) : null;
+    zm.k = Math.min(Math.max(zm.k, 1), zoomMax(t, h));
+    if (zm.follow && here0 && zm.k > 1) { zm.cx = here0.x; zm.cy = here0.y; }
+    var vw = zoomWindow(t, zm.k, zm.cx != null ? zm.cx : minX + t.xMm / 2, zm.cy != null ? zm.cy : minY + t.yMm / 2);
+    zm.cx = vw.x0 + vw.w / 2; zm.cy = vw.y0 + vw.h / 2;
+    var sc = sc0 * zm.k;
+    var X = function(x) { return (pad + (x - vw.x0) * sc).toFixed(1); }, Y = function(y) { return (padT + (vw.y0 + vw.h - y) * sc).toFixed(1); };
+    var inView = function(x, y, m) { return x >= vw.x0 - m && x <= vw.x0 + vw.w + m && y >= vw.y0 - m && y <= vw.y0 + vw.h + m; };
+    holes.view = { pad: pad, padT: padT, sc: sc, minX: vw.x0, minY: vw.y0, xMm: vw.w, yMm: vw.h, hitMm: h ? Math.max(h.diaMm / 2, holeSpacingMm(h) * 0.45) : 10 };
     svg.setAttribute('viewBox', '0 0 ' + w.toFixed(1) + ' ' + ht.toFixed(1));
-    var ns = 'http://www.w3.org/2000/svg';
+    var ns = 'http://www.w3.org/2000/svg', into = svg;
     var add = function(tag, attrs, text) {
       var el = document.createElementNS(ns, tag);
       Object.keys(attrs).forEach(function(a) { el.setAttribute(a, attrs[a]); });
       if (text != null) el.textContent = text;
-      svg.appendChild(el);
+      into.appendChild(el);
       return el;
     };
-    add('rect', { class: 'mw-h-area', x: pad, y: padT, width: (t.xMm * sc).toFixed(1), height: (t.yMm * sc).toFixed(1), rx: 3 });
+    add('rect', { class: 'mw-h-area', x: pad, y: padT, width: (t.xMm * sc0).toFixed(1), height: (t.yMm * sc0).toFixed(1), rx: 3 });
+    // What's on the bed is clipped to it, so a zoomed map doesn't spill
+    // over the rulers.
+    var clipId = 'mw-bed-clip-' + (holes.clipSeq = (holes.clipSeq || 0) + 1);
+    var defs = add('defs', {}), cp = document.createElementNS(ns, 'clipPath');
+    cp.setAttribute('id', clipId);
+    defs.appendChild(cp);
+    var cr = document.createElementNS(ns, 'rect');
+    [['x', pad], ['y', padT], ['width', (t.xMm * sc0).toFixed(1)], ['height', (t.yMm * sc0).toFixed(1)]].forEach(function(a) { cr.setAttribute(a[0], a[1]); });
+    cp.appendChild(cr);
+    var bed = document.createElementNS(ns, 'g');
+    bed.setAttribute('clip-path', 'url(#' + clipId + ')');
     // Rulers in ncSender's units: machine coordinates, 0 at machine X0 Y0.
     var uk = state.imperial ? MM_PER_INCH : 1, unit = state.imperial ? 'in' : 'mm';
-    var bottom = padT + t.yMm * sc, right = pad + t.xMm * sc;
-    var tx = axisTicks(minX / uk, (minX + t.xMm) / uk, sc * uk, 56);
+    var bottom = padT + t.yMm * sc0, right = pad + t.xMm * sc0;
+    var tx = axisTicks(vw.x0 / uk, (vw.x0 + vw.w) / uk, sc * uk, 56);
     tx.values.forEach(function(v) {
       var px = +X(v * uk);
       add('line', { class: 'mw-h-tick', x1: px, y1: bottom, x2: px, y2: bottom + 4 });
@@ -3869,7 +4013,7 @@
       add('text', { class: 'mw-h-ruler', x: px.toFixed(1), y: (bottom + 15).toFixed(1),
         'text-anchor': px < half ? 'start' : px > right - half ? 'end' : 'middle' }, String(v));
     });
-    var ty = axisTicks(minY / uk, (minY + t.yMm) / uk, sc * uk, 30);
+    var ty = axisTicks(vw.y0 / uk, (vw.y0 + vw.h) / uk, sc * uk, 30);
     ty.values.forEach(function(v) {
       var py = +Y(v * uk);
       add('line', { class: 'mw-h-tick', x1: right, y1: py, x2: right + 4, y2: py });
@@ -3877,6 +4021,8 @@
     });
     add('text', { class: 'mw-h-ruler mw-h-axis', x: (right + 7).toFixed(1), y: (bottom + 15).toFixed(1) }, unit);
     if (labelled) tableLabels();
+    svg.appendChild(bed);
+    into = bed;
     // Column numbers and row letters of the grid being edited (else the
     // first one shown), at its holes; every second, fifth... when they'd
     // crowd.
@@ -3889,20 +4035,20 @@
         var m = /^([A-Z]+)(\d+)$/.exec(p.tag);
         cols[m[2]] = p.x; rows[m[1]] = p.y;
       });
-      function every(pos) {
+      function every(pos, labelPx) {
         var gap = Infinity;
         for (var i = 1; i < pos.length; i++) gap = Math.min(gap, Math.abs(pos[i] - pos[i - 1]) * sc);
-        var need = 14 / gap;
-        return [1, 2, 5, 10, 20, 50].filter(function(k) { return k >= need; })[0] || 100;
+        return labelEvery(gap, labelPx);
       }
-      var cn = Object.keys(cols).sort(function(a, b) { return a - b; }), kc = every(cn.map(function(k) { return cols[k]; }));
+      var cn = Object.keys(cols).sort(function(a, b) { return a - b; });
+      var kc = every(cn.map(function(k) { return cols[k]; }), 6 * String(cn[cn.length - 1] || '').length);
       cn.forEach(function(k) {
-        if ((k - 1) % kc) return;
+        if ((k - 1) % kc || !inView(cols[k], vw.y0, 0)) return;
         add('text', { class: 'mw-h-ruler mw-h-table', x: X(cols[k]), y: (padT - 4).toFixed(1), 'text-anchor': 'middle' }, k);
       });
-      var rn = Object.keys(rows).sort(function(a, b) { return a.length - b.length || (a < b ? -1 : 1); }), kr = every(rn.map(function(k) { return rows[k]; }));
+      var rn = Object.keys(rows).sort(function(a, b) { return a.length - b.length || (a < b ? -1 : 1); }), kr = every(rn.map(function(k) { return rows[k]; }), 10);
       rn.forEach(function(k, i) {
-        if (i % kr) return;
+        if (i % kr || !inView(vw.x0, rows[k], 0)) return;
         add('text', { class: 'mw-h-ruler mw-h-table', x: (pad - 4).toFixed(1), y: (+Y(rows[k]) + 3.5).toFixed(1), 'text-anchor': 'end' }, k);
       });
     }
@@ -3938,7 +4084,6 @@
       br.appendChild(bt);
     });
     // The hole nearest the spindle, live while jogging.
-    var ms0 = state.machine || {}, here0 = ms0.homed ? xyOf(ms0.MPos) : null;
     var near0 = here0 && nearestHole(holes.grid.map(function(g) { return g.col != null && !gridNearest(g) ? Object.assign({}, g, { hidden: true }) : g; }), here0.x, here0.y);
     holes.liveNear = near0 || null;
     if (holes.grid.length > 2500) {
@@ -3956,12 +4101,13 @@
         var p = holes.grid[i];
         if ((p.suppressed && !editing) || p.hidden) return;
         var r = Math.max(p.diaMm != null && p.diaMm < h.diaMm ? 2 : 3, holeR(p, h) * sc), hit = Math.max(r, hit0, p.col == null ? 12 : 0);
+        if (!inView(p.x, p.y, (hit + 5) / sc)) return;
         var g = document.createElementNS(ns, 'g');
         g.setAttribute('class', (p.blocked ? 'mw-h-spot mw-h-blocked' : p.suppressed ? 'mw-h-spot mw-h-suppressed' : 'mw-h-spot') +
           (holes.favorites.indexOf(holeKey(p)) >= 0 ? ' mw-h-fav' : '') + (near0 && near0.index === i ? ' mw-h-near' : ''));
         if (!p.blocked) g.setAttribute('data-hole', i);
         if (i === holes.picked) g.setAttribute('data-picked', '');
-        svg.appendChild(g);
+        bed.appendChild(g);
         [['mw-h-hit', hit], ['mw-h-halo', r + 5], ['mw-h-hole', r]].forEach(function(c) {
           var el = document.createElementNS(ns, 'circle');
           el.setAttribute('class', c[0]);
@@ -3992,7 +4138,7 @@
       // the nearest edge and said so, rather than drawn outside the map.
       var cx = Math.min(Math.max(zero.x, minX), minX + t.xMm), cy = Math.min(Math.max(zero.y, minY), minY + t.yMm);
       var off = Math.abs(cx - zero.x) > 1e-6 || Math.abs(cy - zero.y) > 1e-6;
-      var zx = +X(cx), zy = +Y(cy), right = zx > pad + t.xMm * sc - 120, low = zy < padT + 14;
+      var zx = +X(cx), zy = +Y(cy), right = zx > pad + t.xMm * sc0 - 120, low = zy < padT + 14;
       add('path', { class: 'mw-h-wcs' + (off ? ' mw-h-wcs-off' : ''), d: 'M' + (zx - 9) + ' ' + zy + 'H' + (zx + 9) + 'M' + zx + ' ' + (zy - 9) + 'V' + (zy + 9) });
       var zl = add('text', { class: off ? 'mw-h-wcs-off-label' : '', x: (right ? zx - 11 : zx + 11).toFixed(1), y: (low ? zy + 16 : zy - 6).toFixed(1), 'text-anchor': right ? 'end' : 'start' },
         wcs + ' X0 Y0' + (off ? ' off the bed' : ''));
@@ -4019,6 +4165,11 @@
         sp.appendChild(el);
       });
     }
+    svg.classList.toggle('mw-zoomed', zm.k > 1);
+    $('mw-zoom-level').textContent = (zm.k < 10 ? +zm.k.toFixed(1) : Math.round(zm.k)) + '\u00d7';
+    $('mw-zoom-out').disabled = $('mw-zoom-fit').disabled = zm.k <= 1;
+    $('mw-zoom-in').disabled = zm.k >= zoomMax(t, h) - 1e-9;
+    $('mw-zoom-follow').setAttribute('aria-pressed', zm.follow ? 'true' : 'false');
     holes.liveKey = liveKey();
     renderFavs();
     updatePicked();
@@ -4026,6 +4177,7 @@
   function pickHole(i) {
     disarmGoto();
     holes.picked = i;
+    showOnMap(holes.grid[i]);
     holes.nearMm = null;
     // A hole picked replaces any stock hung off X0 Y0, so if the hole is
     // later excluded or hidden, Set doesn't quietly fall back to it.
@@ -4063,6 +4215,7 @@
     holes.picked = near.index;
     holes.nearMm = near.distanceMm;
     holes.stockAnchor = null;
+    showOnMap(holes.grid[near.index]);
     var any = nearestHole(holes.grid.map(function(g) { return { x: g.x, y: g.y, hidden: g.hidden || (g.col != null && !gridNearest(g)) }; }), here.x, here.y);
     var under = any && (holes.grid[any.index].blocked || holes.grid[any.index].suppressed) ? holes.grid[any.index] : null;
     renderHoles();
@@ -4959,6 +5112,7 @@
       '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag a box around several; a box around only suppressed holes restores them. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and shown as faint solid circles while it&rsquo;s unlocked; Pick Nearest Hole, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
       '<strong>Live position:</strong> while you jog, the spindle (the silver ring) moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
       '<strong>Stock:</strong> tick it and type the stock&rsquo;s width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole, running away from the hole (<strong>Corner</strong> overrides which stock corner sits there), and its own box of dots puts X0 Y0 on its center, a corner or an edge. Go to Selected and Set then use that point; the keyboard macros always use the hole. With no hole picked, the stock hangs off X0 Y0 as it was when you ticked Stock (its front left corner there, unless Corner says otherwise): zero on a corner, tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; <strong>From X0 Y0 now</strong> takes X0 Y0 again, and picking a hole replaces it. Closing and reopening the plugin keeps the stock where it was. No tape measure? Jog the bit over the stock&rsquo;s opposite corner and press <strong>Far Corner Here</strong> for its width and length; its thickness fills in from <strong>ZS: Measure stock thickness</strong> until you type one.',
+      '<strong>Zoom</strong> for a big bed: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too).',

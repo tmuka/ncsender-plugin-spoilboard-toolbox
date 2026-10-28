@@ -281,6 +281,10 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 
 ### Map tools
 
+- **Zoom** for a big bed (an 8 × 5 ft machine's holes are a few pixels apart on a small screen): **+**
+  zooms in on the spindle, the mouse wheel on the spot under it, or pinch with two fingers. Drag the
+  zoomed map to look around, and **Fit** shows the whole travel again. **Follow** keeps the spindle in
+  the middle as you jog. Pick Nearest Hole and favorites bring the hole they pick into view.
 - **Live position:** while you jog, the spindle (a silver ring, as ncSender's Top view shows it) moves and the hole nearest it gets a dashed ring,
   with its name and distance under the map, so you can see which hole Pick Nearest Hole will take.
 - **Stock:** tick it and type the stock's width (X) and length (Y). The stock is drawn from the picked

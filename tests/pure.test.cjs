@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1292,4 +1292,22 @@ test('stock holes: each hole can have its own depth (a counterbore, then the hol
     if (hole >= 0 && z && /^G[13]/.test(l)) depths[hole] = Math.min(depths[hole], +z[1]);
   }
   assert.deepEqual(depths, [-4, -20]);
+});
+
+test('map zoom: the window stays inside the travel', () => {
+  const t = { xMm: 2440, yMm: 1525, dirX: 1, dirY: 1 };
+  assert.deepEqual(zoomWindow(t, 1, 0, 0), { x0: 0, y0: 0, w: 2440, h: 1525 });
+  assert.deepEqual(zoomWindow(t, 4, 1220, 700), { x0: 915, y0: 509.375, w: 610, h: 381.25 });
+  // Near a corner it stops at the edge.
+  assert.deepEqual(zoomWindow(t, 4, 10, 2000), { x0: 0, y0: 1143.75, w: 610, h: 381.25 });
+  // A machine running in negative space.
+  const n = zoomWindow({ xMm: 800, yMm: 800, dirX: -1, dirY: -1 }, 2, 0, 0);
+  assert.deepEqual([n.x0, n.y0], [-400, -400]);
+});
+
+test('map labels: every second, fifth... so they never crowd', () => {
+  assert.equal(labelEvery(30, 12), 1);
+  // Two-digit columns 7 px apart: every third would do, so every fifth.
+  assert.equal(labelEvery(7.2, 12), 5);
+  assert.equal(labelEvery(1, 400), 100);
 });
