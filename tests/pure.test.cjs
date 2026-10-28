@@ -126,21 +126,21 @@ test('record macro probes, then stores trigger + offset - block - TLO in the slo
     'G90'
   ]);
   // The stop lines say why in their comments.
-  assert.match(buildMacros(base).record.body, /^#1=\[1 \/ #<_homed_state>\] \(ZS stop: home the machine first\)$/m);
+  assert.match(buildMacros(base).record.body, /^#1=\[1 \/ #<_homed_state>\] \(SBT stop: home the machine first\)$/m);
 });
 
-test('names start ZS:, descriptions are the first comment line after its prefix', () => {
+test('names start SBT:, descriptions are the first comment line after its prefix', () => {
   const m = buildMacros(Object.assign({}, base, { extras: allExtras }));
-  assert.equal(m.record.name, 'ZS: Record spoilboard height');
+  assert.equal(m.record.name, 'SBT: Record spoilboard height');
   assert.equal(m.record.description, 'record spoilboard height');
   assert.equal(m.restore.description, 'put back the Z0 saved in G59.2 Z');
   assert.equal(m.midX.description, 'lift to Safe Z, then move halfway to X0');
-  assert.equal(m.center.name, 'ZS: Set XY0 to Midpoint');
+  assert.equal(m.center.name, 'SBT: Set XY0 to Midpoint');
   assert.equal(m.center.description, 'set X0 Y0 halfway to here, no move');
   assert.deepEqual(m.center.aliases, ['Center X0 Y0 here']);
   for (const k of Object.keys(m)) {
-    assert.ok(m[k].name.startsWith('ZS: '), k);
-    assert.ok(m[k].description && !/ZS|MW|Macro Wiz|[()]/.test(m[k].description), k + ': ' + m[k].description);
+    assert.ok(m[k].name.startsWith('SBT: '), k);
+    assert.ok(m[k].description && !/SBT|MW|Macro Wiz|[()]/.test(m[k].description), k + ': ' + m[k].description);
   }
 });
 
@@ -237,7 +237,7 @@ test('other work offset and slots', () => {
   assert.match(m.record.body, /G10 L2 P8 Z\[\[#5063 \+ #5243 - 15\.000 - #5403\]/);
   assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND #<_tool_offset> AND \[#5363 NE 0\] AND \[ABS\[#5213\] LT 0\.0005\]\]\]$/m);
   assert.match(m.set.body, /^G10 L2 P7 Z\[#5343 \+ \[#5243 - #5343\]/m);
-  assert.equal(m.set.name, 'ZS: G55 Z0 on spoilboard');
+  assert.equal(m.set.name, 'SBT: G55 Z0 on spoilboard');
   const p = Object.assign({ 5363: -90, 5243: -70, 5343: 0 }, ready);
   run(m.set.body, p);
   assert.deepEqual([p[5243], p[5343]], [-90, -70]);
@@ -290,26 +290,26 @@ test('guards: nothing changes unless homed, an offset is active and the values e
     for (const [what, state, why] of cases) {
       const p = run(m[k].body, Object.assign({}, start, state));
       assert.ok(p._error, k + ' stops when ' + what);
-      assert.ok(m[k].body.includes(p._error + ' (ZS stop: ' + why + ')'), k + ': says why');
+      assert.ok(m[k].body.includes(p._error + ' (SBT stop: ' + why + ')'), k + ': says why');
       assert.deepEqual([p[5223], p[5383], p[5343], p[5363]], [-77.5, -95, 18, 0], k + ' changes nothing when ' + what);
     }
   }
   // No spoilboard height recorded yet.
   for (const k of ['measure', 'set', 'stock']) {
     const p = run(m[k].body, Object.assign({}, start, ready, { 5383: 0 }));
-    assert.ok(m[k].body.includes(p._error + ' (ZS stop: record the spoilboard height first)'), k);
+    assert.ok(m[k].body.includes(p._error + ' (SBT stop: record the spoilboard height first)'), k);
     assert.deepEqual([p[5223], p[5343], p[5363]], [-77.5, 18, 0], k + ' changes nothing');
   }
   // No stock thickness stored.
   const p = run(m.stock.body, Object.assign({}, start, ready, { 5343: 0 }));
-  assert.ok(m.stock.body.includes(p._error + ' (ZS stop: store a stock thickness first)'));
+  assert.ok(m.stock.body.includes(p._error + ' (SBT stop: store a stock thickness first)'));
   assert.deepEqual([p[5223], p[5363]], [-77.5, 0]);
   // Back to saved needs none of it, only no G92 Z.
-  assert.deepEqual(m.restore.body.match(/ZS stop: [^)]*/g), ['ZS stop: a G92 Z offset is active; G92.1 clears it']);
+  assert.deepEqual(m.restore.body.match(/SBT stop: [^)]*/g), ['SBT stop: a G92 Z offset is active; G92.1 clears it']);
   // A G92 Z offset stops the three that set Z0, changing nothing.
   for (const k of ['set', 'stock', 'restore']) {
     const q = run(m[k].body, Object.assign({}, start, ready, { 5213: 3, 5363: -50 }));
-    assert.ok(m[k].body.includes(q._error + ' (ZS stop: a G92 Z offset is active; G92.1 clears it)'), k);
+    assert.ok(m[k].body.includes(q._error + ' (SBT stop: a G92 Z offset is active; G92.1 clears it)'), k);
     assert.deepEqual([q[5223], q[5363]], [-77.5, -50], k + ' changes nothing with G92 Z');
   }
 });
@@ -968,7 +968,7 @@ test('Set Z0 keeps a probed Z0 through repeats and the Z0 macros, and only for t
   p = run(zAboveSpoilLines(o, 1, 63.5).join('\n'), p);
   assert.equal(p[Z(1)], -16.5);
   assert.equal(p[Z(8)], -40);
-  // Set Z0 on a vise, then another height, then ZS: Z0 on spoilboard: still -40.
+  // Set Z0 on a vise, then another height, then SBT: Z0 on spoilboard: still -40.
   p = run(zAboveSpoilLines(o, 1, 40).join('\n'), p);
   assert.equal(p[Z(8)], -40);
   const m = buildMacros(Object.assign({}, base, { wcs: 1, slot: 9, backup: 8, thick: 7 }));
@@ -1064,7 +1064,7 @@ test('cut holes: problems stop it', () => {
 test('cut holes: stop lines before anything moves, and the work offset must not have moved', () => {
   const L = holeCutProgram(cutBase());
   const firstMove = L.findIndex(l => /^(G0|G1|G2|G3|M3|G53)\b/.test(l));
-  const stops = L.map((l, i) => [l, i]).filter(([l]) => /ZS stop/.test(l));
+  const stops = L.map((l, i) => [l, i]).filter(([l]) => /SBT stop/.test(l));
   assert.equal(stops.length, 3);
   assert.ok(stops.every(([, i]) => i < firstMove));
   assert.equal(L[3], 'G54');
@@ -1092,13 +1092,13 @@ test('cut holes: hops 5 mm between holes, lifting to Safe Z over a keepout', () 
   const holes = [{ x: 0, y: 0, diaMm: 20, label: 'A1' }, { x: 100, y: 0, diaMm: 20, label: 'A2' }, { x: 100, y: 100, diaMm: 20, label: 'B2' }];
   const zones = [{ minX: 40, maxX: 60, minY: -10, maxY: 10 }];
   const L = holeCutProgram(cutBase({ holes, zones, wcs: { p: 1, x: 0, y: 0 } }));
-  const holeAt = (n) => L.findIndex(l => l.startsWith('(ZS hole ' + n + '/'));
+  const holeAt = (n) => L.findIndex(l => l.startsWith('(SBT hole ' + n + '/'));
   assert.equal(L[holeAt(2) + 1], 'G53 G0 Z-5.000', 'lifts before crossing the zone');
   assert.match(L[holeAt(3) + 1], /^G0 X/, 'hops to the next one');
   assert.equal(L[L.length - 1], 'M30');
   assert.deepEqual(L.slice(-3), ['G53 G0 Z-5.000', 'M5', 'M30']);
   assert.ok(holeCutProgram(cutBase({ imperial: true, pause: true })).includes('G20'));
-  assert.ok(holeCutProgram(cutBase({ pause: true })).some(l => /^M0 \(ZS: check/.test(l)));
+  assert.ok(holeCutProgram(cutBase({ pause: true })).some(l => /^M0 \(SBT: check/.test(l)));
 });
 
 test('cut holes: minutes from moves and dwells', () => {
@@ -1298,7 +1298,7 @@ test('stock holes: each hole can have its own depth (a counterbore, then the hol
   const depths = [], at = [];
   let hole = -1;
   for (const l of L) {
-    if (/^\(ZS hole/.test(l)) { hole++; depths[hole] = 0; }
+    if (/^\(SBT hole/.test(l)) { hole++; depths[hole] = 0; }
     const z = /Z(-[\d.]+)/.exec(l);
     if (hole >= 0 && z && /^G[13]/.test(l)) depths[hole] = Math.min(depths[hole], +z[1]);
   }
@@ -1327,7 +1327,7 @@ test('stock holes: Safe Z between holes, not between a counterbore and its hole,
   const holes = [{ x: 100, y: 100, diaMm: 14, depthMm: 6, label: 'A1 counterbore' }, { x: 100, y: 100, diaMm: 6.9, depthMm: 20, label: 'A1' },
     { x: 200, y: 100, diaMm: 14, depthMm: 6, label: 'A2 counterbore' }, { x: 200, y: 100, diaMm: 6.9, depthMm: 20, label: 'A2' }];
   const L = holeCutProgram(cutBase({ holes, safeEach: true, zStop: -12.5 }));
-  const first = L.findIndex(l => /^\(ZS hole 1\//.test(l));
+  const first = L.findIndex(l => /^\(SBT hole 1\//.test(l));
   const lifts = L.slice(first).map((l, i) => [l, i]).filter(([l]) => /^G53 G0 Z/.test(l)).length;
   // One between A1 and A2, and the one at the end.
   assert.equal(lifts, 2);
@@ -1392,7 +1392,7 @@ test('nearest-hole macros on a turned grid find the same hole as the XY0 Picker'
 
 test('cut programs: M6 to the tool Bit Diameter came from, after Safe Z and before the spindle; none when typed', () => {
   const L = holeCutProgram(cutBase({ tool: 3, rpm: 18000, pause: true }));
-  const m6 = L.indexOf('M6 T3'), safe = L.findIndex(l => /^G53 G0 Z/.test(l)), m3 = L.findIndex(l => /^M3 /.test(l)), stop = L.map((l, i) => /ZS stop/.test(l) ? i : -1).filter(i => i >= 0).pop();
+  const m6 = L.indexOf('M6 T3'), safe = L.findIndex(l => /^G53 G0 Z/.test(l)), m3 = L.findIndex(l => /^M3 /.test(l)), stop = L.map((l, i) => /SBT stop/.test(l) ? i : -1).filter(i => i >= 0).pop();
   assert.ok(stop < safe && safe < m6 && m6 < m3, JSON.stringify([stop, safe, m6, m3]));
   assert.ok(!holeCutProgram(cutBase()).some(l => /^M6/.test(l)));
   assert.ok(!engraveProgram(Object.assign(cutBase({ tool: 3 }), { labels: [], textMm: 5, laser: true, power: 100 })).some(l => /^M6/.test(l)));

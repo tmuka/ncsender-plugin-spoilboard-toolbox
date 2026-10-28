@@ -46,7 +46,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
     `stockHoleCandidates`, `stockBoltHoles`, `flipPins`, `flipRect`. Map zoom: `zoomWindow`, `labelEvery`.
   - Turned grids: `turnHoles` (holeGrid turns a grid's holes about its first hole by `turnDeg`) and `turnLines` (the macros
     turn the spindle position into the grid's square frame in #22 / #23, run the grid math, and turn #6 / #7 back).
-  - `storeThicknessCommand`, `MACRO_PREFIX` (`ZS: `), `OLD_PREFIXES` (`MW: `, `Macro Wiz: `, the names earlier versions used).
+  - `storeThicknessCommand`, `MACRO_PREFIX` (`SBT: `), `OLD_PREFIXES` (`ZS: `, `MW: `, `Macro Wiz: `, the names earlier versions used; Create macros renames them in place by ID, so ncSender's `Macro:<id>` shortcuts survive).
   - Spoilboard holes: `holeGrid`, `travelDirs`, `insetFromPosition`, `nearestHole`, `holeOriginOffset` (where X0 Y0
     goes on a hole, one radius out in machine X / Y), `holeCommands`; and `parseUnitValue`.
   - Suppressed grid holes (`holeKey` "col,row", saved as `holeSuppressed`) stay in `holeGrid` marked
@@ -108,8 +108,8 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
   - **Set XY0 to Midpoint** is `G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]` with no move.
   - **Save / restore X/Y** use the saved-Z0 slot's X/Y.
 - **Naming:**
-  - Names are `ZS: <name>`.
-  - Each description is the text of the macro's first comment line after its `ZS:` prefix.
+  - Names are `SBT: <name>`.
+  - Each description is the text of the macro's first comment line after its `SBT:` prefix.
   - Saving updates macros in place by name: the current name, an alias (`Center X0 Y0 here`), or the
     old `MW: ` or `Macro Wiz: ` prefixes.
 
@@ -119,7 +119,7 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 - **Units:** `#5221…` (work offsets) and `#5403` (TLO) are **always mm**; `#5063` (probe result) and
   `G10` values follow G20/G21. So every macro that reads stored values runs in `G21`, and
   imperial setups get `G20` back at the end.
-- **Safety stops:** record, measure, spoilboard and stock-top start with `#1=[1 / <cond>] (ZS stop: why)`
+- **Safety stops:** record, measure, spoilboard and stock-top start with `#1=[1 / <cond>] (SBT stop: why)`
   lines for homed (`#<_homed_state>`), a tool length offset (`#<_tool_offset>`) and the stored values
   they need; midpoints check homed. A division by zero is grblHAL error 72, and ncSender's
   `ExpandedCommandSender` sends nothing after a rejected macro line (one line in flight at a time).
@@ -178,7 +178,7 @@ npm run build    # dist/com.tmuka.zeroswapper_v<version>.zip from the last commi
 ## How it was built
 
 (As Macro Wiz; renamed Zero Swapper in 0.3.1, with the `ZS:` macro prefix; renamed Spoilboard Toolbox in 0.3.36, keeping the ID
-`com.tmuka.zeroswapper` and the `ZS:` prefix so updates, settings and macros carry over.)
+`com.tmuka.zeroswapper` so updates and settings carry over; the prefix became `SBT:` then, with `ZS:` kept as an old prefix.)
 
 Built in one Claude Code session (2026-10-16), version 0.1 to 0.2.8, driven by requests from the author:
 
@@ -234,7 +234,7 @@ Each change came with tests first or alongside, then a browser check of the UI, 
     polylines in machine mm and gets tests like the rest.
   - **V-bit.** The angle, line width and depth (depth = half the width / tan(half the angle)), feed and
     plunge. Keep the depth well under what a surfacing pass takes, so labels survive one or two passes.
-    Z0 on the spoilboard comes from the stored spoilboard height (the `ZS: … Z0 on spoilboard` macro), so
+    Z0 on the spoilboard comes from the stored spoilboard height (the `SBT: … Z0 on spoilboard` macro), so
     no new probing.
   - **Laser.** Power (S), feed, `M4` dynamic power, a fixed Z for focus, and a check that `$32` (laser
     mode) is on; no plunges. Lines only, no fill.

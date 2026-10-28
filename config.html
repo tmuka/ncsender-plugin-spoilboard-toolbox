@@ -794,7 +794,7 @@
         <div class="mw-card-head">
           <h3 class="mw-card-title" id="mw-macros-title"><span class="mw-step">4</span>Macros</h3>
           <div class="mw-head-actions">
-            <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete ZS: macros</button>
+            <button type="button" class="mw-btn mw-btn-quiet" id="mw-delete">Delete SBT: macros</button>
             <button type="button" class="mw-btn" id="mw-save">Create macros</button>
           </div>
         </div>
@@ -824,7 +824,7 @@
     </div>
     <div class="mw-tab" data-tab="cut" hidden>
       <p class="mw-intro"><strong>Cut the dog holes you set up in the XY0 Picker</strong>, so the spoilboard and the map come from the
-        same numbers. Load the bit and put Z0 on the spoilboard&rsquo;s top (<strong>ZS: Z0 on spoilboard</strong> does it), then
+        same numbers. Load the bit and put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it), then
         <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run. It uses the active work offset&rsquo;s X0 Y0.</p>
       <section class="mw-card">
         <h3 class="mw-card-title">Holes</h3>
@@ -1057,8 +1057,8 @@
   // Macro names start with this. Earlier versions (as Macro Wiz) used
   // "MW: " and before that "Macro Wiz: "; saving renames those in place and
   // deleting still recognizes them.
-  var MACRO_PREFIX = 'ZS: ';
-  var OLD_PREFIXES = ['MW: ', 'Macro Wiz: '];
+  var MACRO_PREFIX = 'SBT: ';
+  var OLD_PREFIXES = ['ZS: ', 'MW: ', 'Macro Wiz: '];
 
   function fmt(v) { return (Math.round(v * 1000) / 1000).toFixed(3); }
 
@@ -1102,7 +1102,7 @@
     var saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
     var HOMED = '#<_homed_state>', TLO = '#<_tool_offset>';
     var hasSpoil = '[' + spoil + ' NE 0]', hasThick = '[' + thick + ' NE 0]';
-    function stop(cond, why) { return '#1=[1 / ' + cond + '] (ZS stop: ' + why + ')'; }
+    function stop(cond, why) { return '#1=[1 / ' + cond + '] (SBT stop: ' + why + ')'; }
     var needHomed = stop(HOMED, 'home the machine first');
     var needTlo = stop(TLO, 'no tool length offset active');
     var needSpoil = stop(hasSpoil, 'record the spoilboard height first');
@@ -1128,15 +1128,15 @@
     var mark = '#' + (offsetZParam(o.thick) - 2);
     var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + mark + '] GT 0.001]';
     var saveLine = 'G10 L2 P' + o.backup + ' Z[' + saved + ' + [' + cur + ' - ' + saved + '] * [' + notOurs + ']]';
-    // Named "ZS: ..."; the description is the first comment line's text
-    // after its "ZS:" prefix, e.g. "record spoilboard height".
+    // Named "SBT: ..."; the description is the first comment line's text
+    // after its "SBT:" prefix, e.g. "record spoilboard height".
     function macro(name, lines) {
-      var first = /^\((?:ZS|MW|Macro Wiz): ?(.*)\)$/.exec(lines[0]);
+      var first = /^\((?:SBT|ZS|MW|Macro Wiz): ?(.*)\)$/.exec(lines[0]);
       return { name: MACRO_PREFIX + name, description: first ? first[1] : '', body: lines.join('\n') };
     }
     var m = {};
     m.record = macro('Record spoilboard height', [
-      '(ZS: record spoilboard height)',
+      '(SBT: record spoilboard height)',
       '(Probe block on the spoilboard, bit)',
       '(just above it, tool offset active.)',
       '(Height is stored in ' + slot + ' Z.)',
@@ -1144,7 +1144,7 @@
       needTlo
     ].concat(probe, ['G10 L2 P' + o.slot + ' Z[[' + surface + '] / [' + HOMED + ' AND ' + TLO + ']]'], back, tail));
     m.measure = macro('Measure stock thickness', [
-      '(ZS: measure stock thickness)',
+      '(SBT: measure stock thickness)',
       '(Probe block on the stock, bit just)',
       '(above it, tool offset active. Needs)',
       '(the spoilboard height recorded.)',
@@ -1154,7 +1154,7 @@
       needSpoil
     ].concat(probe, ['G10 L2 P' + o.thick + ' Z[[' + surface + ' - ' + spoil + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ']]'], back, tail));
     m.set = macro(wcs + ' Z0 on spoilboard', [
-      '(ZS: work Z0 on spoilboard)',
+      '(SBT: work Z0 on spoilboard)',
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
       needHomed,
@@ -1166,7 +1166,7 @@
       'G10 L2 P' + o.wcs + ' Z[' + spoil + ' / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + G92Z + ']]'
     ].concat(tail));
     m.stock = macro(wcs + ' Z0 on stock top', [
-      '(ZS: work Z0 on stock top)',
+      '(SBT: work Z0 on stock top)',
       '(Uses the thickness in ' + thk + ' Z.)',
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
@@ -1180,7 +1180,7 @@
       'G10 L2 P' + o.wcs + ' Z[[' + spoil + ' + ' + thick + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + hasThick + ' AND ' + G92Z + ']]'
     ].concat(tail));
     m.restore = macro(wcs + ' Z0 back to saved', [
-      '(ZS: put back the Z0 saved in ' + bak + ' Z)',
+      '(SBT: put back the Z0 saved in ' + bak + ' Z)',
       '(Leaves Z0 alone if nothing was saved.)',
       noG92Z,
       'G21',
@@ -1194,7 +1194,7 @@
     // line were skipped.
     function midpoint(name, what, move) {
       return macro(name, [
-        '(ZS: lift to Safe Z, then move halfway to ' + what + ')',
+        '(SBT: lift to Safe Z, then move halfway to ' + what + ')',
         needHomed,
         'G21',
         safe,
@@ -1210,13 +1210,13 @@
       var sx = '#' + (offsetZParam(o.backup) - 2), sy = '#' + (offsetZParam(o.backup) - 1);
       var anySaved = '[[' + sx + ' NE 0] OR [' + sy + ' NE 0]]';
       m.saveXY = macro('Save ' + wcs + ' X/Y', [
-        '(ZS: save ' + wcs + ' X/Y in ' + bak + ' X/Y)',
+        '(SBT: save ' + wcs + ' X/Y in ' + bak + ' X/Y)',
         '(e.g. a fixture or jig you come back to)',
         'G21',
         'G10 L2 P' + o.backup + ' X[' + cx + '] Y[' + cy + ']'
       ].concat(tail));
       m.restoreXY = macro(wcs + ' X/Y back to saved', [
-        '(ZS: put back the X/Y saved in ' + bak + ')',
+        '(SBT: put back the X/Y saved in ' + bak + ')',
         '(Leaves X/Y alone if nothing was saved.)',
         'G21',
         'G10 L2 P' + o.wcs + ' X[' + cx + ' + [' + sx + ' - ' + cx + '] * ' + anySaved + '] Y[' + cy + ' + [' + sy + ' - ' + cy + '] * ' + anySaved + ']'
@@ -1232,7 +1232,7 @@
       // 2.0.161 kept sending after a rejected line) it's rejected too.
       var inUnits = function(v) { return '[' + v + ' / ' + MM_PER_UNIT + ' / #10]'; };
       m.goHole = macro('Go to nearest hole', [
-        '(ZS: lift, then move over the nearest hole\'s ' + side + ')',
+        '(SBT: lift, then move over the nearest hole\'s ' + side + ')',
         '(Grid from the XY0 Picker when created:)',
         '(Create macros again after changing it.)',
         needHomed,
@@ -1244,7 +1244,7 @@
         'G53 G90 G0 X' + inUnits(calc.x) + ' Y' + inUnits(calc.y)
       ]));
       m.setHole = macro('XY0 on nearest hole', [
-        '(ZS: X0 Y0 on the nearest hole\'s ' + side + ', no move)',
+        '(SBT: X0 Y0 on the nearest hole\'s ' + side + ', no move)',
         '(Sets the active work offset.)',
         '(Create macros again after changing the grid.)',
         needHomed,
@@ -1254,7 +1254,7 @@
     }
     if (x.center) {
       m.center = macro('Set XY0 to Midpoint', [
-        '(ZS: set X0 Y0 halfway to here, no move)',
+        '(SBT: set X0 Y0 halfway to here, no move)',
         'G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]'
       ]);
       m.center.aliases = ['Center X0 Y0 here'];  // its name before 0.2.7
@@ -1637,17 +1637,17 @@
     lines = lines.concat(scanLines(listed, vary && g));
     if (sup || listed.length) {
       lines.push('#10=[#10 * [#9 LT 100000000]]',
-        '#1=[1 / #10] (ZS stop: ' + (listed.length ? 'no usable hole near the spindle' : 'nearest hole is suppressed, no real hole near it') + ')');
+        '#1=[1 / #10] (SBT stop: ' + (listed.length ? 'no usable hole near the spindle' : 'nearest hole is suppressed, no real hole near it') + ')');
     }
     var R = vary ? '#16' : null, r = g.diaMm / 2;
     if (hasGrid) (g.zones || []).forEach(function(z) {
       var lo = function(v) { return R ? '[' + fmt5(v) + ' - ' + R + ']' : fmt5(v - r); }, hi = function(v) { return R ? '[' + fmt5(v) + ' + ' + R + ']' : fmt5(v + r); };
-      lines.push('#10=[#10 * [1 - [[#6 GE ' + lo(z.minX) + '] AND [#6 LE ' + hi(z.maxX) + '] AND [#7 GE ' + lo(z.minY) + '] AND [#7 LE ' + hi(z.maxY) + ']]]]', '#1=[1 / #10] (ZS stop: nearest hole is in the ' + z.name + ' keepout zone)');
+      lines.push('#10=[#10 * [1 - [[#6 GE ' + lo(z.minX) + '] AND [#6 LE ' + hi(z.maxX) + '] AND [#7 GE ' + lo(z.minY) + '] AND [#7 LE ' + hi(z.maxY) + ']]]]', '#1=[1 / #10] (SBT stop: nearest hole is in the ' + z.name + ' keepout zone)');
     });
     var minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm;
     var tx = vary ? '[#6 + #14]' : '[#6 + ' + fmt5(g.dx) + ']', ty = vary ? '[#7 + #15]' : '[#7 + ' + fmt5(g.dy) + ']';
     if (hasGrid && (vary || g.dx || g.dy || g.turnDeg)) {
-      lines.push('#10=[#10 * [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]]', '#1=[1 / #10] (ZS stop: that side of the hole is outside the travel)');
+      lines.push('#10=[#10 * [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]]', '#1=[1 / #10] (SBT stop: that side of the hole is outside the travel)');
     }
     return { lines: lines, x: tx, y: ty };
   }
@@ -1665,7 +1665,7 @@
       srcs.push({ name: 'grid ' + (e.k + 1), L: L, holes: holeGrid(L), off: { r: e.L.diaMm / 2, dx: o.dx, dy: o.dy } });
     });
     srcs = srcs.filter(function(src) { return src.holes.length; });
-    if (!srcs.length && !listed.length) return { lines: ['#10=[0]', '#1=[1 / #10] (ZS stop: no holes to snap to)'], x: '[#6]', y: '[#7]' };
+    if (!srcs.length && !listed.length) return { lines: ['#10=[0]', '#1=[1 / #10] (SBT stop: no holes to snap to)'], x: '[#6]', y: '[#7]' };
     var lines = ['#19=[1000000000]', '#20=[0]', '#21=[0]', '#14=[0]', '#15=[0]', '#16=[0]'];
     srcs.forEach(function(src) {
       var L = src.L, holes = src.holes, sup = holes.some(function(p) { return p.suppressed; });
@@ -1689,12 +1689,12 @@
     });
     lines.push('#9=[#19]', '#6=[#20]', '#7=[#21]');
     if (listed.length) lines = lines.concat(['(And ' + listed.length + ' listed holes)'], scanLines(listed, g));
-    lines.push('#10=[#10 * [#9 LT 100000000]]', '#1=[1 / #10] (ZS stop: no usable hole near the spindle)');
+    lines.push('#10=[#10 * [#9 LT 100000000]]', '#1=[1 / #10] (SBT stop: no usable hole near the spindle)');
     (g.zones || []).forEach(function(z) {
-      lines.push('#10=[#10 * [1 - [[#6 GE [' + fmt5(z.minX) + ' - #16]] AND [#6 LE [' + fmt5(z.maxX) + ' + #16]] AND [#7 GE [' + fmt5(z.minY) + ' - #16]] AND [#7 LE [' + fmt5(z.maxY) + ' + #16]]]]]', '#1=[1 / #10] (ZS stop: nearest hole is in the ' + z.name + ' keepout zone)');
+      lines.push('#10=[#10 * [1 - [[#6 GE [' + fmt5(z.minX) + ' - #16]] AND [#6 LE [' + fmt5(z.maxX) + ' + #16]] AND [#7 GE [' + fmt5(z.minY) + ' - #16]] AND [#7 LE [' + fmt5(z.maxY) + ' + #16]]]]]', '#1=[1 / #10] (SBT stop: nearest hole is in the ' + z.name + ' keepout zone)');
     });
     var minX = g.dirX > 0 ? 0 : -g.travelXMm, minY = g.dirY > 0 ? 0 : -g.travelYMm, tx = '[#6 + #14]', ty = '[#7 + #15]';
-    lines.push('#10=[#10 * [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]]', '#1=[1 / #10] (ZS stop: that side of the hole is outside the travel)');
+    lines.push('#10=[#10 * [1 - [[' + tx + ' LT ' + fmt5(minX) + '] OR [' + tx + ' GT ' + fmt5(minX + g.travelXMm) + '] OR [' + ty + ' LT ' + fmt5(minY) + '] OR [' + ty + ' GT ' + fmt5(minY + g.travelYMm) + ']]]]', '#1=[1 / #10] (SBT stop: that side of the hole is outside the travel)');
     return { lines: lines, x: tx, y: ty };
   }
   // A turned grid in the macros: the spindle's position turned back about
@@ -1814,10 +1814,10 @@
     var notOurs = '[ABS[' + cur + ' - ' + spoil + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + markX + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + fmt(hMm) + '] GT 0.001]';
     return [
       'G21',
-      '#1=[1 / #<_homed_state>] (ZS stop: home the machine first)',
-      '#1=[1 / #<_tool_offset>] (ZS stop: no tool length offset active)',
-      '#1=[1 / [' + spoil + ' NE 0]] (ZS stop: record the spoilboard height first)',
-      '#1=[1 / [ABS[#5213] LT 0.0005]] (ZS stop: a G92 Z offset is active; G92.1 clears it)'
+      '#1=[1 / #<_homed_state>] (SBT stop: home the machine first)',
+      '#1=[1 / #<_tool_offset>] (SBT stop: no tool length offset active)',
+      '#1=[1 / [' + spoil + ' NE 0]] (SBT stop: record the spoilboard height first)',
+      '#1=[1 / [ABS[#5213] LT 0.0005]] (SBT stop: a G92 Z offset is active; G92.1 clears it)'
     ].concat(save ? [
       // Worked out on a line of its own: together they'd pass grblHAL's
       // line length.
@@ -2102,20 +2102,20 @@
     var name = WCS_NAMES[o.wcs.p], xp = 5201 + 20 * o.wcs.p, yp = xp + 1;
     var less = function(v) { return v < 0 ? ' + ' + fmt(-v) : ' - ' + fmt(v); };
     var L = [
-      gComment('ZS: ' + title),
-      gComment('ZS: ' + name + ' Z0 must be on ' + (o.zWhat || 'the spoilboard') + '; X Y are ' + name + ', X0 Y0 at machine X' + fmt(o.wcs.x) + ' Y' + fmt(o.wcs.y)),
+      gComment('SBT: ' + title),
+      gComment('SBT: ' + name + ' Z0 must be on ' + (o.zWhat || 'the spoilboard') + '; X Y are ' + name + ', X0 Y0 at machine X' + fmt(o.wcs.x) + ' Y' + fmt(o.wcs.y)),
       'G21 G17 G90 G94',
       name,
-      '#1=[1 / #<_homed_state>] (ZS stop: home the machine first)',
-      '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (ZS stop: a G92 offset is active; G92.1 clears it)',
-      '#1=[1 / [[ABS[#' + xp + less(o.wcs.x) + '] LT 0.001] AND [ABS[#' + yp + less(o.wcs.y) + '] LT 0.001]]] (ZS stop: ' + name + ' X0 Y0 moved; make the program again)',
+      '#1=[1 / #<_homed_state>] (SBT stop: home the machine first)',
+      '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (SBT stop: a G92 offset is active; G92.1 clears it)',
+      '#1=[1 / [[ABS[#' + xp + less(o.wcs.x) + '] LT 0.001] AND [ABS[#' + yp + less(o.wcs.y) + '] LT 0.001]]] (SBT stop: ' + name + ' X0 Y0 moved; make the program again)',
     ];
-    if (o.zStop != null) L.push('#1=[1 / [ABS[#' + (yp + 1) + less(o.zStop) + '] LT 0.001]] (ZS stop: ' + name + ' Z0 moved; make the program again)');
+    if (o.zStop != null) L.push('#1=[1 / [ABS[#' + (yp + 1) + less(o.zStop) + '] LT 0.001]] (SBT stop: ' + name + ' Z0 moved; make the program again)');
     if (!o.laser) L.push(cutSafe(o));
     // tool: the loaded tool Bit Diameter was taken from, changed to first
     // (ncSender runs the tool change); none when the size was typed.
     if (o.tool && !o.laser) L.push('M6 T' + o.tool);
-    if (o.pause) L.push('M0 ' + gComment('ZS: check ' + what + ', then resume'));
+    if (o.pause) L.push('M0 ' + gComment('SBT: check ' + what + ', then resume'));
     if (o.mist) L.push('M7');
     if (o.flood) L.push('M8');
     if (o.rpm > 0 && !o.laser) {
@@ -2149,7 +2149,7 @@
       var levels = levelsTo(h.depthMm || o.depthMm);
       var method = holeCutMethod(h.diaMm, o.bitMm), cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, pr = h.diaMm / 2 - r;
       var helixR = Math.min(r * 0.6, pr - 0.001), start = method === 'drill' ? { x: cx, y: cy } : { x: cx + (method === 'helix' ? pr : helixR), y: cy };
-      L.push(c('ZS hole ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40) + ', ' + fmt(h.diaMm) + ' mm, ' + method));
+      L.push(c('SBT hole ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40) + ', ' + fmt(h.diaMm) + ' mm, ' + method));
       var to = { x: start.x + o.wcs.x, y: start.y + o.wcs.y };
       // safeEach: to Safe Z between holes (over clamps on the stock), not
       // between a counterbore and the hole through it.
@@ -2348,7 +2348,7 @@
     if (o.laser) L.push('M4 S' + Math.round(o.power));
     var at = null;
     o.labels.forEach(function(lb, i) {
-      L.push(c('ZS label ' + (i + 1) + '/' + n + ': ' + lb.text));
+      L.push(c('SBT label ' + (i + 1) + '/' + n + ': ' + lb.text));
       textStrokes(lb.text, lb.x, lb.y, o.textMm).forEach(function(st, k) {
         var a = st[0], to = { x: a.x, y: a.y };
         if (!o.laser && k === 0 && at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, 0); })) L.push(cutSafe(o));
@@ -2376,7 +2376,7 @@
     o.holes.forEach(function(h, i) {
       var cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, rt = h.diaMm / 2 - extra * t;
       var sink = rt <= 0.05, start = sink ? { x: cx, y: cy } : { x: cx + rt, y: cy };
-      L.push(c('ZS chamfer ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40)));
+      L.push(c('SBT chamfer ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40)));
       var to = { x: start.x + o.wcs.x, y: start.y + o.wcs.y };
       if (at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, 0); })) L.push(cutSafe(o));
       L.push('G0 X' + f3(start.x) + ' Y' + f3(start.y));
@@ -2811,7 +2811,7 @@
     }
   }
 
-  // Delete every macro this wizard made (name starts "ZS:", or "MW:" or
+  // Delete every macro this wizard made (name starts "SBT:", or "ZS:", "MW:" or
   // "Macro Wiz:" from earlier versions), e.g. ones left over from older settings or
   // another work offset. The first press only lists them
   // and turns the button into "Confirm delete"; a second press within a
@@ -2825,7 +2825,7 @@
     var btn = $('mw-delete');
     if (deleteArmed && deleteArmed.timer) clearTimeout(deleteArmed.timer);
     deleteArmed = null;
-    if (btn) { btn.textContent = 'Delete ZS: macros'; btn.classList.remove('mw-btn-danger'); }
+    if (btn) { btn.textContent = 'Delete SBT: macros'; btn.classList.remove('mw-btn-danger'); }
   }
   async function deleteMacros() {
     var status = $('mw-save-status'), btn = $('mw-delete');
@@ -2835,7 +2835,7 @@
         var mine = (lres.ok ? await lres.json() : []).filter(isOurs);
         if (!mine.length) {
           status.removeAttribute('data-state');
-          status.textContent = 'There are no ZS: macros to delete.';
+          status.textContent = 'There are no SBT: macros to delete.';
           return;
         }
         deleteArmed = { macros: mine, timer: setTimeout(function() {
@@ -2846,7 +2846,7 @@
         btn.classList.add('mw-btn-danger');
         status.setAttribute('data-state', 'bad');
         status.textContent = 'This deletes ' + mine.length + ' macro' + (mine.length === 1 ? '' : 's') + ': ' +
-          mine.map(function(m) { return 'P' + (m.id != null ? m.id : m.Id) + ' ' + (m.name || m.Name).replace(/^(ZS|MW|Macro Wiz): /, ''); }).join(', ') +
+          mine.map(function(m) { return 'P' + (m.id != null ? m.id : m.Id) + ' ' + (m.name || m.Name).replace(/^(SBT|ZS|MW|Macro Wiz): /, ''); }).join(', ') +
           '. Keyboard shortcuts set on them stop working, and new ones get new numbers, so to change' +
           ' settings use Create macros instead: it updates them in place. Press Confirm delete to go ahead.';
       } catch (err) {
@@ -2870,7 +2870,7 @@
     }
     btn.disabled = false;
     status.setAttribute('data-state', failed.length ? 'bad' : 'ok');
-    status.textContent = 'Deleted ' + gone + ' ZS: macro' + (gone === 1 ? '' : 's') + '.' +
+    status.textContent = 'Deleted ' + gone + ' SBT: macro' + (gone === 1 ? '' : 's') + '.' +
       (failed.length ? ' Couldn\'t delete ' + failed.join(', ') + '.' : ' Press Create macros to make fresh ones, then set any keyboard shortcuts on them again.');
   }
 
@@ -2898,7 +2898,7 @@
     try {
       var lres = await fetch(BASE_URL + '/api/m98-macros');
       var existing = lres.ok ? await lres.json() : [];
-      var done = [], removed = [];
+      var done = [], removed = [], renamed = 0;
       // The same macro under its current name, or an older one: the
       // "MW: " or "Macro Wiz: " prefix, or a name it had before (aliases).
       var find = function(mac) {
@@ -2915,6 +2915,7 @@
         var mac = m[key];
         var prev = find(mac);
         var prevId = prev && (prev.id != null ? prev.id : prev.Id);
+        if (prev && /^ZS: /.test(prev.name != null ? prev.name : prev.Name)) renamed++;
         var res = await fetch(BASE_URL + '/api/m98-macros' + (prevId ? '/' + prevId : ''), {
           method: prevId ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2940,6 +2941,7 @@
       saveSettings();
       status.setAttribute('data-state', 'ok');
       status.textContent = 'Saved: M98 P' + done.join(', M98 P') + '. Run them from the Macros tab.' +
+        (renamed ? ' Renamed ' + renamed + ' from ZS: to SBT:, keeping their numbers, so their keyboard shortcuts still work.' : '') +
         (removed.length ? ' Removed the unticked ' + removed.join(', ') + ' (a keyboard shortcut on them stops working).' : '');
     } catch (err) {
       status.setAttribute('data-state', 'bad');
@@ -4625,7 +4627,7 @@
         if (zp) throw new Error('that Z0 is ' + shown(z.hMm) + ' ' + unitName() + ' above the spoilboard, and ' + zp + '; check the height and the stock thickness');
         if (!g92) throw new Error('the controller didn\u2019t report its G92 offset ($#), so it isn\u2019t safe to set Z0; try again');
         if (Math.abs(g92[2] || 0) > 0.0005) throw new Error('a G92 Z offset is active, which would shift Z0. Send G92.1 in the terminal to clear it, then try again');
-        if (!spoil || !spoil[2]) throw new Error('the spoilboard height isn\u2019t recorded yet: run ZS: Record spoilboard height (Z0 macros tab) once');
+        if (!spoil || !spoil[2]) throw new Error('the spoilboard height isn\u2019t recorded yet: run SBT: Record spoilboard height (Z0 macros tab) once');
         var gc = parseGcState((await ask('$G', 500)).lines);
         if (!gc || !gc.tloActive) throw new Error('no tool length offset is active, so Z0 wouldn\u2019t follow the tool. Measure the tool first');
         var wcsP = await resolveHoleWcs(gc);
@@ -4633,7 +4635,7 @@
         await sendHoleCommands(zAboveSpoilLines(s, wcsP, z.hMm), gc.imperial);
         status.setAttribute('data-state', 'ok');
         status.textContent = WCS_NAMES[wcsP] + ' Z0 is now on ' + z.what + ': the spoilboard + ' + shown(z.hMm) + ' ' + unitName() + '.' +
-          (wcsP === s.wcs ? ' A probed Z0 you had is kept for ZS: Z0 back to saved.' : ' (Only ' + WCS_NAMES[s.wcs] + ', the Z0 macros\u2019 offset, keeps its previous Z0 for back to saved.)');
+          (wcsP === s.wcs ? ' A probed Z0 you had is kept for SBT: Z0 back to saved.' : ' (Only ' + WCS_NAMES[s.wcs] + ', the Z0 macros\u2019 offset, keeps its previous Z0 for back to saved.)');
         await readMachineState();
         renderHoles();
         readNumbers();
@@ -4834,7 +4836,7 @@
     await readMachineState();
     var o = cutSettings(), probs = cutProblems(o);
     if (probs.length) { renderCut(); return; }
-    await loadProgram('ZS-DogHoles_' + o.holes.length + 'x_Bit-' + shown(o.bitMm) + '_D-' + shown(o.depthMm) + '_' + unitName() + '.nc',
+    await loadProgram('SBT-DogHoles_' + o.holes.length + 'x_Bit-' + shown(o.bitMm) + '_D-' + shown(o.depthMm) + '_' + unitName() + '.nc',
       holeCutProgram(o), $('mw-cut-note'), $('mw-cut-generate'));
   }
 
@@ -4864,7 +4866,7 @@
     await readMachineState();
     var f = fitSettings();
     if (f.probs.length) { renderFit(); return; }
-    await loadProgram('ZS-FitTest_' + f.local.length + 'x_' + shown(f.local[0].diaMm) + '-' + shown(f.local[f.local.length - 1].diaMm) + '_' + unitName() + '.nc',
+    await loadProgram('SBT-FitTest_' + f.local.length + 'x_' + shown(f.local[0].diaMm) + '-' + shown(f.local[f.local.length - 1].diaMm) + '_' + unitName() + '.nc',
       holeCutProgram(f.o), $('mw-fit-note'), $('mw-fit-generate'));
   }
 
@@ -4889,7 +4891,7 @@
     await readMachineState();
     var c = chamferSettings();
     if (c.probs.length) { renderChamfer(); return; }
-    await loadProgram('ZS-Chamfer_' + c.o.holes.length + 'x_V' + c.o.vAngleDeg + '_W-' + shown(c.o.chamferMm) + '_' + unitName() + '.nc',
+    await loadProgram('SBT-Chamfer_' + c.o.holes.length + 'x_V' + c.o.vAngleDeg + '_W-' + shown(c.o.chamferMm) + '_' + unitName() + '.nc',
       chamferProgram(c.o), $('mw-chm-note'), $('mw-chm-generate'));
   }
 
@@ -4932,7 +4934,7 @@
     await readMachineState();
     var l = labelSettings();
     if (l.probs.length) { renderLabels(); return; }
-    await loadProgram('ZS-Labels_' + l.o.labels.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '_H-' + shown(l.o.textMm) + '_' + unitName() + '.nc',
+    await loadProgram('SBT-Labels_' + l.o.labels.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '_H-' + shown(l.o.textMm) + '_' + unitName() + '.nc',
       engraveProgram(l.o), $('mw-lab-note'), $('mw-lab-generate'));
   }
   // Holes through the stock, over the spoilboard holes of the grid picked
@@ -4959,7 +4961,7 @@
     // recorded, when it's known.
     if (thick > 0 && o.zWcs != null && state.spoilZ) {
       var above = o.zWcs - state.spoilZ;
-      if (above < thick / 2) probs.push(o.wcsName + ' Z0 is ' + (Math.abs(above) < 0.05 ? 'on the spoilboard' : shown(above) + ' ' + unitName() + ' above the spoilboard') + ', not on the stock\u2019s top: put it there first (ZS: Z0 on stock top, or touch off)');
+      if (above < thick / 2) probs.push(o.wcsName + ' Z0 is ' + (Math.abs(above) < 0.05 ? 'on the spoilboard' : shown(above) + ' ' + unitName() + ' above the spoilboard') + ', not on the stock\u2019s top: put it there first (SBT: Z0 on stock top, or touch off)');
       else if (Math.abs(above - thick) > 0.5) res.warn = o.wcsName + ' Z0 is ' + shown(above) + ' ' + unitName() + ' above the spoilboard but the stock is ' + shown(thick) + ' ' + unitName() + ' thick: check Z0 is on its top and T is right.';
     } else if (thick > 0) res.warn = 'Couldn\u2019t check that Z0 is on the stock\u2019s top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.';
     var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '';
@@ -5025,7 +5027,7 @@
     await readMachineState();
     var s = stockHoleSettings();
     if (s.probs.length) { renderStockHoles(); return; }
-    await loadProgram('ZS-Stock' + (s.pins ? 'Pins' : 'Bolts') + '_' + s.chosen.length + 'x_D-' + shown(s.o.depthMm) + '_' + unitName() + '.nc',
+    await loadProgram('SBT-Stock' + (s.pins ? 'Pins' : 'Bolts') + '_' + s.chosen.length + 'x_D-' + shown(s.o.depthMm) + '_' + unitName() + '.nc',
       holeCutProgram(s.o), $('mw-sh-note'), $('mw-sh-generate'));
   }
   function renderCutTab() { renderCut(); renderStockHoles(); renderFit(); renderChamfer(); renderLabels(); }
@@ -5222,7 +5224,7 @@
       holes.surfaceKey = done.key;
       $('mw-surface-text').textContent = 'A wasteboard surfacing job finished ' + new Date(job.jobEndTime).toLocaleString() +
         (done.depthMm ? ', taking ' + shown(done.depthMm) + ' ' + unitName() + ' off' : '') +
-        ': the spoilboard is thinner now. Run ZS: Record spoilboard height again before setting Z0 from it (the Z0 macros, Set Z0 and Cut Holes all measure from it).';
+        ': the spoilboard is thinner now. Run SBT: Record spoilboard height again before setting Z0 from it (the Z0 macros, Set Z0 and Cut Holes all measure from it).';
       $('mw-surface').hidden = false;
     } catch (e) { /* no job status: nothing to say */ }
   }
@@ -5234,12 +5236,12 @@
   // tooltips read from the page, so touch users see them too. Keep the
   // notes in step with the README.
   var help = { tab: 'holes', from: 'holes' };
-  var HELP_KEYS = '<strong>Put the macros on keys:</strong> ncSender can run any macro from a keyboard shortcut (or a gamepad button), which is where these really pay off: switching Z0, snapping X0 Y0 to the nearest hole or finding a midpoint becomes one keypress at the machine. In ncSender&rsquo;s <strong>Settings &rsaquo; Controls</strong> (with keyboard control on), search for <kbd>ZS</kbd>, click the pencil next to a macro in the <strong>Macros</strong> group, and press a key combination. Use <strong>Create macros</strong> to update them after a change, rather than deleting them, so the shortcuts keep working.';
+  var HELP_KEYS = '<strong>Put the macros on keys:</strong> ncSender can run any macro from a keyboard shortcut (or a gamepad button), which is where these really pay off: switching Z0, snapping X0 Y0 to the nearest hole or finding a midpoint becomes one keypress at the machine. In ncSender&rsquo;s <strong>Settings &rsaquo; Controls</strong> (with keyboard control on), search for <kbd>SBT</kbd>, click the pencil next to a macro in the <strong>Macros</strong> group, and press a key combination. Use <strong>Create macros</strong> to update them after a change, rather than deleting them, so the shortcuts keep working.';
   var HELP_UNITS = '<strong>Typing units:</strong> size and feed fields take mm or inches, whichever you have to hand, and convert to the machine&rsquo;s units when you leave the field: <kbd>1/4"</kbd>, <kbd>5/4"</kbd>, <kbd>.25in</kbd>, <kbd>1-1/2"</kbd>, <kbd>6.35mm</kbd>, and for feeds <kbd>100ipm</kbd>, <kbd>2540mm/min</kbd>, <kbd>25mm/s</kbd>.';
   var HELP_TOPICS = {
     holes: { name: 'XY0 Picker', notes: [
       '<strong>Your spoilboard&rsquo;s holes are a precision fixture; this turns them into work zero.</strong> Jog roughly near a hole, tap <strong>Pick Nearest Hole</strong>, hold <strong>Set</strong>, and X0 Y0 is exactly on its center or edge: no edge finder, no XY probe, nothing typed, and the same zero next time. Jog to the stock&rsquo;s far corner and press <strong>Far Corner Here</strong> (or type its size) to zero on its center or any corner instead. Missing holes, T-tracks, several grids, custom pins and a profile per board are all covered below.',
-      '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>ZS: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
+      '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>SBT: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. Two or more holes far apart fit the spacing too, and how far the spoilboard is turned. <strong>Apply to Setup</strong> writes them in, Turn included.',
@@ -5254,22 +5256,22 @@
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, jog the bit over the center of the first hole (any hole works when the first is less than one spacing from machine X0 Y0) and press <strong>Grab First Hole Center</strong>; the machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
       '<strong>Profiles:</strong> the menu beside Setup&rsquo;s title keeps one per spoilboard, fixture plate or grid you use. <strong>New profile&hellip;</strong> saves what&rsquo;s in Setup under a name; pick another to load it. Change a number and the bar says it&rsquo;s changed: <strong>Save</strong> keeps it, <strong>Revert</strong> puts the profile back, so you can try other numbers safely. A profile holds the layout, numbers, T-tracks, list and suppressed holes (the dot is picked per job). Press Create macros after switching if you use the nearest-hole macros.',
-      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>ZS: Go to nearest hole</strong> and <strong>ZS: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
+      '<strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. That writes <strong>SBT: Go to nearest hole</strong> and <strong>SBT: XY0 on nearest hole</strong>, which work out the nearest hole on the controller, so you can jog roughly and press a key (see the Z0 macros tab&rsquo;s Help for setting one up). They use the grid, the side picked with the dots and the keepout zones as they were when created, so press Create macros again after changing any of them. Go to lifts to Safe Z first (never down); XY0 sets the active work offset. Both stop, changing nothing, if the machine isn&rsquo;t homed; on a grid also if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left out of the macros, so the nearest usable one is used). XY0 (and Set) also stop while a G92 offset is active, since it would shift X0 Y0 away from the hole; G92.1 in the terminal clears it.',
       '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag a box around several; a box around only suppressed holes restores them. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and shown as faint solid circles while it&rsquo;s unlocked; Pick Nearest Hole, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
       '<strong>Live position:</strong> while you jog, the spindle (the silver ring) moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
-      '<strong>Stock:</strong> tick it and type the stock&rsquo;s width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole, running away from the hole (<strong>Corner</strong> overrides which stock corner sits there), and its own box of dots puts X0 Y0 on its center, a corner or an edge. Go to Selected and Set then use that point; the keyboard macros always use the hole. With no hole picked, the stock hangs off X0 Y0 as it was when you ticked Stock (its front left corner there, unless Corner says otherwise): zero on a corner, tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; <strong>From X0 Y0 now</strong> takes X0 Y0 again, and picking a hole replaces it. Closing and reopening the plugin keeps the stock where it was. No tape measure? Jog the bit over the stock&rsquo;s opposite corner and press <strong>Far Corner Here</strong> for its width and length; its thickness fills in from <strong>ZS: Measure stock thickness</strong> until you type one.',
+      '<strong>Stock:</strong> tick it and type the stock&rsquo;s width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole, running away from the hole (<strong>Corner</strong> overrides which stock corner sits there), and its own box of dots puts X0 Y0 on its center, a corner or an edge. Go to Selected and Set then use that point; the keyboard macros always use the hole. With no hole picked, the stock hangs off X0 Y0 as it was when you ticked Stock (its front left corner there, unless Corner says otherwise): zero on a corner, tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; <strong>From X0 Y0 now</strong> takes X0 Y0 again, and picking a hole replaces it. Closing and reopening the plugin keeps the stock where it was. No tape measure? Jog the bit over the stock&rsquo;s opposite corner and press <strong>Far Corner Here</strong> for its width and length; its thickness fills in from <strong>SBT: Measure stock thickness</strong> until you type one.',
       '<strong>Zoom</strong> for a big bed: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too).',
       '<strong>Grid + List</strong> adds extra holes to a grid, one per line, measured from the first grid&rsquo;s first hole. A third value is that hole&rsquo;s own diameter, e.g. <kbd>pin: 130, 40, 6mm</kbd>; the map draws it at that size, and the dots put X0 Y0 on its own edge.',
-      '<strong>Fixtures with a height</strong> (a vise, a vertical jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard, e.g. <kbd>vise: 400, 250, , 63.5mm</kbd> (a blank third value keeps Hole Diameter). Pick it and a <strong>Set Z0</strong> hold button appears: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. With <strong>Stock</strong> on, its thickness (filled in from <strong>ZS: Measure stock thickness</strong> until you type one) and the <strong>Z0</strong> menu put Z0 on the stock&rsquo;s bottom or top instead (on the fixture, or on the spoilboard with no fixture picked). Set Z0 needs the spoilboard height recorded and a tool length offset active, stops while a G92 Z offset is active, and on the Z0 macros&rsquo; work offset keeps a probed Z0 for <strong>ZS: Z0 back to saved</strong> (holding it again, or running a Z0 macro after it, doesn&rsquo;t replace that). A height below the spoilboard or more than the machine&rsquo;s Z travel ($132), a unit typo say, is flagged in the list and refused. The keyboard macros only ever set X and Y.',
+      '<strong>Fixtures with a height</strong> (a vise, a vertical jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard, e.g. <kbd>vise: 400, 250, , 63.5mm</kbd> (a blank third value keeps Hole Diameter). Pick it and a <strong>Set Z0</strong> hold button appears: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. With <strong>Stock</strong> on, its thickness (filled in from <strong>SBT: Measure stock thickness</strong> until you type one) and the <strong>Z0</strong> menu put Z0 on the stock&rsquo;s bottom or top instead (on the fixture, or on the spoilboard with no fixture picked). Set Z0 needs the spoilboard height recorded and a tool length offset active, stops while a G92 Z offset is active, and on the Z0 macros&rsquo; work offset keeps a probed Z0 for <strong>SBT: Z0 back to saved</strong> (holding it again, or running a Z0 macro after it, doesn&rsquo;t replace that). A height below the spoilboard or more than the machine&rsquo;s Z travel ($132), a unit typo say, is flagged in the list and refused. The keyboard macros only ever set X and Y.',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
       HELP_UNITS ] },
     cut: { name: 'Cut Holes', notes: [
-      '<strong>Cut the dog holes you set up in the XY0 Picker</strong>, so the spoilboard and the map come from the same numbers. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>ZS: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
+      '<strong>Cut the dog holes you set up in the XY0 Picker</strong>, so the spoilboard and the map come from the same numbers. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
       'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
@@ -5282,7 +5284,7 @@
       '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.' ] },
     macros: { name: 'Z0 macros', notes: [
       '<strong>Probe the spoilboard once, and stop re-probing Z on every tool change.</strong> With measured tools (a tool setter or an ATC), one macro puts Z0 on the spoilboard and another on the stock top, for whichever tool is loaded, and a third puts your own Z0 back. Put them on keys and switching Z0 is a single press.',
-      'Record the spoilboard height once with a probe block and a measured tool; then the <strong>ZS:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
+      'Record the spoilboard height once with a probe block and a measured tool; then the <strong>SBT:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
       '<strong>Run checks</strong> confirms the controller supports the parameters and expressions the macros use. Run it once, and again after a firmware change.',
       'The values are kept in spare work offsets (G59.1&ndash;G59.3 Z by default); pick ones you don&rsquo;t use. Re-record the spoilboard height after surfacing it.',
       'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, or a value it needs isn&rsquo;t stored; ncSender&rsquo;s terminal shows <code>error:72</code>.',

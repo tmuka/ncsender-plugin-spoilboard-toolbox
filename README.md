@@ -76,8 +76,8 @@ tool, without re-probing after a tool change:
 | **Z0 on stock top** | Sets work Z0 on top of the stock: the spoilboard plus a stored stock thickness (typed in, or probed with **Measure stock thickness**). |
 | **Z0 back to saved** | Puts back the Z0 you had before, e.g. one you probed on the stock. |
 
-In ncSender's Macros tab they're named **ZS: …**, with the work offset they set (e.g.
-**ZS: G54 Z0 on spoilboard**).
+In ncSender's Macros tab they're named **SBT: …**, with the work offset they set (e.g.
+**SBT: G54 Z0 on spoilboard**).
 
 ### Put them on keys
 
@@ -86,7 +86,7 @@ shortcut** (or a gamepad button), so switching Z0, snapping X0 Y0 to the nearest
 finding a midpoint is one keypress at the machine, with no menus and no plugin window open.
 
 1. Open ncSender's **Settings → Controls** (keyboard control has to be on).
-2. Type **ZS** in **Search Actions…**; the macros are listed in the **Macros** group.
+2. Type **SBT** in **Search Actions…**; the macros are listed in the **Macros** group.
 3. Click the pencil next to one and press the key combination you want.
 
 For example: one key for **Z0 on stock top**, another for **Z0 on spoilboard**, and one for **XY0 on
@@ -161,7 +161,7 @@ dot (where X0 Y0 goes on the hole) is picked per job. Press **Create macros** af
 use the nearest-hole macros.
 
 **From the keyboard, without opening the plugin:** tick **Nearest hole** under the Z0 macros tab's
-**Extras** and press **Create macros**. You get **ZS: Go to nearest hole** and **ZS: XY0 on nearest
+**Extras** and press **Create macros**. You get **SBT: Go to nearest hole** and **SBT: XY0 on nearest
 hole**: the controller works out the nearest hole to the spindle (grblHAL expressions with the grid
 built in), so you can jog roughly and press a key (see [Put them on keys](#put-them-on-keys)). Go to
 lifts to Safe Z first and never moves down; XY0 sets the active work offset on the side picked with the
@@ -210,11 +210,11 @@ spacing or insets; a change that renumbers the holes (a different first hole) mo
 the bed. Give a listed point a fourth value, its reference surface's height above the spoilboard:
 `vise: 400, 250, , 63.5mm` (a blank third value keeps Hole Diameter). Pick it, hold **Set** for X0 Y0,
 and hold **Set Z0**: Z0 lands on the vise jaw for any measured tool, from the spoilboard height the Z0
-macros recorded, with no probing at the fixture. With **Stock** ticked, its thickness fills in from **ZS: Measure stock
+macros recorded, with no probing at the fixture. With **Stock** ticked, its thickness fills in from **SBT: Measure stock
 thickness** (or type it), and **Z0: spoilboard** or **Z0: stock top** puts Z0 on the stock's bottom or top (on the fixture,
 or on the spoilboard when no fixture is picked). Set Z0 needs the spoilboard height recorded
-(**ZS: Record spoilboard height**) and a tool length offset active, stops while a G92 Z offset is
-active, and, on the Z0 macros' work offset, keeps a probed Z0 for **ZS: Z0 back to saved** (holding it
+(**SBT: Record spoilboard height**) and a tool length offset active, stops while a G92 Z offset is
+active, and, on the Z0 macros' work offset, keeps a probed Z0 for **SBT: Z0 back to saved** (holding it
 again, or running a Z0 macro after it, doesn't replace that). A height below the spoilboard or more
 than the machine's Z travel (`$132`), a unit typo say, is flagged in the list and refused. Re-measure a fixture's height if you
 move it or resurface the spoilboard. The keyboard macros only ever set X and Y.
@@ -304,7 +304,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; **From X0 Y0 now** takes
   X0 Y0 again, and picking a hole replaces it. Reopening the plugin keeps the stock where it was. No
   tape measure? Jog the bit over the stock's opposite corner and press **Far Corner Here** for its width
-  and length; its thickness fills in from **ZS: Measure stock thickness** until you type one. The
+  and length; its thickness fills in from **SBT: Measure stock thickness** until you type one. The
   keyboard macros always use the hole itself.
 - **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
   rectangle over it. This map then won't pick its holes, Pick Nearest Hole skips them, and Go to and Set
@@ -320,7 +320,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 ## Cut Holes: cut the dog holes you set up
 
 The **Cut Holes** tab writes a program that cuts the XY0 Picker's holes, so the spoilboard and the map
-come from the same numbers. Load the bit, put Z0 on the spoilboard's top (**ZS: Z0 on spoilboard** does
+come from the same numbers. Load the bit, put Z0 on the spoilboard's top (**SBT: Z0 on spoilboard** does
 it, or touch off), set the depth and feeds, and press **Generate**: the program opens in ncSender's
 visualizer to check and run.
 
@@ -406,7 +406,7 @@ something to screw into.
 4. **Macros.** Creates the ncSender macros, or updates the ones it made before:
    Every ncSender macro can have a keyboard shortcut (**Settings → Controls**, **Macros** group; see
    [Put them on keys](#put-them-on-keys)).
-   Their names start with **ZS:**, and each description is the macro's first comment line (e.g.
+   Their names start with **SBT:**, and each description is the macro's first comment line (e.g.
    "record spoilboard height").
    - **Record spoilboard height**: probes down onto the block and stores the height.
    - **Measure stock thickness**: with the block on the stock, probes down and stores
@@ -416,7 +416,7 @@ something to screw into.
      spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
-   - **Delete ZS: macros** removes every macro whose name starts with "ZS:" (the prefix is from its old name, Zero Swapper; for example
+   - **Delete SBT: macros** removes every macro whose name starts with "SBT:" (or "ZS:", the name from before 0.3.36; for example
      ones left over from older settings or another work offset) and nothing else. The first press lists
      them and turns into **Confirm delete**; a second press within a few seconds deletes. Keyboard
      shortcuts set on deleted macros stop working (recreated macros get new numbers), so to change
@@ -482,7 +482,7 @@ it should. `G92.1` clears it. (The probing in record and measure isn't affected:
 probe point relative to the work offset only.)
 
 grblHAL macros have no if/else here, so a stop is a deliberate division by zero, for example
-`#1=[1 / #<_homed_state>] (ZS stop: home the machine first)`: grblHAL rejects the line with
+`#1=[1 / #<_homed_state>] (SBT stop: home the machine first)`: grblHAL rejects the line with
 `error:72`, and ncSender (2.0.161 and later) sends nothing after a rejected line of a macro. As a
 second line of defence, every line that sets an offset or moves is divided by the same checks too
 (homed, tool length offset, stored values, no G92 offset, and for the nearest-hole macros the keepout

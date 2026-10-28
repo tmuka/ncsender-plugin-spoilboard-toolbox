@@ -6,7 +6,10 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 **Zero Swapper is now Spoilboard Toolbox**, since it cuts the holes as well as zeroing on them. It's the
-same plugin: updates, settings and macros carry over, and the macros keep their `ZS:` names.
+same plugin: updates and settings carry over. Its macros are now named **SBT:** (for Spoilboard
+Toolbox) instead of ZS:. Your ZS: macros keep working; press **Create macros** once and they're renamed in
+place, keeping their numbers, so keyboard shortcuts on them still work. Generated programs' comments and
+file names start SBT too.
 
 ### ✨ New
 - **Cut Holes:** a new tab writes the program that cuts the dog holes you set up, every grid and each
