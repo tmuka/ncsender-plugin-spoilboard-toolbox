@@ -302,6 +302,11 @@ visualizer to check and run.
   5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. **Pause**
   (on to start) stops before the spindle starts so you can check the bit and Z0.
 
+**A setup that works:** a grid of 8 mm holes with
+[8 mm wooden dowel pins](https://www.amazon.com/dp/B0DJ5GZR9H) as dogs: cheap, and a bit that clips
+one is unharmed. Flanged 1/4-20 threaded inserts installed from the back, behind the holes, give clamps
+something to screw into.
+
 ## The wizard, step by step
 
 1. **Check the controller.** The wizard sends `$G`, `$#` and `#1=[1+1]` (nothing moves) and reports:
