@@ -332,6 +332,10 @@ visualizer to check and run.
   circle milling is QuickCut's.
 - **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before
   moving if the machine isn't homed, a G92 offset is active, or X0 Y0 has moved since it was generated.
+- **The bit:** click **Bit Diameter** to take the loaded tool's diameter from ncSender's tool table, and
+  the program starts with a tool change to that tool (`M6 T3`, say), which ncSender runs like any other
+  tool change. Type a diameter instead and there's no tool change: load that bit yourself before running
+  it. The stock-hole and fit-test programs work the same way; chamfers and labels never change tools.
 - **Safety:** Hole Depth can't be more than the Spoilboard Thickness (0.75" to start). Between holes it hops
   5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. **Pause**
   (on to start) stops before the spindle starts so you can check the bit and Z0.

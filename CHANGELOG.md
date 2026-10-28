@@ -19,6 +19,8 @@ same plugin: updates, settings and macros carry over, and the macros keep their 
 - **Dowel fit test, chamfers and labels** (Cut Holes tab): a row of test holes in scrap to find the size
   your dowels fit; a V-bit chamfer round each hole's top edge; and the fixture table's names engraved
   beside the holes with a V-bit or a laser.
+- **Tool change from the loaded tool:** click Bit Diameter to take ncSender's loaded tool and the hole
+  programs start with `M6` to it; a typed diameter means you load the bit.
 - **Holes through the stock** (Cut Holes tab): drill the stock right over spoilboard holes, either bolt
   holes (with an optional counterbore) to bolt it to threaded inserts, or two flip pins so a stock
   flipped for its second side drops back exactly where it was.

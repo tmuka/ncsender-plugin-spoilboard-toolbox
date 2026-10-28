@@ -2112,6 +2112,9 @@
     ];
     if (o.zStop != null) L.push('#1=[1 / [ABS[#' + (yp + 1) + less(o.zStop) + '] LT 0.001]] (ZS stop: ' + name + ' Z0 moved; make the program again)');
     if (!o.laser) L.push(cutSafe(o));
+    // tool: the loaded tool Bit Diameter was taken from, changed to first
+    // (ncSender runs the tool change); none when the size was typed.
+    if (o.tool && !o.laser) L.push('M6 T' + o.tool);
     if (o.pause) L.push('M0 ' + gComment('ZS: check ' + what + ', then resume'));
     if (o.mist) L.push('M7');
     if (o.flood) L.push('M8');
@@ -4688,6 +4691,7 @@
     var inside = all.filter(function(q) { return !state.travel || !(bit > 0) || holeInTravel(q, Math.max(0, q.diaMm / 2 - bit / 2), state.travel); });
     return {
       holes: inside, pastTravel: all.length - inside.length, travel: state.travel,
+      tool: state.cutTool && Math.abs(state.cutTool.mm - bit) < 0.001 ? state.cutTool.n : null,
       zWcs: zero && ms[w.toLowerCase()] ? parseFloat(String(ms[w.toLowerCase()]).split(',')[2]) : null,
       bitMm: bit, thickMm: cutMm('mw-cut-thick'), depthMm: cutMm('mw-cut-depth'), stepMm: cutMm('mw-cut-step'),
       stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
@@ -4695,6 +4699,12 @@
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked, pause: $('mw-cut-pause').checked,
       wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial
     };
+  }
+  // What the programs say about the bit: a tool change when Bit Diameter
+  // came from the loaded tool, else load it yourself.
+  function toolText(o) {
+    return o.tool ? ' It starts with a tool change to T' + o.tool + ' (M6), the tool Bit Diameter came from.'
+      : ' No tool change: load the ' + shown(o.bitMm) + ' ' + unitName() + ' bit yourself (click Bit Diameter to take the loaded tool and change to it).';
   }
   // What stops any program: no travel, or no work offset whose X0 Y0
   // ncSender reports.
@@ -4731,7 +4741,7 @@
     var min = lines ? programMinutes(lines, state.rapidMmMin || 3000) : 0;
     $('mw-cut-summary').textContent = lines ? 'In ' + o.wcsName + ' (X0 Y0 at machine X ' + shown(o.wcs.x) + ', Y ' + shown(o.wcs.y) + ' ' + unitName() +
       '), with Z0 on the spoilboard\u2019s top. About ' + Math.max(1, Math.round(min)) + ' min; ' + lines.length + ' lines. ' +
-      'It hops 5 mm between holes, and lifts to ' + (state.safeZMm != null ? 'Safe Z' : 'machine Z0') + ' to pass over a keepout zone or Exclude Picks area.' : '';
+      'It hops 5 mm between holes, and lifts to ' + (state.safeZMm != null ? 'Safe Z' : 'machine Z0') + ' to pass over a keepout zone or Exclude Picks area.' + toolText(o) : '';
     var note = $('mw-cut-note');
     if (note.getAttribute('data-state') !== 'ok' || probs.length) {
       note.setAttribute('data-state', probs.length ? 'bad' : '');
@@ -4751,7 +4761,7 @@
     'fit-step': 0.002, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
     'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-margin': 0.4, 'sh-break': 0.04 };
   function cutBody() {
-    var b = {};
+    var b = { 'cut-tool': state.cutTool || null };
     CUT_SAVED.lengths.forEach(function(k) { b[k] = fieldVal('mw-' + k); });
     CUT_SAVED.plain.forEach(function(k) { b[k] = $('mw-' + k).value; });
     CUT_SAVED.checks.forEach(function(k) { b[k] = $('mw-' + k).checked; });
@@ -4759,6 +4769,8 @@
   }
   function loadCut(c, conv) {
     c = c && typeof c === 'object' ? c : {};
+    var tl = c['cut-tool'];
+    state.cutTool = tl && tl.n > 0 && tl.mm > 0 ? { n: Math.round(tl.n), mm: +tl.mm } : null;
     CUT_SAVED.lengths.forEach(function(k) {
       var v = parseFloat(c[k]);
       if (isFinite(v)) $('mw-' + k).value = +(v * conv).toFixed(4);
@@ -4783,8 +4795,9 @@
       var tool = (tools || []).filter(function(t) { return (byId ? t.toolId : t.toolNumber) === n; })[0];
       if (!tool || !(tool.diameter > 0)) throw new Error('T' + n + ' has no diameter in ncSender\u2019s tool table');
       $('mw-cut-bit').value = +(tool.diameter / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
+      state.cutTool = { n: n, mm: cutMm('mw-cut-bit') };
       note.setAttribute('data-state', 'ok');
-      note.textContent = 'Bit Diameter from T' + n + (tool.name ? ' (' + tool.name + ')' : '') + '.';
+      note.textContent = 'Bit Diameter from T' + n + (tool.name ? ' (' + tool.name + ')' : '') + ': the programs start with M6 T' + n + '.';
       saveSettings();
     } catch (e) {
       note.setAttribute('data-state', 'bad');
@@ -4843,7 +4856,7 @@
   function renderFit() {
     var f = fitSettings(), last = f.local[f.local.length - 1];
     $('mw-fit-sizes').textContent = f.local.length ? 'Left to right: ' + f.local.map(function(h) { return shown(h.diaMm); }).join(', ') + ' ' + unitName() +
-      ', on a strip of scrap about ' + shown(last.x + last.diaMm / 2 + 5) + ' \u00d7 ' + shown(2 * f.local[0].y) + ' ' + unitName() + '.' : '';
+      ', on a strip of scrap about ' + shown(last.x + last.diaMm / 2 + 5) + ' \u00d7 ' + shown(2 * f.local[0].y) + ' ' + unitName() + '.' + toolText(f.o) : '';
     showProblems($('mw-fit-note'), f.probs);
     $('mw-fit-generate').disabled = !!f.probs.length;
   }
@@ -4858,6 +4871,7 @@
   // A V-bit chamfer on the holes Cut Holes cuts.
   function chamferSettings() {
     var o = cutSettings(), probs = placeProblems(o);
+    o.tool = null;
     o.vAngleDeg = parseFloat($('mw-chm-angle').value); o.chamferMm = cutMm('mw-chm-width');
     o.holes = o.holes.filter(function(h) { return h.diaMm >= 1; });
     if (!o.holes.length) probs.push('There are no holes to chamfer (grid lines aren\u2019t)');
@@ -4881,7 +4895,9 @@
 
   // The fixture table's labels, with a V-bit or a laser.
   function labelSettings() {
-    var o = cutSettings(), laser = $('mw-lab-tool').value === 'laser', hh = readHoles(), textMm = cutMm('mw-lab-height'), probs = placeProblems(o);
+    var o = cutSettings();
+    o.tool = null;
+    var laser = $('mw-lab-tool').value === 'laser', hh = readHoles(), textMm = cutMm('mw-lab-height'), probs = placeProblems(o);
     var pl = { labels: [], skipped: [] };
     if (state.travel && hh && textMm > 0) {
       pl = labelPlacements(holes.grid.filter(function(q) { return q.col != null && !q.suppressed && !q.hidden && !q.blocked; }), $('mw-lab-mode').value,
@@ -4995,7 +5011,7 @@
       }
       if (!s.probs.length) {
         var lines = holeCutProgram(o);
-        text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.';
+        text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o);
       }
       if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths.';
       text += ' It lifts to Safe Z between holes, to clear the clamps.';
@@ -5022,6 +5038,8 @@
       $('mw-' + k).addEventListener('change', function() { renderCutTab(); saveSettings(); });
     });
     $('mw-cut-bit-label').addEventListener('click', function(evt) { evt.preventDefault(); cutLoadedBit(); });
+    // A typed size: the user loads the bit, so no tool change.
+    $('mw-cut-bit').addEventListener('input', function() { state.cutTool = null; }, true);
     $('mw-cut-generate').addEventListener('click', generateCut);
     $('mw-sh-generate').addEventListener('click', generateStockHoles);
     $('mw-fit-generate').addEventListener('click', generateFit);
@@ -5256,7 +5274,7 @@
       'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
       'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, or X0 Y0 has moved since you generated it. Z0 must be on the spoilboard&rsquo;s top.',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
-      'With <strong>Pause</strong> ticked it stops (M0) before starting the spindle, so you can check the bit and Z0; resume to go on. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table.',
+      'With <strong>Pause</strong> ticked it stops (M0) before starting the spindle, so you can check the bit and Z0; resume to go on. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table: the hole, stock-hole and fit-test programs then start with a tool change to that tool (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
       '<strong>Holes through the stock:</strong> drill the stock right over spoilboard holes, Z0 on the stock&rsquo;s top, with the stock clamped some other way first. <strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under the stock, with an optional counterbore for the head, to bolt into threaded inserts. <strong>Flip pins:</strong> two holes on the grid row (or column) nearest the stock&rsquo;s middle, for dowels, so the stock flipped over that line drops back exactly where it was; the summary gives the line to mirror the second side across, and where the flipped stock lands when it isn&rsquo;t centered on it. Each goes Break Through below the stock into the spoilboard hole, and can&rsquo;t be bigger than that hole, so the spoilboard isn&rsquo;t cut; threaded inserts must sit at least that far below the surface. It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard rather than the stock&rsquo;s top (once the Z0 macros have recorded the spoilboard height), and the program stops before moving if Z0 changed since. The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',

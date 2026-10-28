@@ -1389,3 +1389,11 @@ test('nearest-hole macros on a turned grid find the same hole as the XY0 Picker'
     }
   }
 });
+
+test('cut programs: M6 to the tool Bit Diameter came from, after Safe Z and before the spindle; none when typed', () => {
+  const L = holeCutProgram(cutBase({ tool: 3, rpm: 18000, pause: true }));
+  const m6 = L.indexOf('M6 T3'), safe = L.findIndex(l => /^G53 G0 Z/.test(l)), m3 = L.findIndex(l => /^M3 /.test(l)), stop = L.map((l, i) => /ZS stop/.test(l) ? i : -1).filter(i => i >= 0).pop();
+  assert.ok(stop < safe && safe < m6 && m6 < m3, JSON.stringify([stop, safe, m6, m3]));
+  assert.ok(!holeCutProgram(cutBase()).some(l => /^M6/.test(l)));
+  assert.ok(!engraveProgram(Object.assign(cutBase({ tool: 3 }), { labels: [], textMm: 5, laser: true, power: 100 })).some(l => /^M6/.test(l)));
+});
