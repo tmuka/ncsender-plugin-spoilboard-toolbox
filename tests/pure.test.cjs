@@ -1240,7 +1240,7 @@ test('cut holes: a spiral down a hole just bigger than the bit goes no faster th
   assert.ok(worst <= 500 + 1, 'Z speed ' + worst);
 });
 
-// A 4 x 3 grid 50 apart from (50, 50), and a 300 x 200 stock from (20, 30).
+// A 6 x 4 grid 50 apart from (50, 50), and a 300 x 200 stock from (20, 30).
 const stockGrid = () => {
   const g = [];
   for (let r = 1; r <= 4; r++) for (let c = 1; c <= 6; c++) g.push({ col: c, row: r, x: c * 50, y: r * 50, tag: String.fromCharCode(64 + r) + c });
@@ -1310,4 +1310,21 @@ test('map labels: every second, fifth... so they never crowd', () => {
   // Two-digit columns 7 px apart: every third would do, so every fifth.
   assert.equal(labelEvery(7.2, 12), 5);
   assert.equal(labelEvery(1, 400), 100);
+});
+
+test('stock holes: Safe Z between holes, not between a counterbore and its hole, and a Z0 stop line', () => {
+  const holes = [{ x: 100, y: 100, diaMm: 14, depthMm: 6, label: 'A1 counterbore' }, { x: 100, y: 100, diaMm: 6.9, depthMm: 20, label: 'A1' },
+    { x: 200, y: 100, diaMm: 14, depthMm: 6, label: 'A2 counterbore' }, { x: 200, y: 100, diaMm: 6.9, depthMm: 20, label: 'A2' }];
+  const L = holeCutProgram(cutBase({ holes, safeEach: true, zStop: -12.5 }));
+  const first = L.findIndex(l => /^\(ZS hole 1\//.test(l));
+  const lifts = L.slice(first).map((l, i) => [l, i]).filter(([l]) => /^G53 G0 Z/.test(l)).length;
+  // One between A1 and A2, and the one at the end.
+  assert.equal(lifts, 2);
+  const stop = L.find(l => /Z0 moved/.test(l));
+  assert.match(stop, /#5223 \+ 12\.500/);
+  const check = stop.replace(/\s*\(.*$/, '').replace(/^#1=/, '');
+  assert.equal(evalExpr(check, { 5223: -12.5 }), 1);
+  assert.throws(() => evalExpr(check, { 5223: -12.4 }), /error:72/);
+  // Dog holes are unchanged: no Z0 stop line, no Safe Z between holes.
+  assert.ok(!holeCutProgram(cutBase()).some(l => /Z0 moved/.test(l)));
 });

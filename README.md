@@ -347,7 +347,11 @@ size and thickness); the holes come from the grid picked in Setup.
   gives the line to mirror the second side's toolpaths across in your CAM, and, when the stock isn't
   centered on it, how far the flipped stock lands from where it was.
 - Each hole goes **Break Through** (1 mm) below the stock into the spoilboard hole, and can't be bigger
-  than that hole, so the spoilboard isn't cut.
+  than that hole, so the spoilboard isn't cut. Threaded inserts must sit at least that far below the
+  surface (installed from the back, they do).
+- It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard
+  rather than the stock top (once the Z0 macros have recorded the spoilboard height), and the program
+  stops before moving if Z0 changed since it was generated.
 
 **A setup that works:** a grid of 8 mm holes with
 [8 mm wooden dowel pins](https://www.amazon.com/dp/B0DJ5GZR9H) as dogs: cheap, and a bit that clips

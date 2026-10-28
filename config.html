@@ -883,7 +883,8 @@
         <p class="mw-hint">Drill the stock right over spoilboard holes: for <strong>bolts</strong> into threaded inserts below,
           or for <strong>flip pins</strong>, so a stock flipped for its second side drops back exactly where it was. The stock is the
           XY0 Picker&rsquo;s (tick Stock, with its size and thickness) and the holes come from the grid picked in Setup. Clamp the stock
-          down some other way first, and put Z0 on its top. It uses the bit, feeds and spindle above.</p>
+          down some other way first (it lifts to Safe Z between holes, over the clamps), and put Z0 on its top. Threaded inserts must sit
+          at least Break Through below the spoilboard&rsquo;s surface. It uses the bit, feeds and spindle above.</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-sh-mode">For</label>
@@ -2065,6 +2066,7 @@
       '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (ZS stop: a G92 offset is active; G92.1 clears it)',
       '#1=[1 / [[ABS[#' + xp + less(o.wcs.x) + '] LT 0.001] AND [ABS[#' + yp + less(o.wcs.y) + '] LT 0.001]]] (ZS stop: ' + name + ' X0 Y0 moved; make the program again)',
     ];
+    if (o.zStop != null) L.push('#1=[1 / [ABS[#' + (yp + 1) + less(o.zStop) + '] LT 0.001]] (ZS stop: ' + name + ' Z0 moved; make the program again)');
     if (!o.laser) L.push(cutSafe(o));
     if (o.pause) L.push('M0 ' + gComment('ZS: check ' + what + ', then resume'));
     if (o.mist) L.push('M7');
@@ -2095,14 +2097,18 @@
       for (var d = 0; d < depth - 1e-6; ) { d = Math.min(depth, d + o.stepMm); out.push(d); }
       return out;
     };
-    var at = null;
+    var at = null, lastC = null;
     o.holes.forEach(function(h, i) {
       var levels = levelsTo(h.depthMm || o.depthMm);
       var method = holeCutMethod(h.diaMm, o.bitMm), cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, pr = h.diaMm / 2 - r;
       var helixR = Math.min(r * 0.6, pr - 0.001), start = method === 'drill' ? { x: cx, y: cy } : { x: cx + (method === 'helix' ? pr : helixR), y: cy };
       L.push(c('ZS hole ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40) + ', ' + fmt(h.diaMm) + ' mm, ' + method));
       var to = { x: start.x + o.wcs.x, y: start.y + o.wcs.y };
-      if (at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, r); })) L.push(safe);
+      // safeEach: to Safe Z between holes (over clamps on the stock), not
+      // between a counterbore and the hole through it.
+      var moves = lastC && Math.hypot(h.x - lastC.x, h.y - lastC.y) > 0.01;
+      lastC = h;
+      if (at && ((o.safeEach && moves) || (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, r); }))) L.push(safe);
       L.push('G0 X' + f3(start.x) + ' Y' + f3(start.y));
       L.push('G0 Z' + fmt(hop));
       L.push('G0 Z' + fmt(clearZ));
@@ -2921,6 +2927,7 @@
     if (!s || !hash) return;
     var z = function(p) { var v = hash[WCS_NAMES[p]]; return v ? v[2] : null; };
     var spoil = z(s.slot), thick = z(s.thick), saved = z(s.backup), cur = z(s.wcs);
+    state.spoilZ = spoil || null;
     var mm = function(v) { return fmt(v) + ' mm'; };
     var set = function(key, text) { ROOT.querySelectorAll('[data-val="' + key + '"]').forEach(function(el) { el.textContent = text; }); };
     set('spoil', spoil ? ' \u2014 height ' + mm(spoil) : spoil === 0 ? ' \u2014 height not recorded yet' : '');
@@ -3046,6 +3053,13 @@
     map.addEventListener('pointerup', function(evt) { mapUp(evt, false); });
     map.addEventListener('pointercancel', function(evt) { mapUp(evt, true); });
     map.addEventListener('pointerleave', function(evt) { if (holes.pan && !holes.pan.moved && holes.ptrs[evt.pointerId]) panUp(evt); });
+    // A finger lifted off the map after a redraw took its target still ends.
+    ['pointerup', 'pointercancel'].forEach(function(type) {
+      window.addEventListener(type, function onEnd(evt) {
+        if (!rootAlive()) { window.removeEventListener(type, onEnd); return; }
+        if (holes.ptrs[evt.pointerId] && !map.contains(evt.target)) panUp(evt);
+      });
+    });
     // The wheel zooms at the pointer; past either end it scrolls the page.
     map.addEventListener('wheel', function(evt) {
       var t = state.travel, k = holes.zoom.k, nk = k * (evt.deltaY < 0 ? 1.25 : 0.8);
@@ -3363,6 +3377,9 @@
   // Outside Edit Holes and Exclude Picks: one finger (or the mouse) drags
   // a zoomed map, two pinch it. A drag isn't a click on a hole.
   function panDown(evt) {
+    // A first finger (or the mouse) starts afresh: a pointer whose up was
+    // lost (lifted off the map after a pinch redrew under it) is dropped.
+    if (evt.isPrimary) { holes.ptrs = {}; holes.pan = null; }
     holes.ptrs[evt.pointerId] = { x: evt.clientX, y: evt.clientY };
     var ids = Object.keys(holes.ptrs), v = holes.view;
     if (!v) return;
@@ -3384,7 +3401,9 @@
       var a = holes.ptrs[ids[0]], b = holes.ptrs[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y);
       evt.preventDefault();
       var mid = mapPoint({ clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 });
-      if (pan.dist > 0 && Math.abs(pan.k * d / pan.dist - holes.zoom.k) > 0.05) setZoom(pan.k * d / pan.dist, mid);
+      if (pan.dist > 0 && Math.abs(pan.k * d / pan.dist - holes.zoom.k) > 0.05 && !holes.panFrame) {
+        holes.panFrame = requestAnimationFrame(function() { holes.panFrame = null; if (rootAlive()) setZoom(pan.k * d / pan.dist, mid); });
+      }
       return;
     }
     var dx = evt.clientX - pan.x, dy = evt.clientY - pan.y;
@@ -3429,6 +3448,7 @@
   }
   function mapDown(evt) {
     if (!holes.mode) { if (!(evt.button > 0)) panDown(evt); return; }
+    holes.ptrs = {}; holes.pan = null;
     if (evt.button > 0) return;
     var pt = mapPoint(evt);
     if (!pt) return;
@@ -4086,8 +4106,9 @@
     // The hole nearest the spindle, live while jogging.
     var near0 = here0 && nearestHole(holes.grid.map(function(g) { return g.col != null && !gridNearest(g) ? Object.assign({}, g, { hidden: true }) : g; }), here0.x, here0.y);
     holes.liveNear = near0 || null;
-    if (holes.grid.length > 2500) {
-      add('text', { x: (w / 2).toFixed(1), y: (ht / 2).toFixed(1), 'text-anchor': 'middle' }, holes.grid.length + ' holes: too many to draw');
+    var inViewCount = holes.grid.filter(function(p) { return !p.hidden && inView(p.x, p.y, 0); }).length;
+    if (inViewCount > 2500) {
+      add('text', { x: (w / 2).toFixed(1), y: (ht / 2).toFixed(1), 'text-anchor': 'middle' }, inViewCount + ' holes: too many to draw, zoom in');
     } else if (h) {
       // Each hole sits in a hit area most of the way to its neighbours, so
       // small holes are easy to tap.
@@ -4169,6 +4190,8 @@
     $('mw-zoom-level').textContent = (zm.k < 10 ? +zm.k.toFixed(1) : Math.round(zm.k)) + '\u00d7';
     $('mw-zoom-out').disabled = $('mw-zoom-fit').disabled = zm.k <= 1;
     $('mw-zoom-in').disabled = zm.k >= zoomMax(t, h) - 1e-9;
+    $('mw-zoom-follow').disabled = zoomMax(t, h) <= 1;
+    if (zoomMax(t, h) <= 1) zm.follow = false;
     $('mw-zoom-follow').setAttribute('aria-pressed', zm.follow ? 'true' : 'false');
     holes.liveKey = liveKey();
     renderFavs();
@@ -4822,18 +4845,33 @@
     var thick = unitVal($('mw-stock-t')) * k, pins = $('mw-sh-mode').value === 'pins';
     var size = cutMm(pins ? 'mw-sh-pin' : 'mw-sh-bolt'), cb = pins ? NaN : cutMm('mw-sh-cb'), cbd = cutMm('mw-sh-cbd');
     var margin = cutMm('mw-sh-margin'), brk = cutMm('mw-sh-break'), depth = thick + brk;
-    var res = { o: o, probs: probs, rect: rect, pins: pins, chosen: [], flip: null };
-    if (!rect) probs.push('Tick Stock in the XY0 Picker and give its width and length');
+    var res = { o: o, probs: probs, rect: rect, pins: pins, chosen: [], flip: null, warn: '' };
+    if (!$('mw-stock-on').checked || !stockAt({ x: 0, y: 0 })) probs.push('Tick Stock in the XY0 Picker and give its width and length');
+    else if (!rect) probs.push('Pick the hole the stock is on in the XY0 Picker, or press From X0 Y0 now');
     else if (p && p.zMm != null) probs.push('The stock sits on a fixture point, not over the spoilboard holes');
     if (!(thick > 0)) probs.push('Give the stock a thickness (T) in the XY0 Picker');
     if (!(size > 0)) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' must be more than 0');
     if (!(margin >= 0)) probs.push('Edge Margin must be 0 or more');
     if (!(brk >= 0)) probs.push('Break Through must be 0 or more');
-    else if (o.depthMm > 0 && brk >= o.depthMm) probs.push('Break Through must be less than Hole Depth (how deep the spoilboard holes are)');
+    else if (!(o.depthMm > 0)) probs.push('Set Hole Depth above (how deep the spoilboard holes are): Break Through must be less');
+    else if (brk >= o.depthMm || (o.thickMm > 0 && brk >= o.thickMm)) probs.push('Break Through must be less than Hole Depth (how deep the spoilboard holes are)');
+    // Z0 must be on the stock's top: the hops between holes and the depth
+    // are from it. Checked against the spoilboard height the Z0 macros
+    // recorded, when it's known.
+    if (thick > 0 && o.zWcs != null && state.spoilZ) {
+      var above = o.zWcs - state.spoilZ;
+      if (above < thick / 2) probs.push(o.wcsName + ' Z0 is ' + (Math.abs(above) < 0.05 ? 'on the spoilboard' : shown(above) + ' ' + unitName() + ' above the spoilboard') + ', not on the stock\u2019s top: put it there first (ZS: Z0 on stock top, or touch off)');
+      else if (Math.abs(above - thick) > 0.5) res.warn = o.wcsName + ' Z0 is ' + shown(above) + ' ' + unitName() + ' above the spoilboard but the stock is ' + shown(thick) + ' ' + unitName() + ' thick: check Z0 is on its top and T is right.';
+    } else if (thick > 0) res.warn = 'Couldn\u2019t check that Z0 is on the stock\u2019s top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.';
     var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '';
     if (hasCb && !(cb > size)) probs.push('Counterbore must be bigger than Hole Size');
     if (hasCb && !(cbd > 0 && cbd < thick)) probs.push('Counterbore Depth must be more than 0 and less than the stock\u2019s thickness');
+    if (!hh) probs.push('Setup\u2019s grid has a field that can\u2019t be read: fix it in the XY0 Picker');
     if (!rect || !hh || !(size > 0) || !(margin >= 0)) return res;
+    if (holes.hidden[String(holes.activeGrid)] || hh.layout === 'list') {
+      probs.push(hh.layout === 'list' ? 'Stock holes go over a grid\u2019s holes, and Setup has only a list' : 'The grid picked in Setup is hidden on the map: show it (its eye) to use its holes');
+      return res;
+    }
     var grid = holes.grid.filter(function(q) { return q.col != null && (q.layer || 0) === holes.activeGrid && !q.suppressed && !q.hidden && !q.blocked; });
     var cands = stockHoleCandidates(grid, rect, (hasCb ? cb : size) / 2, margin);
     if (pins) {
@@ -4852,7 +4890,7 @@
       o.holes.push({ x: q.x, y: q.y, diaMm: size, depthMm: depth, label: holeName(q) });
     });
     var n = res.chosen.length;
-    Object.assign(o, { depthMm: depth, thickMm: 0, zWhat: 'the stock\u2019s top',
+    Object.assign(o, { depthMm: depth, thickMm: 0, zWhat: 'the stock\u2019s top', safeEach: true, zStop: o.zWcs,
       title: (pins ? 'flip pin holes' : n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '')) + ' through the stock' });
     if (!probs.length) res.probs = probs.concat(holeCutProblems(o));
     return res;
@@ -4862,7 +4900,8 @@
     ROOT.querySelectorAll('.mw-sh-bolt').forEach(function(el) { el.hidden = s.pins; });
     ROOT.querySelectorAll('.mw-sh-pins').forEach(function(el) { el.hidden = !s.pins; });
     if (s.chosen.length) {
-      text = (s.pins ? 'Pins at ' : 'Bolts at ') + s.chosen.map(holeName).join(', ') + '.';
+      text = (s.pins ? 'Pins at ' : 'Bolts at ') + s.chosen.map(holeName).join(', ') +
+        (!s.pins && o.holes.length > s.chosen.length ? ', each counterbored ' + shown(o.holes[0].diaMm) + u + ' wide, ' + shown(o.holes[0].depthMm) + u + ' deep' : '') + '.';
       if (s.flip && o.wcs) {
         var ax = s.flip.axis === 'x' ? 'Y' : 'X', line = s.flip.lineMm - (ax === 'Y' ? o.wcs.y : o.wcs.x), off = s.flip.offMm;
         text += ' The flip line is ' + ax + ' ' + shown(line) + u + ' in ' + o.wcsName + ': mirror the second side\u2019s toolpaths across it.';
@@ -4876,7 +4915,9 @@
         text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.';
       }
       if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths.';
+      text += ' It lifts to Safe Z between holes, to clear the clamps.';
     }
+    if (s.warn) text += (text ? ' ' : '') + s.warn;
     $('mw-sh-summary').textContent = text;
     showProblems($('mw-sh-note'), s.probs);
     $('mw-sh-generate').disabled = !!s.probs.length;
@@ -5129,7 +5170,7 @@
       'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, or X0 Y0 has moved since you generated it. Z0 must be on the spoilboard&rsquo;s top.',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
       'With <strong>Pause</strong> ticked it stops (M0) before starting the spindle, so you can check the bit and Z0; resume to go on. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table.',
-      '<strong>Holes through the stock:</strong> drill the stock right over spoilboard holes, Z0 on the stock&rsquo;s top, with the stock clamped some other way first. <strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under the stock, with an optional counterbore for the head, to bolt into threaded inserts. <strong>Flip pins:</strong> two holes on the grid row (or column) nearest the stock&rsquo;s middle, for dowels, so the stock flipped over that line drops back exactly where it was; the summary gives the line to mirror the second side across, and where the flipped stock lands when it isn&rsquo;t centered on it. Each goes Break Through below the stock into the spoilboard hole, and can&rsquo;t be bigger than that hole, so the spoilboard isn&rsquo;t cut. The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.',
+      '<strong>Holes through the stock:</strong> drill the stock right over spoilboard holes, Z0 on the stock&rsquo;s top, with the stock clamped some other way first. <strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under the stock, with an optional counterbore for the head, to bolt into threaded inserts. <strong>Flip pins:</strong> two holes on the grid row (or column) nearest the stock&rsquo;s middle, for dowels, so the stock flipped over that line drops back exactly where it was; the summary gives the line to mirror the second side across, and where the flipped stock lands when it isn&rsquo;t centered on it. Each goes Break Through below the stock into the spoilboard hole, and can&rsquo;t be bigger than that hole, so the spoilboard isn&rsquo;t cut; threaded inserts must sit at least that far below the surface. It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard rather than the stock&rsquo;s top (once the Z0 macros have recorded the spoilboard height), and the program stops before moving if Z0 changed since. The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
       '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.' ] },
@@ -5176,7 +5217,7 @@
     $('mw-help-btn').classList.toggle('active', name === 'help');
     ROOT.querySelector('.mw-panel').scrollTop = 0;
     if (name === 'holes') renderHoles();
-    if (name === 'cut') readMachineState().then(renderCutTab);
+    if (name === 'cut') readMachineState().then(readNumbers).then(renderCutTab);
   }
 
   init().then(readNumbers);

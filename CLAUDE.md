@@ -1,6 +1,6 @@
 # Spoilboard Toolbox (formerly Zero Swapper): notes for working on this plugin
 
-Zero Swapper (`com.tmuka.zeroswapper`; called Macro Wiz before 0.3.1, with id `com.tmuka.macrowiz` before 0.3.3) is a
+Spoilboard Toolbox (`com.tmuka.zeroswapper`; Zero Swapper before 0.3.36, Macro Wiz before 0.3.1, with id `com.tmuka.macrowiz` before 0.3.3) is a
 client-only ncSender plugin. It runs a wizard that checks a
 grblHAL controller, then writes ncSender macros (M98 macros) that put work Z0 on the spoilboard or the
 stock top with any measured tool, without probing each time. README.md is the user guide; this file
@@ -40,6 +40,10 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
   - `offsetZParam(p)`: `5203 + 20p`, the Z parameter of work offset P (G54 = #5223, G59.3 = #5383).
   - `parseHashReport` (`$#`, both `[TLO:z]` and four-axis `[TLO:x,y,z,a]`) and `parseGcState` (`$G`: units, TLO
     on/off, active work offset).
+  - Cut Holes: `holeCutMethod`, `holesToCut`, `cutOrder`, `holeCutProblems`, `cutStart` / `cutEnd`, `holeCutProgram`
+    (each hole may carry its own `depthMm`; `safeEach` lifts to Safe Z between hole centers; `zStop` adds a stop
+    line for the work offset's Z0), `engraveProgram`, `chamferProgram`, `fitTestHoles`, `fitGrid`. Stock holes:
+    `stockHoleCandidates`, `stockBoltHoles`, `flipPins`, `flipRect`. Map zoom: `zoomWindow`, `labelEvery`.
   - `storeThicknessCommand`, `MACRO_PREFIX` (`ZS: `), `OLD_PREFIXES` (`MW: `, `Macro Wiz: `, the names earlier versions used).
   - Spoilboard holes: `holeGrid`, `travelDirs`, `insetFromPosition`, `nearestHole`, `holeOriginOffset` (where X0 Y0
     goes on a hole, one radius out in machine X / Y), `holeCommands`; and `parseUnitValue`.
@@ -210,7 +214,7 @@ Each change came with tests first or alongside, then a browser check of the UI, 
     Standard Block Z probe.
   - Guard rails: only when the machine is idle and homed with a TLO active, and a warning when the
     stored height may be stale.
-  - If proposed upstream, Zero Swapper is the working prototype.
+  - If proposed upstream, Spoilboard Toolbox is the working prototype.
 
 - **Idea, not started: unit-aware input as a native ncSender library.** Typing mm or inches in any
   field and converting to the machine's units (`parseUnitValue`, from QuickCut's `lib/unit-input.cjs`)
