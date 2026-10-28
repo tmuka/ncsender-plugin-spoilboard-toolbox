@@ -564,7 +564,7 @@
             <label for="mw-hole-iy"><span class="mw-grid-only">Inset Y</span><span class="mw-ref-only">Reference Y</span> (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-iy" step="0.01" min="0" value="48" title="From machine Y0 to the center of the first row of holes, into the machine's travel.">
           </div>
-          <div class="mw-field">
+          <div class="mw-field mw-grid-only">
             <label for="mw-hole-turn">Turn (&deg;)</label>
             <input class="mw-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" id="mw-hole-turn" placeholder="0" title="How far the spoilboard is turned from square to the machine, in degrees, counterclockwise seen from above, about the first hole. Measure Holes finds it. Blank or 0 when it's square; up to 10.">
           </div>
@@ -1368,13 +1368,15 @@
   }
   // A grid turned turnDeg (counterclockwise, seen from above) about its
   // first hole, as a spoilboard not quite square to the machine is: its
-  // holes (and listed holes, measured from that hole) turned with it,
-  // and ones the turn takes outside the travel left out.
+  // holes turned with it, and ones the turn takes outside the travel left
+  // out. Listed holes stay where they were typed or captured (along the
+  // machine's axes from the first hole), so a capture is where the bit was.
   function turnHoles(o, pts) {
     if (!o.turnDeg) return pts;
     var a = o.turnDeg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), px = o.dirX * o.insetXMm, py = o.dirY * o.insetYMm;
     var minX = o.dirX > 0 ? 0 : -o.travelXMm, minY = o.dirY > 0 ? 0 : -o.travelYMm, e = 1e-9;
     return pts.filter(function(p) {
+      if (p.col == null) return true;
       var dx = p.x - px, dy = p.y - py;
       p.x = px + dx * c - dy * s;
       p.y = py + dx * s + dy * c;
@@ -2139,7 +2141,7 @@
     if (!o.laser) L.push(cutSafe(o));
     // tool: the loaded tool Bit Diameter was taken from, changed to first
     // (ncSender runs the tool change); none when the size was typed.
-    if (o.tool && !o.laser) L.push('M6 T' + o.tool);
+    if (o.tool && !o.laser) L.push('M6 T' + o.tool, cutSafe(o));
     if (o.mist) L.push('M7');
     if (o.flood) L.push('M8');
     if (o.rpm > 0 && !o.laser) {
@@ -3794,7 +3796,7 @@
   // A grid's Turn in degrees: blank is 0; null when it can't be read or
   // is more than 10 (a typo, not a spoilboard).
   function parseTurn(v, mark) {
-    var t = String(v == null ? '' : v).trim(), n = t === '' ? 0 : Number(t), good = isFinite(n) && Math.abs(n) <= 10;
+    var t = String(v == null ? '' : v).trim(), n = t === '' ? 0 : /^[+-]?(\d+\.?\d*|\.\d+)$/.test(t) ? Number(t) : NaN, good = isFinite(n) && Math.abs(n) <= 10;
     if (mark) $('mw-hole-turn').classList.toggle('mw-invalid', !good);
     return good ? n : null;
   }
@@ -4101,8 +4103,7 @@
         return v * k;
       };
       var hl = { layout: 'list', list: list, diaMm: val('dia', 0), insetXMm: val('ix', -Infinity), insetYMm: val('iy', -Infinity),
-                 trackAxis: null, panelHoles: 0, panelPitchMm: 0, turnDeg: parseTurn(r0.turn, true), suppressed: holes.suppressed.slice() };
-      if (hl.turnDeg == null) ok = false;
+                 trackAxis: null, panelHoles: 0, panelPitchMm: 0, suppressed: holes.suppressed.slice() };
       holes.gridBad = [];
       return ok && listOk ? hl : null;
     }
@@ -4593,14 +4594,14 @@
     if (!h) { status.setAttribute('data-state', 'bad'); status.textContent = 'Fix this grid\u2019s highlighted fields first.'; return; }
     var px = h.trackAxis === 'y' ? (h.panelPitchMm || h.panelHoles * h.sxMm) : h.sxMm;
     var py = h.trackAxis === 'x' ? (h.panelPitchMm || h.panelHoles * h.syMm) : h.syMm;
-    var tg = Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY, layout: 'grid' }, h);
+    var tg = Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, h, { layout: 'grid' });
     var near = h.turnDeg ? nearestHole(holeGrid(tg), here.x, here.y) : null;
     if (near) {
       // Turned: the hole the spindle is over is taken to be the nearest
       // one Setup has, and the first hole is put where the turn says it is
       // from there.
       var flat = holeGrid(Object.assign({}, tg, { turnDeg: 0 })), q = holeGrid(tg)[near.index], f0 = null;
-      flat.forEach(function(p) { if (p.col === q.col && p.row === q.row) f0 = p; });
+      flat.forEach(function(p) { if (p.col != null && p.col === q.col && p.row === q.row) f0 = p; });
       var a = h.turnDeg * Math.PI / 180, ux = f0.x - t.dirX * h.insetXMm, uy = f0.y - t.dirY * h.insetYMm;
       var p0x = here.x - (ux * Math.cos(a) - uy * Math.sin(a)), p0y = here.y - (ux * Math.sin(a) + uy * Math.cos(a));
       $('mw-hole-ix').value = +(t.dirX * p0x / k).toFixed(4);
@@ -4953,8 +4954,29 @@
     note.setAttribute('data-state', probs.length ? 'bad' : '');
     note.textContent = probs.length ? probs.join('. ') + '.' : '';
   }
+  // Before a program with a tool change: the remembered tool must still
+  // be that size in ncSender's tool table, or the bit changed to isn't the
+  // one the program was made for. false (and the note says why) when not.
+  async function cutToolStillMatches(note) {
+    var tl = state.cutTool;
+    if (!tl) return true;
+    try {
+      var byId = state.ncSettings && state.ncSettings.tool && state.ncSettings.tool.numbering === 'toolId';
+      var tools = await (await fetch(BASE_URL + '/api/tools/active')).json();
+      var tool = (tools || []).filter(function(t) { return (byId ? t.toolId : t.toolNumber) === tl.n; })[0];
+      if (tool && Math.abs(tool.diameter - tl.mm) < 0.001) return true;
+      state.cutTool = null;
+      note.setAttribute('data-state', 'bad');
+      note.textContent = 'T' + tl.n + ' isn\u2019t ' + shown(tl.mm) + ' ' + unitName() + ' in ncSender\u2019s tool table any more: click Bit Diameter again, or type the size and load the bit yourself.';
+      renderCutTab();
+      return false;
+    } catch (e) {
+      return true;
+    }
+  }
   async function generateCut() {
     await readMachineState();
+    if (!(await cutToolStillMatches($('mw-cut-note')))) return;
     var o = cutSettings(), probs = cutProblems(o);
     if (probs.length) { renderCut(); return; }
     await loadProgram('SBT-DogHoles_' + o.holes.length + 'x_Bit-' + shown(o.bitMm) + '_D-' + shown(o.depthMm) + '_' + unitName() + '.nc',
@@ -4987,6 +5009,7 @@
   }
   async function generateFit() {
     await readMachineState();
+    if (!(await cutToolStillMatches($('mw-fit-note')))) return;
     var f = fitSettings();
     if (f.probs.length) { renderFit(); return; }
     await loadProgram('SBT-FitTest_' + f.local.length + 'x_' + shown(f.local[0].diaMm) + '-' + shown(f.local[f.local.length - 1].diaMm) + '_' + unitName() + '.nc',
@@ -5139,6 +5162,8 @@
         text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o);
       }
       if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths.';
+      var hn = readHoles() || {}, turnNow = (holes.activeGrid ? (hn.grids || [])[holes.activeGrid - 1] || {} : hn).turnDeg;
+      if (s.pins && turnNow) text += ' The grid is turned ' + turnNow + '\u00b0, so the pin line is too: the stock flips about that tilted line, so set the second side\u2019s X0 Y0 from the pins rather than mirroring across a straight line.';
       text += ' It lifts to Safe Z between holes, to clear the clamps.';
     }
     if (s.warn) text += (text ? ' ' : '') + s.warn;
@@ -5148,6 +5173,7 @@
   }
   async function generateStockHoles() {
     await readMachineState();
+    if (!(await cutToolStillMatches($('mw-sh-note')))) return;
     var s = stockHoleSettings();
     if (s.probs.length) { renderStockHoles(); return; }
     await loadProgram('SBT-Stock' + (s.pins ? 'Pins' : 'Bolts') + '_' + s.chosen.length + 'x_D-' + shown(s.o.depthMm) + '_' + unitName() + '.nc',
@@ -5186,6 +5212,7 @@
       text = o.slots.length + ' slot' + (o.slots.length === 1 ? '' : 's') + ', ' + shown(o.slots.reduce(function(a, sl) { return a + sl.lenMm; }, 0)) + u + ' in all, ' +
         shown(o.widthMm) + u + ' wide, ' + (o.through ? 'through the top layer (' + shown(o.depthMm) + u + ')' : 'dados ' + shown(o.depthMm) + u + ' deep') + '.' +
         ' They stop short of the travel\u2019s ends, keepout zones and Exclude Picks areas.' +
+        (o.through ? ' Through goes exactly the Spoilboard Thickness, onto the tracks below: if the top layer has been surfaced since, lower it.' : '') +
         (lines ? ' About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o) : '');
     }
     $('mw-trk-summary').textContent = text;
@@ -5194,6 +5221,7 @@
   }
   async function generateTracks() {
     await readMachineState();
+    if (!(await cutToolStillMatches($('mw-trk-note')))) return;
     var tr = trackSettings();
     if (tr.probs.length) { renderTracks(); return; }
     await loadProgram('SBT-Tracks_' + tr.o.slots.length + 'x_W-' + shown(tr.o.widthMm) + '_D-' + shown(tr.o.depthMm) + '_' + unitName() + '.nc',
@@ -5447,7 +5475,7 @@
       'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
       'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, or X0 Y0 has moved since you generated it. Z0 must be on the spoilboard&rsquo;s top.',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
-      'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table: the hole, stock-hole and fit-test programs then start with a tool change to that tool (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
+      'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table: the hole, T-track, stock-hole and fit-test programs then start with a tool change to that tool (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',
       '<strong>Holes through the stock:</strong> drill the stock right over spoilboard holes, Z0 on the stock&rsquo;s top, with the stock clamped some other way first. <strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under the stock, with an optional counterbore for the head, to bolt into threaded inserts. <strong>Flip pins:</strong> two holes on the grid row (or column) nearest the stock&rsquo;s middle, for dowels, so the stock flipped over that line drops back exactly where it was; the summary gives the line to mirror the second side across, and where the flipped stock lands when it isn&rsquo;t centered on it. Each goes Break Through below the stock into the spoilboard hole, and can&rsquo;t be bigger than that hole, so the spoilboard isn&rsquo;t cut; threaded inserts must sit at least that far below the surface. It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard rather than the stock&rsquo;s top (once the Z0 macros have recorded the spoilboard height), and the program stops before moving if Z0 changed since. The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, Edge Distance in from its edges, and see which size your dowels fit. Set Hole Diameter to that.',

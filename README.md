@@ -340,7 +340,7 @@ the plugin reminds you to re-record the spoilboard height.
 - **The bit:** click **Bit Diameter** to take the loaded tool's diameter from ncSender's tool table, and
   the program starts with a tool change to that tool (`M6 T3`, say), which ncSender runs like any other
   tool change. Type a diameter instead and there's no tool change: load that bit yourself before running
-  it. The stock-hole and fit-test programs work the same way; chamfers and labels never change tools.
+  it. The T-track, stock-hole and fit-test programs work the same way; chamfers and labels never change tools.
 - **Safety:** Hole Depth can't be more than the Spoilboard Thickness (0.75" to start). Between holes it hops
   5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. There's
   no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck), so
@@ -428,7 +428,7 @@ something to screw into.
      spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
-   - **Delete SBT: macros** removes every macro whose name starts with "SBT:" (or "ZS:", the name from before 0.3.36; for example
+   - **Delete SBT: macros** removes every macro whose name starts with "SBT:" (or "ZS:", "MW:" or "Macro Wiz:", its names before; for example
      ones left over from older settings or another work offset) and nothing else. The first press lists
      them and turns into **Confirm delete**; a second press within a few seconds deletes. Keyboard
      shortcuts set on deleted macros stop working (recreated macros get new numbers), so to change

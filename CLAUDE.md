@@ -110,8 +110,9 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 - **Naming:**
   - Names are `SBT: <name>`.
   - Each description is the text of the macro's first comment line after its `SBT:` prefix.
-  - Saving updates macros in place by name: the current name, an alias (`Center X0 Y0 here`), or the
-    old `MW: ` or `Macro Wiz: ` prefixes.
+  - Saving updates macros in place by name: the current name, an alias (`Center X0 Y0 here`, `XY0 on
+    nearest hole`), or the old `ZS: `, `MW: ` or `Macro Wiz: ` prefixes.
+  - Turned grids turn only grid holes; listed holes stay where they were typed or captured.
 
 ### Rules the macro lines follow
 

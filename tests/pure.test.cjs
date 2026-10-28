@@ -997,7 +997,7 @@ test('parseHoleList gives each hole its line number', () => {
 const cutBase = (over) => Object.assign({
   holes: [{ x: 100, y: 100, diaMm: 20, label: 'A1' }],
   bitMm: 6.35, depthMm: 18, stepMm: 3, stepoverPct: 40, feed: 1500, plunge: 500, rpm: 18000, delayS: 3,
-  wcs: { p: 1, x: 10, y: -20.5 }, safeZMm: -5, zones: [], imperial: false, pause: false, thickMm: 19.05
+  wcs: { p: 1, x: 10, y: -20.5 }, safeZMm: -5, zones: [], imperial: false, thickMm: 19.05
 }, over);
 
 // Every point the bit's centre passes while cutting (below Z0), from the
@@ -1098,9 +1098,9 @@ test('cut holes: hops 5 mm between holes, lifting to Safe Z over a keepout', () 
   assert.match(L[holeAt(3) + 1], /^G0 X/, 'hops to the next one');
   assert.equal(L[L.length - 1], 'M30');
   assert.deepEqual(L.slice(-3), ['G53 G0 Z-5.000', 'M5', 'M30']);
-  assert.ok(holeCutProgram(cutBase({ imperial: true, pause: true })).includes('G20'));
+  assert.ok(holeCutProgram(cutBase({ imperial: true })).includes('G20'));
   // No pause: ncSender shows no prompt for M0.
-  assert.ok(!holeCutProgram(cutBase({ pause: true })).some(l => /^M0/.test(l)));
+  assert.ok(!holeCutProgram(cutBase()).some(l => /^M0/.test(l)));
 });
 
 test('cut holes: minutes from moves and dwells', () => {
@@ -1150,7 +1150,7 @@ test('labels: too big for the gap, in a zone, or off the travel are left out', (
 
 test('engraving: V-bit strokes at depth, a laser without Z moves', () => {
   const base = { labels: [{ text: 'A1', x: 20, y: 30 }], textMm: 6, depthMm: 0.4, feed: 800, plunge: 300, rpm: 18000, delayS: 2,
-    wcs: { p: 1, x: 10, y: 10 }, safeZMm: -5, zones: [], imperial: false, pause: false };
+    wcs: { p: 1, x: 10, y: 10 }, safeZMm: -5, zones: [], imperial: false };
   const v = engraveProgram(base);
   assert.ok(v.includes('G1 Z-0.400 F300'));
   assert.ok(v.includes('G0 X10.000 Y20.000'), 'A starts at its bottom left, in G54');
@@ -1229,7 +1229,7 @@ test('surfacing: a finished Wasteboard Surfacing job, and how much it took off',
 
 test('program comments are plain ASCII', () => {
   const L = chamferProgram({ holes: [{ x: 50, y: 50, diaMm: 8, label: 'Pins \u00b7 A1' }], vAngleDeg: 90, chamferMm: 0.8, feed: 1000, plunge: 300,
-    rpm: 0, delayS: 0, wcs: { p: 1, x: 0, y: 0 }, safeZMm: null, zones: [], imperial: false, pause: true });
+    rpm: 0, delayS: 0, wcs: { p: 1, x: 0, y: 0 }, safeZMm: null, zones: [], imperial: false });
   for (const l of L) assert.match(l, /^[\x20-\x7e]*$/, l);
   assert.ok(L.some(l => /90 deg V-bit/.test(l)) && L.some(l => /Pins - A1/.test(l)));
 });
@@ -1396,7 +1396,7 @@ test('nearest-hole macros on a turned grid find the same hole as the XY0 Picker'
 });
 
 test('cut programs: M6 to the tool Bit Diameter came from, after Safe Z and before the spindle; none when typed', () => {
-  const L = holeCutProgram(cutBase({ tool: 3, rpm: 18000, pause: true }));
+  const L = holeCutProgram(cutBase({ tool: 3, rpm: 18000 }));
   const m6 = L.indexOf('M6 T3'), safe = L.findIndex(l => /^G53 G0 Z/.test(l)), m3 = L.findIndex(l => /^M3 /.test(l)), stop = L.map((l, i) => /SBT stop/.test(l) ? i : -1).filter(i => i >= 0).pop();
   assert.ok(stop < safe && safe < m6 && m6 < m3, JSON.stringify([stop, safe, m6, m3]));
   assert.ok(!L.some(l => /^M0/.test(l)));
@@ -1443,4 +1443,13 @@ test('T-track program: never deeper than asked, every pass inside the slot and t
   const one = trackProgram(cutBase({ slots: slots.slice(0, 1), widthMm: 6.35, depthMm: 6, stepMm: 3, wcs: { p: 1, x: 0, y: 0 } }));
   assert.equal(one.filter(l => /^G1 X/.test(l)).length, 2);
   for (const l of L) assert.ok(l.length < 190, l);
+});
+
+test('a turned Grid + List: grid holes turn, listed holes stay where they were captured', () => {
+  const g = holeGrid({ layout: 'both', sxMm: 50, syMm: 50, insetXMm: 20, insetYMm: 20, travelXMm: 2000, travelYMm: 1000, dirX: 1, dirY: 1, turnDeg: 0.5,
+    list: [{ xMm: 1780, yMm: 880 }] });
+  const listed = g.find((p) => p.col == null);
+  assert.deepEqual([listed.x, listed.y], [1800, 900]);
+  const far = g.find((p) => p.col === 30 && p.row === 15);
+  assert.ok(Math.abs(far.y - (20 + 14 * 50) - Math.sin(0.5 * Math.PI / 180) * 29 * 50) < 0.1);
 });
