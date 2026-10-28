@@ -304,7 +304,7 @@ visualizer to check and run.
 
 **A setup that works:** a grid of 8 mm holes with
 [8 mm wooden dowel pins](https://www.amazon.com/dp/B0DJ5GZR9H) as dogs: cheap, and a bit that clips
-one is unharmed. Flanged 1/4-20 threaded inserts installed from the back, behind the holes, give clamps
+one is unharmed. [Flanged 1/4-20 threaded inserts](https://www.amazon.com/dp/B091L3Y6VJ) installed from the back, behind the holes, give clamps
 something to screw into.
 
 ## The wizard, step by step
