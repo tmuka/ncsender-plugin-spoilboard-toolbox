@@ -256,7 +256,7 @@ middle of a crossing, and a corner dot on the edges of the two lines (back right
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
 spindle, with machine-coordinate rulers along the bottom (X) and right (Y) in ncSender's units. Grid
 holes are named like a fixture table, a row letter and a column number (**B3**), counted from machine
-zero's corner: **A1** is the hole nearest machine X0 Y0 (front left on most machines). The column numbers
+zero's corner: **A1** is the hole nearest machine X0 Y0 (front left on a machine that homes there). The column numbers
 run along the top and the row letters down the left. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
 `$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole,
 or jog roughly over one and press **Pick Nearest Hole** (it picks the hole closest

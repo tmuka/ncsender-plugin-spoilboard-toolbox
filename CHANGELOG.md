@@ -26,7 +26,7 @@ What's new in each release of Zero Swapper. Install or update from
 ### 🎯 Easier to use
 - **Holes are named like a fixture table**: a row letter and a column number (**B3**), like a
   Fireball fixture table, counted from machine zero's corner: **A1** is the hole nearest machine X0 Y0
-  (front left on most machines). The column numbers run along the top of the map and the row letters
+  (front left on a machine that homes there). The column numbers run along the top of the map and the row letters
   down its left. (Thanks, Francis.)
 
 ## 0.3.35

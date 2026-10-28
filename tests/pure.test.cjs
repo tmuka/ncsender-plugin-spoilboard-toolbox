@@ -1190,7 +1190,9 @@ test('calibration: spacing, insets and turn from probed holes', () => {
   const f = fitGrid([at(1, 1), at(15, 1), at(1, 20)], 1, 1, 48, 48);
   assert.ok(Math.abs(f.sx - 48.6) < 0.01 && Math.abs(f.sy - 48.6) < 0.01, JSON.stringify(f));
   assert.ok(Math.abs(f.turnDeg - 0.1) < 1e-6);
-  assert.ok(f.missMm < 1e-6, 'the turn taken out, the grid fits');
+  assert.ok(f.fitMissMm < 1e-6, 'the turn taken out, the grid fits');
+  // Setup's grid can't turn: it misses the far hole by about its distance times the turn.
+  assert.ok(Math.abs(f.missMm - 19 * 48.6 * 0.1 * Math.PI / 180) < 0.01, String(f.missMm));
   // The insets are where the first hole really is.
   assert.ok(Math.abs(f.ix - at(1, 1).x) < 1e-6 && Math.abs(f.iy - at(1, 1).y) < 1e-6);
   // One hole: the inset only, spacing kept.
@@ -1214,4 +1216,26 @@ test('program comments are plain ASCII', () => {
     rpm: 0, delayS: 0, wcs: { p: 1, x: 0, y: 0 }, safeZMm: null, zones: [], imperial: false, pause: true });
   for (const l of L) assert.match(l, /^[\x20-\x7e]*$/, l);
   assert.ok(L.some(l => /90 deg V-bit/.test(l)) && L.some(l => /Pins - A1/.test(l)));
+});
+
+test('cut holes: a hole whose cut would go past the travel is a problem', () => {
+  const o = cutBase({ holes: [{ x: 798, y: 100, diaMm: 20, label: 'A9' }], wcs: { p: 1, x: 0, y: 0 }, travel: { xMm: 800, yMm: 1200, dirX: 1, dirY: 1 } });
+  assert.match(holeCutProblems(o).join(), /A9 reaches outside the machine.s travel/);
+  assert.deepEqual(holeCutProblems(cutBase({ holes: [{ x: 790, y: 100, diaMm: 20, label: 'A9' }], travel: { xMm: 800, yMm: 1200, dirX: 1, dirY: 1 } })), []);
+});
+
+test('cut holes: a spiral down a hole just bigger than the bit goes no faster than Plunge in Z', () => {
+  const L = holeCutProgram(cutBase({ holes: [{ x: 100, y: 100, diaMm: 6.5, label: 'A1' }] }));
+  let p = { x: 0, y: 0, z: 0 }, worst = 0;
+  for (const line of L) {
+    const g = /^G([0-3])\b/.exec(line); if (!g) continue;
+    const v = (k, d) => { const m = new RegExp('(?:^|\\s)' + k + '(-?[\\d.]+)').exec(line); return m ? +m[1] : d; };
+    const q = { x: v('X', p.x), y: v('Y', p.y), z: v('Z', p.z) }, F = v('F', null);
+    if (g[1] === '3' && q.z < p.z) {
+      const r = Math.hypot(v('I', 0), v('J', 0)), len = Math.hypot(Math.PI * r, p.z - q.z);
+      worst = Math.max(worst, F * (p.z - q.z) / len);
+    }
+    p = q;
+  }
+  assert.ok(worst <= 500 + 1, 'Z speed ' + worst);
 });
