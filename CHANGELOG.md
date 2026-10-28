@@ -5,10 +5,19 @@ What's new in each release of Zero Swapper. Install or update from
 
 ## Unreleased
 
+### ✨ New
+- **Cut Holes:** a new tab writes the program that cuts the dog holes you set up, every grid and each
+  hole at its own size, and opens it in ncSender's visualizer. Holes the bit's size are drilled, up to
+  twice its size spiralled down, bigger ones cleared in rings (QuickCut's circle milling). Suppressed,
+  hidden and keepout holes are left out; it hops 5 mm between holes and lifts to Safe Z over keepout
+  zones and Exclude Picks areas; Hole Depth can't pass the spoilboard's thickness; and it stops before
+  moving if the work offset's X0 Y0 changed since you generated it.
+
 ### 🎯 Easier to use
-- **Holes are named like a fixture table**: a row letter and a column number (**B3**), with the
-  column numbers along the top of the map and the row letters down its left, A at the back and 1 at
-  the left, like a Fireball fixture table. (Thanks, Francis.)
+- **Holes are named like a fixture table**: a row letter and a column number (**B3**), like a
+  Fireball fixture table, counted from machine zero's corner: **A1** is the hole nearest machine X0 Y0
+  (front left on most machines). The column numbers run along the top of the map and the row letters
+  down its left. (Thanks, Francis.)
 
 ## 0.3.35
 

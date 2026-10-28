@@ -13,7 +13,9 @@
     "pro-v2": "2.0.163"
   },
   "events": [],
-  "permissions": [],
+  "permissions": [
+    "gcode.modify"
+  ],
   "toolMenu": [
     {
       "id": "open-config",

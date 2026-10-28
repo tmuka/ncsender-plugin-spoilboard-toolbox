@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -341,14 +341,14 @@ test('hole grid: as many as fit in the travel, from the inset, in machine coordi
   const g = holeGrid({ sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 30, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 });
   // X: 48, 144, ... 816 is past 812, so 8 columns (48 + 7 * 96 = 720); Y: 30 + 12 * 96 = 1182, 13 rows.
   assert.equal(g.length, 8 * 13);
-  // Named like a fixture table: row A at the back (the map's top), column 1 at the left.
-  assert.deepEqual(g[0], { col: 1, row: 1, x: 48, y: 30, tag: 'M1' });
-  assert.deepEqual(g[g.length - 1], { col: 8, row: 13, x: 720, y: 1182, tag: 'A8' });
+  // Named like a fixture table from machine zero's corner: A1 nearest machine X0 Y0.
+  assert.deepEqual(g[0], { col: 1, row: 1, x: 48, y: 30, tag: 'A1' });
+  assert.deepEqual(g[g.length - 1], { col: 8, row: 13, x: 720, y: 1182, tag: 'M8' });
   const neg = holeGrid({ sxMm: 100, syMm: 100, insetXMm: 50, insetYMm: 50, travelXMm: 300, travelYMm: 200, dirX: -1, dirY: -1 });
   assert.deepEqual(neg.map(h => [h.x, h.y]), [[-50, -50], [-150, -50], [-250, -50], [-50, -150], [-150, -150], [-250, -150]]);
-  // Homing back right: the first hole is the back right one, A3.
-  assert.deepEqual(neg.map(h => h.tag), ['A3', 'A2', 'A1', 'B3', 'B2', 'B1']);
-  assert.deepEqual(neg.map(holeLabel), ['A3', 'A2', 'A1', 'B3', 'B2', 'B1']);
+  // Homing back right: A1 is the back right hole, nearest machine zero.
+  assert.deepEqual(neg.map(h => h.tag), ['A1', 'A2', 'A3', 'B1', 'B2', 'B3']);
+  assert.deepEqual(neg.map(holeLabel), ['A1', 'A2', 'A3', 'B1', 'B2', 'B3']);
   assert.deepEqual(holeGrid({ sxMm: 0, syMm: 96, insetXMm: 0, insetYMm: 0, travelXMm: 800, travelYMm: 800, dirX: 1, dirY: 1 }), [], 'no spacing, no holes');
 });
 
@@ -646,7 +646,7 @@ test('holeGrid with a list: reference point plus x, y into the travel; outside d
   assert.equal(holeLabel({ col: 3, row: 2 }), 'Column 3, row 2');
   // Past Z, rows go on AA, AB...
   const tall = holeGrid({ sxMm: 10, syMm: 10, insetXMm: 5, insetYMm: 5, travelXMm: 20, travelYMm: 300, dirX: 1, dirY: 1 });
-  assert.deepEqual([tall[tall.length - 1].tag, tall[0].tag, tall[(30 - 27) * 2].tag], ['A2', 'AD1', 'AA1']);
+  assert.deepEqual([tall[0].tag, tall[25 * 2].tag, tall[26 * 2].tag, tall[tall.length - 1].tag], ['A1', 'Z1', 'AA1', 'AD2']);
 });
 
 test('nearest-hole macros with a list pick the nearest usable listed hole', () => {
@@ -723,7 +723,7 @@ test('holeGrid marks suppressed holes by column and row; nearestHole skips them'
   const grid = holeGrid(o);
   assert.deepEqual(grid.filter((p) => p.suppressed).map((p) => [p.col, p.row]), [[2, 1]]);
   assert.equal(grid.length, 6, 'suppressed holes stay in the grid, so indices don\'t shift');
-  assert.deepEqual(grid[nearestHole(grid, 150, 50).index], { col: 1, row: 1, x: 50, y: 50, tag: 'B1' });
+  assert.deepEqual(grid[nearestHole(grid, 150, 50).index], { col: 1, row: 1, x: 50, y: 50, tag: 'A1' });
 });
 
 test('nearest-hole macros skip suppressed holes, matching the XY0 Picker', () => {
@@ -988,4 +988,119 @@ test('parseHoleList gives each hole its line number', () => {
   const r = parseHoleList('( fixtures )\npin: 1, 2\n\nbad line\nvise: 400, 250, , 6350', false);
   assert.deepEqual(r.lines, [2, 5]);
   assert.deepEqual(r.bad, [4]);
+});
+
+// ---------- Cutting the holes ----------
+
+const cutBase = (over) => Object.assign({
+  holes: [{ x: 100, y: 100, diaMm: 20, label: 'A1' }],
+  bitMm: 6.35, depthMm: 18, stepMm: 3, stepoverPct: 40, feed: 1500, plunge: 500, rpm: 18000, delayS: 3,
+  wcs: { p: 1, x: 10, y: -20.5 }, safeZMm: -5, zones: [], imperial: false, pause: false, thickMm: 19.05
+}, over);
+
+// Every point the bit's centre passes while cutting (below Z0), from the
+// program's moves, plus the deepest Z reached.
+function cutTrace(lines) {
+  let p = { x: 0, y: 0, z: 0 }; const pts = []; let deepest = 0;
+  for (const line of lines) {
+    const g = /^G([0-3])\b/.exec(line); if (!g) continue;
+    const v = (k, d) => { const m = new RegExp('(?:^|\\s)' + k + '(-?[\\d.]+)').exec(line); return m ? +m[1] : d; };
+    const q = { x: v('X', p.x), y: v('Y', p.y), z: v('Z', p.z) };
+    if (g[1] !== '0' && Math.max(p.z, q.z) < 0) {
+      if (g[1] === '1') { for (let i = 0; i <= 20; i++) pts.push([p.x + (q.x - p.x) * i / 20, p.y + (q.y - p.y) * i / 20]); }
+      else {
+        const cx = p.x + v('I', 0), cy = p.y + v('J', 0), r = Math.hypot(p.x - cx, p.y - cy);
+        let a0 = Math.atan2(p.y - cy, p.x - cx), a1 = Math.atan2(q.y - cy, q.x - cx);
+        if (a1 <= a0) a1 += 2 * Math.PI;
+        for (let i = 0; i <= 40; i++) { const a = a0 + (a1 - a0) * i / 40; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+      }
+    }
+    deepest = Math.min(deepest, q.z);
+    p = q;
+  }
+  return { pts, deepest };
+}
+
+test('cut holes: drill, helix or clear by the bit and hole size', () => {
+  assert.equal(holeCutMethod(6.35, 6.35), 'drill');
+  assert.equal(holeCutMethod(6.38, 6.35), 'drill');
+  assert.equal(holeCutMethod(6, 6.35), 'too-small');
+  assert.equal(holeCutMethod(12.7, 6.35), 'helix');
+  assert.equal(holeCutMethod(20, 6.35), 'clear');
+});
+
+test('cut holes: skips suppressed, hidden and blocked holes and fixtures; listed holes when asked', () => {
+  const grid = [{ col: 1, row: 1 }, { col: 2, row: 1, suppressed: true }, { col: 3, row: 1, hidden: true }, { col: 4, row: 1, blocked: true },
+    { index: 1, name: 'pin' }, { index: 2, name: 'vise', zMm: 63.5 }];
+  assert.deepEqual(holesToCut(grid, false).map(p => p.col), [1]);
+  assert.deepEqual(holesToCut(grid, true).map(p => p.name || p.col), [1, 'pin']);
+});
+
+test('cut holes: rows back and forth, grids in turn, then listed holes nearest first', () => {
+  const g = [];
+  for (let r = 1; r <= 2; r++) for (let c = 1; c <= 3; c++) g.push({ col: c, row: r, x: c * 10, y: r * 10 });
+  g.push({ col: 1, row: 1, layer: 1, x: 500, y: 0 }, { index: 1, x: 0, y: 0 }, { index: 2, x: 480, y: 0 });
+  assert.deepEqual(cutOrder(g).map(p => p.index != null ? '#' + p.index : (p.layer ? 'g2:' : '') + p.col + ',' + p.row),
+    ['1,1', '2,1', '3,1', '3,2', '2,2', '1,2', 'g2:1,1', '#2', '#1']);
+});
+
+test('cut holes: a line over a zone, grown by the bit radius', () => {
+  const z = { minX: 0, maxX: 10, minY: 0, maxY: 10 };
+  assert.equal(lineCrossesZone({ x: -5, y: 5 }, { x: 15, y: 5 }, z, 0), true);
+  assert.equal(lineCrossesZone({ x: -5, y: 12 }, { x: 15, y: 12 }, z, 0), false);
+  assert.equal(lineCrossesZone({ x: -5, y: 12 }, { x: 15, y: 12 }, z, 3), true);
+  assert.equal(lineCrossesZone({ x: 20, y: 20 }, { x: 30, y: 30 }, z, 1), false);
+});
+
+test('cut holes: problems stop it', () => {
+  assert.deepEqual(holeCutProblems(cutBase()), []);
+  assert.match(holeCutProblems(cutBase({ depthMm: 20 })).join(), /more than the spoilboard/);
+  assert.match(holeCutProblems(cutBase({ bitMm: 25 })).join(), /bigger than A1/);
+  assert.match(holeCutProblems(cutBase({ holes: [] })).join(), /no holes/);
+  assert.match(holeCutProblems(cutBase({ stepMm: 0 })).join(), /Depth per Pass/);
+});
+
+test('cut holes: stop lines before anything moves, and the work offset must not have moved', () => {
+  const L = holeCutProgram(cutBase());
+  const firstMove = L.findIndex(l => /^(G0|G1|G2|G3|M3|G53)\b/.test(l));
+  const stops = L.map((l, i) => [l, i]).filter(([l]) => /ZS stop/.test(l));
+  assert.equal(stops.length, 3);
+  assert.ok(stops.every(([, i]) => i < firstMove));
+  assert.equal(L[3], 'G54');
+  const check = stops[2][0].replace(/\s*\(.*$/, '').replace(/^#1=/, '');
+  // Its own X0 Y0 (G54 X 10, Y -20.5) passes; moved by a hair it stops (error 72).
+  assert.equal(evalExpr(check, { 5221: 10, 5222: -20.5 }), 1);
+  assert.throws(() => evalExpr(check, { 5221: 10.01, 5222: -20.5 }), /error:72/);
+  assert.match(stops[2][0], /#5222 \+ 20\.500/);
+  for (const l of L) assert.ok(l.length < 190, l);
+});
+
+test('cut holes: the bit stays inside each hole and reaches its edge and depth', () => {
+  for (const [dia, method] of [[20, 'clear'], [10, 'helix'], [6.35, 'drill']]) {
+    const o = cutBase({ holes: [{ x: 100, y: 100, diaMm: dia, label: 'A1' }] }), L = holeCutProgram(o);
+    assert.ok(L.some(l => l.endsWith(', ' + method + ')')), method);
+    const { pts, deepest } = cutTrace(L), cx = 90, cy = 120.5, pr = dia / 2 - 6.35 / 2;
+    const far = Math.max(...pts.map(([x, y]) => Math.hypot(x - cx, y - cy)));
+    assert.ok(far <= pr + 1e-4, method + ' stays inside: ' + far);
+    if (method !== 'drill') assert.ok(Math.abs(far - pr) < 1e-4, method + ' reaches the edge');
+    assert.equal(deepest, -18);
+  }
+});
+
+test('cut holes: hops 5 mm between holes, lifting to Safe Z over a keepout', () => {
+  const holes = [{ x: 0, y: 0, diaMm: 20, label: 'A1' }, { x: 100, y: 0, diaMm: 20, label: 'A2' }, { x: 100, y: 100, diaMm: 20, label: 'B2' }];
+  const zones = [{ minX: 40, maxX: 60, minY: -10, maxY: 10 }];
+  const L = holeCutProgram(cutBase({ holes, zones, wcs: { p: 1, x: 0, y: 0 } }));
+  const holeAt = (n) => L.findIndex(l => l.startsWith('(ZS hole ' + n + '/'));
+  assert.equal(L[holeAt(2) + 1], 'G53 G0 Z-5.000', 'lifts before crossing the zone');
+  assert.match(L[holeAt(3) + 1], /^G0 X/, 'hops to the next one');
+  assert.equal(L[L.length - 1], 'M30');
+  assert.deepEqual(L.slice(-3), ['G53 G0 Z-5.000', 'M5', 'M30']);
+  assert.ok(holeCutProgram(cutBase({ imperial: true, pause: true })).includes('G20'));
+  assert.ok(holeCutProgram(cutBase({ pause: true })).some(l => /^M0 \(ZS: check/.test(l)));
+});
+
+test('cut holes: minutes from moves and dwells', () => {
+  assert.ok(Math.abs(programMinutes(['G4 P30', 'G1 X100 F1000', 'G0 X0'], 5000) - (0.5 + 0.1 + 0.02)) < 1e-9);
+  assert.ok(Math.abs(programMinutes(['G1 X10 Y0 F100', 'G3 X-10 Y0 I-10 J0'], 1000) - (10 + Math.PI * 10) / 100) < 1e-9);
 });

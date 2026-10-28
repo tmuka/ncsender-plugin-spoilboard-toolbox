@@ -249,6 +249,7 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
   .mw-input.mw-invalid, .mw-select.mw-invalid { border-color: var(--color-danger, #d9534f); }
+  .mw-label-link { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
   .mw-source { font-size: 0.72rem; color: var(--color-text-secondary); line-height: 1.3; }
   .mw-btn {
     -webkit-appearance: none; appearance: none;
@@ -414,6 +415,10 @@
         <button type="button" class="mw-nav-btn" data-tab="macros">
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14L5 19h14"/></svg></span>
           <span class="mw-nav-label">Z0 macros</span>
+        </button>
+        <button type="button" class="mw-nav-btn" data-tab="cut">
+          <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="6"/><path d="M12 2v9"/><path d="M9 8l3 3 3-3"/></svg></span>
+          <span class="mw-nav-label">Cut Holes</span>
         </button>
       </nav>
       <div class="mw-sidebar-footer">
@@ -773,6 +778,67 @@
           Surfacing), or if your reference tool changes: the stored height is only as current as the last recording.</p>
       </section>
     </div>
+    <div class="mw-tab" data-tab="cut" hidden>
+      <p class="mw-intro"><strong>Cut the dog holes you set up in the XY0 Picker</strong>, so the spoilboard and the map come from the
+        same numbers. Load the bit and put Z0 on the spoilboard&rsquo;s top (<strong>ZS: Z0 on spoilboard</strong> does it), then
+        <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run. It uses the active work offset&rsquo;s X0 Y0.</p>
+      <section class="mw-card">
+        <h3 class="mw-card-title">Holes</h3>
+        <p class="mw-hint" id="mw-cut-holes"></p>
+        <label class="mw-extra"><input type="checkbox" id="mw-cut-list"><span>Also cut the listed holes (Grid + List or List). Points with a height, such as a vise, are never cut.</span></label>
+      </section>
+      <section class="mw-card">
+        <h3 class="mw-card-title">Bit and depth</h3>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-cut-bit" id="mw-cut-bit-label" class="mw-label-link" title="Click to use the loaded tool's diameter from ncSender's tool table">Bit Diameter (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-bit" value="6.35" title="The bit that's loaded. Each hole is drilled when the bit is its size, spiralled down when it's up to twice the bit, else cleared in rings.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-cut-thick">Spoilboard Thickness (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-thick" value="19.05" title="How thick the spoilboard is. Hole Depth can't be more, so the bit never cuts into what's under it.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-cut-depth">Hole Depth (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-depth" value="18.05" title="How deep each hole goes below Z0 (the spoilboard's top). Leave a little under it unless there's a sacrificial layer below.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-cut-step">Depth per Pass (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-step" value="3" title="How much deeper each pass goes: a turn of the spiral, a ring of clearing, or a peck when drilling.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-cut-stepover">Stepover (%)</label>
+            <input class="mw-input" type="number" id="mw-cut-stepover" min="1" max="90" step="1" value="40" title="For holes cleared in rings: how far apart the rings are, as a % of the bit diameter.">
+          </div>
+        </div>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-cut-feed">Feed (<span class="mw-unit">mm</span>/min)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-feed" value="1500" title="How fast the bit moves while cutting, spiral included.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-cut-plunge">Plunge (<span class="mw-unit">mm</span>/min)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-plunge" value="500" title="How fast the bit goes down when drilling or ramping into a cleared hole.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-cut-rpm">Spindle RPM</label>
+            <input class="mw-input" type="number" id="mw-cut-rpm" min="0" step="100" value="18000" title="Spindle speed (M3). 0 leaves the spindle alone.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-cut-delay">Spindle Delay (s)</label>
+            <input class="mw-input" type="number" id="mw-cut-delay" min="0" step="1" value="3" title="Seconds to wait after starting the spindle, so it's up to speed.">
+          </div>
+        </div>
+        <label class="mw-extra"><input type="checkbox" id="mw-cut-pause" checked><span>Pause before the spindle starts, to check the bit and Z0 (resume to go on)</span></label>
+        <label class="mw-extra"><input type="checkbox" id="mw-cut-mist"><span>Mist (M7)</span></label>
+        <label class="mw-extra"><input type="checkbox" id="mw-cut-flood"><span>Flood (M8)</span></label>
+      </section>
+      <section class="mw-card">
+        <p class="mw-hint" id="mw-cut-summary"></p>
+        <p class="mw-status" id="mw-cut-note" role="status"></p>
+        <div><button type="button" class="mw-btn" id="mw-cut-generate">Generate</button></div>
+      </section>
+    </div>
     <div class="mw-tab" data-tab="help" hidden>
       <h2 class="mw-help-title">Help: <span id="mw-help-for"></span></h2>
       <div id="mw-help-body" class="mw-help-body"></div>
@@ -1079,12 +1145,12 @@
     var xs = axisPositions(o.insetXMm, o.sxMm, o.travelXMm, o.trackAxis === 'y' ? o.panelHoles : 0, o.panelPitchMm);
     var ys = axisPositions(o.insetYMm, o.syMm, o.travelYMm, o.trackAxis === 'x' ? o.panelHoles : 0, o.panelPitchMm);
     // tag: its name on a fixture table, as on a Fireball's: a row letter
-    // (A at the back, the map's top) and a column number (1 at the left),
-    // whichever corner the machine homes to.
+    // and a column number counted from machine zero's corner, so A1 is the
+    // hole nearest machine X0 Y0 (front left on most machines).
     for (var r = 0; r < ys.length; r++) {
       for (var c = 0; c < xs.length; c++) {
         var p = { col: c + 1, row: r + 1, x: o.dirX * xs[c], y: o.dirY * ys[r],
-                  tag: rowLetters(o.dirY > 0 ? ys.length - r : r + 1) + (o.dirX > 0 ? c + 1 : xs.length - c) };
+                  tag: rowLetters(r + 1) + (c + 1) };
         if (o.layer) p.layer = o.layer;
         if (sup.indexOf(holeKey(p)) >= 0) p.suppressed = true;
         out.push(p);
@@ -1672,6 +1738,221 @@
       .concat([Object.assign({}, setup, { name: String(name).trim() })])
       .sort(function(a, b) { return a.name.localeCompare(b.name); });
   }
+  // ---------- Cutting the holes ----------
+  //
+  // A program that cuts the dog holes set up in the XY0 Picker. The circle
+  // milling is QuickCut's (lib/quickcut-gcode.cjs: emitOneCircle,
+  // emitOneCircleClearing, emitOneHole, startupBlock, programFooter),
+  // adapted: always mm, one hole after another in the active work offset,
+  // whose X0 Y0 is written into the program and checked by a stop line
+  // before anything moves. Z0 is the spoilboard's top. Climb milling (G3),
+  // as QuickCut.
+
+  // How a hole is cut: drilled when the bit is its size, a helix (spiral
+  // down, then a lap) when it's up to twice the bit, else cleared in rings
+  // out from a helix in its middle. 'too-small' when the bit won't fit.
+  function holeCutMethod(holeDiaMm, bitMm) {
+    if (Math.abs(holeDiaMm - bitMm) <= 0.05) return 'drill';
+    if (bitMm > holeDiaMm) return 'too-small';
+    return holeDiaMm <= 2 * bitMm ? 'helix' : 'clear';
+  }
+
+  // The holes to cut: the XY0 Picker's, less suppressed, hidden and
+  // blocked ones (in a keepout zone or an Exclude Picks area) and points
+  // with a height (a vise jaw or fixture isn't a hole); listed holes only
+  // when asked.
+  function holesToCut(grid, withList) {
+    return grid.filter(function(p) {
+      return !p.suppressed && !p.hidden && !p.blocked && p.zMm == null && (p.col != null || !!withList);
+    });
+  }
+
+  // Cutting order: each grid row by row, back and forth so a row starts
+  // where the last one ended, then listed holes, nearest first.
+  function cutOrder(holes) {
+    var out = [], groups = {}, keys = [];
+    holes.forEach(function(p) {
+      var k = p.col == null ? 'list' : String(p.layer || 0);
+      if (!groups[k]) { groups[k] = []; keys.push(k); }
+      groups[k].push(p);
+    });
+    keys.sort(function(a, b) { return a === 'list' ? 1 : b === 'list' ? -1 : a - b; });
+    keys.forEach(function(k) {
+      var g = groups[k];
+      if (k === 'list') {
+        var left = g.slice(), at = out.length ? out[out.length - 1] : left[0];
+        while (left.length) {
+          var bi = 0;
+          for (var i = 1; i < left.length; i++) {
+            if (Math.hypot(left[i].x - at.x, left[i].y - at.y) < Math.hypot(left[bi].x - at.x, left[bi].y - at.y)) bi = i;
+          }
+          at = left.splice(bi, 1)[0];
+          out.push(at);
+        }
+        return;
+      }
+      var rows = {};
+      g.forEach(function(p) { (rows[p.row] = rows[p.row] || []).push(p); });
+      Object.keys(rows).map(Number).sort(function(a, b) { return a - b; }).forEach(function(r, i) {
+        var row = rows[r].sort(function(a, b) { return a.col - b.col; });
+        out.push.apply(out, i % 2 ? row.reverse() : row);
+      });
+    });
+    return out;
+  }
+
+  // Whether the straight line from a to b passes over zone z grown by r.
+  function lineCrossesZone(a, b, z, r) {
+    var t0 = 0, t1 = 1, dx = b.x - a.x, dy = b.y - a.y;
+    var p = [-dx, dx, -dy, dy], q = [a.x - (z.minX - r), z.maxX + r - a.x, a.y - (z.minY - r), z.maxY + r - a.y];
+    for (var i = 0; i < 4; i++) {
+      if (p[i] === 0) { if (q[i] < 0) return false; continue; }
+      var t = q[i] / p[i];
+      if (p[i] < 0) t0 = Math.max(t0, t); else t1 = Math.min(t1, t);
+      if (t0 > t1) return false;
+    }
+    return true;
+  }
+
+  // What stops a cut, as messages; none when it's good to go. o as
+  // holeCutProgram's, plus thickMm (the spoilboard's thickness).
+  function holeCutProblems(o) {
+    var out = [];
+    if (!(o.bitMm > 0)) out.push('Bit Diameter must be more than 0');
+    if (!(o.depthMm > 0)) out.push('Hole Depth must be more than 0');
+    else if (o.thickMm > 0 && o.depthMm > o.thickMm + 1e-9) out.push('Hole Depth is more than the spoilboard’s thickness: it would cut into what’s under it');
+    if (!(o.stepMm > 0)) out.push('Depth per Pass must be more than 0');
+    if (!(o.feed > 0) || !(o.plunge > 0)) out.push('Feed and Plunge must be more than 0');
+    if (!(o.stepoverPct > 0 && o.stepoverPct <= 90)) out.push('Stepover must be 1 to 90%');
+    if (!o.holes.length) out.push('There are no holes to cut');
+    var small = o.holes.filter(function(h) { return o.bitMm > 0 && holeCutMethod(h.diaMm, o.bitMm) === 'too-small'; });
+    if (small.length) out.push('The bit is bigger than ' + (small.length === 1 ? small[0].label : small.length + ' holes (' + small[0].label + '…)'));
+    return out;
+  }
+
+  // The program, as lines. o: holes (in cutting order, machine mm, each
+  // with diaMm and a label), bitMm, depthMm, stepMm (depth per pass),
+  // stepoverPct (between clearing rings), feed and plunge (mm/min), rpm,
+  // delayS, mist, flood, wcs { p, x, y } (the work offset and its X0 Y0
+  // in machine mm), safeZMm (machine; null: machine Z0), zones (keepouts
+  // and Exclude Picks areas, machine mm: crossing one lifts to Safe Z
+  // instead of a 5 mm hop), imperial (G20 at the end), pause (M0 before
+  // the spindle starts, to check the bit).
+  function holeCutProgram(o) {
+    var hop = 5, clearZ = 2, n = o.holes.length, r = o.bitMm / 2, name = WCS_NAMES[o.wcs.p];
+    var xp = 5201 + 20 * o.wcs.p, yp = xp + 1;
+    var f5 = function(v) { var s = v.toFixed(5); return /^-0\.0*$/.test(s) ? s.slice(1) : s; };
+    var f3 = function(v) { var s = fmt(v); return /^-0\.0*$/.test(s) ? s.slice(1) : s; };
+    var less = function(v) { return v < 0 ? ' + ' + fmt(-v) : ' - ' + fmt(v); };
+    var c = function(t) { return '(' + String(t).replace(/\(/g, '[').replace(/\)/g, ']') + ')'; };
+    var safe = 'G53 G0 Z' + fmt(o.safeZMm != null ? o.safeZMm : 0);
+    var L = [
+      c('ZS: cut ' + n + ' dog hole' + (n === 1 ? '' : 's') + ', ' + fmt(o.bitMm) + ' mm bit, ' + fmt(o.depthMm) + ' mm deep, ' + fmt(o.stepMm) + ' mm a pass'),
+      c('ZS: ' + name + ' Z0 must be on the spoilboard top; X Y are ' + name + ', X0 Y0 at machine X' + fmt(o.wcs.x) + ' Y' + fmt(o.wcs.y)),
+      'G21 G17 G90 G94',
+      name,
+      '#1=[1 / #<_homed_state>] (ZS stop: home the machine first)',
+      '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (ZS stop: a G92 offset is active; G92.1 clears it)',
+      '#1=[1 / [[ABS[#' + xp + less(o.wcs.x) + '] LT 0.001] AND [ABS[#' + yp + less(o.wcs.y) + '] LT 0.001]]] (ZS stop: ' + name + ' X0 Y0 moved; make the program again)',
+      safe
+    ];
+    if (o.pause) L.push('M0 ' + c('ZS: check a ' + fmt(o.bitMm) + ' mm bit is loaded and Z0 is on the spoilboard, then resume'));
+    if (o.mist) L.push('M7');
+    if (o.flood) L.push('M8');
+    if (o.rpm > 0) {
+      L.push('M3 S' + Math.round(o.rpm));
+      if (o.delayS > 0) L.push('G4 P' + o.delayS);
+    }
+    var levels = [];
+    for (var d = 0; d < o.depthMm - 1e-6; ) { d = Math.min(o.depthMm, d + o.stepMm); levels.push(d); }
+    var at = null;
+    o.holes.forEach(function(h, i) {
+      var method = holeCutMethod(h.diaMm, o.bitMm), cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, pr = h.diaMm / 2 - r;
+      var helixR = Math.min(r * 0.6, pr - 0.001), start = method === 'drill' ? { x: cx, y: cy } : { x: cx + (method === 'helix' ? pr : helixR), y: cy };
+      L.push(c('ZS hole ' + (i + 1) + '/' + n + ': ' + h.label + ', ' + fmt(h.diaMm) + ' mm, ' + method));
+      var to = { x: start.x + o.wcs.x, y: start.y + o.wcs.y };
+      if (at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, r); })) L.push(safe);
+      L.push('G0 X' + f3(start.x) + ' Y' + f3(start.y));
+      L.push('G0 Z' + fmt(hop));
+      L.push('G0 Z' + fmt(clearZ));
+      if (method === 'drill') {
+        // QuickCut's emitOneHole, pecking a pass at a time and clearing chips.
+        levels.forEach(function(lv, k) {
+          L.push('G1 Z' + f3(-lv) + ' F' + o.plunge);
+          if (k < levels.length - 1) { L.push('G0 Z' + fmt(clearZ)); L.push('G0 Z' + f3(0.5 - lv)); }
+        });
+        at = { x: cx + o.wcs.x, y: cy + o.wcs.y };
+      } else if (method === 'helix') {
+        // QuickCut's emitOneCircle: two half turns a pass, then a lap at depth.
+        var prev = clearZ;
+        levels.forEach(function(lv) {
+          L.push('G3 X' + f5(cx - pr) + ' Y' + f5(cy) + ' I' + f5(-pr) + ' J0 Z' + f3((prev - lv) / 2) + ' F' + o.feed);
+          L.push('G3 X' + f5(cx + pr) + ' Y' + f5(cy) + ' I' + f5(pr) + ' J0 Z' + f3(-lv) + ' F' + o.feed);
+          prev = -lv;
+        });
+        L.push('G3 X' + f5(cx - pr) + ' Y' + f5(cy) + ' I' + f5(-pr) + ' J0 F' + o.feed);
+        L.push('G3 X' + f5(cx + pr) + ' Y' + f5(cy) + ' I' + f5(pr) + ' J0');
+        at = to;
+      } else {
+        // QuickCut's emitOneCircleClearing: a helix in the middle to each
+        // pass's depth, then rings out to the hole's edge.
+        var step = o.bitMm * o.stepoverPct / 100, radii = [];
+        for (var off = 0; pr - off > 0; off += step) { radii.push(pr - off); if (pr - off <= r) break; }
+        radii.reverse();
+        var pz = clearZ, pitch = r * 0.5;
+        levels.forEach(function(lv, k) {
+          var turns = Math.max(1, Math.ceil((pz + lv) / pitch)), each = (pz + lv) / turns;
+          for (var t = 0; t < turns; t++) {
+            L.push('G3 X' + f5(cx - helixR) + ' Y' + f5(cy) + ' I' + f5(-helixR) + ' J0 Z' + f3(pz - each * (t + 0.5)) + ' F' + o.plunge);
+            L.push('G3 X' + f5(cx + helixR) + ' Y' + f5(cy) + ' I' + f5(helixR) + ' J0 Z' + f3(pz - each * (t + 1)) + ' F' + o.plunge);
+          }
+          pz = -lv;
+          radii.forEach(function(rr) {
+            L.push('G1 X' + f5(cx + rr) + ' Y' + f5(cy) + ' F' + o.plunge);
+            L.push('G3 X' + f5(cx - rr) + ' Y' + f5(cy) + ' I' + f5(-rr) + ' J0 F' + o.feed);
+            L.push('G3 X' + f5(cx + rr) + ' Y' + f5(cy) + ' I' + f5(rr) + ' J0');
+          });
+          if (k < levels.length - 1) L.push('G1 X' + f5(cx + helixR) + ' Y' + f5(cy) + ' F' + o.plunge);
+        });
+        at = { x: cx + pr + o.wcs.x, y: cy + o.wcs.y };
+      }
+      L.push('G0 Z' + fmt(hop));
+    });
+    L.push(safe);
+    if (o.mist || o.flood) L.push('M9');
+    if (o.rpm > 0) L.push('M5');
+    if (o.imperial) L.push('G20');
+    L.push('M30');
+    return L;
+  }
+
+  // Roughly how long a program takes, in minutes: its moves at their feed
+  // (rapids at rapidMmMin) and its dwells. Machine-coordinate lifts count
+  // as nothing.
+  function programMinutes(lines, rapidMmMin) {
+    var p = { x: 0, y: 0, z: 0 }, f = 1000, min = 0;
+    lines.forEach(function(line) {
+      var g = /^G([0-4])\b/.exec(line);
+      if (!g) return;
+      var v = function(k, d) { var m = new RegExp('(?:^|\\s)' + k + '(-?[\\d.]+)').exec(line); return m ? +m[1] : d; };
+      if (g[1] === '4') { min += v('P', 0) / 60; return; }
+      var F = v('F', null);
+      if (F) f = F;
+      var q = { x: v('X', p.x), y: v('Y', p.y), z: v('Z', p.z) }, len;
+      if (g[1] === '2' || g[1] === '3') {
+        var cx = p.x + v('I', 0), cy = p.y + v('J', 0), rr = Math.hypot(p.x - cx, p.y - cy);
+        var a = Math.atan2(q.y - cy, q.x - cx) - Math.atan2(p.y - cy, p.x - cx);
+        if (g[1] === '3' && a <= 0) a += 2 * Math.PI;
+        if (g[1] === '2' && a >= 0) a -= 2 * Math.PI;
+        len = Math.hypot(rr * Math.abs(a), q.z - p.z);
+      } else {
+        len = Math.hypot(q.x - p.x, q.y - p.y, q.z - p.z);
+      }
+      min += len / (g[1] === '0' ? rapidMmMin : f);
+      p = q;
+    });
+    return min;
+  }
   // END pure
 
   var state = { imperial: false, capturing: null, safeZMm: null };
@@ -1923,7 +2204,8 @@
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'),
       stockZMode: $('mw-stock-zmode').value,
-      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, stockPoint: stockPoint()
+      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, stockPoint: stockPoint(),
+      cut: cutBody()
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
@@ -2183,6 +2465,7 @@
     });
     if (/^(auto|front-left|front-right|back-left|back-right)$/.test(saved.stockCorner || '')) $('mw-stock-corner').value = saved.stockCorner;
     setStockZero(saved.stockZero);
+    loadCut(saved.cut, conv);
     // Where the stock was drawn from comes back once the grid is placed
     // (restoreStock), so a reopen draws it where it was.
     holes.stockAnchor = null;
@@ -2199,6 +2482,7 @@
     if (saved.backup) $('mw-backup').value = saved.backup;
     if (saved.thick) $('mw-thick').value = saved.thick;
     if (Array.isArray(saved.extras)) EXTRAS.forEach(function(k) { $('mw-x-' + k).checked = saved.extras.indexOf(k) >= 0; });
+    wireCut();
     wireUnitFields();
     $('mw-store-stock').addEventListener('click', storeThickness);
     EXTRAS.forEach(function(k) { $('mw-x-' + k).addEventListener('change', render); });
@@ -2454,6 +2738,8 @@
       var dirs = travelDirs(set);
       state.travel = tx > 0 && ty > 0 && dirs ? { xMm: tx, yMm: ty, dirX: dirs.dirX, dirY: dirs.dirY } : null;
       state.keepouts = keepoutZones(state.ncSettings, set);
+      var rx = parseFloat(set['110'] && set['110'].value), ry = parseFloat(set['111'] && set['111'].value);
+      state.rapidMmMin = rx > 0 && ry > 0 ? Math.min(rx, ry) : null;
     } catch (e) { state.travel = null; }
     await readMachineState();
     renderHoles();
@@ -3630,6 +3916,141 @@
   }
 
 
+  // ---------- Cut Holes ----------
+  //
+  // The XY0 Picker's holes (holes.grid, as the map last placed them, with
+  // its suppressed, hidden and blocked marks) cut by holeCutProgram and
+  // loaded into ncSender's visualizer to check and run.
+  var CUT_LENGTHS = ['bit', 'thick', 'depth', 'step', 'feed', 'plunge'], CUT_PLAIN = ['stepover', 'rpm', 'delay'];
+  var CUT_METHODS = { drill: 'drilled', helix: 'spiralled down', clear: 'cleared in rings', 'too-small': 'too small for the bit' };
+  function cutMm(id) { var v = unitVal($(id)); return isFinite(v) ? v * (state.imperial ? MM_PER_INCH : 1) : NaN; }
+  function cutSettings() {
+    var ms = state.machine || {}, w = String(ms.workspace || 'G54').toUpperCase(), p = 0;
+    for (var k in WCS_NAMES) if (WCS_NAMES[k] === w) p = +k;
+    var zero = p >= 1 && p <= 6 ? xyOf(ms[w.toLowerCase()]) : null, h = readHoles();
+    return {
+      holes: h ? cutOrder(holesToCut(holes.grid, $('mw-cut-list').checked)).map(function(q) {
+        return { x: q.x, y: q.y, diaMm: 2 * holeR(q, h), label: holeName(q) };
+      }) : [],
+      bitMm: cutMm('mw-cut-bit'), thickMm: cutMm('mw-cut-thick'), depthMm: cutMm('mw-cut-depth'), stepMm: cutMm('mw-cut-step'),
+      stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
+      rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
+      mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked, pause: $('mw-cut-pause').checked,
+      wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial
+    };
+  }
+  function cutProblems(o) {
+    var out = holeCutProblems(o), ms = state.machine || {};
+    if (!o.wcs) out.unshift(ms.connected ? o.wcsName + ' is active, and ncSender only reports G54\u2013G59\u2019s X0 Y0: switch to one of those' : 'Connect to the controller first');
+    if (!state.travel) out.unshift('Couldn\u2019t read the machine\u2019s travel, so the holes can\u2019t be placed');
+    return out;
+  }
+  // What's cut (how many of each size, and how) and what's left out.
+  function renderCut() {
+    var o = cutSettings(), probs = cutProblems(o), g = holes.grid;
+    var sizes = {};
+    o.holes.forEach(function(q) {
+      var key = shown(q.diaMm) + ' ' + unitName() + ' (' + (o.bitMm > 0 ? CUT_METHODS[holeCutMethod(q.diaMm, o.bitMm)] : '?') + ')';
+      sizes[key] = (sizes[key] || 0) + 1;
+    });
+    var skip = [
+      [g.filter(function(q) { return q.suppressed; }).length, 'suppressed'],
+      [g.filter(function(q) { return q.hidden && !q.suppressed; }).length, 'on hidden grids'],
+      [g.filter(function(q) { return q.blocked && !q.suppressed && !q.hidden; }).length, 'in keepout zones or Exclude Picks areas'],
+      [g.filter(function(q) { return q.col == null && (q.zMm != null || !$('mw-cut-list').checked) && !q.suppressed && !q.hidden && !q.blocked; }).length, 'listed']
+    ].filter(function(x) { return x[0]; }).map(function(x) { return x[0] + ' ' + x[1]; });
+    $('mw-cut-holes').textContent = (o.holes.length ? o.holes.length + ' hole' + (o.holes.length === 1 ? '' : 's') + ': ' +
+      Object.keys(sizes).map(function(k) { return sizes[k] + ' \u00d7 ' + k; }).join(', ') + '.' : 'No holes to cut.') +
+      (skip.length ? ' Left out: ' + skip.join(', ') + '.' : '') + ' The holes come from the XY0 Picker\u2019s Setup and map.';
+    var lines = probs.length ? null : holeCutProgram(o);
+    var min = lines ? programMinutes(lines, state.rapidMmMin || 3000) : 0;
+    $('mw-cut-summary').textContent = lines ? 'In ' + o.wcsName + ' (X0 Y0 at machine X ' + shown(o.wcs.x) + ', Y ' + shown(o.wcs.y) + ' ' + unitName() +
+      '), with Z0 on the spoilboard\u2019s top. About ' + Math.max(1, Math.round(min)) + ' min; ' + lines.length + ' lines. ' +
+      'It hops 5 mm between holes, and lifts to ' + (state.safeZMm != null ? 'Safe Z' : 'machine Z0') + ' to pass over a keepout zone or Exclude Picks area.' : '';
+    var note = $('mw-cut-note');
+    if (note.getAttribute('data-state') !== 'ok' || probs.length) {
+      note.setAttribute('data-state', probs.length ? 'bad' : '');
+      note.textContent = probs.length ? probs.join('. ') + '.' : '';
+    }
+    $('mw-cut-generate').disabled = !!probs.length;
+  }
+  function cutBody() {
+    var b = { list: $('mw-cut-list').checked, pause: $('mw-cut-pause').checked, mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked };
+    CUT_LENGTHS.forEach(function(k) { b[k] = fieldVal('mw-cut-' + k); });
+    CUT_PLAIN.forEach(function(k) { b[k] = $('mw-cut-' + k).value; });
+    return b;
+  }
+  // Saved in the machine's units then (settings.units); conv converts.
+  function loadCut(c, conv) {
+    if (!c || typeof c !== 'object') {
+      if (state.imperial) [['bit', 0.25], ['thick', 0.75], ['depth', 0.71], ['step', 0.12], ['feed', 60], ['plunge', 20]].forEach(function(d) { $('mw-cut-' + d[0]).value = d[1]; });
+      return;
+    }
+    CUT_LENGTHS.forEach(function(k) { var v = parseFloat(c[k]); if (isFinite(v)) $('mw-cut-' + k).value = +(v * conv).toFixed(4); });
+    CUT_PLAIN.forEach(function(k) { var v = parseFloat(c[k]); if (isFinite(v)) $('mw-cut-' + k).value = v; });
+    ['list', 'pause', 'mist', 'flood'].forEach(function(k) { if (typeof c[k] === 'boolean') $('mw-cut-' + k).checked = c[k]; });
+  }
+  // Bit Diameter's label: the loaded tool's diameter from ncSender's tool
+  // table, as QuickCut's (the loaded T<n> is a slot or a Tool ID, by
+  // Settings > Tool Changer > Tool Numbering).
+  async function cutLoadedBit() {
+    var note = $('mw-cut-note');
+    try {
+      await readMachineState();
+      var n = Number((state.machine || {}).tool);
+      if (!(n > 0)) throw new Error('No tool is loaded, so there\u2019s no diameter to read');
+      var byId = state.ncSettings && state.ncSettings.tool && state.ncSettings.tool.numbering === 'toolId';
+      var tools = await (await fetch(BASE_URL + '/api/tools/active')).json();
+      var tool = (tools || []).filter(function(t) { return (byId ? t.toolId : t.toolNumber) === n; })[0];
+      if (!tool || !(tool.diameter > 0)) throw new Error('T' + n + ' has no diameter in ncSender\u2019s tool table');
+      $('mw-cut-bit').value = +(tool.diameter / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
+      note.setAttribute('data-state', 'ok');
+      note.textContent = 'Bit Diameter from T' + n + (tool.name ? ' (' + tool.name + ')' : '') + '.';
+      saveSettings();
+    } catch (e) {
+      note.setAttribute('data-state', 'bad');
+      note.textContent = /fetch|JSON/i.test(e.message) ? 'Couldn\u2019t read the tool table from ncSender.' : e.message + '.';
+    }
+    renderCut();
+  }
+  async function generateCut() {
+    var note = $('mw-cut-note'), btn = $('mw-cut-generate');
+    await readMachineState();
+    var o = cutSettings(), probs = cutProblems(o);
+    if (probs.length) { renderCut(); return; }
+    var name = 'ZS-DogHoles_' + o.holes.length + 'x_Bit-' + shown(o.bitMm) + '_D-' + shown(o.depthMm) + '_' + unitName() + '.nc';
+    btn.disabled = true;
+    note.removeAttribute('data-state');
+    note.textContent = 'Loading the program\u2026';
+    try {
+      var res = await fetch(BASE_URL + '/api/gcode-files/load-temp', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: name, content: holeCutProgram(o).join('\n') + '\n' })
+      });
+      if (!res.ok) throw new Error('ncSender answered ' + res.status);
+      note.setAttribute('data-state', 'ok');
+      note.textContent = 'Loaded ' + name + ' into the visualizer.';
+      setTimeout(function() { window.postMessage({ type: 'close-plugin-dialog' }, '*'); }, 100);
+    } catch (e) {
+      note.setAttribute('data-state', 'bad');
+      note.textContent = 'Couldn\u2019t load the program: ' + e.message + '.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  function wireCut() {
+    CUT_LENGTHS.concat(CUT_PLAIN).forEach(function(k) {
+      $('mw-cut-' + k).addEventListener('input', renderCut);
+      $('mw-cut-' + k).addEventListener('change', saveSettings);
+    });
+    ['list', 'pause', 'mist', 'flood'].forEach(function(k) {
+      $('mw-cut-' + k).addEventListener('change', function() { renderCut(); saveSettings(); });
+    });
+    $('mw-cut-bit-label').addEventListener('click', function(evt) { evt.preventDefault(); cutLoadedBit(); });
+    $('mw-cut-generate').addEventListener('click', generateCut);
+  }
+
+
   // ---------- Tabs and Help ----------
   //
   // Help shows notes for the tab it was opened from, then that tab's hover
@@ -3644,7 +4065,7 @@
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>ZS: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
-      'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>. The column numbers run along the top of the map and the row letters down its left side, A at the back and 1 at the left, whichever corner your machine homes to.',
+      'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>, counted from machine zero&rsquo;s corner, so <strong>A1</strong> is the hole nearest machine X0 Y0 (front left on most machines). The column numbers run along the top of the map and the row letters down its left side.',
       'The dots pick where on the hole the point goes: its center, or an edge or corner one hole radius out in machine X and Y (back is +Y, right is +X). The map marks it on the picked hole.',
       '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the silver ring with a dot in it is the spindle, as ncSender&rsquo;s Top view shows it from above (the dot is the bit&rsquo;s center). The numbers along the bottom (X) and right (Y) are machine coordinates in ncSender&rsquo;s units.',
@@ -3665,6 +4086,13 @@
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
       HELP_UNITS ] },
+    cut: { name: 'Cut Holes', notes: [
+      '<strong>Cut the dog holes you set up in the XY0 Picker</strong>, so the spoilboard and the map come from the same numbers. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>ZS: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
+      'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
+      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
+      'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, or X0 Y0 has moved since you generated it. Z0 must be on the spoilboard&rsquo;s top.',
+      'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
+      'With <strong>Pause</strong> ticked it stops (M0) before starting the spindle, so you can check the bit and Z0; resume to go on. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table.' ] },
     macros: { name: 'Z0 macros', notes: [
       '<strong>Probe the spoilboard once, and stop re-probing Z on every tool change.</strong> With measured tools (a tool setter or an ATC), one macro puts Z0 on the spoilboard and another on the stock top, for whichever tool is loaded, and a third puts your own Z0 back. Put them on keys and switching Z0 is a single press.',
       'Record the spoilboard height once with a probe block and a measured tool; then the <strong>ZS:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
@@ -3708,6 +4136,7 @@
     $('mw-help-btn').classList.toggle('active', name === 'help');
     ROOT.querySelector('.mw-panel').scrollTop = 0;
     if (name === 'holes') renderHoles();
+    if (name === 'cut') readMachineState().then(renderCut);
   }
 
   init().then(readNumbers);

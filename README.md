@@ -237,8 +237,9 @@ middle of a crossing, and a corner dot on the edges of the two lines (back right
 
 A map of your machine's travel then shows every hole, where the work offset's X0 Y0 is now, and the
 spindle, with machine-coordinate rulers along the bottom (X) and right (Y) in ncSender's units. Grid
-holes are named like a fixture table, a row letter and a column number (**B3**): the column numbers
-run along the top and the row letters down the left, A at the back and 1 at the left. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
+holes are named like a fixture table, a row letter and a column number (**B3**), counted from machine
+zero's corner: **A1** is the hole nearest machine X0 Y0 (front left on most machines). The column numbers
+run along the top and the row letters down the left. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
 `$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole,
 or jog roughly over one and press **Pick Nearest Hole** (it picks the hole closest
 to the spindle and says how far off it is, so you get the grid's exact position without centering
@@ -281,6 +282,25 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 - **Favorites:** tap the star beside the picked hole's name to keep it as a favorite, e.g. your jig's
   home hole. Favorites are ringed on the map and listed under it; tap one to pick it. They're kept
   in the board's profile.
+
+## Cut Holes: cut the dog holes you set up
+
+The **Cut Holes** tab writes a program that cuts the XY0 Picker's holes, so the spoilboard and the map
+come from the same numbers. Load the bit, put Z0 on the spoilboard's top (**ZS: Z0 on spoilboard** does
+it, or touch off), set the depth and feeds, and press **Generate**: the program opens in ncSender's
+visualizer to check and run.
+
+- **Which holes:** every grid, each hole its own size, row by row and back and forth. Suppressed holes,
+  hidden grids and holes in a keepout zone or Exclude Picks area are left out. Listed holes are cut when
+  ticked; points with a height (a vise, a fixture) never are.
+- **How:** drilled when the bit is the hole's size (pecking), spiralled down when the hole is up to twice
+  the bit, else cleared in rings out from a spiral in its middle. Climb milling, as QuickCut does; the
+  circle milling is QuickCut's.
+- **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before
+  moving if the machine isn't homed, a G92 offset is active, or X0 Y0 has moved since it was generated.
+- **Safety:** Hole Depth can't be more than the Spoilboard Thickness (0.75" to start). Between holes it hops
+  5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. **Pause**
+  (on to start) stops before the spindle starts so you can check the bit and Z0.
 
 ## The wizard, step by step
 
