@@ -266,7 +266,10 @@ own machine.
 doesn't conduct, so a plain probe pin can't trigger), jog its tip into a hole below the top, and press
 **Probe This Hole**. It touches the sides in X and Y and finds the center. Two or more holes far apart
 (along a row and up a column) fit the spacing as well as the insets, and how far the spoilboard is
-turned; **Apply to Setup** writes them in once two holes are measured.
+turned; **Apply to Setup** writes them in once two holes are measured. It suggests three to measure (the
+hole nearest A1, the far end of its row and the top of its column, clear of keepout zones, Exclude Picks
+areas and the stock), and holding **Go to** moves over the next one at Safe Z, so there's no hunting on
+the map; any other hole works too.
 
 ![Measure Holes: a 3D probe touches a hole's four sides, or a pin is centered by eye with an even gap;
 measuring three holes far apart fits Setup's grid, spacing, insets and Turn, to the real
