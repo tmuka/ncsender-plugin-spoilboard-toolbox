@@ -58,17 +58,40 @@ for the exact center (**Midpoint XY** moves the spindle there first, at Safe Z).
 **New tool, same Z0.** Change to any measured tool and run **Z0 on stock top** (or **Z0 on
 spoilboard** for through-cuts). No re-probing.
 
-## Who it's for
+## What you need
 
-The **XY0 Picker** works on any homed grblHAL machine with a grid on its spoilboard. You'll get the
-most from the **Z0 macros** if:
+**For the basics, nothing beyond a homed grblHAL machine and ncSender.** The extras each light up
+features when you have them; nothing else stops working without them.
 
-- your machine **measures tool lengths** (a tool setter / tool length sensor, or an automatic tool
-  changer (ATC) such as RapidChange), so each tool has a tool length offset (TLO), and
-- your controller runs **grblHAL** (the wizard checks it can do the math the macros need).
+**Basic: every user**
+- **ncSender** 2.0.163 or later, driving a **grblHAL** controller.
+- **Homing switches**, used every session: the holes are machine positions, so most actions wait for a
+  homed machine. The travel comes from grblHAL's `$130`/`$131` and homing settings.
+- **A spoilboard with a hole grid**, or a grid lasered or V-carved on it, or a list of fixture holes.
 
-Without measured tool lengths, every tool change needs a new Z probe anyway, and Spoilboard Toolbox can't
-save you that.
+That's enough for:
+- the **XY0 Picker**: Pick Nearest Hole, Set, Go to, stock, favorites, profiles, zoom;
+- **Measure Holes by eye**, with a pin or dowel in the spindle (or a V-bit);
+- the **nearest-hole keyboard macros**;
+- **cutting the board**: dog holes, T-tracks, fit test, and chamfers and labels with a V-bit;
+- drilling **stock holes** (bolts and flip pins).
+
+Put Z0 on the spoilboard (or the stock) any way you like for these: paper, a touch plate, or the Z0 macros.
+
+**Extras, and what each one adds**
+
+| If you have | You also get |
+| --- | --- |
+| **Measured tool lengths:** a tool setter (tool length sensor) or an ATC, so each tool's length offset is active | The **Z0 macros**: Z0 on spoilboard, Z0 on stock top and Z0 back to saved, for any tool without re-probing, and **Set Z0** on a vise or fixture |
+| **A touch plate** (ncSender's Standard Block, on the probe input), with measured tool lengths | **Record spoilboard height** and **Measure stock thickness**, which the Z0 macros need once |
+| **Tools in ncSender's tool table** | Click **Bit Diameter** to take the loaded tool's size, and the programs start with a tool change (`M6`) to it |
+| **A 3D touch probe** | **Probe This Hole** and **Probe Suggested Holes** in Measure Holes; with its tool length offset measured, **Also record the spoilboard height**. *Feedback wanted: not yet tried on a real probe.* |
+| **A laser** with grblHAL's laser mode on (`$32=1`) | Engrave the hole labels with the laser instead of a V-bit |
+| **Keepout zones** (ncSender's, or the ATCi tool rack's `$684`–`$687`) | The map shows them, picks avoid them, and the programs lift over them |
+| **The [QuickCut](https://github.com/siganberg/ncsender-plugin-quickcut) plugin** | Spoilboard surfacing (left to QuickCut on purpose), and a reminder to re-record the height after it |
+
+**Without measured tool lengths**, every tool change needs a new Z touch-off anyway, so the Z0 macros
+can't save you anything; the rest of the plugin works the same.
 
 ## What you get
 
@@ -578,7 +601,9 @@ read as mm; `#<_x>` / `#<_y>` are then also in mm, which keeps the move right.
 No macro moves sideways without lifting first: the midpoint moves lift to Safe Z, and the probing
 macros only move straight down from where you put the bit, then back off upward.
 
-### Requirements
+### Requirements for the Z0 macros
+
+See [What you need](#what-you-need) for the rest of the plugin.
 
 - ncSender 2.0.163 or later (it stops a macro at its first rejected line, and checks this).
 - grblHAL built with parameter and expression support (the check tells you).
