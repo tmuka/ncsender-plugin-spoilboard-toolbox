@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.3.36
 
 **Cut the spoilboard, measure it, zero on it: one plugin, from the first hole to every job after.**
 
@@ -11,7 +11,8 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 same plugin: updates and settings carry over. Its macros are now named **SBT:** (for Spoilboard
 Toolbox) instead of ZS:. Your ZS: macros keep working; press **Create macros** once and they're renamed in
 place, keeping their numbers, so keyboard shortcuts on them still work. Generated programs' comments and
-file names start SBT too.
+file names start SBT too. Its GitHub page is now
+[tmuka/ncsender-plugin-spoilboard-toolbox](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox); the old link still works.
 
 ### ✨ New
 - **Spoilboard:** a new tab writes the program that cuts the dog holes you set up, every grid and each
