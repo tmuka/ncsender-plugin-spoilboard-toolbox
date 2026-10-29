@@ -28,6 +28,10 @@
     color: var(--color-text-primary);
     font-size: 0.9rem;
   }
+  /* ncCAM's size: almost full screen, 24 px clear all round, in landscape
+     and portrait (the dialog itself stops at 85vh). */
+  .plugin-dialog-container:has(.mw-wrapper) { max-height: none !important; max-width: none !important; }
+  .mw-wrapper { width: calc(100vw - 48px) !important; max-width: none !important; height: calc(100vh - 48px) !important; max-height: none !important; }
   .mw-container { display: flex; flex: 1; min-height: 0; }
   .mw-sidebar {
     display: flex; flex-direction: column; flex-shrink: 0; width: 220px;
@@ -89,7 +93,7 @@
     overflow-y: auto;
     padding: 20px;
   }
-  .mw-tab { display: flex; flex-direction: column; gap: var(--mw-gap); }
+  .mw-tab { display: flex; flex-direction: column; gap: var(--mw-gap); max-width: 1200px; }
   .mw-tab[hidden] { display: none; }
   .mw-help-body { display: flex; flex-direction: column; gap: var(--mw-gap); }
   /* ncSender's dialog styles every button (accent, white, no border) and
@@ -131,7 +135,7 @@
   .mw-holebar-info .mw-hint.mw-coords { font-size: 0.72rem; white-space: nowrap; }
   .mw-holebar-info .mw-hole-dist { font-size: 0.72rem; }
   .mw-holebar-info .mw-hole-dist[hidden], .mw-btn.mw-hold-btn[hidden] { display: none !important; }
-  .mw-holebar-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+  .mw-holebar-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; max-width: 100%; }
   .mw-holebar-info { flex-basis: 150px; }
   .mw-select.mw-hole-wcs { width: 8.5em !important; min-width: 0 !important; min-height: 0 !important; padding: 6px 8px !important; }
   /* QuickCut's drill origin picker: the hole inside its dashed box, with
@@ -419,7 +423,7 @@
   .mw-ins-btns { display: flex; flex-wrap: wrap; gap: 8px; }
   .mw-ins-btns .mw-btn { flex: none; white-space: nowrap; min-width: 0; }
   .mw-holes-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
-  .mw-select.mw-profile { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; margin: -4px 0 -4px 4px; max-width: 220px; }
+  .mw-select.mw-profile { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; margin: -4px 0 -4px 4px; max-width: 220px; min-width: 0; }
   .mw-profile-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding: 6px 6px 6px 10px; border-radius: 8px; background: var(--color-surface-muted); }
   .mw-profile-bar[hidden] { display: none; }
   .mw-profile-msg { flex: 1 1 auto; font-size: 0.85rem; color: var(--color-text-secondary); }
@@ -428,7 +432,7 @@
   .mw-profile-bar .mw-btn { min-height: 0 !important; padding: 4px 12px !important; }
   /* The map is sized in renderHoles to fill what's left of the panel.
      A machine deeper (Y) than it is wide puts the controls in a column on
-     the right; otherwise they sit below the map. */
+     the right, unless the panel is portrait; otherwise they sit below the map. */
   .mw-hole-map { width: 100%; max-width: 100%; height: 300px; display: block; flex: none; overflow: visible; }
   .mw-pick-card.mw-tall {
     display: grid; grid-template-columns: minmax(0, 1fr) 230px; grid-template-rows: auto 1fr;
@@ -4951,13 +4955,15 @@
   // underneath. Falls back to 700 x 400 while the tab is hidden.
   function holeMapBox(t) {
     var card = $('mw-pick-card'), svg = $('mw-hole-map'), panel = ROOT.querySelector('.mw-panel');
-    card.classList.toggle('mw-tall', t.yMm > t.xMm);
+    var tall = t.yMm > t.xMm && panel.clientWidth > panel.clientHeight * 0.8;
+    card.classList.toggle('mw-tall', tall);
+    card.style.gridTemplateColumns = '';
     svg.style.width = '';
     var w = svg.getBoundingClientRect().width;
     if (!w) return { w: 700, h: 400 };
     var top = svg.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
     var below = 20 + 13;
-    if (t.yMm <= t.xMm) below += $('mw-holebar').offsetHeight + Math.max($('mw-hole-status').offsetHeight, 18) + 20;
+    if (!tall) below += $('mw-holebar').offsetHeight + Math.max($('mw-hole-status').offsetHeight, 18) + 20;
     return { w: w, h: Math.max(260, panel.clientHeight - top - below) };
   }
   // live: only the machine moved (the position poll), so Setup's
@@ -5009,6 +5015,9 @@
     var w = t.xMm * sc0 + pad + padR + 2 * m, ht = t.yMm * sc0 + padT + padB + 2 * m;
     svg.style.width = w.toFixed(0) + 'px';
     svg.style.height = ht.toFixed(0) + 'px';
+    // Tall maps stop short of the column on wide screens: the controls
+    // follow the map rather than the panel's far edge.
+    if ($('mw-pick-card').classList.contains('mw-tall')) $('mw-pick-card').style.gridTemplateColumns = w.toFixed(0) + 'px 230px';
     // Zoomed in, the map shows part of the travel (vw) at k times the
     // scale, following the spindle when Follow is on.
     var zm = holes.zoom, ms0 = state.machine || {}, here0 = ms0.homed ? xyOf(ms0.MPos) : null;
