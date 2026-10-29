@@ -256,6 +256,11 @@ doesn't conduct, so a plain probe pin can't trigger), jog its tip into a hole be
 (along a row and up a column) fit the spacing as well as the insets, and how far the spoilboard is
 turned; **Apply to Setup** writes them in.
 
+No probe? Measure **by eye** instead: put a pin, a dowel or a V-bit in the spindle, jog it with the
+keyboard, a gamepad or the pendant down into the hole's mouth until the gap is even all round, and press
+**Centered by Eye**. It records where the bit is, without moving. A pin that just fits the hole centers
+itself; with a V-bit, lower its tip until the cone touches the rim evenly.
+
 **A spoilboard that isn't square to the machine:** **Turn** is how far it's turned, in degrees
 (counterclockwise seen from above), about the grid's first hole. Measure Holes fills it in. On a big bed
 it matters: 0.1° over 2.4 m is about 4 mm at the far end. The map, Pick Nearest Hole, Set, the keyboard

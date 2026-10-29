@@ -588,16 +588,21 @@
         <div class="mw-holes-tools mw-grid-only">
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-edit" aria-pressed="false" disabled title="For a grid with holes left out (under a clamp rail, say): tap a hole on the map to suppress it, or drag a box around several; a box around only suppressed holes restores them. Pick Nearest Hole, Go to, Set and the nearest-hole macros skip suppressed holes.">Edit Holes</button>
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-restore-all" disabled title="Put back every suppressed hole.">Restore All</button>
-          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-open" aria-pressed="false" disabled title="Fit the spacing, insets and Turn to real holes, by probing a few with a touch probe.">Measure Holes</button>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-open" aria-pressed="false" disabled title="Fit the spacing, insets and Turn to real holes, by probing a few with a touch probe or centering a pin in them by eye.">Measure Holes</button>
           <span class="mw-hint" id="mw-hole-sup-note"></span>
         </div>
         <div class="mw-cal mw-grid-only" id="mw-cal" hidden>
-          <p class="mw-hint">With a touch probe (a 3D probe that triggers when its tip is pushed sideways; wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t) in the spindle and connected: jog its tip into a hole, below the spoilboard&rsquo;s top
+          <p class="mw-hint"><strong>With a touch probe</strong> (a 3D probe that triggers when its tip is pushed sideways; wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t) in the spindle and connected: jog its tip into a hole, below the spoilboard&rsquo;s top
             and roughly centered, and press <strong>Probe This Hole</strong>. It touches the hole&rsquo;s sides in X and Y at the Z0 macros&rsquo; Probe Feed and
-            finds its center. Probe two or more holes far apart (along a row and up a column) to fit the spacing and insets, and how far the
+            finds its center.</p>
+          <p class="mw-hint"><strong>By eye</strong>, with no probe: put a pin, a dowel or a V-bit in the spindle, jog it (keyboard, gamepad or pendant) down into
+            the hole&rsquo;s mouth until it&rsquo;s centered, with an even gap all round, and press <strong>Centered by Eye</strong>. It records where the bit is,
+            without moving; a pin that just fits the hole centers itself.</p>
+          <p class="mw-hint">Measure two or more holes far apart (along a row and up a column) to fit the spacing and insets, and how far the
             spoilboard is turned (Turn); one fits the insets only, keeping Setup&rsquo;s Turn.</p>
           <div class="mw-inline-row">
             <button type="button" class="mw-btn mw-btn-small" id="mw-cal-probe">Probe This Hole</button>
+            <button type="button" class="mw-btn mw-btn-small" id="mw-cal-eye" title="Record the bit's position as this hole's center, without moving. Jog a pin or V-bit into the hole until it's centered first.">Centered by Eye</button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-apply" disabled>Apply to Setup</button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-clear">Clear</button>
           </div>
@@ -5349,7 +5354,7 @@
       inches = !!(gc && gc.imperial);
       var hh = readHoles(), here = xyOf((state.machine || {}).MPos);
       if (!hh || !here) throw new Error('Setup needs a grid first');
-      var grid = holes.grid.filter(function(q) { return q.col != null && (q.layer || 0) === holes.activeGrid; });
+      var grid = calGrid();
       var near = nearestHole(grid, here.x, here.y);
       if (!near) throw new Error('no grid holes to measure');
       // A hole's wall is its radius from the middle; the tip starts roughly
@@ -5369,19 +5374,47 @@
       var yb = await touch('Y', -reach);
       var c = probedCenter(xa.x, xb.x, ya.y, yb.y);
       await back(c.x, c.y);
-      // Matched to the hole Setup puts nearest; too far from every one and
-      // it would be matched to the wrong column or row.
-      var match = nearestHole(grid, c.x, c.y), hole = grid[match.index], sp = holeSpacingMm(hh);
-      if (match.distanceMm > sp / 3) throw new Error('that hole is ' + shown(match.distanceMm) + ' ' + unitName() + ' from where Setup puts any hole: jog over the first hole and press Grab First Hole Center, so Setup is close, then measure');
-      cal.meas = cal.meas.filter(function(m) { return m.key !== holeKey(hole); })
-        .concat([{ key: holeKey(hole), tag: holeName(hole), col: hole.col, row: hole.row, x: c.x, y: c.y, offX: c.x - hole.x, offY: c.y - hole.y }]);
       note.setAttribute('data-state', 'ok');
-      note.textContent = holeName(hole) + ' measured.';
+      note.textContent = recordCenter(c, grid, hh) + ' measured.';
     } catch (e) {
       note.setAttribute('data-state', 'bad');
       note.textContent = 'Couldn\u2019t measure it: ' + e.message + '.';
     } finally {
       if (inches) await sendCommand('G20').catch(function() {});
+      btn.disabled = false;
+      renderCal();
+    }
+  }
+  function calGrid() {
+    return holes.grid.filter(function(q) { return q.col != null && (q.layer || 0) === holes.activeGrid; });
+  }
+  // Matched to the hole Setup puts nearest; too far from every one and it
+  // would be matched to the wrong column or row. Returns the hole's name.
+  function recordCenter(c, grid, hh) {
+    var match = nearestHole(grid, c.x, c.y);
+    if (!match) throw new Error('no grid holes to measure');
+    var hole = grid[match.index];
+    if (match.distanceMm > holeSpacingMm(hh) / 3) throw new Error('that hole is ' + shown(match.distanceMm) + ' ' + unitName() + ' from where Setup puts any hole: jog over the first hole and press Grab First Hole Center, so Setup is close, then measure');
+    cal.meas = cal.meas.filter(function(m) { return m.key !== holeKey(hole); })
+      .concat([{ key: holeKey(hole), tag: holeName(hole), col: hole.col, row: hole.row, x: c.x, y: c.y, offX: c.x - hole.x, offY: c.y - hole.y }]);
+    return holeName(hole);
+  }
+  // By eye: the bit's position now is the hole's center. Nothing moves.
+  async function eyeHole() {
+    var note = $('mw-cal-note'), btn = $('mw-cal-eye');
+    btn.disabled = true;
+    note.removeAttribute('data-state');
+    try {
+      await machineReady();
+      var hh = readHoles(), here = xyOf((state.machine || {}).MPos);
+      if (!hh || !here) throw new Error('Setup needs a grid first');
+      var name = recordCenter(here, calGrid(), hh);
+      note.setAttribute('data-state', 'ok');
+      note.textContent = name + ' recorded where the bit is.';
+    } catch (e) {
+      note.setAttribute('data-state', 'bad');
+      note.textContent = 'Couldn\u2019t record it: ' + e.message + '.';
+    } finally {
       btn.disabled = false;
       renderCal();
     }
@@ -5434,6 +5467,7 @@
   function wireCal() {
     $('mw-cal-open').addEventListener('click', function() { showCal($('mw-cal').hidden); });
     $('mw-cal-probe').addEventListener('click', probeHole);
+    $('mw-cal-eye').addEventListener('click', eyeHole);
     $('mw-cal-apply').addEventListener('click', applyCal);
     $('mw-cal-clear').addEventListener('click', function() { cal.meas = []; renderCal(); });
   }
@@ -5496,7 +5530,7 @@
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>SBT: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
-      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. Two or more holes far apart fit the spacing too, and how far the spoilboard is turned. <strong>Apply to Setup</strong> writes them in, Turn included.',
+      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. Two or more holes far apart fit the spacing too, and how far the spoilboard is turned. <strong>Apply to Setup</strong> writes them in, Turn included.',
       '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and the Spoilboard and Stock programs all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',

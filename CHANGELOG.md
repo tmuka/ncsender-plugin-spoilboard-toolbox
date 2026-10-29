@@ -30,8 +30,9 @@ file names start SBT too.
 - **Stock** (a new tab): drill the stock right over spoilboard holes, either bolt
   holes (with an optional counterbore) to bolt it to threaded inserts, or two flip pins so a stock
   flipped for its second side drops back exactly where it was.
-- **Measure Holes:** probe a few real holes and Setup's spacing and insets are fitted to them, with how
-  far the spoilboard is turned.
+- **Measure Holes:** probe a few real holes, or center a pin in them by eye (jogging with the keyboard,
+  a gamepad or the pendant), and Setup's spacing and insets are fitted to them, with how far the
+  spoilboard is turned.
 - **Turned spoilboards:** a grid's **Turn** (degrees, from Measure Holes) turns its holes about the first
   one, for the map, Pick Nearest Hole, Set, the keyboard macros (press **Create macros** again after
   changing it) and the Spoilboard and Stock programs. On an 8 ft bed, 0.1° is about 4 mm at the far end.
