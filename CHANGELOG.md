@@ -6,6 +6,9 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### 🎯 Easier to use
+- **A welcome screen** on a fresh install: pick **No holes yet** (lay out and cut a new board) or
+  **Holes already there** (map them), and it takes you to Setup with the next steps. Help's **Getting
+  started** opens it again.
 - **Measure Holes** has a **Measure with** menu, a pin by eye (to start) or a 3D touch probe, and shows only
   that way's button, so a pin in a hole can't be sent probing into the wall by mistake.
 - **Apply to Setup** waits for two measured holes.

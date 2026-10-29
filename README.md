@@ -95,6 +95,8 @@ can't save you anything; the rest of the plugin works the same.
 
 ## Two ways to start
 
+The plugin asks this itself the first time it opens (and Help's **Getting started** brings it back).
+
 **A. No holes yet: lay out a new spoilboard and cut it.** The board and the map come from the same
 numbers, so they agree from the first hole.
 1. Surface the board (QuickCut's Wasteboard Surfacing) and put Z0 on its top: touch off, or

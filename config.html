@@ -182,6 +182,13 @@
   .mw-diagram .mw-d-line { stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
   .mw-diagram .mw-d-dim { stroke: var(--color-text-secondary); stroke-width: 1; fill: none; }
   .mw-diagram .mw-d-edge { stroke: var(--color-border); stroke-width: 1; }
+  .mw-welcome { display: flex; flex-direction: column; gap: 14px; }
+  .mw-welcome-title { margin: 0; font-size: 1.35rem; font-weight: 700; }
+  .mw-welcome-frame { background: #111720; border-radius: 10px; padding: 8px; }
+  .mw-welcome-art { display: block; width: 100%; height: auto; }
+  .mw-welcome-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--mw-gap); }
+  @media (max-width: 900px) { .mw-welcome-paths { grid-template-columns: minmax(0, 1fr); } }
+  .mw-welcome-steps { margin: 0; padding-left: 20px; font-size: 0.85rem; line-height: 1.5; color: var(--color-text-secondary); }
   .mw-card {
     background: var(--color-surface-muted);
     border: 1px solid var(--color-border);
@@ -527,6 +534,7 @@
         <p class="mw-status" id="mw-hole-status" role="status"></p>
       </section>
       <section class="mw-card" id="mw-setup-card" aria-labelledby="mw-holes-title">
+        <p class="mw-status" id="mw-setup-guide" data-state="ok" hidden></p>
         <div class="mw-card-head">
           <h3 class="mw-card-title" id="mw-holes-title">Setup</h3>
           <select class="mw-select mw-profile" id="mw-profile" aria-label="Profile" title="Profiles: one per spoilboard, fixture plate or grid you use (Spoilboard, Airweights sheet...). Make one before trying other numbers, and Revert brings it back."></select>
@@ -1096,10 +1104,144 @@
         <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-sh-generate">Generate Stock Holes</button></div>
       </section>
     </div>
+    <div class="mw-tab mw-welcome" data-tab="welcome" hidden>
+      <h2 class="mw-welcome-title">Welcome to Spoilboard Toolbox</h2>
+      <p class="mw-hint">Your spoilboard&rsquo;s holes are already a precision fixture. This turns any of them into X0 Y0 in two taps,
+        with no probe: jog roughly near a hole, tap <strong>Pick Nearest Hole</strong>, hold <strong>Set</strong>.</p>
+      <div class="mw-welcome-frame"><svg xmlns="http://www.w3.org/2000/svg" viewBox="30 90 1140 320" class="mw-welcome-art" aria-hidden="true">
+  <defs>
+    <marker id="wt-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1abc9c"/></marker>
+    <g id="wt-board">
+      <rect x="0" y="0" width="300" height="300" rx="14" fill="#2a2418"/>
+      <rect x="0" y="0" width="300" height="300" rx="14" fill="none" stroke="#4a3f2a" stroke-width="2"/>
+      <g fill="#14100a" stroke="#5c4d33" stroke-width="2">
+        <circle cx="60" cy="60" r="20"/><circle cx="150" cy="60" r="20"/><circle cx="240" cy="60" r="20"/>
+        <circle cx="60" cy="150" r="20"/><circle cx="150" cy="150" r="20"/><circle cx="240" cy="150" r="20"/>
+        <circle cx="60" cy="240" r="20"/><circle cx="150" cy="240" r="20"/><circle cx="240" cy="240" r="20"/>
+      </g>
+    </g>
+    <g id="wt-spindle">
+      <circle r="30" fill="none" stroke="#c9d3de" stroke-width="5" opacity=".9"/>
+      <circle r="5" fill="#e6ecf2"/>
+    </g>
+  </defs>
+  <g transform="translate(40,100)">
+    <use href="#wt-board"/>
+    <use href="#wt-spindle" x="172" y="128"/>
+    </g>
+  <line x1="365" y1="250" x2="430" y2="250" stroke="#1abc9c" stroke-width="4" marker-end="url(#wt-ar)"/>
+  <g transform="translate(450,100)">
+    <use href="#wt-board"/>
+    <use href="#wt-spindle" x="172" y="128"/>
+    <circle cx="150" cy="150" r="27" fill="none" stroke="#1abc9c" stroke-width="4"/>
+    <line x1="166" y1="134" x2="157" y2="143" stroke="#1abc9c" stroke-width="3" marker-end="url(#wt-ar)"/>
+    </g>
+  <line x1="775" y1="250" x2="840" y2="250" stroke="#1abc9c" stroke-width="4" marker-end="url(#wt-ar)"/>
+  <g transform="translate(860,100)">
+    <use href="#wt-board"/>
+    <use href="#wt-spindle" x="172" y="128"/>
+    <g stroke="#1abc9c" stroke-width="4" stroke-linecap="round">
+      <line x1="150" y1="110" x2="150" y2="190"/><line x1="110" y1="150" x2="190" y2="150"/>
+    </g>
+    <circle cx="150" cy="150" r="6" fill="#1abc9c"/>
+    </g>
+  </svg></div>
+      <h3 class="mw-card-title">Which is your spoilboard?</h3>
+      <div class="mw-welcome-paths">
+        <section class="mw-card">
+          <h3 class="mw-card-title">No holes yet</h3>
+          <div class="mw-welcome-frame"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 570 280" class="mw-welcome-art" aria-hidden="true">
+<rect width="570" height="280" rx="14" fill="#2a2418" stroke="#4a3f2a" stroke-width="2"/>
+<polyline points="60,50 150,50 240,50 330,50 420,50 510,50 510,140 420,140 330,140" fill="none" stroke="#1abc9c" stroke-width="2" stroke-dasharray="6 6" opacity=".7"/>
+<circle cx="60" cy="50" r="20" fill="#14100a" stroke="#5c4d33" stroke-width="2"/>
+<circle cx="150" cy="50" r="20" fill="#14100a" stroke="#5c4d33" stroke-width="2"/>
+<circle cx="240" cy="50" r="20" fill="#14100a" stroke="#5c4d33" stroke-width="2"/>
+<circle cx="330" cy="50" r="20" fill="#14100a" stroke="#5c4d33" stroke-width="2"/>
+<circle cx="420" cy="50" r="20" fill="#14100a" stroke="#5c4d33" stroke-width="2"/>
+<circle cx="510" cy="50" r="20" fill="#14100a" stroke="#5c4d33" stroke-width="2"/>
+<circle cx="510" cy="140" r="20" fill="#14100a" stroke="#5c4d33" stroke-width="2"/>
+<circle cx="420" cy="140" r="20" fill="#14100a" stroke="#5c4d33" stroke-width="2"/>
+<circle cx="240" cy="140" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="150" cy="140" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="60" cy="140" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="60" cy="230" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="150" cy="230" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="240" cy="230" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="330" cy="230" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="420" cy="230" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="510" cy="230" r="20" fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="330" cy="140" r="20" fill="#14100a" stroke="#1abc9c" stroke-width="2"/>
+<polyline points="334.0,140.0 334.0,140.4 334.0,140.8 334.0,141.2 333.9,141.6 333.8,142.0 333.7,142.3 333.5,142.7 333.3,143.1 333.0,143.4 332.7,143.7 332.4,144.0 332.0,144.3 331.6,144.5 331.2,144.7 330.8,144.8 330.3,145.0 329.8,145.0 329.4,145.0 328.9,145.0 328.4,144.9 327.9,144.8 327.4,144.7 327.0,144.4 326.5,144.2 326.1,143.9 325.7,143.5 325.4,143.2 325.0,142.7 324.7,142.3 324.5,141.8 324.3,141.3 324.1,140.7 324.0,140.2 324.0,139.6 324.0,139.0 324.0,138.5 324.1,137.9 324.3,137.3 324.5,136.8 324.8,136.2 325.2,135.7 325.5,135.2 326.0,134.8 326.4,134.4 327.0,134.0 327.5,133.7 328.1,133.5 328.7,133.2 329.3,133.1 330.0,133.0 330.7,133.0 331.3,133.0 332.0,133.1 332.7,133.3 333.3,133.5 333.9,133.8 334.5,134.1 335.1,134.5 335.7,135.0 336.1,135.5 336.6,136.1 337.0,136.7 337.3,137.4 337.6,138.1 337.8,138.8 337.9,139.5 338.0,140.3 338.0,141.0 337.9,141.8 337.8,142.5 337.6,143.3 337.3,144.0 336.9,144.7 336.5,145.4 336.0,146.0 335.5,146.6 334.8,147.1 334.2,147.6 333.5,148.0 332.7,148.4 331.9,148.6 331.1,148.8 330.3,149.0 329.4,149.0 328.6,149.0 327.7,148.9 326.9,148.7 326.0,148.4 325.2,148.0 324.5,147.6 323.7,147.1 323.1,146.5 322.4,145.9 321.9,145.2 321.4,144.4 320.9,143.6 320.6,142.7 320.3,141.9 320.1,140.9 320.0,140.0 320.0,139.1 320.1,138.1 320.2,137.2 320.5,136.2 320.8,135.3 321.3,134.4 321.8,133.6 322.4,132.8 323.0,132.1 323.8,131.4 324.6,130.8 325.4,130.3 326.3,129.9 327.3,129.5 328.3,129.2 329.3,129.1 330.3,129.0 331.4,129.0 332.4,129.1 333.5,129.3 334.5,129.7 335.5,130.1 336.4,130.6 337.3,131.2 338.1,131.9 338.9,132.6 339.6,133.5 340.2,134.4 340.8,135.3 341.2,136.4 341.6,137.4 341.8,138.5 342.0,139.6 342.0,140.8 342.0,141.9 341.8,143.0 341.5,144.1 341.1,145.2 340.6,146.3 340.0,147.3 339.3,148.2 338.6,149.1 337.7,149.9 336.8,150.7 335.8,151.3 334.7,151.9 333.6,152.3 332.4,152.7 331.2,152.9 330.0,153.0 328.8,153.0 327.5,152.9 326.3,152.7 325.1,152.3 324.0,151.9 322.8,151.3 321.8,150.6 320.8,149.8 319.8,149.0 319.0,148.0 318.2,147.0 317.6,145.8 317.0,144.7 316.6,143.4 316.3,142.2 316.1,140.9 316.0,139.6 316.0,138.2 316.2,136.9 316.5,135.6 316.9,134.3 317.5,133.1 318.1,131.9 318.9,130.8 319.7,129.7 320.7,128.8 321.8,127.9 322.9,127.1 324.1,126.5 325.4,125.9 326.8,125.5 328.1,125.2 329.5,125.0 330.9,125.0 332.4,125.1 333.8,125.3 335.2,125.7 336.5,126.2 337.8,126.8 339.1,127.5 340.2,128.4 341.3,129.4 342.3,130.5 343.2,131.6 344.0,132.9 344.7,134.2 345.2,135.6 345.6,137.0 345.9,138.5" fill="none" stroke="#1abc9c" stroke-width="2.5"/>
+<circle cx="330" cy="140" r="30" fill="none" stroke="#c9d3de" stroke-width="5" opacity=".9"/><circle cx="330" cy="140" r="5" fill="#e6ecf2"/>
+</svg></div>
+          <p class="mw-hint">Lay out a new board and cut it. The board and the map come from the same numbers, so they agree from the first hole.</p>
+          <ol class="mw-welcome-steps">
+            <li>Surface the board (QuickCut) and put Z0 on its top.</li>
+            <li>Describe the grid you want in <strong>Setup</strong>, or load a preset.</li>
+            <li><strong>Spoilboard &rsaquo; Fit test</strong> in scrap, to choose the hole size.</li>
+            <li><strong>Spoilboard &rsaquo; Dog holes &rsaquo; Generate</strong>, check it in the visualizer and run it.</li>
+          </ol>
+          <div><button type="button" class="mw-btn" id="mw-welcome-new">Lay out a new board</button></div>
+        </section>
+        <section class="mw-card">
+          <h3 class="mw-card-title">Holes already there</h3>
+          <div class="mw-welcome-frame"><svg xmlns="http://www.w3.org/2000/svg" viewBox="690 90 470 260" class="mw-welcome-art" aria-hidden="true">
+  <defs>
+    <marker id="wm-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1abc9c"/></marker>
+    <marker id="wm-aw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f1c40f"/></marker>
+  </defs>
+  <g transform="translate(40,90)">
+    <rect width="260" height="260" rx="14" fill="#1a222e" stroke="rgba(255,255,255,.12)"/>
+    <circle cx="130" cy="130" r="80" fill="#14100a" stroke="#5c4d33" stroke-width="3"/>
+    <circle cx="130" cy="130" r="14" fill="#c9d3de"/>
+    <g stroke="#f1c40f" stroke-width="3" marker-end="url(#wm-aw)">
+      <line x1="146" y1="130" x2="205" y2="130"/><line x1="114" y1="130" x2="55" y2="130"/>
+      <line x1="130" y1="114" x2="130" y2="55"/><line x1="130" y1="146" x2="130" y2="205"/>
+    </g>
+    </g>
+  <g transform="translate(330,90)">
+    <rect width="260" height="260" rx="14" fill="#1a222e" stroke="rgba(255,255,255,.12)"/>
+    <circle cx="130" cy="130" r="80" fill="#14100a" stroke="#5c4d33" stroke-width="3"/>
+    <circle cx="130" cy="130" r="64" fill="none" stroke="#1abc9c" stroke-width="2" stroke-dasharray="6 5"/>
+    <circle cx="130" cy="130" r="56" fill="#c9a66b" stroke="#8a6d3b" stroke-width="3"/>
+    <circle cx="130" cy="130" r="5" fill="#5c4d33"/>
+    </g>
+  <line x1="615" y1="220" x2="665" y2="220" stroke="#1abc9c" stroke-width="4" marker-end="url(#wm-ar)"/>
+  <g transform="translate(690,90)">
+    <rect width="470" height="260" rx="14" fill="#1a222e" stroke="rgba(255,255,255,.12)"/>
+    <g fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="4 4">
+      <circle cx="80" cy="200" r="14"/><circle cx="170" cy="200" r="14"/><circle cx="260" cy="200" r="14"/><circle cx="350" cy="200" r="14"/>
+      <circle cx="80" cy="110" r="14"/><circle cx="170" cy="110" r="14"/><circle cx="260" cy="110" r="14"/><circle cx="350" cy="110" r="14"/>
+    </g>
+    <g transform="rotate(-4 80 200) translate(6 -5)" fill="#14100a" stroke="#c9a66b" stroke-width="3">
+      <circle cx="80" cy="200" r="14"/><circle cx="170" cy="200" r="14"/><circle cx="260" cy="200" r="14"/><circle cx="350" cy="200" r="14"/>
+      <circle cx="80" cy="110" r="14"/><circle cx="170" cy="110" r="14"/><circle cx="260" cy="110" r="14"/><circle cx="350" cy="110" r="14"/>
+    </g>
+    <g transform="rotate(-4 80 200) translate(6 -5)" stroke="#1abc9c" stroke-width="3">
+      <line x1="70" y1="200" x2="90" y2="200"/><line x1="80" y1="190" x2="80" y2="210"/>
+      <line x1="340" y1="200" x2="360" y2="200"/><line x1="350" y1="190" x2="350" y2="210"/>
+      <line x1="70" y1="110" x2="90" y2="110"/><line x1="80" y1="100" x2="80" y2="120"/>
+    </g>
+    </g>
+  </svg></div>
+          <p class="mw-hint">Map the holes you have, then zero on them every job.</p>
+          <ol class="mw-welcome-steps">
+            <li>Type the hole size and spacing in <strong>Setup</strong>, or load a preset.</li>
+            <li>Pick a hole, jog over its real center, press <strong>Grab &hellip; Center</strong>.</li>
+            <li><strong>Measure Holes</strong> on the three it suggests (a pin by eye, or a 3D probe), then <strong>Apply</strong>.</li>
+            <li>Check with <strong>Go to Selected</strong> over a far hole, and save a profile.</li>
+          </ol>
+          <div><button type="button" class="mw-btn" id="mw-welcome-map">Map my holes</button></div>
+        </section>
+      </div>
+      <p class="mw-hint" id="mw-welcome-needs"></p>
+      <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-welcome-skip">Skip: I know my way around</button></div>
+    </div>
     <div class="mw-tab" data-tab="help" hidden>
       <h2 class="mw-help-title">Help: <span id="mw-help-for"></span></h2>
       <div id="mw-help-body" class="mw-help-body"></div>
-      <div><button type="button" class="mw-btn" id="mw-help-back">Back</button></div>
+      <div class="mw-inline-row"><button type="button" class="mw-btn" id="mw-help-back">Back</button>
+        <button type="button" class="mw-btn mw-btn-quiet" id="mw-help-welcome">Getting started</button></div>
     </div>
     </main>
   </div>
@@ -3022,7 +3164,7 @@
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'),
       stockZMode: $('mw-stock-zmode').value,
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, stockPoint: stockPoint(),
-      cut: cutBody(), surfaceAck: holes.surfaceAck || '', calMode: calMode()
+      cut: cutBody(), surfaceAck: holes.surfaceAck || '', calMode: calMode(), welcomed: !!state.welcomed
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
@@ -3294,6 +3436,8 @@
     holes.savedStock = saved.stockPoint || null;
     holes.profiles = Array.isArray(saved.holeProfiles) ? saved.holeProfiles.filter(function(x) { return x && typeof x.name === 'string' && x.name.trim(); }) : [];
     holes.profile = holes.profiles.some(function(x) { return x.name === saved.holeProfile; }) ? saved.holeProfile : '';
+    // The welcome opens first only on a fresh install: nothing set up yet.
+    state.welcomed = !!saved.welcomed || saved.holeSx != null || holes.profiles.length > 0;
     if (probeBlockMm != null) {
       $('mw-block').value = +(probeBlockMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
       $('mw-block-source').hidden = false;
@@ -3422,6 +3566,11 @@
     });
     $('mw-help-btn').addEventListener('click', function() { showTab(help.tab === 'help' ? help.from : 'help'); });
     $('mw-help-back').addEventListener('click', function() { showTab(help.from); });
+    $('mw-help-welcome').addEventListener('click', function() { showTab('welcome'); });
+    $('mw-welcome-new').addEventListener('click', function() { welcomeGo('new'); });
+    $('mw-welcome-map').addEventListener('click', function() { welcomeGo('map'); });
+    $('mw-welcome-skip').addEventListener('click', function() { welcomeGo(''); });
+    $('mw-welcome-needs').innerHTML = HELP_NEEDS;
     $('mw-close').addEventListener('click', function() { saveNow(); window.postMessage({ type: 'close-plugin-dialog' }, '*'); });
     ROOT.addEventListener('input', function(evt) { if (/^(INPUT|TEXTAREA|SELECT)$/.test(evt.target.tagName)) saveLater(); });
     window.addEventListener('pagehide', saveNow);
@@ -5903,9 +6052,27 @@
       (tips ? '<section class="mw-card mw-help-card"><h3 class="mw-card-title">Field tips</h3><dl class="mw-help-tips">' + tips + '</dl></section>' : '') +
       '<p class="mw-hint">More in the <a href="' + HELP_DOCS + '" target="_blank" rel="noopener">README</a>.</p>';
   }
+  // Leaving the welcome: to Setup, unlocked, with the chosen path's next
+  // steps above it; or straight to the XY0 Picker.
+  var WELCOME_GUIDE = {
+    'new': 'New board: describe the grid you want here (hole size, spacing, and the insets from machine X0 Y0 to the first hole), or load a preset from Profiles. Then Spoilboard \u203a Fit test in scrap, and Spoilboard \u203a Dog holes \u203a Generate.',
+    map: 'Mapping your holes: type their size and spacing here (or load a preset). Then pick a hole on the map, jog the bit over its real center and press Grab \u2026 Center, and open Measure Holes to fit the rest.'
+  };
+  function welcomeGo(path) {
+    state.welcomed = true;
+    saveSettings();
+    showTab('holes');
+    var guide = $('mw-setup-guide');
+    guide.hidden = !path;
+    if (!path) return;
+    guide.textContent = WELCOME_GUIDE[path];
+    if (holeLocked()) $('mw-hole-lock').click();
+    $('mw-setup-card').scrollIntoView({ block: 'start' });
+    $('mw-hole-dia').focus();
+  }
   function showTab(name) {
     if (name === 'help') renderHelp(help.from);
-    else help.from = name;
+    else if (name !== 'welcome') help.from = name;
     help.tab = name;
     ROOT.querySelectorAll('.mw-panel > .mw-tab').forEach(function(t) { t.hidden = t.getAttribute('data-tab') !== name; });
     ROOT.querySelectorAll('.mw-sidebar-nav .mw-nav-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-tab') === name); });
@@ -5926,6 +6093,6 @@
     ROOT.querySelectorAll('.mw-tab[data-tab="cut"] .mw-card[data-sec]').forEach(function(c) { c.hidden = c.getAttribute('data-sec') !== name; });
   }
 
-  init().then(readNumbers);
+  init().then(function() { if (!state.welcomed) showTab('welcome'); }).then(readNumbers);
 })();
 </script>
