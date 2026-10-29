@@ -456,9 +456,10 @@ the plugin reminds you to re-record the spoilboard height.
 **Removable fixtures:** tick **Fixture plate** and every Spoilboard program is confined to the XY0
 Picker's **Stock**, so you can make a plate (MDF, say) whose holes, slots or lines match the spoilboard
 and lift it off when you're done. Dog holes, chamfers and labels use only the holes wholly on it, 3 mm in
-from its edges; T-track slots and grid lines stop 3 mm short of them; nothing cuts deeper than its
-thickness (T), and Z0 goes on its top (Generate refuses while Z0 is still on the spoilboard, once its
-height is recorded). Lay the plate over a sacrificial sheet for through holes, or keep them no bigger
+from its edges; slots, grid lines, chamfers and labels stay at least 3 mm in too; nothing cuts deeper than
+its thickness (T), and Z0 goes on its top. Once the spoilboard height is recorded, Generate refuses unless
+Z0 is T above it (so a stale T is caught), and the program stops if Z0 moves after Generate; it lifts to
+Safe Z between holes, over the clamps. Lay the plate over a sacrificial sheet for through holes, or keep them no bigger
 than the spoilboard holes they line up over.
 
 **No holes, just lines:** **Grid lines** lasers (grblHAL's laser mode, `$32=1`) or V-bit engraves a line

@@ -3,12 +3,16 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.4.1
+
+**Removable fixture plates that match your spoilboard.**
 
 ### ✨ New
 - **Fixture plate** (Spoilboard tab): confine the dog holes, T-tracks, grid lines, chamfers and labels
   to the XY0 Picker's Stock, to make a removable plate that matches the spoilboard. Nothing goes past
-  its edges or deeper than its thickness, and Z0 goes on its top.
+  its edges or deeper than its thickness, and Z0 goes on its top: with the spoilboard height recorded,
+  Generate checks Z0 is the plate's thickness above it, the program stops if Z0 moves, and it lifts to
+  Safe Z between holes, over the clamps.
 
 ### 🐛 Fixes
 - The **Bit and depth** card no longer has a blank strip at the bottom.

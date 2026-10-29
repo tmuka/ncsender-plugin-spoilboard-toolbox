@@ -409,8 +409,9 @@
     white-space: pre; overflow-x: auto;
   }
   .mw-status { margin: 0 !important; font-size: 0.85rem; }
-  /* The Bit and depth card's note takes no room until there's something to say. */
-  #mw-cut-bit-note:empty { display: none; }
+  /* The Bit and depth card's note takes no room until there's something to
+     say, but stays in the page so a screen reader announces it. */
+  #mw-cut-bit-note:empty { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .mw-holes-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
   .mw-select.mw-profile { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; margin: -4px 0 -4px 4px; max-width: 220px; }
   .mw-profile-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding: 6px 6px 6px 10px; border-radius: 8px; background: var(--color-surface-muted); }
@@ -928,7 +929,7 @@
       <div class="mw-plate">
         <label class="mw-extra"><input type="checkbox" id="mw-cut-plate"><span><strong>Fixture plate:</strong> only inside the stock, for a removable plate (MDF,
           say) whose holes, slots or lines match the spoilboard. Its size, place and thickness are the XY0 Picker&rsquo;s Stock; Z0 on its top.</span></label>
-        <p class="mw-hint" id="mw-cut-plate-note" hidden></p>
+        <p class="mw-hint" id="mw-cut-plate-note" role="status" hidden></p>
       </div>
       <div class="mw-secs" id="mw-cut-secs" role="tablist" aria-label="What to cut">
         <button type="button" class="mw-sec" role="tab" data-sec="holes" aria-selected="true">Dog holes</button>
@@ -5496,6 +5497,9 @@
       zWcs: zero && ms[w.toLowerCase()] ? parseFloat(String(ms[w.toLowerCase()]).split(',')[2]) : null,
       bitMm: bit, thickMm: plateOn ? plateT : cutMm('mw-cut-thick'), depthMm: cutMm('mw-cut-depth'), stepMm: cutMm('mw-cut-step'),
       zWhat: plateOn ? 'the fixture plate\u2019s top' : undefined,
+      // A plate is clamped like stock: Safe Z between holes, and a stop if
+      // Z0 has moved since Generate (its depth is from that Z0).
+      safeEach: plateOn || undefined, zStop: plateOn && zero && ms[w.toLowerCase()] ? parseFloat(String(ms[w.toLowerCase()]).split(',')[2]) : undefined,
       stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
       rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
@@ -5525,7 +5529,13 @@
       if (!o.plate) out.push('Fixture plate: tick Stock in the XY0 Picker, give its width and length, and pick the hole it\u2019s on (or press From X0 Y0 now)');
       if (!(o.plateThickMm > 0)) out.push('Fixture plate: give the stock a thickness (T) in the XY0 Picker, so nothing cuts deeper than the plate');
       // Z0 must be on the plate's top, checked against the recorded spoilboard height.
-      else if (o.zWcs != null && state.spoilZ && o.zWcs - state.spoilZ < o.plateThickMm / 2) out.push('Fixture plate: ' + o.wcsName + ' Z0 is on the spoilboard, not the plate\u2019s top: put it there first (SBT: Z0 on stock top, or touch off)');
+      else if (o.zWcs != null && state.spoilZ) {
+        // Z0 is checked against the recorded spoilboard height: it must be
+        // the plate's thickness above it, or T (the depth limit) is wrong.
+        var above = o.zWcs - state.spoilZ;
+        if (above < o.plateThickMm / 2) out.push('Fixture plate: ' + o.wcsName + ' Z0 is on the spoilboard, not the plate\u2019s top: put it there first (SBT: Z0 on stock top, or touch off)');
+        else if (Math.abs(above - o.plateThickMm) > 0.5) out.push('Fixture plate: ' + o.wcsName + ' Z0 is ' + shown(above) + ' ' + unitName() + ' above the spoilboard but the stock\u2019s T is ' + shown(o.plateThickMm) + ' ' + unitName() + ': measure or type the plate\u2019s thickness, and check Z0 is on its top');
+      }
     }
     return out;
   }
@@ -5713,7 +5723,9 @@
     o.tool = null;
     o.vAngleDeg = parseFloat($('mw-chm-angle').value); o.chamferMm = cutMm('mw-chm-width');
     o.holes = o.holes.filter(function(h) { return h.diaMm >= 1; });
-    if (!o.holes.length) probs.push('There are no holes to chamfer (grid lines aren\u2019t)');
+    // On a plate, the chamfer's outer edge must stay off its edge too.
+    if (o.plateOn && o.plate && o.chamferMm > 0) o.holes = o.holes.filter(function(h) { return stockHoleCandidates([h], o.plate, h.diaMm / 2 + o.chamferMm, 1).length > 0; });
+    if (!o.holes.length) probs.push(o.plateOn ? 'There are no holes on the fixture plate to chamfer, with the chamfer clear of its edge' : 'There are no holes to chamfer (grid lines aren\u2019t)');
     if (!(o.vAngleDeg >= 10 && o.vAngleDeg <= 170)) probs.push('V-bit Angle must be 10 to 170\u00b0');
     if (!(o.chamferMm > 0)) probs.push('Chamfer Width must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) probs.push('Feed and Plunge must be more than 0');
@@ -5847,7 +5859,8 @@
         return q.col != null && !q.suppressed && !q.hidden && !q.blocked && (!o.plateOn || (o.plate && stockHoleCandidates([q], o.plate, holeR(q, hh), PLATE_EDGE_MM).length > 0));
       }), $('mw-lab-mode').value,
         { textMm: textMm, gapMm: Math.max(1, textMm * 0.4), travel: state.travel, zones: uiZones(), all: holes.grid.filter(function(q) { return !q.hidden && !q.suppressed; }),
-          holeR: function(q) { return holeR(q, hh); }, tracks: labelTracks(hh), within: o.plateOn ? o.plate : null });
+          holeR: function(q) { return holeR(q, hh); }, tracks: labelTracks(hh),
+          within: o.plateOn && o.plate ? (function(r, m) { return { minX: r.minX + m, maxX: r.maxX - m, minY: r.minY + m, maxY: r.maxY - m }; })(o.plate, PLATE_EDGE_MM + (laser ? 0 : 1)) : null });
     }
     Object.assign(o, { labels: pl.labels, textMm: textMm, laser: laser, power: parseFloat($('mw-lab-power').value), depthMm: cutMm('mw-lab-depth'),
       feed: Math.round(cutMm('mw-lab-feed')) });
@@ -5993,7 +6006,7 @@
     var depth = typed ? cutMm('mw-trk-depth') : o.thickMm;
     if (!(width > 0)) probs.push('Track Width must be more than 0');
     else if (o.bitMm > 0 && o.bitMm > width + 0.05) probs.push('The bit is wider than the track');
-    if (!(depth > 0)) probs.push(typed ? 'Depth must be more than 0' : 'Set the Spoilboard Thickness above (the top layer\u2019s), or a Depth');
+    if (!(depth > 0)) probs.push(typed ? 'Depth must be more than 0' : o.plateOn ? 'Give the stock a thickness (T) in the XY0 Picker, or a Depth' : 'Set the Spoilboard Thickness above (the top layer\u2019s), or a Depth');
     else if (o.thickMm > 0 && depth > o.thickMm + 1e-9) probs.push(o.plateOn ? 'Depth is more than the fixture plate\u2019s thickness' : 'Depth is more than the Spoilboard Thickness: it would cut the layer below and its inserts');
     else if (!(o.thickMm > 0)) probs.push(o.plateOn ? 'Give the stock a thickness (T) in the XY0 Picker' : 'Set the Spoilboard Thickness above (the top layer\u2019s), so the slots can\u2019t go deeper');
     if (!(o.bitMm > 0)) probs.push('Bit Diameter must be more than 0');
@@ -6040,7 +6053,8 @@
     note.textContent = !r ? 'No stock yet: tick Stock in the XY0 Picker and give its size, then pick the hole it\u2019s on (or From X0 Y0 now).'
       : 'Plate ' + shown(r.maxX - r.minX) + ' \u00d7 ' + shown(r.maxY - r.minY) + (o.plateThickMm > 0 ? ' \u00d7 ' + shown(o.plateThickMm) : ', no thickness (T) yet,') + u +
         ', its front left corner at machine X ' + shown(r.minX) + ', Y ' + shown(r.minY) + u + '. ' + o.holes.length + ' hole' + (o.holes.length === 1 ? '' : 's') +
-        ' wholly on it, ' + shown(PLATE_EDGE_MM) + u + ' from its edges; depth never past its thickness; Z0 on its top.';
+        ' wholly on it, ' + shown(PLATE_EDGE_MM) + u + ' from its edges; depth never past its thickness; Z0 on its top.' +
+        (state.spoilZ ? '' : ' Couldn\u2019t check that Z0 is on its top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.');
   }
   function renderCutTab() { renderPlate(); renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderLabels(); renderGridLines(); renderLaserTest(); }
   function wireCut() {
@@ -6553,8 +6567,8 @@
         '<p>Pick the crispest cross and use its power and feed for Grid lines and Labels. The summary gives the scrap size it needs.</p>',
       '<p><strong>Fixture plate:</strong> tick it to make a removable plate (MDF, say) that matches the spoilboard, instead of cutting the spoilboard itself. The plate is the XY0 Picker&rsquo;s <strong>Stock</strong>: its size, the hole it sits on (or X0 Y0), and its thickness (T).</p><ul>' +
         '<li>Dog holes, Chamfers and Labels use only the holes wholly on it, 3 mm in from its edges.</li>' +
-        '<li>T-track slots and Grid lines stop 3 mm short of its edges.</li>' +
-        '<li>Nothing cuts deeper than its thickness; Z0 on its top. With the spoilboard height recorded, Generate refuses while Z0 is still on the spoilboard.</li></ul>' +
+        '<li>T-track slots, Grid lines, chamfers and labels stay at least 3 mm in from its edges (more for a slot&rsquo;s width or a V-bit).</li>' +
+        '<li>Nothing cuts deeper than its thickness; Z0 on its top. With the spoilboard height recorded, Generate refuses unless Z0 is the plate&rsquo;s thickness above it; the program stops if Z0 moves afterwards, and lifts to Safe Z between holes, over the clamps.</li></ul>' +
         '<p>Through holes go into whatever&rsquo;s under the plate: lay it over a sacrificial sheet, or line its holes up over the spoilboard&rsquo;s and keep them no bigger. The Fit test, Laser test and Stock tab ignore the tick.</p>' ] },
     stock: { name: 'Stock', notes: [
       '<p><strong>Stock that bolts down and flips true.</strong> Clamp the stock some other way, put Z0 on its top, and drill it right over spoilboard holes:</p><ul>' +
