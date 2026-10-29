@@ -611,7 +611,7 @@
           </div>
           <p class="mw-hint" data-cal-mode="probe"><strong>With a touch probe</strong> (a 3D probe that triggers when its tip is pushed sideways; wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t) in the spindle and connected: jog its tip into a hole, below the spoilboard&rsquo;s top
             and roughly centered, and press <strong>Probe This Hole</strong>. It touches the hole&rsquo;s sides in X and Y at the Z0 macros&rsquo; Probe Feed and
-            finds its center. Or let it do the suggested holes: jog the tip to a few mm above the spoilboard and hold <strong>Probe Suggested Holes</strong>.
+            finds its center. Or let it do the suggested holes: jog the tip to 1 to 4 mm above the spoilboard and hold <strong>Probe Suggested Holes</strong>.
             It goes to each at Safe Z, 6 mm down into it (stopping if it touches the spoilboard&rsquo;s top instead), and centers itself.
             <strong>Not yet tried with a real 3D probe:</strong> stay by the stop button the first time, and please tell us how it went on <a href="https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/issues" target="_blank" rel="noopener">GitHub</a>.</p>
           <p class="mw-hint" data-cal-mode="eye"><strong>By eye</strong>, with no probe: put a pin, a dowel or a V-bit in the spindle, jog it (keyboard, gamepad or pendant) down into
@@ -624,7 +624,7 @@
           <p class="mw-hint" id="mw-cal-next"></p>
           <div class="mw-inline-row">
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-cal-goto" hidden title="Hold to move over the suggested hole's center from Setup: up to ncSender's Safe Z first, then across. Then jog down into it to measure."><span class="mw-hold-fill"></span><span id="mw-cal-goto-label">Go to</span><span class="mw-hold-hint">Hold</span></button>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-cal-auto" data-cal-mode="probe" title="Hold to probe each suggested hole in turn: start with the probe tip a few mm above the spoilboard. It lifts to Safe Z between holes, goes 6 mm down into each and stops if it touches the spoilboard's top instead."><span class="mw-hold-fill"></span>Probe Suggested Holes<span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-cal-auto" data-cal-mode="probe" title="Hold to probe each suggested hole in turn: start with the probe tip 1 to 4 mm above the spoilboard. It lifts to Safe Z between holes, goes 6 mm down into each and stops if it touches the spoilboard's top instead."><span class="mw-hold-fill"></span>Probe Suggested Holes<span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small" id="mw-cal-probe" data-cal-mode="probe">Probe This Hole</button>
             <button type="button" class="mw-btn mw-btn-small" id="mw-cal-eye" data-cal-mode="eye" title="Record the bit's position as this hole's center, without moving. Jog a pin or V-bit into the hole until it's centered first.">Centered by Eye</button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-apply" disabled>Apply to Setup</button>
@@ -2096,11 +2096,11 @@
     return [a, b, c].filter(Boolean);
   }
   // Where a probe can touch the spoilboard's top next to hole h: its radius
-  // plus 4 mm out along +X, -X, +Y or -Y, the first that's 2 mm clear of
+  // plus outMm (4 mm unless given) out along +X, -X, +Y or -Y, the first that's 2 mm clear of
   // every other hole (others, each with rMm), keepout zones, T-tracks
   // ({ a, b, halfMm } centerlines) and the travel's edges. null when none is.
-  function surfaceSpot(h, rMm, others, zones, tracks, travel) {
-    var d = rMm + 4, clear = 2, minX = travel.dirX > 0 ? 0 : -travel.xMm, minY = travel.dirY > 0 ? 0 : -travel.yMm;
+  function surfaceSpot(h, rMm, others, zones, tracks, travel, outMm) {
+    var d = rMm + (outMm > 0 ? outMm : 4), clear = 2, minX = travel.dirX > 0 ? 0 : -travel.xMm, minY = travel.dirY > 0 ? 0 : -travel.yMm;
     var segDist = function(p, a, b) {
       var dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy, t = l2 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
       return Math.hypot(p.x - a.x - t * dx, p.y - a.y - t * dy);
@@ -3164,7 +3164,7 @@
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'),
       stockZMode: $('mw-stock-zmode').value,
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, stockPoint: stockPoint(),
-      cut: cutBody(), surfaceAck: holes.surfaceAck || '', calMode: calMode(), welcomed: !!state.welcomed
+      cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
@@ -3346,7 +3346,7 @@
   // offsets in mm), only when the controller is connected and idle.
   var numbersBusy = false;
   async function readNumbers() {
-    if (numbersBusy) return;
+    if (numbersBusy || (cal && cal.busy)) return;
     numbersBusy = true;
     var note = $('mw-d-status');
     try {
@@ -3416,7 +3416,9 @@
     holes.hidden = saved.holeHidden && typeof saved.holeHidden === 'object' ? saved.holeHidden : {};
     applySetup(setupFields(saved, state.imperial));
     setHoleOrigin(saved.holeOrigin);
-    $('mw-cal-mode').value = saved.calMode === 'probe' ? 'probe' : 'eye';
+    // By eye on every open: a pin left in the spindle from last time must
+    // never meet the probing buttons.
+    $('mw-cal-mode').value = 'eye';
     holes.blocks = Array.isArray(saved.holeBlocks) ? saved.holeBlocks.filter(function(z) {
       return z && [z.minX, z.maxX, z.minY, z.maxY].every(function(v) { return typeof v === 'number' && isFinite(v); });
     }).map(function(z) { return { block: true, name: 'Blocked', minX: z.minX, maxX: z.maxX, minY: z.minY, maxY: z.maxY }; }) : [];
@@ -5645,7 +5647,7 @@
   // Finds the center of the hole the probe tip is in, from `from` (machine
   // mm): touches in X, then in Y through the X center; then again from that
   // center, so a start off to one side doesn't skew it. Ends over the center.
-  async function probeCenterFrom(from, reach, feed) {
+  async function probeCenterFrom(from, reach, feed, firstReach) {
     var back = function(x, y) { return sendCommand('G53 G21 G90 G0 X' + fmt(x) + ' Y' + fmt(y)); };
     var touch = async function(axis, dist) {
       var t = await probeTouch(axis, dist, feed);
@@ -5654,11 +5656,12 @@
     };
     var c = from;
     for (var pass = 0; pass < 2; pass++) {
-      var xa = await touch('X', reach); await back(c.x, c.y);
-      var xb = await touch('X', -reach);
+      var rr = pass === 0 && firstReach > 0 ? firstReach : reach;
+      var xa = await touch('X', rr); await back(c.x, c.y);
+      var xb = await touch('X', -rr);
       var cx = (xa.x + xb.x) / 2; await back(cx, c.y);
-      var ya = await touch('Y', reach); await back(cx, c.y);
-      var yb = await touch('Y', -reach);
+      var ya = await touch('Y', rr); await back(cx, c.y);
+      var yb = await touch('Y', -rr);
       c = probedCenter(xa.x, xb.x, ya.y, yb.y);
       await back(c.x, c.y);
     }
@@ -5678,14 +5681,17 @@
   // stored when it's over 2 mm from the height already recorded (a probe
   // whose own offset isn't measured, most likely). Returns what it did.
   var SPOIL_JUMP_MM = 2;
-  async function probeSpoilHeight(h, hh, z0, feed) {
+  async function probeSpoilHeight(h, c, hh, z0, feed) {
     var s = readSettings();
     if (!s) throw new Error('the Z0 macros tab has a setting to fix before the spoilboard height can be recorded');
     var gc = parseGcState((await ask('$G', 500)).lines), hash = parseHashReport((await ask('$#', 900)).lines);
     if (!gc || !gc.tloActive || !isFinite(hash.TLO)) throw new Error('no tool length offset is active for the probe, so the spoilboard height wasn\u2019t recorded');
     if (hash.G92 && Math.abs(hash.G92[2]) > 0.0005) throw new Error('a G92 Z offset is active (G92.1 clears it), so the spoilboard height wasn\u2019t recorded');
     var others = holes.grid.filter(function(q) { return q !== h && !q.hidden; }).map(function(q) { return { x: q.x, y: q.y, rMm: holeR(q, hh) }; });
-    var spot = surfaceSpot(h, holeR(h, hh), others, uiZones(), labelTracks(hh), state.travel);
+    // From the measured center, past a chamfer (as wide as the Chamfers
+    // section's) and the probe's ball.
+    var chm = cutMm('mw-chm-width');
+    var spot = surfaceSpot({ x: c.x, y: c.y }, holeR(h, hh), others, uiZones(), labelTracks(hh), state.travel, 4 + (chm > 0 ? chm : 0));
     if (!spot) throw new Error('there\u2019s no clear spot beside ' + holeName(h) + ' to touch the spoilboard\u2019s top');
     var r = await sendCommand('G53 G21 G90 G0 X' + fmt(spot.x) + ' Y' + fmt(spot.y));
     if (!r.ok) throw new Error('the controller rejected the move beside ' + holeName(h));
@@ -5702,9 +5708,11 @@
     return 'Spoilboard height ' + (prev ? fmt(prev) + ' \u2192 ' + fmt(now) + ' mm (' + fmt(Math.abs(now - prev)) + ' mm ' + (now > prev ? 'higher' : 'lower') + ')' : fmt(now) + ' mm (none recorded before)') + ', in ' + slot + ' Z. ';
   }
   async function probeSuggested() {
-    var note = $('mw-cal-note'), inches = false, gen = cal.gen, z0 = null, done = [], heightNote = '', heightBad = false;
-    if (calMode() !== 'probe') return;
+    var note = $('mw-cal-note'), inches = false, gen = cal.gen, z0 = null, done = [], heightNote = '', heightBad = false, moved = false;
+    if (calMode() !== 'probe' || holes.busy || cal.busy) return;
+    holes.busy = true;
     calBusy(true);
+    updatePicked();
     note.removeAttribute('data-state');
     try {
       await machineReady();
@@ -5717,21 +5725,32 @@
       if (!(feed > 0)) throw new Error('set a Probe Feed on the Z0 macros tab');
       z0 = parseFloat(String((state.machine || {}).MPos || '').split(',')[2]);
       if (!isFinite(z0)) throw new Error('couldn\u2019t read the spindle\u2019s height');
-      if (state.safeZMm != null && z0 >= state.safeZMm - 1) throw new Error('jog the probe tip down to a few mm above the spoilboard first: it starts from there');
+      if (state.safeZMm != null && z0 >= state.safeZMm - 1) throw new Error('jog the probe tip down to 1 to 4 mm above the spoilboard first: it starts from there');
+      // With the spoilboard height recorded, the start must be 0.5 to 5 mm
+      // above it, so the 6 mm dive gets below the top but not to a chamfer's
+      // foot from too high.
+      await readTlo();
+      if (state.spoilZ && state.tloMm != null) {
+        var above = z0 - (state.spoilZ + state.tloMm);
+        if (above < 0.5 || above > 5) throw new Error('the probe tip is ' + shown(above) + ' ' + unitName() + ' above the spoilboard: start it 1 to 4 mm above');
+      }
       for (var i = 0; i < todo.length; i++) {
         var h = todo[i], name = holeName(h), mz = parseFloat(String((state.machine || {}).MPos || '').split(',')[2]);
+        if (!rootAlive()) throw new Error('the plugin was closed');
         note.textContent = 'Probing ' + name + ' (' + (i + 1) + ' of ' + todo.length + ')\u2026';
+        moved = true;
         await sendHoleCommands(holeGotoCommands(h.x, h.y, state.safeZMm, isFinite(mz) ? mz : z0));
         var r = await sendCommand('G53 G21 G90 G0 Z' + fmt(z0));
         if (!r.ok) throw new Error('the controller rejected the move down over ' + name);
         var dive = await probeTouch('Z', -CAL_DIVE_MM, feed);
-        if (dive && dive.ok) throw new Error('at ' + name + ' the probe touched ' + shown(z0 - dive.z) + ' ' + unitName() + ' down: that\u2019s the spoilboard\u2019s top, not a hole. Setup\u2019s grid is off by about a hole there: Grab First Hole Center, or measure that hole by hand');
-        var c = await probeCenterFrom({ x: h.x, y: h.y }, holeR(h, hh) + 3, feed);
+        if (!dive) throw new Error('no answer from the probe move into ' + name);
+        if (dive.ok) throw new Error('at ' + name + ' the probe touched ' + shown(z0 - dive.z) + ' ' + unitName() + ' down: that\u2019s the spoilboard\u2019s top, not a hole. Setup\u2019s grid is off by about a hole there: Grab First Hole Center, or measure that hole by hand');
+        var c = await probeCenterFrom({ x: h.x, y: h.y }, holeR(h, hh) + 3, feed, 2 * holeR(h, hh) + 1);
         done.push(recordCenter(c, grid, hh, gen));
         await sendCommand('G53 G21 G90 G0 Z' + fmt(z0));
         renderCal();
         if (i === 0 && $('mw-cal-height').checked) {
-          try { heightNote = await probeSpoilHeight(h, hh, z0, feed); } catch (he) { heightNote = 'Spoilboard height not recorded: ' + he.message + '. '; heightBad = true; }
+          try { heightNote = await probeSpoilHeight(h, c, hh, z0, feed); } catch (he) { heightNote = 'Spoilboard height not recorded: ' + he.message + '. '; heightBad = true; }
         }
       }
       note.setAttribute('data-state', heightBad ? 'bad' : 'ok');
@@ -5740,16 +5759,22 @@
       note.setAttribute('data-state', 'bad');
       note.textContent = (done.length ? 'Measured ' + done.join(', ') + ', then stopped: ' : 'Stopped: ') + heightNote + e.message + '.';
     } finally {
-      // Up to Safe Z (or the start height, if that's higher) whatever happened.
-      var up = state.safeZMm != null ? (z0 != null && isFinite(z0) ? Math.max(state.safeZMm, z0) : state.safeZMm) : z0;
-      if (up != null && isFinite(up)) await sendCommand('G53 G21 G90 G0 Z' + fmt(up)).catch(function() {});
+      // Once it has moved: up to Safe Z (or the start height, if that's
+      // higher) whatever happened. Before any move, nothing is sent.
+      if (moved) {
+        var up = state.safeZMm != null ? Math.max(state.safeZMm, z0) : z0;
+        if (isFinite(up)) await sendCommand('G53 G21 G90 G0 Z' + fmt(up)).catch(function() {});
+      }
       if (inches) await sendCommand('G20').catch(function() {});
+      holes.busy = false;
       calBusy(false);
+      if (rootAlive()) updatePicked();
     }
   }
   async function probeHole() {
     var note = $('mw-cal-note'), inches = false, gen = cal.gen;
-    if (calMode() !== 'probe') return;
+    if (calMode() !== 'probe' || holes.busy || cal.busy) return;
+    holes.busy = true;
     calBusy(true);
     note.removeAttribute('data-state');
     note.textContent = 'Probing\u2026';
@@ -5775,6 +5800,7 @@
       note.textContent = 'Couldn\u2019t measure it: ' + e.message + '.';
     } finally {
       if (inches) await sendCommand('G20').catch(function() {});
+      holes.busy = false;
       calBusy(false);
     }
   }
@@ -5844,7 +5870,7 @@
   // to Safe Z first, like Go to Selected.
   async function calGoto() {
     var note = $('mw-cal-note'), h = calNext().next;
-    if (!h) return;
+    if (!h || holes.busy || cal.busy) return;
     calBusy(true);
     note.removeAttribute('data-state');
     try {
@@ -5908,7 +5934,7 @@
   function wireCal() {
     $('mw-cal-open').addEventListener('click', function() { showCal($('mw-cal').hidden); });
     $('mw-cal-probe').addEventListener('click', probeHole);
-    $('mw-cal-mode').addEventListener('change', function() { showCalMode(); saveSettings(); });
+    $('mw-cal-mode').addEventListener('change', showCalMode);
     showCalMode();
     $('mw-cal-eye').addEventListener('click', eyeHole);
     $('mw-cal-apply').addEventListener('click', applyCal);
