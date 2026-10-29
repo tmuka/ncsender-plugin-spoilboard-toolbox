@@ -280,6 +280,7 @@
   .mw-hole-list { text-align: left !important; resize: vertical; min-height: 6em; font-family: 'JetBrains Mono', monospace; }
   .mw-select.mw-layout { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; margin: -4px 0 -4px auto; }
   .mw-bad-text { color: var(--mw-danger) !important; }
+  .mw-warn-text { color: var(--mw-warn) !important; }
   .mw-input:disabled { opacity: 0.65; cursor: not-allowed; }
   .mw-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .mw-card-title { margin: 0; font-size: 1rem; font-weight: 600; }
@@ -4353,7 +4354,7 @@
   // tab never gets the messages). The map redraws only when it changed.
   function liveKey() {
     var ms = state.machine || {}, w = WCS_NAMES[holeWcs()] || '';
-    return [ms.MPos, ms[w.toLowerCase()], ms.workspace, ms.homed, ms.connected].join('|');
+    return [ms.MPos, ms[w.toLowerCase()], ms.workspace, ms.homed, ms.connected, ms.status].join('|');
   }
   // At most every 300 ms, and not while a finger or button is down, so a
   // tap on a hole or favorite isn't lost to a redraw mid-jog.
@@ -5041,6 +5042,7 @@
     holes.picked = i;
     showOnMap(holes.grid[i]);
     holes.nearMm = null;
+    holes.refXY = spindleXY();
     // A hole picked replaces any stock hung off X0 Y0, so if the hole is
     // later excluded or hidden, Set doesn't quietly fall back to it.
     holes.stockAnchor = null;
@@ -5076,6 +5078,7 @@
     if (!near) { status.setAttribute('data-state', 'bad'); status.textContent = 'Needs the hole grid and the machine\u2019s position.'; return; }
     holes.picked = near.index;
     holes.nearMm = near.distanceMm;
+    holes.refXY = here;
     holes.stockAnchor = null;
     showOnMap(holes.grid[near.index]);
     var any = nearestHole(holes.grid.map(function(g) { return { x: g.x, y: g.y, hidden: g.hidden || (g.col != null && !gridNearest(g)) }; }), here.x, here.y);
@@ -5097,6 +5100,21 @@
   // A length in ncSender's units, for the readouts (the rulers match).
   function shown(mm) { return state.imperial ? (mm / MM_PER_INCH).toFixed(4) : fmt(mm); }
   function unitName() { return state.imperial ? 'in' : 'mm'; }
+  function spindleXY() {
+    var ms = state.machine || {};
+    return ms.homed ? xyOf(ms.MPos) : null;
+  }
+  // Set and Go to use the picked point, never the spindle. Someone who
+  // jogged after picking (or after Go to) may expect Set to zero where the
+  // spindle now is, as ncSender's XY0 does: the distance off, when idle.
+  var JOG_WARN_MM = 0.02;
+  function joggedAwayMm(tg) {
+    var here = spindleXY(), ref = holes.refXY;
+    if (!here || !ref || String((state.machine || {}).status || '').indexOf('Idle') !== 0) return null;
+    if (Math.hypot(here.x - ref.x, here.y - ref.y) <= JOG_WARN_MM) return null;
+    var off = Math.hypot(here.x - tg.x, here.y - tg.y);
+    return off > JOG_WARN_MM ? off : null;
+  }
   function updatePicked() {
     var p = holes.grid[holes.picked], aim = pickTarget(), tg = aim && aim.tg;
     var grabbable = p && p.col != null && (p.layer || 0) === holes.activeGrid && $('mw-hole-layout').value !== 'list';
@@ -5120,8 +5138,11 @@
     // The spindle's distance from the hole Pick Nearest Hole took: only
     // when that hole itself is the target, not a point on the stock.
     var dist = aim && aim.p && !onStock && !problem && holes.nearMm != null;
-    $('mw-hole-dist').hidden = !dist;
-    $('mw-hole-dist').textContent = dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
+    var away = aim && aim.p && !problem ? joggedAwayMm(tg) : null;
+    $('mw-hole-dist').hidden = !dist && away == null;
+    $('mw-hole-dist').textContent = away != null ? 'Jogged since picking: Set uses the picked point, not the spindle (' + shown(away) + ' ' + unitName() + ' away). To zero where the spindle is, use ncSender\u2019s XY0.'
+      : dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
+    $('mw-hole-dist').classList.toggle('mw-warn-text', away != null);
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
     var zt = zTarget();
@@ -5354,6 +5375,7 @@
         status.textContent = 'Moving to ' + targetText(t) + ' at ' +
           (state.safeZMm != null ? 'Safe Z' : 'machine Z0 (no Safe Z set in ncSender)') + ', or the current height if that\u2019s higher.';
         holes.nearMm = null;
+        holes.refXY = { x: t.tg.x, y: t.tg.y };
         setTimeout(function() { if (rootAlive()) readMachineState().then(renderHoles); }, 1500);
       } catch (err) {
         status.setAttribute('data-state', 'bad');
@@ -5450,7 +5472,9 @@
         var wcsP = await resolveHoleWcs(gc);
         await sendHoleCommands(holeCommands(wcsP, t.tg.x, t.tg.y), gc ? gc.imperial : null);
         status.setAttribute('data-state', 'ok');
-        status.textContent = WCS_NAMES[wcsP] + ' X0 Y0 is now on ' + targetText(t) + ' (machine X ' + fmt(t.tg.x) + ', Y ' + fmt(t.tg.y) + ' mm).';
+        var away = t.p ? joggedAwayMm(t.tg) : null;
+        status.textContent = WCS_NAMES[wcsP] + ' X0 Y0 is now on ' + targetText(t) + ' (machine X ' + fmt(t.tg.x) + ', Y ' + fmt(t.tg.y) + ' mm)' +
+          (away != null ? ', not under the spindle, which is ' + fmt(away) + ' mm from it.' : '.');
         await readMachineState();
         renderHoles();
         readNumbers();

@@ -3,6 +3,13 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### 🐛 Fixes
+- **XY0 Picker warns after a jog.** Set always uses the picked hole's grid position, never the
+  spindle's. If you jog after picking a hole (or after Go to Selected), the picker now says how far
+  the spindle is from the picked point, and that ncSender's XY0 is the way to zero where the spindle is.
+
 ## 0.4.1
 
 **Removable fixture plates that match your spoilboard.**
