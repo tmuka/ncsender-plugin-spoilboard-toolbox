@@ -240,6 +240,10 @@
   .mw-hint { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--color-text-secondary); }
   .mw-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mw-gap); }
   @media (max-width: 640px) { .mw-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .mw-row-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; }
+  .mw-coolant { gap: 0; }
+  @media (max-width: 760px) { .mw-row-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .mw-row-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .mw-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .mw-field label { font-size: 0.78rem; font-weight: 600; color: var(--color-text-secondary); }
   .mw-input, .mw-select {
@@ -845,7 +849,7 @@
       <div id="mw-cut-common-slot">
       <section class="mw-card" id="mw-cut-common">
         <h3 class="mw-card-title">Bit and depth</h3>
-        <div class="mw-row">
+        <div class="mw-row mw-row-5">
           <div class="mw-field">
             <label for="mw-cut-bit" id="mw-cut-bit-label" class="mw-label-link" title="Click to use the loaded tool's diameter from ncSender's tool table">Bit Diameter (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-bit" value="6.35" title="The bit that's loaded. Each hole is drilled when the bit is its size, spiralled down when it's up to twice the bit, else cleared in rings.">
@@ -866,8 +870,6 @@
             <label for="mw-cut-stepover">Stepover (%)</label>
             <input class="mw-input" type="number" id="mw-cut-stepover" min="1" max="90" step="1" value="40" title="For holes cleared in rings: how far apart the rings are, as a % of the bit diameter.">
           </div>
-        </div>
-        <div class="mw-row">
           <div class="mw-field">
             <label for="mw-cut-feed">Feed (<span class="mw-unit">mm</span>/min)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-feed" value="1500" title="How fast the bit moves while cutting, spiral included.">
@@ -884,9 +886,11 @@
             <label for="mw-cut-delay">Spindle Delay (s)</label>
             <input class="mw-input" type="number" id="mw-cut-delay" min="0" step="1" value="3" title="Seconds to wait after starting the spindle, so it's up to speed.">
           </div>
+          <div class="mw-field mw-coolant">
+            <label class="mw-extra"><input type="checkbox" id="mw-cut-mist"><span>Mist (M7)</span></label>
+            <label class="mw-extra"><input type="checkbox" id="mw-cut-flood"><span>Flood (M8)</span></label>
+          </div>
         </div>
-        <label class="mw-extra"><input type="checkbox" id="mw-cut-mist"><span>Mist (M7)</span></label>
-        <label class="mw-extra"><input type="checkbox" id="mw-cut-flood"><span>Flood (M8)</span></label>
       </section>
       </div>
       <section class="mw-card" data-sec="holes">
