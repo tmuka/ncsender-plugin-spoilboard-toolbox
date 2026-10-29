@@ -465,6 +465,10 @@
       </div>
     </aside>
     <main class="mw-panel">
+    <div class="mw-banner" id="mw-moved" hidden>
+      <span id="mw-moved-text"></span>
+      <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-moved-ok">Done</button>
+    </div>
     <div class="mw-banner" id="mw-surface" hidden>
       <span id="mw-surface-text"></span>
       <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-surface-ok">Done</button>
@@ -1251,7 +1255,10 @@
 (function() {
   var FALLBACK_PORT = __SERVER_PORT__;
   var initialConfig = __INITIAL_CONFIG__;
-  var PLUGIN_ID = 'com.tmuka.zeroswapper';
+  var PLUGIN_ID = 'com.tmuka.spoilboard-toolbox';
+  // The ID before 0.4.0. Its settings and keyboard shortcuts move to this
+  // one once, and that copy is uninstalled (migrateFromOldId).
+  var OLD_PLUGIN_ID = 'com.tmuka.zeroswapper';
 
   var BASE_URL = (window.ncSender && typeof window.ncSender.getApiBaseUrl === 'function')
     ? window.ncSender.getApiBaseUrl(FALLBACK_PORT) : '';
@@ -3387,6 +3394,55 @@
       : WCS_NAMES[s.wcs] + ' Z0 is ' + (onSpoil ? 'on the spoilboard' : onStock ? 'on the stock top' : 'your own (' + mm(cur) + ')') + '.';
   }
 
+  // One time, on the first open under the new ID: the old ID's settings
+  // (Setup, profiles, everything) are copied here, its keyboard shortcuts
+  // (Plugin:<id>:...) renamed, and the old copy uninstalled, so there's one
+  // menu entry and no stale update badge. Its settings file stays on disk.
+  // The whole keyboardBindings object is sent, since ncSender's page merges
+  // a settings change shallowly and a partial one would hide the others.
+  async function migrateFromOldId(saved) {
+    var notes = [], hasOwn = Object.keys(saved).length > 0, copied = false;
+    try {
+      var list = await (await fetch(BASE_URL + '/api/plugins')).json();
+      list = Array.isArray(list) ? list : (list && list.plugins) || [];
+      var oldInstalled = list.some(function(p) { return (p.id || p.Id) === OLD_PLUGIN_ID; });
+      var old = hasOwn ? {} : await (await fetch(BASE_URL + '/api/plugins/' + OLD_PLUGIN_ID + '/settings')).json();
+      if (!hasOwn && old && typeof old === 'object' && Object.keys(old).length) {
+        saved = Object.assign({}, old, { migratedFrom: OLD_PLUGIN_ID });
+        var put = await fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(saved)
+        });
+        if (!put.ok) throw new Error('saving them under the new ID failed (' + put.status + ')');
+        copied = true;
+        notes.push('your Setup, profiles and settings came across');
+        var nc = await (await fetch(BASE_URL + '/api/settings')).json();
+        var kb = nc && nc.keyboardBindings, from = 'Plugin:' + OLD_PLUGIN_ID + ':', n = 0;
+        if (kb && typeof kb === 'object') {
+          var next = {};
+          Object.keys(kb).forEach(function(k) {
+            if (k.indexOf(from) !== 0) { next[k] = kb[k]; return; }
+            next[k] = null;
+            next['Plugin:' + PLUGIN_ID + ':' + k.slice(from.length)] = kb[k];
+            if (kb[k]) n++;
+          });
+          if (n) {
+            var pr = await fetch(BASE_URL + '/api/settings', {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyboardBindings: next })
+            });
+            notes.push(pr.ok ? n + ' keyboard shortcut' + (n === 1 ? '' : 's') + ' for it moved too' : 'its keyboard shortcuts didn\u2019t move: set them again in Settings \u203a Controls');
+          }
+        }
+      }
+      if (oldInstalled && (hasOwn || copied || !(old && Object.keys(old).length))) {
+        var del = await fetch(BASE_URL + '/api/plugins/' + OLD_PLUGIN_ID, { method: 'DELETE' });
+        notes.push(del.ok ? 'the old copy (' + OLD_PLUGIN_ID + ') was uninstalled, its settings kept on disk as a backup'
+          : 'uninstall the old copy (' + OLD_PLUGIN_ID + ') from the Plugins tab');
+      }
+    } catch (e) {
+      notes.push('moving the old settings didn\u2019t finish (' + e.message + '); the old copy is still installed, so nothing is lost');
+    }
+    return { saved: saved, notes: notes };
+  }
   async function init() {
     // The block thickness comes from ncSender's own probe screen (Standard
     // Block, Z Thickness), stored there in mm, so there's one place to set it.
@@ -3405,7 +3461,12 @@
     $('mw-safe-note').textContent = 'Midpoint moves first lift to ' + (state.safeZMm != null
       ? 'ncSender\'s Safe Z (machine Z ' + fmt(state.safeZMm) + ' mm)'
       : 'machine Z0, since no Safe Z is set in ncSender') + ', then move. They use the active work offset.';
-    var saved = initialConfig || {};
+    var moved = await migrateFromOldId(initialConfig || {});
+    var saved = moved.saved;
+    if (moved.notes.length) {
+      $('mw-moved-text').textContent = 'Spoilboard Toolbox has a new plugin ID: ' + moved.notes.join('; ') + '.';
+      $('mw-moved').hidden = false;
+    }
     var conv = state.imperial === (saved.units === 'imperial') ? 1 : (state.imperial ? 1 / MM_PER_INCH : MM_PER_INCH);
     var defaults = state.imperial ? { block: 0.5906, feed: 4, travel: 1.25, retract: 0.2, stock: 0.75 } : {};
     ['block', 'feed', 'travel', 'retract', 'stock'].forEach(function(k) {
@@ -5584,6 +5645,7 @@
     $('mw-chm-generate').addEventListener('click', generateChamfer);
     $('mw-lab-generate').addEventListener('click', generateLabels);
     wireCal();
+    $('mw-moved-ok').addEventListener('click', function() { $('mw-moved').hidden = true; });
     $('mw-surface-ok').addEventListener('click', function() { holes.surfaceAck = holes.surfaceKey; $('mw-surface').hidden = true; saveSettings(); });
   }
 
@@ -5994,7 +6056,7 @@
   var help = { tab: 'holes', from: 'holes' };
   var HELP_KEYS = '<strong>Put the macros on keys:</strong> ncSender can run any macro from a keyboard shortcut (or a gamepad button), which is where these really pay off: switching Z0, snapping X0 Y0 to the nearest hole or finding a midpoint becomes one keypress at the machine. In ncSender&rsquo;s <strong>Settings &rsaquo; Controls</strong> (with keyboard control on), search for <kbd>SBT</kbd>, click the pencil next to a macro in the <strong>Macros</strong> group, and press a key combination. Use <strong>Create macros</strong> to update them after a change, rather than deleting them, so the shortcuts keep working.';
   var HELP_UNITS = '<strong>Typing units:</strong> size and feed fields take mm or inches, whichever you have to hand, and convert to the machine&rsquo;s units when you leave the field: <kbd>1/4"</kbd>, <kbd>5/4"</kbd>, <kbd>.25in</kbd>, <kbd>1-1/2"</kbd>, <kbd>6.35mm</kbd>, and for feeds <kbd>100ipm</kbd>, <kbd>2540mm/min</kbd>, <kbd>25mm/s</kbd>.';
-  var HELP_NEEDS = '<strong>What you need:</strong> a homed grblHAL machine and ncSender are enough for the XY0 Picker, measuring holes by eye, the nearest-hole keyboard macros, and the Spoilboard and Stock programs (Z0 touched off any way you like). The Z0 macros and Set Z0 also need measured tool lengths (a tool setter or an ATC) and, once, a touch plate. Bit Diameter&rsquo;s tool change needs the tool in ncSender&rsquo;s tool table; probing holes needs a 3D touch probe (not yet tried on a real one: feedback welcome); laser labels need grblHAL&rsquo;s laser mode ($32=1). The README has the full list.';
+  var HELP_NEEDS = '<strong>What you need:</strong> a spoilboard (a plain one is fine: the Spoilboard tab cuts the holes), and a homed grblHAL machine and ncSender are enough for the XY0 Picker, measuring holes by eye, the nearest-hole keyboard macros, and the Spoilboard and Stock programs (Z0 touched off any way you like). The Z0 macros and Set Z0 also need measured tool lengths (a tool setter or an ATC) and, once, a touch plate. Bit Diameter&rsquo;s tool change needs the tool in ncSender&rsquo;s tool table; probing holes needs a 3D touch probe (not yet tried on a real one: feedback welcome); laser labels need grblHAL&rsquo;s laser mode ($32=1). The README has the full list.';
   var HELP_TOPICS = {
     holes: { name: 'XY0 Picker', notes: [
       '<strong>Two ways to start.</strong> <strong>No holes yet:</strong> surface the board, put Z0 on its top, describe the grid you want in Setup (or load a preset), cut a fit test in scrap to choose the hole size, then Spoilboard &rsaquo; Dog holes &rsaquo; Generate; the board and the map come from the same numbers, so they agree. <strong>Holes already there:</strong> type the grid&rsquo;s size and spacing in Setup, pick a hole, jog over its real center and press Grab &hellip; Center; then Measure Holes on the three it suggests and Apply, suppress missing holes with Edit Holes, and check with Go to Selected over a far hole. Save Setup as a profile either way.',

@@ -67,7 +67,8 @@ features when you have them; nothing else stops working without them.
 - **ncSender** 2.0.163 or later, driving a **grblHAL** controller.
 - **Homing switches**, used every session: the holes are machine positions, so most actions wait for a
   homed machine. The travel comes from grblHAL's `$130`/`$131` and homing settings.
-- **A spoilboard with a hole grid**, or a grid lasered or V-carved on it, or a list of fixture holes.
+- **A spoilboard.** A plain one is fine: the plugin cuts the dog holes into it (path A below). Or one that
+  already has a hole grid, a grid lasered or V-carved on it, or fixture holes, which you map (path B).
 
 That's enough for:
 - the **XY0 Picker**: Pick Nearest Hole, Set, Go to, stock, favorites, profiles, zoom;
@@ -645,7 +646,7 @@ See [What you need](#what-you-need) for the rest of the plugin.
 
 ## Install
 
-1. Download the latest `com.tmuka.zeroswapper_v….zip` from this repository's
+1. Download the latest `com.tmuka.spoilboard-toolbox_v….zip` from this repository's
    [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 2. In ncSender: **Settings → Plugins → Install Plugin → ZIP**, pick the file and press **Install from
    File**, or paste the zip's link and press **Install from URL**.
@@ -658,7 +659,7 @@ Development below.
 
 ```
 npm test         # pure functions from config.html, plus a stand-in for grblHAL running the G10 lines
-npm run build    # dist/com.tmuka.zeroswapper_v<version>.zip from the committed files
+npm run build    # dist/com.tmuka.spoilboard-toolbox_v<version>.zip from the committed files
 ```
 
 `config.html` is the whole plugin: ncSender runs a client-only plugin's page inline, so its script

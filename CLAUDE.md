@@ -1,6 +1,6 @@
 # Spoilboard Toolbox (formerly Zero Swapper): notes for working on this plugin
 
-Spoilboard Toolbox (`com.tmuka.zeroswapper`; Zero Swapper before 0.3.36, Macro Wiz before 0.3.1, with id `com.tmuka.macrowiz` before 0.3.3) is a
+Spoilboard Toolbox (`com.tmuka.spoilboard-toolbox` from 0.4.0, `com.tmuka.zeroswapper` before that, whose settings and shortcuts `migrateFromOldId` moves over once and whose copy it uninstalls; Zero Swapper before 0.3.36, Macro Wiz before 0.3.1, with id `com.tmuka.macrowiz` before 0.3.3) is a
 client-only ncSender plugin. It runs a wizard that checks a
 grblHAL controller, then writes ncSender macros (M98 macros) that put work Z0 on the spoilboard or the
 stock top with any measured tool, without probing each time. README.md is the user guide; this file
@@ -156,7 +156,7 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
   - `POST` with `id: 0` auto-assigns an id;
   - `PUT` updates;
   - `DELETE` removes.
-- Plugin settings: `/api/plugins/com.tmuka.zeroswapper/settings`.
+- Plugin settings: `/api/plugins/com.tmuka.spoilboard-toolbox/settings` (the old ID's at `/api/plugins/com.tmuka.zeroswapper/settings` stay on disk).
 - `GET /api/server-state`: `machineState` (`MPos`, `g54`…`g59`, `workspace`, `homed`, `status`, `connected`).
 - `GET /api/firmware`: grblHAL settings (`$130`/`$131` travel, `$22`/`$23` homing, `$683`-`$687` ATCi keepout).
 - **Keyboard shortcuts:** every macro is registered as shortcut action `Macro:<id>`; plugins can't register
@@ -169,7 +169,7 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 
 ```
 npm test         # node --test tests/*.cjs: the pure block plus the expression simulator
-npm run build    # dist/com.tmuka.zeroswapper_v<version>.zip from the last commit (commit first)
+npm run build    # dist/com.tmuka.spoilboard-toolbox_v<version>.zip from the last commit (commit first)
 ```
 
 - Bump `version` in both `manifest.json` and `package.json` for a release build.

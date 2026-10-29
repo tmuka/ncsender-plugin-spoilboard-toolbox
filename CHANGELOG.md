@@ -3,6 +3,18 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+**A new plugin ID, moved over for you.** The plugin's ID is now `com.tmuka.spoilboard-toolbox` (it was
+`com.tmuka.zeroswapper`, from the Zero Swapper days). Update as usual from the Plugins tab; the first
+time you open the new one it copies your Setup, profiles and settings across, moves its keyboard shortcut,
+and uninstalls the old copy, then says what it did. The old settings stay on disk as a backup, and the
+SBT: macros and their shortcuts aren't touched. If you see two Spoilboard Toolbox buttons after updating,
+open each once: the new one does the move and the old button goes away.
+
+### 📖 Docs
+- **What you need** says a plain spoilboard is fine: the plugin cuts the holes.
+
 ## 0.3.37
 
 **Measure your holes without hunting for them, and a welcome that asks where you're starting.**
