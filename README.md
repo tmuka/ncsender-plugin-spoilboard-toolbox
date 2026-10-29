@@ -93,6 +93,36 @@ Put Z0 on the spoilboard (or the stock) any way you like for these: paper, a tou
 **Without measured tool lengths**, every tool change needs a new Z touch-off anyway, so the Z0 macros
 can't save you anything; the rest of the plugin works the same.
 
+## Two ways to start
+
+**A. No holes yet: lay out a new spoilboard and cut it.** The board and the map come from the same
+numbers, so they agree from the first hole.
+1. Surface the board (QuickCut's Wasteboard Surfacing) and put Z0 on its top: touch off, or
+   **SBT: Z0 on spoilboard**.
+2. In the XY0 Picker's **Setup**, describe the grid you want: hole size, spacing, and the insets from
+   machine X0 Y0 to the first hole; T-tracks between panels if you have them. Or load a preset from the
+   Profiles menu. The map shows the result over your machine's travel.
+3. **Spoilboard → Fit test:** cut a row of test holes in scrap and set Hole Diameter to the one your
+   dowels fit.
+4. **Spoilboard → Dog holes → Generate**, check it in ncSender's visualizer, and run it. Then
+   chamfers and labels if you like, and T-tracks for a two-layer board.
+5. Save Setup as a profile (**New profile…**). From now on, zeroing is path B's last step.
+
+**B. Holes already there: map them, then zero in two taps.**
+1. In **Setup**, type the grid's hole size and spacing (and T-tracks), or load a preset.
+2. Pick a hole on the map, jog the bit over that hole's real center, and press **Grab … Center**: the
+   insets fill in so the map lines up with the board.
+3. **Measure Holes** (by eye with a pin, or a 3D probe) on the three holes it suggests, then **Apply to
+   Setup**: spacing, insets and how far the board is turned, fitted to the real holes.
+4. **Edit Holes** to suppress any the board doesn't have, and add fixture pins or a vise as listed holes.
+5. Check it: **Pick Nearest Hole** near a far hole, hold **Go to Selected**, and the bit should sit
+   right over it. Save Setup as a profile.
+6. Every job after: jog near a hole, **Pick Nearest Hole**, hold **Set**. Tick the nearest-hole macros
+   and put them on keys to make it one keypress.
+
+Either way, the Z0 macros are a separate, optional step for machines with measured tool lengths: see
+[First time with the Z0 macros](#first-time-with-the-z0-macros).
+
 ## What you get
 
 **XY0 Picker:** repeatable XY zero from your spoilboard grid. Use it for bench-dog stops and fences,
@@ -134,7 +164,7 @@ itself. The values are kept in the controller, so they survive power cycles.
 Optional extras for setting X/Y: move to the **midpoint** between X0 and where you are (finding the
 center of round or square stock), set X0 Y0 at that midpoint, and save / restore X/Y for a fixture.
 
-## First time
+## First time with the Z0 macros
 
 1. Open **Spoilboard Toolbox** from the plugin tool menu, run the check, and press **Create macros**.
 2. With a measured tool loaded, put your probe block (touch plate) on the spoilboard, jog the bit just above it,
