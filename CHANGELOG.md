@@ -26,6 +26,10 @@ open each once: the new one does the move and the old button goes away.
   Previous and Next; the longest pages are now short paragraphs and lists. **Getting started** and the
   README link are at the top, and Field tips is a page of its own with the names in a narrow column.
 ### 🐛 Fixes
+- **Easier to read, light or dark (WCAG AA contrast):** accent-colored text, links and lines, warnings,
+  errors and status notes are darker in light mode and lighter in dark; input and chip borders, the map's
+  edge, suppressed and blocked holes and the keepout outline stand out; primary buttons are a deeper green
+  under their white text; and every control shows a clear outline when reached with the keyboard.
 - In by-eye mode, Measure Holes no longer shows the probe-only **Also record the spoilboard height** box.
 
 ## 0.3.37
