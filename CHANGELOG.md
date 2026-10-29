@@ -5,6 +5,8 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ## Unreleased
 
+**Cut the spoilboard, measure it, zero on it: one plugin, from the first hole to every job after.**
+
 **Zero Swapper is now Spoilboard Toolbox**, since it cuts the holes as well as zeroing on them. It's the
 same plugin: updates and settings carry over. Its macros are now named **SBT:** (for Spoilboard
 Toolbox) instead of ZS:. Your ZS: macros keep working; press **Create macros** once and they're renamed in
@@ -49,6 +51,7 @@ file names start SBT too.
   together. Holes right on the edge of the travel show whole, with room before the row letters.
 - **The menu** runs XY0 Picker, Spoilboard (dog holes, T-tracks, fit test, chamfers and labels, one at a
   time with chips), Stock, then Z0 macros.
+- **The Bit and depth card** fits in two rows of five, Mist and Flood included.
 - **Grab any hole:** pick a hole on the map, jog over it, and **Grab B3 Center** sets the insets so that
   hole is under the bit, instead of guessing from the first hole.
 - **SBT: Set XY0 at nearest hole (no move)** is the new name of XY0 on nearest hole, so it's not mistaken

@@ -2,29 +2,38 @@
 
 *Formerly **Zero Swapper**: same plugin, same settings and macros, a name for everything it does now.*
 
-**Your spoilboard's holes are already a precision fixture. Spoilboard Toolbox turns them into work zero, and cuts them in the first place.**
+**Your spoilboard's holes are already a precision fixture. Spoilboard Toolbox cuts them, measures them,
+and turns every one into a work zero you can hit again tomorrow.**
 
-- **X0 Y0 in seconds, no probe.** Jog roughly near a dog hole, tap **Pick Nearest Hole**, hold
-  **Set**: work zero lands exactly on the hole's center or edge. No edge finder, no XY probe, no
-  coordinates typed into the terminal, and the same holes give the same zero next time. Put it on a
-  key and it's one press near any hole.
+- **X0 Y0 in two taps, no probe.** Jog roughly near any dog hole, tap **Pick Nearest Hole**, hold
+  **Set**: work zero lands on the hole's exact center or edge, from the grid's numbers, not your eye.
+  Same hole, same zero, every job. Put it on a key and it's one press.
+- **Z0 for every tool, probed once.** Record the spoilboard height once. After that any measured tool
+  puts Z0 on the spoilboard or the stock top in one click, and one more puts your old Z0 back.
 - **Zero anywhere on the stock, no tape measure.** Jog to the stock's far corner and press **Far
   Corner Here** (or type its size), then put X0 Y0 on its center or any corner or edge, drawn right on
-  the map.
-- **Z0 without re-probing.** Probe the spoilboard once. After that, any measured tool puts Z0 on the
-  spoilboard or the stock top in one click, and another click puts your old Z0 back.
-- **Full XYZ on a vise or fixture.** Give a fixture point its height and Set Z0 puts Z0 on the vise
-  jaw or the stock top for any measured tool.
-- **Fits the bed you actually have.** Missing holes, T-track panels, dog holes plus a pin grid, custom
-  locating pins, lasered or V-carved grid lines, keepout zones, and a saved profile for every board.
-- **Cut the holes from the same numbers.** Cut the dog holes, chamfer them, engrave their fixture
-  table labels, and drill bolt or flip-pin holes through your stock right over them.
+  the map. Give a vise or fixture its height and Z0 goes on its jaw too.
+- **A whole spoilboard from one Generate.** Every dog hole drilled, spiralled or cleared at its own
+  size, in one program you check in ncSender's 3D visualizer before it cuts. Then chamfer every hole and
+  engrave fixture-table labels (A1, B3…) with a V-bit or a laser. The board and the map come from the
+  same numbers, so they agree.
+- **Fit the grid to the real board, probe or no probe.** **Measure Holes** finds a few hole centers
+  with a 3D probe, or by eye: center a pin in each, jogging with the keyboard, a gamepad or the
+  pendant. One press fits the spacing, the insets and even a board mounted a fraction of a degree off
+  square (0.1° is 4 mm at the far end of an 8 ft bed).
+- **A spoilboard that lasts.** Cut just the T-tracks in a sacrificial top layer over a permanent layer
+  of tracks and threaded inserts: surface or replace the top, never the inserts.
+- **Stock that bolts down and flips true.** Drill bolt holes right over threaded inserts, or two flip
+  pins so a part flipped for its second side drops back exactly where it was.
+- **Every bed, any size.** Missing holes, T-track panels, dog holes plus a pin grid, custom pins,
+  lasered grid lines, keepout zones, a saved profile for every board, and zoom for an 8 × 5 ft bed.
 
 Spoilboard Toolbox is a plugin for [ncSender](https://github.com/siganberg/ncSender), the G-code sender for
 grblHAL CNC routers. Its **XY0 Picker** shows your machine's bed with every hole on it, live as you jog,
 and sets the work offset (G54–G59.3) without moving the machine. Its **Z0 macros** tab checks your
 grblHAL controller, then writes ncSender macros you run from the Macros tab or, best of all, a
-keyboard shortcut.
+keyboard shortcut. Its **Spoilboard** and **Stock** tabs write the programs that cut the board and
+drill the stock, from the same grid.
 
 ![Spoilboard Toolbox's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid between T-tracks, a
 hole picked with a sheet of stock drawn from it, the spindle, the ATCi tool rack's keepout zone in
