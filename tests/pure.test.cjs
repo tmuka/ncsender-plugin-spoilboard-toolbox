@@ -28,7 +28,7 @@ function evalExpr(expr, params) {
       .replace(/FIX\[/g, 'Math.floor(')
       .replace(/ROUND\[/g, 'gRound(')
       .replace(/\[/g, '(').replace(/\]/g, ')')
-      .replace(/ GT /g, ' > ').replace(/ GE /g, ' >= ').replace(/ LT /g, ' < ').replace(/ LE /g, ' <= ').replace(/ NE /g, ' != ').replace(/ AND /g, ' && ').replace(/ OR /g, ' || ');
+      .replace(/ GT /g, ' > ').replace(/ GE /g, ' >= ').replace(/ LT /g, ' < ').replace(/ LE /g, ' <= ').replace(/ NE /g, ' != ').replace(/ EQ /g, ' == ').replace(/ AND /g, ' && ').replace(/ OR /g, ' || ');
   // Comparisons and AND evaluate to 1 or 0 in grblHAL.
   js = js.replace(/\(([^()]*(?:>|<|!=|&&|\|\|)[^()]*)\)/g, '(+($1))');
   // grblHAL's ROUND: (int)(v + 0.5), or - 0.5 below zero.
@@ -1068,7 +1068,10 @@ test('cut holes: stop lines before anything moves, and the work offset must not 
   const stops = L.map((l, i) => [l, i]).filter(([l]) => /SBT stop/.test(l));
   assert.equal(stops.length, 3);
   assert.ok(stops.every(([, i]) => i < firstMove));
-  assert.equal(L[3], 'G54');
+  // Units and the work offset only after the stops, so a stop leaves the units alone.
+  const units = L.indexOf('G21 G17 G90 G94');
+  assert.ok(stops.every(([, i]) => i < units));
+  assert.equal(L[units + 1], 'G54');
   const check = stops[2][0].replace(/\s*\(.*$/, '').replace(/^#1=/, '');
   // Its own X0 Y0 (G54 X 10, Y -20.5) passes; moved by a hair it stops (error 72).
   assert.equal(evalExpr(check, { 5221: 10, 5222: -20.5 }), 1);
@@ -1452,4 +1455,36 @@ test('a turned Grid + List: grid holes turn, listed holes stay where they were c
   assert.deepEqual([listed.x, listed.y], [1800, 900]);
   const far = g.find((p) => p.col === 30 && p.row === 15);
   assert.ok(Math.abs(far.y - (20 + 14 * 50) - Math.sin(0.5 * Math.PI / 180) * 29 * 50) < 0.1);
+});
+
+test('cut programs: a Z0 the Z0 macros set needs a tool length offset', () => {
+  const L = holeCutProgram(cutBase({ zMacro: { spoil: 5343, thick: 5383 } }));
+  const line = L.find(l => /SBT stop: no tool length offset active/.test(l));
+  assert.ok(line && line.length < 255, line);
+  assert.ok(L.indexOf(line) < L.findIndex(l => /^G[0-3] /.test(l)));
+  const check = line.replace(/\s*\(.*$/, '').replace(/^#1=/, '');
+  const at = (tlo, z, spoil = -80, thick = 19, mark = 0) => () => evalExpr(check, { _tool_offset: tlo, 5223: z, 5343: spoil, 5383: thick, 5381: mark });
+  assert.equal(at(1, -80)(), 1);                       // offset active: fine
+  assert.throws(at(0, -80), /error:72/);               // Z0 on the spoilboard, no offset
+  assert.throws(at(0, -61), /error:72/);               // Z0 on the stock top
+  assert.throws(at(0, -55, -80, 19, 25), /error:72/);  // a fixture's height Set Z0 put down
+  assert.equal(at(0, -42.5)(), 1);                     // a Z0 touched off another way
+  assert.equal(at(0, -80, 0)(), 1);                    // spoilboard never recorded
+  assert.ok(!holeCutProgram(cutBase({ zMacro: { spoil: 5343, thick: 5383 }, laser: true })).some(l => /SBT stop: no tool length offset active/.test(l)));
+});
+
+test('labels: none over a T-track', () => {
+  const holes = [{ tag: 'A1', col: 1, row: 1, x: 10, y: 10 }, { tag: 'A2', col: 2, row: 1, x: 60, y: 10 }];
+  const base = { textMm: 6, gapMm: 2.4, travel: { xMm: 200, yMm: 200, dirX: 1, dirY: 1 }, zones: [], all: holes, holeR: () => 4 };
+  assert.equal(labelPlacements(holes, 'every', base).labels.length, 2);
+  // A 19 mm track along Y at x 25 sits where A1's label would go, and on its other side is the travel's edge.
+  const pl = labelPlacements(holes, 'every', Object.assign({}, base, { tracks: [{ a: { x: 25, y: -50 }, b: { x: 25, y: 250 }, halfMm: 9.5 }] }));
+  assert.deepEqual(pl.skipped.map(s => s.tag + ': ' + s.why), ['A1: over a T-track']);
+});
+
+test('fit test: sizes next to the bit are each cut as themselves', () => {
+  assert.equal(holeCutMethod(7.95, 8), 'drill');
+  assert.equal(holeCutMethod(7.95, 8, 0.005), 'too-small');
+  assert.equal(holeCutMethod(8.05, 8, 0.005), 'helix');
+  assert.equal(holeCutMethod(8, 8, 0.005), 'drill');
 });

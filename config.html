@@ -2048,8 +2048,8 @@
   // How a hole is cut: drilled when the bit is its size, a helix (spiral
   // down, then a lap) when it's up to twice the bit, else cleared in rings
   // out from a helix in its middle. 'too-small' when the bit won't fit.
-  function holeCutMethod(holeDiaMm, bitMm) {
-    if (Math.abs(holeDiaMm - bitMm) <= 0.05) return 'drill';
+  function holeCutMethod(holeDiaMm, bitMm, tolMm) {
+    if (Math.abs(holeDiaMm - bitMm) <= (tolMm != null ? tolMm : 0.05)) return 'drill';
     if (bitMm > holeDiaMm) return 'too-small';
     return holeDiaMm <= 2 * bitMm ? 'helix' : 'clear';
   }
@@ -2099,6 +2099,9 @@
   }
 
   // Whether the straight line from a to b passes over zone z grown by r.
+  // A V-bit's radius at the 5 mm hop, for chamfer and label moves past a
+  // zone: a 1/2" V-bit's.
+  var VBIT_R = 6.35;
   function lineCrossesZone(a, b, z, r) {
     var t0 = 0, t1 = 1, dx = b.x - a.x, dy = b.y - a.y;
     var p = [-dx, dx, -dy, dy], q = [a.x - (z.minX - r), z.maxX + r - a.x, a.y - (z.minY - r), z.maxY + r - a.y];
@@ -2134,7 +2137,7 @@
       var off = o.holes.filter(function(h) { return !holeInTravel(h, Math.max(0, h.diaMm / 2 - o.bitMm / 2), o.travel); });
       if (off.length) out.push((off.length === 1 ? off[0].label + ' reaches' : off.length + ' holes (' + off[0].label + '\u2026) reach') + ' outside the machine\u2019s travel');
     }
-    var small = o.holes.filter(function(h) { return o.bitMm > 0 && holeCutMethod(h.diaMm, o.bitMm) === 'too-small'; });
+    var small = o.holes.filter(function(h) { return o.bitMm > 0 && holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm) === 'too-small'; });
     if (small.length) out.push('The bit is bigger than ' + (small.length === 1 ? small[0].label : small.length + ' holes (' + small[0].label + '…)'));
     return out;
   }
@@ -2165,17 +2168,26 @@
     var L = [
       gComment('SBT: ' + title),
       gComment('SBT: ' + name + ' Z0 must be on ' + (o.zWhat || 'the spoilboard') + '; X Y are ' + name + ', X0 Y0 at machine X' + fmt(o.wcs.x) + ' Y' + fmt(o.wcs.y)),
-      'G21 G17 G90 G94',
-      name,
       '#1=[1 / #<_homed_state>] (SBT stop: home the machine first)',
       '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (SBT stop: a G92 offset is active; G92.1 clears it)',
       '#1=[1 / [[ABS[#' + xp + less(o.wcs.x) + '] LT 0.001] AND [ABS[#' + yp + less(o.wcs.y) + '] LT 0.001]]] (SBT stop: ' + name + ' X0 Y0 moved; make the program again)',
     ];
     if (o.zStop != null) L.push('#1=[1 / [ABS[#' + (yp + 1) + less(o.zStop) + '] LT 0.001]] (SBT stop: ' + name + ' Z0 moved; make the program again)');
+    // The stop lines read mm parameters whatever the units, so they come
+    // first: a stop leaves the controller's units as they were.
+    L.push('G21 G17 G90 G94', name);
     if (!o.laser) L.push(cutSafe(o));
     // tool: the loaded tool Bit Diameter was taken from, changed to first
     // (ncSender runs the tool change); none when the size was typed.
     if (o.tool && !o.laser) L.push('M6 T' + o.tool, cutSafe(o));
+    // A Z0 the Z0 macros set (the spoilboard, the stock top, a fixture's
+    // height) is right only with a tool length offset active, which a
+    // controller restart drops while the work offset stays.
+    if (o.zMacro && !o.laser) {
+      var cur = '#' + (yp + 1), sp = '#' + o.zMacro.spoil, th = '#' + o.zMacro.thick, mk = '#' + (o.zMacro.thick - 2);
+      L.push('#1=[1 / [#<_tool_offset> OR [' + sp + ' EQ 0] OR [[ABS[' + cur + ' - ' + sp + '] GT 0.001] AND [ABS[' + cur + ' - ' + sp + ' - ' + th +
+        '] GT 0.001] AND [ABS[' + cur + ' - ' + sp + ' - ' + mk + '] GT 0.001]]]] (SBT stop: no tool length offset active)');
+    }
     if (o.mist) L.push('M7');
     if (o.flood) L.push('M8');
     if (o.rpm > 0 && !o.laser) {
@@ -2206,7 +2218,7 @@
     var at = null, lastC = null;
     o.holes.forEach(function(h, i) {
       var levels = levelsTo(h.depthMm || o.depthMm);
-      var method = holeCutMethod(h.diaMm, o.bitMm), cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, pr = h.diaMm / 2 - r;
+      var method = holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm), cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, pr = h.diaMm / 2 - r;
       var helixR = Math.min(r * 0.6, pr - 0.001), start = method === 'drill' ? { x: cx, y: cy } : { x: cx + (method === 'helix' ? pr : helixR), y: cy };
       L.push(c('SBT hole ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40) + ', ' + fmt(h.diaMm) + ' mm, ' + method));
       var to = { x: start.x + o.wcs.x, y: start.y + o.wcs.y };
@@ -2365,6 +2377,19 @@
   // corner). Labels that would touch another hole, leave the travel, or
   // reach a zone are left out. o: textMm, gapMm, dirX, travel ({ xMm, yMm,
   // dirX, dirY }), zones, holeR(p) (radius).
+  // Whether a box comes within d of segment a-b (a T-track's centerline):
+  // a corner that close, or corners on both sides of it within its span.
+  function boxNearSegment(box, a, b, d) {
+    var dx = b.x - a.x, dy = b.y - a.y, len2 = dx * dx + dy * dy, side = 0, mixed = false;
+    var corners = [[box.minX, box.minY], [box.maxX, box.minY], [box.minX, box.maxY], [box.maxX, box.maxY]];
+    return corners.some(function(c) {
+      var t = len2 ? ((c[0] - a.x) * dx + (c[1] - a.y) * dy) / len2 : 0, tc = Math.max(0, Math.min(1, t));
+      if (Math.hypot(c[0] - a.x - tc * dx, c[1] - a.y - tc * dy) < d) return true;
+      var sg = Math.sign(dx * (c[1] - a.y) - dy * (c[0] - a.x));
+      if (t >= 0 && t <= 1) { mixed = mixed || (side && sg && sg !== side); side = side || sg; }
+      return false;
+    }) || mixed;
+  }
   function labelPlacements(holes, mode, o) {
     var labels = [], skipped = [], h = o.textMm, gap = o.gapMm;
     var minX = o.travel.dirX > 0 ? 0 : -o.travel.xMm, minY = o.travel.dirY > 0 ? 0 : -o.travel.yMm;
@@ -2387,6 +2412,7 @@
     function problem(p, box) {
       return box.minX < minX || box.maxX > minX + o.travel.xMm || box.minY < minY || box.maxY > minY + o.travel.yMm ? 'outside the travel'
         : (o.zones || []).some(function(z) { return z.minX < box.maxX && z.maxX > box.minX && z.minY < box.maxY && z.maxY > box.minY; }) ? 'in a keepout zone or Exclude Picks area'
+        : (o.tracks || []).some(function(t) { return boxNearSegment(box, t.a, t.b, t.halfMm + gap / 2); }) ? 'over a T-track'
         : o.all.some(function(q) {
             if (q === p) return false;
             var dx = Math.max(box.minX - q.x, 0, q.x - box.maxX), dy = Math.max(box.minY - q.y, 0, q.y - box.maxY);
@@ -2409,7 +2435,7 @@
       L.push(c('SBT label ' + (i + 1) + '/' + n + ': ' + lb.text));
       textStrokes(lb.text, lb.x, lb.y, o.textMm).forEach(function(st, k) {
         var a = st[0], to = { x: a.x, y: a.y };
-        if (!o.laser && k === 0 && at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, 0); })) L.push(cutSafe(o));
+        if (!o.laser && k === 0 && at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, VBIT_R); })) L.push(cutSafe(o));
         L.push('G0 X' + f3(a.x - o.wcs.x) + ' Y' + f3(a.y - o.wcs.y));
         if (!o.laser) { if (k === 0) L.push('G0 Z5.000'); L.push('G0 Z1.000'); L.push('G1 Z' + f3(-o.depthMm) + ' F' + o.plunge); }
         st.slice(1).forEach(function(q, j) { L.push('G1 X' + f3(q.x - o.wcs.x) + ' Y' + f3(q.y - o.wcs.y) + (j === 0 ? ' F' + o.feed : '')); });
@@ -2435,7 +2461,7 @@
       var sink = rt <= 0.05, start = sink ? { x: cx, y: cy } : { x: cx + rt, y: cy };
       L.push(c('SBT chamfer ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40)));
       var to = { x: start.x + o.wcs.x, y: start.y + o.wcs.y };
-      if (at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, 0); })) L.push(cutSafe(o));
+      if (at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, VBIT_R); })) L.push(cutSafe(o));
       L.push('G0 X' + f3(start.x) + ' Y' + f3(start.y));
       L.push('G0 Z5.000');
       L.push('G0 Z2.000');
@@ -3500,6 +3526,16 @@
     await readMachineState();
     renderHoles();
     restoreStock();
+  }
+  // The active tool length offset (0 when none), for the Safe Z check: a
+  // G53 move to Safe Z leaves the tip that much lower.
+  async function readTlo() {
+    try {
+      var gc = parseGcState((await ask('$G', 500)).lines), hash = parseHashReport((await ask('$#', 900)).lines);
+      state.tloMm = gc && gc.tloActive && isFinite(hash.TLO) ? hash.TLO * (state.reportInches ? MM_PER_INCH : 1) : 0;
+    } catch (e) {
+      state.tloMm = 0;
+    }
   }
   async function readMachineState() {
     try {
@@ -4882,7 +4918,8 @@
       stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
       rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
-      wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial
+      wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial,
+      zMacro: { spoil: offsetZParam(+$('mw-slot').value), thick: offsetZParam(+$('mw-thick').value) }, tloMm: state.tloMm || 0
     };
   }
   // What the programs say about the bit: a tool change when Bit Diameter
@@ -4898,8 +4935,9 @@
     if (!state.travel) out.push('Couldn\u2019t read the machine\u2019s travel, so the holes can\u2019t be placed');
     if (state.reportInches) out.push('grblHAL reports positions in inches ($13=1); set $13=0 first');
     // Lifting to Safe Z between holes over a zone mustn't go down: Safe Z
-    // must be above the 5 mm hop.
-    if (o.wcs && o.zWcs != null && state.safeZMm != null && state.safeZMm < o.zWcs + 5) out.push('ncSender\u2019s Safe Z is below 5 mm above ' + o.wcsName + ' Z0 here: raise it, since the programs lift to it to pass over zones');
+    // (G53, so without the tool length offset) must put the tip above the
+    // 5 mm hop.
+    if (o.wcs && o.zWcs != null && state.safeZMm != null && state.safeZMm - (o.tloMm || 0) < o.zWcs + 5) out.push('ncSender\u2019s Safe Z puts this tool\u2019s tip less than 5 mm above ' + o.wcsName + ' Z0: raise it, since the programs lift to it to pass over zones');
     if (!o.wcs) out.push(ms.connected ? o.wcsName + ' is active, and ncSender only reports G54\u2013G59\u2019s X0 Y0: switch to one of those' : 'Connect to the controller first');
     return out;
   }
@@ -5037,7 +5075,7 @@
     }
   }
   async function generateCut() {
-    await readMachineState();
+    await readMachineState(); await readTlo();
     if (!(await cutToolStillMatches($('mw-cut-note')))) return;
     var o = cutSettings(), probs = cutProblems(o);
     if (probs.length) { renderCut(); return; }
@@ -5055,7 +5093,8 @@
     if (!(edge >= 0)) probs.push('Edge Distance must be 0 or more');
     var local = probs.length ? [] : fitTestHoles(size, step, count, edge);
     if (local.length && !(local[0].diaMm > 0)) { probs.push('The smallest hole would be 0 or less'); local = []; }
-    var fo = Object.assign({}, o, { depthMm: cutMm('mw-fit-depth'), thickMm: 0, zWhat: 'the scrap',
+    // Drilled only at the bit's own size, so each test size is cut as itself.
+    var fo = Object.assign({}, o, { depthMm: cutMm('mw-fit-depth'), thickMm: 0, zWhat: 'the scrap', drillTolMm: 0.005,
       title: 'dowel fit test, ' + local.map(function(h) { return fmt(h.diaMm); }).join(', ') + ' mm, left to right',
       holes: o.wcs ? local.map(function(h) { return Object.assign({}, h, { x: h.x + o.wcs.x, y: h.y + o.wcs.y }); }) : [] });
     var zoned = fo.holes.filter(function(h) { return holeKeepout(h.x, h.y, h.diaMm / 2, o.zones); });
@@ -5070,7 +5109,7 @@
     $('mw-fit-generate').disabled = !!f.probs.length;
   }
   async function generateFit() {
-    await readMachineState();
+    await readMachineState(); await readTlo();
     if (!(await cutToolStillMatches($('mw-fit-note')))) return;
     var f = fitSettings();
     if (f.probs.length) { renderFit(); return; }
@@ -5096,13 +5135,28 @@
     $('mw-chm-generate').disabled = !!c.probs.length;
   }
   async function generateChamfer() {
-    await readMachineState();
+    await readMachineState(); await readTlo();
     var c = chamferSettings();
     if (c.probs.length) { renderChamfer(); return; }
     await loadProgram('SBT-Chamfer_' + c.o.holes.length + 'x_V' + c.o.vAngleDeg + '_W-' + shown(c.o.chamferMm) + '_' + unitName() + '.nc',
       chamferProgram(c.o), $('mw-chm-note'), $('mw-chm-generate'));
   }
 
+  // The T-tracks' centerlines and half widths (Track Width on the T-tracks
+  // section, or 3/4"), for labels to keep off.
+  function labelTracks(hh) {
+    var w = cutMm('mw-trk-width'), half = (w > 0 ? w : 19.05) / 2;
+    return trackSlots(trackGrids(hh, state.travel), 0, 0, []).map(function(sl) { return { a: sl.a, b: sl.b, halfMm: half }; });
+  }
+  // The grids with T-tracks shown on the map, ready for trackSlots.
+  function trackGrids(hh, t) {
+    var grids = [];
+    if (hh && t && hh.layout !== 'list') [hh].concat(hh.grids || []).forEach(function(g, i) {
+      if (g.bad || !g.trackAxis || holes.hidden[String(i)]) return;
+      grids.push(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, g));
+    });
+    return grids;
+  }
   // The fixture table's labels, with a V-bit or a laser.
   function labelSettings() {
     var o = cutSettings();
@@ -5112,7 +5166,7 @@
     if (state.travel && hh && textMm > 0) {
       pl = labelPlacements(holes.grid.filter(function(q) { return q.col != null && !q.suppressed && !q.hidden && !q.blocked; }), $('mw-lab-mode').value,
         { textMm: textMm, gapMm: Math.max(1, textMm * 0.4), travel: state.travel, zones: uiZones(), all: holes.grid.filter(function(q) { return !q.hidden && !q.suppressed; }),
-          holeR: function(q) { return holeR(q, hh); } });
+          holeR: function(q) { return holeR(q, hh); }, tracks: labelTracks(hh) });
     }
     Object.assign(o, { labels: pl.labels, textMm: textMm, laser: laser, power: parseFloat($('mw-lab-power').value), depthMm: cutMm('mw-lab-depth'),
       feed: Math.round(cutMm('mw-lab-feed')) });
@@ -5139,7 +5193,7 @@
     $('mw-lab-generate').disabled = !!l.probs.length;
   }
   async function generateLabels() {
-    await readMachineState();
+    await readMachineState(); await readTlo();
     var l = labelSettings();
     if (l.probs.length) { renderLabels(); return; }
     await loadProgram('SBT-Labels_' + l.o.labels.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '_H-' + shown(l.o.textMm) + '_' + unitName() + '.nc',
@@ -5234,7 +5288,7 @@
     $('mw-sh-generate').disabled = !!s.probs.length;
   }
   async function generateStockHoles() {
-    await readMachineState();
+    await readMachineState(); await readTlo();
     if (!(await cutToolStillMatches($('mw-sh-note')))) return;
     var s = stockHoleSettings();
     if (s.probs.length) { renderStockHoles(); return; }
@@ -5255,11 +5309,7 @@
     if (!(o.stepMm > 0)) probs.push('Depth per Pass must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) probs.push('Feed and Plunge must be more than 0');
     if (!(o.stepoverPct > 0 && o.stepoverPct <= 90)) probs.push('Stepover must be 1 to 90%');
-    var grids = [];
-    if (hh && t && hh.layout !== 'list') [hh].concat(hh.grids || []).forEach(function(g, i) {
-      if (g.bad || !g.trackAxis || holes.hidden[String(i)]) return;
-      grids.push(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, g));
-    });
+    var grids = trackGrids(hh, t);
     if (!hh) probs.push('Setup\u2019s grid has a field that can\u2019t be read: fix it in the XY0 Picker');
     else if (!grids.length) probs.push('No grid shown on the map has T-tracks: set T-tracks in Setup');
     var slots = grids.length && width > 0 && o.bitMm > 0 ? trackSlots(grids, width / 2, o.bitMm / 2, o.zones) : [];
@@ -5282,7 +5332,7 @@
     $('mw-trk-generate').disabled = !!tr.probs.length;
   }
   async function generateTracks() {
-    await readMachineState();
+    await readMachineState(); await readTlo();
     if (!(await cutToolStillMatches($('mw-trk-note')))) return;
     var tr = trackSettings();
     if (tr.probs.length) { renderTracks(); return; }
@@ -5583,7 +5633,7 @@
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
       'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
-      'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, or X0 Y0 has moved since you generated it. Z0 must be on the spoilboard&rsquo;s top.',
+      'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say). Z0 must be on the spoilboard&rsquo;s top.',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
       'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table: the hole, T-track, stock-hole and fit-test programs then start with a tool change to that tool (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',

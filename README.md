@@ -366,7 +366,8 @@ the plugin reminds you to re-record the spoilboard height.
   the bit, else cleared in rings out from a spiral in its middle. Climb milling, as QuickCut does; the
   circle milling is QuickCut's.
 - **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before
-  moving if the machine isn't homed, a G92 offset is active, or X0 Y0 has moved since it was generated.
+  moving if the machine isn't homed, a G92 offset is active, X0 Y0 has moved since it was generated, or Z0 is one the
+  Z0 macros set and no tool length offset is active (after a controller restart, say).
 - **The bit:** click **Bit Diameter** to take the loaded tool's diameter from ncSender's tool table, and
   the program starts with a tool change to that tool (`M6 T3`, say), which ncSender runs like any other
   tool change. Type a diameter instead and there's no tool change: load that bit yourself before running

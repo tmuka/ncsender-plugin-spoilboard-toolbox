@@ -19,7 +19,8 @@ file names start SBT too.
   twice its size spiralled down, bigger ones cleared in rings (QuickCut's circle milling). Suppressed,
   hidden and keepout holes are left out; it hops 5 mm between holes and lifts to Safe Z over keepout
   zones and Exclude Picks areas; Hole Depth can't pass the spoilboard's thickness; and it stops before
-  moving if the work offset's X0 Y0 changed since you generated it.
+  moving if the work offset's X0 Y0 changed since you generated it, or if Z0 came from the Z0 macros but
+  no tool length offset is active.
 
 - **Dowel fit test, chamfers and labels** (Spoilboard tab): a row of test holes in scrap to find the size
   your dowels fit; a V-bit chamfer round each hole's top edge; and the fixture table's names engraved
