@@ -407,7 +407,9 @@
     font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.5;
     white-space: pre; overflow-x: auto;
   }
-  .mw-status { margin: 0; font-size: 0.85rem; }
+  .mw-status { margin: 0 !important; font-size: 0.85rem; }
+  /* The Bit and depth card's note takes no room until there's something to say. */
+  #mw-cut-bit-note:empty { display: none; }
   .mw-holes-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
   .mw-select.mw-profile { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; margin: -4px 0 -4px 4px; max-width: 220px; }
   .mw-profile-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding: 6px 6px 6px 10px; border-radius: 8px; background: var(--color-surface-muted); }

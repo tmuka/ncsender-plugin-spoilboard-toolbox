@@ -3,6 +3,11 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### 🐛 Fixes
+- The **Bit and depth** card no longer has a blank strip at the bottom.
+
 ## 0.4.0
 
 **A new plugin ID, moved over for you.** The plugin's ID is now `com.tmuka.spoilboard-toolbox` (it was
