@@ -276,6 +276,17 @@ With a 3D probe it can do all three on its own: jog the tip to a few mm above th
 if it touches the spoilboard's top instead, since Setup is then off by about a hole there), touches the
 walls twice to center itself, and records it. It ends back at Safe Z.
 
+Tick **Also record the spoilboard height** and it also touches the spoilboard's top beside the first hole
+and stores the height the Z0 macros use (the touch's machine Z less the probe's tool length offset), so
+there's no separate trip with the touch plate after surfacing. Only tick it when the probe's tool length
+offset is measured on the tool setter like your bits': every Z0 the macros set comes from this height. It
+refuses without an active tool length offset or with a G92 Z offset, and it won't store a height more
+than 2 mm from the one already recorded (it says both, so you can check the probe's offset).
+
+> **Feedback wanted:** Probe Suggested Holes and recording the height with a 3D probe haven't been tried
+> on a real probe yet, only in a simulation. Stay by the stop button the first time, and please
+> [open an issue](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/issues) with how it went, good or bad.
+
 ![Measure Holes: a 3D probe touches a hole's four sides, or a pin is centered by eye with an even gap;
 measuring three holes far apart fits Setup's grid, spacing, insets and Turn, to the real
 holes](docs/measure-holes.png)

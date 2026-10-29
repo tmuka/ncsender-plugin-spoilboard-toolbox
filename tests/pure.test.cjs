@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1502,4 +1502,18 @@ test('measure holes: suggests the hole nearest A1, the far end of its row and th
   assert.deepEqual(calPlan(g.map(q => Object.assign({}, q, { layer: 1 })), 0), []);
   // One usable hole: just it.
   assert.deepEqual(tags(calPlan([{ col: 3, row: 3, x: 0, y: 0 }], 0)), ['3,3']);
+});
+
+test('spoilboard height: a spot on the top beside the hole, clear of holes, zones, tracks and edges', () => {
+  const travel = { xMm: 500, yMm: 500, dirX: 1, dirY: 1 };
+  const h = { x: 100, y: 100 }, others = [{ x: 150, y: 100, rMm: 4 }, { x: 100, y: 150, rMm: 4 }];
+  assert.deepEqual(surfaceSpot(h, 4, others, [], [], travel), { x: 108, y: 100 });
+  // +X under a keepout zone: -X.
+  assert.deepEqual(surfaceSpot(h, 4, others, [{ minX: 105, maxX: 120, minY: 90, maxY: 110 }], [], travel), { x: 92, y: 100 });
+  // A T-track along Y at x 92 and the zone: +Y.
+  assert.deepEqual(surfaceSpot(h, 4, others, [{ minX: 105, maxX: 120, minY: 90, maxY: 110 }], [{ a: { x: 92, y: 0 }, b: { x: 92, y: 500 }, halfMm: 5 }], travel), { x: 100, y: 108 });
+  // A hole right next to it on +X: not there.
+  assert.deepEqual(surfaceSpot(h, 4, [{ x: 112, y: 100, rMm: 4 }], [], [], travel), { x: 92, y: 100 });
+  // Hard against the travel's corner with every way blocked: none.
+  assert.equal(surfaceSpot({ x: 3, y: 3 }, 4, [{ x: 11, y: 3, rMm: 4 }, { x: 3, y: 11, rMm: 4 }], [], [], travel), null);
 });

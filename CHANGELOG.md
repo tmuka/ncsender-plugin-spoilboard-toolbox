@@ -14,7 +14,10 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
   next one at Safe Z.
 - **Probe Suggested Holes:** with a 3D probe, one hold measures them all: Safe Z between holes, 6 mm
   down into each (it stops if it touches the spoilboard's top instead of finding the hole), and two
-  rounds of wall touches so it centers itself.
+  rounds of wall touches so it centers itself. Tick **Also record the spoilboard height** and it touches
+  the top beside the first hole and stores the height for the Z0 macros (refused without the probe's tool
+  length offset active, and not stored when it's over 2 mm from the recorded one). **Feedback wanted:**
+  not yet tried on a real 3D probe, so stay by the stop button and tell us how it went.
 - **Nothing typed is lost on close:** fields save half a second after you stop typing, not only when you
   leave them, so closing the plugin right after typing a number keeps it.
 

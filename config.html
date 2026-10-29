@@ -604,12 +604,15 @@
           <p class="mw-hint" data-cal-mode="probe"><strong>With a touch probe</strong> (a 3D probe that triggers when its tip is pushed sideways; wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t) in the spindle and connected: jog its tip into a hole, below the spoilboard&rsquo;s top
             and roughly centered, and press <strong>Probe This Hole</strong>. It touches the hole&rsquo;s sides in X and Y at the Z0 macros&rsquo; Probe Feed and
             finds its center. Or let it do the suggested holes: jog the tip to a few mm above the spoilboard and hold <strong>Probe Suggested Holes</strong>.
-            It goes to each at Safe Z, 6 mm down into it (stopping if it touches the spoilboard&rsquo;s top instead), and centers itself.</p>
+            It goes to each at Safe Z, 6 mm down into it (stopping if it touches the spoilboard&rsquo;s top instead), and centers itself.
+            <strong>Not yet tried with a real 3D probe:</strong> stay by the stop button the first time, and please tell us how it went on <a href="https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/issues" target="_blank" rel="noopener">GitHub</a>.</p>
           <p class="mw-hint" data-cal-mode="eye"><strong>By eye</strong>, with no probe: put a pin, a dowel or a V-bit in the spindle, jog it (keyboard, gamepad or pendant) down into
             the hole&rsquo;s mouth until it&rsquo;s centered, with an even gap all round, and press <strong>Centered by Eye</strong>. It records where the bit is,
             without moving; a pin that just fits the hole centers itself.</p>
           <p class="mw-hint">Measure two or more holes far apart (along a row and up a column) to fit the spacing and insets, and how far the
             spoilboard is turned (Turn); Apply waits for the second.</p>
+          <label class="mw-extra" data-cal-mode="probe"><input type="checkbox" id="mw-cal-height"><span>Also record the spoilboard height, probing its top beside the first hole. Only if the
+            probe&rsquo;s tool length offset is measured on the tool setter like your bits&rsquo;: every Z0 the macros set comes from this height.</span></label>
           <p class="mw-hint" id="mw-cal-next"></p>
           <div class="mw-inline-row">
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-cal-goto" hidden title="Hold to move over the suggested hole's center from Setup: up to ncSender's Safe Z first, then across. Then jog down into it to measure."><span class="mw-hold-fill"></span><span id="mw-cal-goto-label">Go to</span><span class="mw-hold-hint">Hold</span></button>
@@ -1949,6 +1952,24 @@
     var b = best(rest.filter(function(q) { return q.col !== a.col; }), function(q) { return (q.row === a.row ? 1e6 : 0) + Math.abs(q.col - a.col) - Math.abs(q.row - a.row) / 1000; });
     var c = best(rest.filter(function(q) { return q.row !== a.row && q !== b; }), function(q) { return (q.col === a.col ? 1e6 : 0) + Math.abs(q.row - a.row) - Math.abs(q.col - a.col) / 1000; });
     return [a, b, c].filter(Boolean);
+  }
+  // Where a probe can touch the spoilboard's top next to hole h: its radius
+  // plus 4 mm out along +X, -X, +Y or -Y, the first that's 2 mm clear of
+  // every other hole (others, each with rMm), keepout zones, T-tracks
+  // ({ a, b, halfMm } centerlines) and the travel's edges. null when none is.
+  function surfaceSpot(h, rMm, others, zones, tracks, travel) {
+    var d = rMm + 4, clear = 2, minX = travel.dirX > 0 ? 0 : -travel.xMm, minY = travel.dirY > 0 ? 0 : -travel.yMm;
+    var segDist = function(p, a, b) {
+      var dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy, t = l2 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
+      return Math.hypot(p.x - a.x - t * dx, p.y - a.y - t * dy);
+    };
+    var tries = [[d, 0], [-d, 0], [0, d], [0, -d]].map(function(o) { return { x: h.x + o[0], y: h.y + o[1] }; });
+    return tries.filter(function(p) {
+      return p.x >= minX + clear && p.x <= minX + travel.xMm - clear && p.y >= minY + clear && p.y <= minY + travel.yMm - clear &&
+        !others.some(function(q) { return Math.hypot(p.x - q.x, p.y - q.y) < q.rMm + clear; }) &&
+        !holeKeepout(p.x, p.y, clear, zones || []) &&
+        !(tracks || []).some(function(t) { return segDist(p, t.a, t.b) < t.halfMm + clear; });
+    })[0] || null;
   }
   function stockRect(x, y, wMm, lMm, corner) {
     var left = !/right/.test(corner), front = !/^back/.test(corner);
@@ -5501,8 +5522,38 @@
   // stops. In the hole it finds the center and records it. Back to Safe Z
   // at the end, or on any error.
   var CAL_DIVE_MM = 6;
+  // The spoilboard height from the probe, beside hole h (the tip at height
+  // z0 over it): the Z0 macros' Record spoilboard height with no block,
+  // spoilboard = trigger Z (machine) - TLO, stored in their slot. Refused
+  // without an active tool length offset or with a G92 Z offset, and not
+  // stored when it's over 2 mm from the height already recorded (a probe
+  // whose own offset isn't measured, most likely). Returns what it did.
+  var SPOIL_JUMP_MM = 2;
+  async function probeSpoilHeight(h, hh, z0, feed) {
+    var s = readSettings();
+    if (!s) throw new Error('the Z0 macros tab has a setting to fix before the spoilboard height can be recorded');
+    var gc = parseGcState((await ask('$G', 500)).lines), hash = parseHashReport((await ask('$#', 900)).lines);
+    if (!gc || !gc.tloActive || !isFinite(hash.TLO)) throw new Error('no tool length offset is active for the probe, so the spoilboard height wasn\u2019t recorded');
+    if (hash.G92 && Math.abs(hash.G92[2]) > 0.0005) throw new Error('a G92 Z offset is active (G92.1 clears it), so the spoilboard height wasn\u2019t recorded');
+    var others = holes.grid.filter(function(q) { return q !== h && !q.hidden; }).map(function(q) { return { x: q.x, y: q.y, rMm: holeR(q, hh) }; });
+    var spot = surfaceSpot(h, holeR(h, hh), others, uiZones(), labelTracks(hh), state.travel);
+    if (!spot) throw new Error('there\u2019s no clear spot beside ' + holeName(h) + ' to touch the spoilboard\u2019s top');
+    var r = await sendCommand('G53 G21 G90 G0 X' + fmt(spot.x) + ' Y' + fmt(spot.y));
+    if (!r.ok) throw new Error('the controller rejected the move beside ' + holeName(h));
+    var t = await probeTouch('Z', -CAL_DIVE_MM, feed);
+    await sendCommand('G53 G21 G90 G0 Z' + fmt(z0));
+    if (!t || !t.ok) throw new Error('the probe didn\u2019t touch the spoilboard beside ' + holeName(h) + ' within ' + CAL_DIVE_MM + ' mm, so its height wasn\u2019t recorded');
+    var slot = WCS_NAMES[s.slot], prev = hash[slot] ? hash[slot][2] : 0, now = t.z - hash.TLO;
+    if (prev && Math.abs(now - prev) > SPOIL_JUMP_MM) {
+      throw new Error('the probe puts the spoilboard at ' + fmt(now) + ' mm, ' + fmt(Math.abs(now - prev)) + ' mm from the ' + fmt(prev) + ' mm recorded, so it wasn\u2019t stored: check the probe\u2019s tool length offset, or use Record spoilboard height with a block');
+    }
+    var w = await sendCommand('G21 G10 L2 P' + s.slot + ' Z' + fmt(now));
+    if (!w.ok) throw new Error('the controller rejected storing the spoilboard height');
+    state.spoilZ = now;
+    return 'Spoilboard height ' + (prev ? fmt(prev) + ' \u2192 ' + fmt(now) + ' mm (' + fmt(Math.abs(now - prev)) + ' mm ' + (now > prev ? 'higher' : 'lower') + ')' : fmt(now) + ' mm (none recorded before)') + ', in ' + slot + ' Z. ';
+  }
   async function probeSuggested() {
-    var note = $('mw-cal-note'), inches = false, gen = cal.gen, z0 = null, done = [];
+    var note = $('mw-cal-note'), inches = false, gen = cal.gen, z0 = null, done = [], heightNote = '', heightBad = false;
     if (calMode() !== 'probe') return;
     calBusy(true);
     note.removeAttribute('data-state');
@@ -5530,12 +5581,15 @@
         done.push(recordCenter(c, grid, hh, gen));
         await sendCommand('G53 G21 G90 G0 Z' + fmt(z0));
         renderCal();
+        if (i === 0 && $('mw-cal-height').checked) {
+          try { heightNote = await probeSpoilHeight(h, hh, z0, feed); } catch (he) { heightNote = 'Spoilboard height not recorded: ' + he.message + '. '; heightBad = true; }
+        }
       }
-      note.setAttribute('data-state', 'ok');
-      note.textContent = 'Measured ' + done.join(', ') + '. Check the fit below, then Apply to Setup.';
+      note.setAttribute('data-state', heightBad ? 'bad' : 'ok');
+      note.textContent = 'Measured ' + done.join(', ') + '. ' + heightNote + 'Check the fit below, then Apply to Setup.';
     } catch (e) {
       note.setAttribute('data-state', 'bad');
-      note.textContent = (done.length ? 'Measured ' + done.join(', ') + ', then stopped: ' : 'Stopped: ') + e.message + '.';
+      note.textContent = (done.length ? 'Measured ' + done.join(', ') + ', then stopped: ' : 'Stopped: ') + heightNote + e.message + '.';
     } finally {
       // Up to Safe Z (or the start height, if that's higher) whatever happened.
       var up = state.safeZMm != null ? (z0 != null && isFinite(z0) ? Math.max(state.safeZMm, z0) : state.safeZMm) : z0;
@@ -5771,7 +5825,7 @@
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>SBT: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
-      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. It suggests three holes to measure (the one nearest A1, the far end of its row and the top of its column, clear of keepout zones, Exclude Picks areas and the stock), and <strong>Go to</strong> (hold) moves over the next at Safe Z; any other hole works too. With a 3D probe, jog its tip to a few mm above the spoilboard and hold <strong>Probe Suggested Holes</strong>: it does them all, up to Safe Z between holes, 6 mm down into each (stopping if it touches the spoilboard&rsquo;s top instead, which means Setup is off there) and touching the walls twice to center itself. <strong>Measure with</strong> picks which: only that way&rsquo;s button shows (by eye to start), so a pin is never sent probing into a wall. Measure at least two holes far apart: that fits the spacing too, and two in the same row or column how far the spoilboard is turned (measure along a row and up a column for both). <strong>Apply to Setup</strong> writes them in, Turn included.',
+      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. It suggests three holes to measure (the one nearest A1, the far end of its row and the top of its column, clear of keepout zones, Exclude Picks areas and the stock), and <strong>Go to</strong> (hold) moves over the next at Safe Z; any other hole works too. With a 3D probe, jog its tip to a few mm above the spoilboard and hold <strong>Probe Suggested Holes</strong>: it does them all, up to Safe Z between holes, 6 mm down into each (stopping if it touches the spoilboard&rsquo;s top instead, which means Setup is off there) and touching the walls twice to center itself; ticked, <strong>Also record the spoilboard height</strong> touches the top beside the first hole and stores it for the Z0 macros (spoilboard = touch Z &minus; the probe&rsquo;s tool length offset), refusing with no offset active and not storing a height more than 2 mm from the one recorded. These 3D probe steps haven&rsquo;t been tried on a real probe yet: stay by the stop button, and feedback is welcome on GitHub. <strong>Measure with</strong> picks which: only that way&rsquo;s button shows (by eye to start), so a pin is never sent probing into a wall. Measure at least two holes far apart: that fits the spacing too, and two in the same row or column how far the spoilboard is turned (measure along a row and up a column for both). <strong>Apply to Setup</strong> writes them in, Turn included.',
       '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and the Spoilboard and Stock programs all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
