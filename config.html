@@ -713,7 +713,7 @@
         </div>
         <div class="mw-field mw-list-only">
           <label for="mw-hole-list"><span class="mw-ref-only">Holes: X, Y from the reference point, one per line</span><span class="mw-extra-only">Extra holes: X, Y from the first grid&rsquo;s first hole, one per line</span></label>
-          <textarea class="mw-input mw-hole-list" id="mw-hole-list" rows="6" spellcheck="false" placeholder="300, 150&#10;120, 40, 6mm&#10;Fixture1: 0, 400, 0&#10;Vise: 500, 250, , 63.5mm" title="One hole per line: x, y or name: x, y, measured from the reference point (or, with Grid + List, from the first grid's first hole) into the machine's travel, like the insets. A third value is that hole's own diameter; without one it's the first grid's Hole Diameter (with a List alone, Hole Diameter). Values take mm or inches (6.35mm, 1/4&quot;); bare numbers are in the machine's units."></textarea>
+          <textarea class="mw-input mw-hole-list" id="mw-hole-list" rows="6" spellcheck="false" placeholder="300, 150&#10;120, 40, 6mm&#10;# 200, 90  (commented out)&#10;Fixture1: 0, 400, 0&#10;Vise: 500, 250, , 63.5mm" title="One hole per line: x, y or name: x, y, measured from the reference point (or, with Grid + List, from the first grid's first hole) into the machine's travel, like the insets. A third value is that hole's own diameter; without one it's the first grid's Hole Diameter (with a List alone, Hole Diameter). Values take mm or inches (6.35mm, 1/4&quot;); bare numbers are in the machine's units. Start a line with # or ; to comment it out (skip that hole without deleting it)."></textarea>
           <div class="mw-holes-tools">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-add" title="Jog the bit over the center of a hole and press this to add it to the list.">Add Current Position</button>
             <span class="mw-hint" id="mw-hole-list-note"></span>
@@ -1808,14 +1808,14 @@
   // height of its surface above the spoilboard (a vise jaw, a fixture's
   // top: zMm), each value in mm or inches as parseUnitValue reads it
   // (bare numbers in the machine's units). "x, y, , height" keeps Hole
-  // Diameter. Blank lines and lines starting with ( or ; are skipped. Returns
+  // Diameter. Blank lines and lines starting with #, ( or ; are skipped. Returns
   // the holes in mm, the 1-based numbers of lines it couldn't read, and
   // each hole's line number (lines).
   function parseHoleList(text, imperial) {
     var holes = [], bad = [], lines = [];
     String(text || '').split(/\r?\n/).forEach(function(line, i) {
       var t = line.replace(/\s*(;.*|\([^)]*\))\s*$/, '').trim();
-      if (!t || /^[(;]/.test(line.trim())) return;
+      if (!t || /^[#(;]/.test(line.trim())) return;
       var m = /^([^:,]*[^\s:,]):\s*(.*)$/.exec(t), name = '';
       if (m) { name = m[1].trim(); t = m[2]; }
       var parts = t.split(',');
@@ -1852,8 +1852,33 @@
       var r = parseHoleList(line, fromImperial);
       if (r.holes.length !== 1) return line;
       var note = /\s*(;.*|\([^)]*\))\s*$/.exec(line);
-      return formatHoleList(r.holes, toImperial) + (note && !/^[(;]/.test(line.trim()) ? note[0] : '');
+      return formatHoleList(r.holes, toImperial) + (note && !/^[#(;]/.test(line.trim()) ? note[0] : '');
     }).join('\n');
+  }
+  // Listed holes are keyed by their place in the list (#1, #2...), so a
+  // line commented out, deleted or added renumbers the ones after it. The
+  // keys (suppressed, favorites) moved to follow their hole, matched by
+  // name and position; a hole no longer listed loses its key.
+  function remapListKeys(keys, oldText, newText, imperial) {
+    var was = parseHoleList(oldText, imperial).holes, now = parseHoleList(newText, imperial).holes, used = {};
+    var same = function(a, b) { return a.name === b.name && Math.abs(a.xMm - b.xMm) < 1e-6 && Math.abs(a.yMm - b.yMm) < 1e-6; };
+    var to = was.map(function(h, i) {
+      for (var j = 0; j < now.length; j++) if (!used[j] && same(h, now[j])) { used[j] = true; return j; }
+      return -1;
+    });
+    // Unchanged holes first, so an edited one can't take a moved one's key.
+    was.forEach(function(h, i) {
+      if (to[i] >= 0) return;
+      if (now[i] && !used[i] && (now[i].name ? now[i].name === h.name : Math.abs(now[i].xMm - h.xMm) + Math.abs(now[i].yMm - h.yMm) < 1e-6)) { used[i] = true; to[i] = i; }
+    });
+    var out = [];
+    keys.forEach(function(k) {
+      var m = /^#(\d+)$/.exec(k);
+      if (!m) { out.push(k); return; }
+      var j = to[+m[1] - 1];
+      if (j != null && j >= 0 && out.indexOf('#' + (j + 1)) < 0) out.push('#' + (j + 1));
+    });
+    return out;
   }
   // The hole nearest a machine position: { index, distanceMm }, or null.
   // Holes marked `blocked` (in a keepout zone) or `suppressed` (not on the
@@ -3802,6 +3827,18 @@
     $('mw-d-refresh').addEventListener('click', function(evt) { evt.preventDefault(); readNumbers(); });
     $('mw-save').addEventListener('click', function() { disarmDelete(); saveMacros(); });
     $('mw-delete').addEventListener('click', deleteMacros);
+    // Suppressed and favorite listed holes follow their line as the list
+    // is edited (before the redraw below reads them).
+    $('mw-hole-list').addEventListener('focus', function() { holes.listPrev = $('mw-hole-list').value; });
+    $('mw-hole-list').addEventListener('input', function() {
+      var now = $('mw-hole-list').value, prev = holes.listPrev != null ? holes.listPrev : now;
+      holes.listPrev = now;
+      if (prev === now) return;
+      holes.suppressed = remapListKeys(holes.suppressed, prev, now, state.imperial);
+      holes.favorites = remapListKeys(holes.favorites, prev, now, state.imperial);
+      var prof = profileOf(holes.profile);
+      if (prof && prof.holeFavorites) prof.holeFavorites = holes.favorites.slice();
+    });
     HOLE_FIELDS.forEach(function(id) {
       // The grid changes shape, so the picked index would be another hole.
       $(id).addEventListener('input', function() { holes.picked = -1; holes.nearMm = null; });
@@ -6568,7 +6605,7 @@
         '<li>Needs the spoilboard height recorded and a tool length offset active; stops with a G92 Z offset.</li>' +
         '<li>On the Z0 macros&rsquo; work offset it keeps a probed Z0 for <strong>SBT: Z0 back to saved</strong>.</li>' +
         '<li>A height below the spoilboard or past the Z travel (a unit typo, say) is flagged and refused.</li></ul>',
-      '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
+      '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. Start a line with <kbd>#</kbd> or <kbd>;</kbd> to skip that hole without deleting it. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines. No grid on the board yet? <strong>Spoilboard &rsaquo; Grid lines</strong> lasers or engraves it from Setup.',
       HELP_NEEDS, HELP_UNITS ] },

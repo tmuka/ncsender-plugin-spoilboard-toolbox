@@ -295,7 +295,8 @@ move it or resurface the spoilboard. The keyboard macros only ever set X and Y.
 **Layout** menu at the top of Setup to **List** and enter one hole per line, as `x, y` or
 `name: x, y` (e.g. `A: 0, 0`, `pin: 12-1/2", 6"`, with an optional third value for that hole's
 diameter), measured from a **reference point** (Reference X /
-Y) into the machine's travel, the same way the grid's insets are. Easiest: set the reference, then jog
+Y) into the machine's travel, the same way the grid's insets are. Start a line with `#` or `;` to
+comment it out: that hole is skipped but stays in the list. Easiest: set the reference, then jog
 over each hole and press **Add Current Position**. Positions are relative so that if the board or the
 machine's homing ever shifts, jogging to the first listed hole and pressing **Grab First Hole Center**
 moves the reference and the whole list follows. The map, Pick Nearest Hole, the dots, Go to Selected,

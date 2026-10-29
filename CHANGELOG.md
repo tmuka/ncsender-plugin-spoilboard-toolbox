@@ -12,6 +12,12 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Holes through the stock: a Counterbore of 0 means none**, as blank does, instead of an error.
   Counterbore Depth is greyed out when there's no counterbore, since it isn't used.
 
+### ✨ New
+- **Comment out a listed hole** with `#` at the start of its line (`;` and `(` already worked):
+  it's skipped everywhere but stays in the list for later. Stars and suppressed marks on listed
+  holes now stay with their hole when lines are commented out, added or deleted, instead of
+  sliding onto the next one.
+
 ## 0.4.1
 
 **Removable fixture plates that match your spoilboard.**

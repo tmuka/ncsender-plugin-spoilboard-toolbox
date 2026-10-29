@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -624,6 +624,21 @@ test('nearest-hole macros: Go lifts (never down), then moves; stops for keepouts
   assert.ok(run(none.setHole.body, Object.assign({}, ready))._error);
 });
 
+test('remapListKeys keeps suppressed and favorite listed holes on their hole', () => {
+  const was = 'A: 0, 0\n10, 10\n20, 20\nD: 30, 30';
+  assert.deepStrictEqual(remapListKeys(['#2', '#3', '#4', '3,2', 'g2:#1'], was, 'A: 0, 0\n# 10, 10\n20, 20\nD: 30, 30', false), ['#2', '#3', '3,2', 'g2:#1']);
+  assert.deepStrictEqual(remapListKeys(['#3'], was, 'A: 0, 0\n# 10, 10\n20, 20\nD: 30, 30', false), ['#2']);
+  assert.deepStrictEqual(remapListKeys(['#2'], was, 'A: 0, 0\n10, 10\n20, 20\nD: 30, 30', false), ['#2']);
+  assert.deepStrictEqual(remapListKeys(['#4'], was, 'A: 0, 0\n10, 10\n20, 20\nD: 31, 30', false), ['#4']);
+  assert.deepStrictEqual(remapListKeys(['#2'], was, 'A: 0, 0\n5, 5\n10, 10\n20, 20\nD: 30, 30', false), ['#3']);
+});
+test('parseHoleList skips lines commented out with #, ; or (', () => {
+  const r = parseHoleList('A: 0, 0\n# B: 10, 10\n  #20, 20\n; 30, 30\n(40, 40)\nC: 50, 50', false);
+  assert.deepStrictEqual(r.holes.map(h => h.name), ['A', 'C']);
+  assert.deepStrictEqual(r.bad, []);
+  assert.deepStrictEqual(r.lines, [1, 6]);
+  assert.strictEqual(convertHoleList('# 25.4, 50.8\n25.4, 50.8', false, true), '# 25.4, 50.8\n1, 2');
+});
 test('parseHoleList reads names, mixed units and skips comments; formatHoleList writes it back', () => {
   const r = parseHoleList('A: 0, 0\n( locating pins )\n\nB: 300, 12.5\n12-1/2", 6"\n1: 2in, 50.8mm\nnot a hole\n5, 6, 7, 8, 9\npin: 5, 6, 1/4"\n7, 8, -2', false);
   assert.deepEqual(r.bad, [7, 8, 10]);
