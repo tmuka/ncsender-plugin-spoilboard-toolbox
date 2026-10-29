@@ -14,8 +14,12 @@ open each once: the new one does the move and the old button goes away.
 
 ### 📖 Docs
 - **What you need** says a plain spoilboard is fine: the plugin cuts the holes.
-- **Help** has **Getting started** and the README link at the top, and its Field tips list keeps the
-  names to a narrow column (one column on a small screen) with every name readable.
+- **Help is a set of short pages**: each tab's Help opens on an index of topics, grouped (Start here, Set up
+  your board, Using the map...), each a tile with an icon and one line. A tile opens its page, with
+  Previous and Next; the longest pages are now short paragraphs and lists. **Getting started** and the
+  README link are at the top, and Field tips is a page of its own with the names in a narrow column.
+### 🐛 Fixes
+- In by-eye mode, Measure Holes no longer shows the probe-only **Also record the spoilboard height** box.
 
 ## 0.3.37
 
