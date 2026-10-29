@@ -266,13 +266,14 @@ own machine.
 doesn't conduct, so a plain probe pin can't trigger), jog its tip into a hole below the top, and press
 **Probe This Hole**. It touches the sides in X and Y and finds the center. Two or more holes far apart
 (along a row and up a column) fit the spacing as well as the insets, and how far the spoilboard is
-turned; **Apply to Setup** writes them in.
+turned; **Apply to Setup** writes them in once two holes are measured.
 
 ![Measure Holes: a 3D probe touches a hole's four sides, or a pin is centered by eye with an even gap;
 measuring three holes far apart fits Setup's grid, spacing, insets and Turn, to the real
 holes](docs/measure-holes.png)
 
-No probe? Measure **by eye** instead: put a pin, a dowel or a V-bit in the spindle, jog it with the
+No probe? Measure **by eye** instead (the panel's **Measure with** menu starts there, and only shows the
+chosen way's button, so a pin is never sent probing into a hole's wall): put a pin, a dowel or a V-bit in the spindle, jog it with the
 keyboard, a gamepad or the pendant down into the hole's mouth until the gap is even all round, and press
 **Centered by Eye**. It records where the bit is, without moving. A pin that just fits the hole centers
 itself; with a V-bit, lower its tip until the cone touches the rim evenly.

@@ -269,6 +269,8 @@
   .mw-banner[hidden], .mw-cal[hidden], .mw-lab-vbit[hidden], .mw-lab-laser[hidden], .mw-sh-bolt[hidden], .mw-sh-pins[hidden] { display: none !important; }
   .mw-banner span { flex: 1; }
   .mw-cal { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; }
+  .mw-select.mw-cal-mode { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; }
+  #mw-cal label[for=mw-cal-mode] { font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary); }
   .mw-cal-list { margin: 0; padding-left: 18px; font-variant-numeric: tabular-nums; }
   .mw-cal-list:empty { display: none; }
   .mw-label-link { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
@@ -592,17 +594,24 @@
           <span class="mw-hint" id="mw-hole-sup-note"></span>
         </div>
         <div class="mw-cal mw-grid-only" id="mw-cal" hidden>
-          <p class="mw-hint"><strong>With a touch probe</strong> (a 3D probe that triggers when its tip is pushed sideways; wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t) in the spindle and connected: jog its tip into a hole, below the spoilboard&rsquo;s top
+          <div class="mw-inline-row" style="align-items: center">
+            <label for="mw-cal-mode">Measure with</label>
+            <select class="mw-select mw-cal-mode" id="mw-cal-mode" title="By eye records where the bit is and never moves. 3D touch probe moves the probe sideways into each hole's walls, so only choose it with a 3D probe in the spindle and connected: a plain pin would be driven into the wall.">
+              <option value="eye">A pin, by eye (no probe)</option>
+              <option value="probe">A 3D touch probe</option>
+            </select>
+          </div>
+          <p class="mw-hint" data-cal-mode="probe"><strong>With a touch probe</strong> (a 3D probe that triggers when its tip is pushed sideways; wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t) in the spindle and connected: jog its tip into a hole, below the spoilboard&rsquo;s top
             and roughly centered, and press <strong>Probe This Hole</strong>. It touches the hole&rsquo;s sides in X and Y at the Z0 macros&rsquo; Probe Feed and
             finds its center.</p>
-          <p class="mw-hint"><strong>By eye</strong>, with no probe: put a pin, a dowel or a V-bit in the spindle, jog it (keyboard, gamepad or pendant) down into
+          <p class="mw-hint" data-cal-mode="eye"><strong>By eye</strong>, with no probe: put a pin, a dowel or a V-bit in the spindle, jog it (keyboard, gamepad or pendant) down into
             the hole&rsquo;s mouth until it&rsquo;s centered, with an even gap all round, and press <strong>Centered by Eye</strong>. It records where the bit is,
             without moving; a pin that just fits the hole centers itself.</p>
           <p class="mw-hint">Measure two or more holes far apart (along a row and up a column) to fit the spacing and insets, and how far the
-            spoilboard is turned (Turn); one fits the insets only, keeping Setup&rsquo;s Turn.</p>
+            spoilboard is turned (Turn); Apply waits for the second.</p>
           <div class="mw-inline-row">
-            <button type="button" class="mw-btn mw-btn-small" id="mw-cal-probe">Probe This Hole</button>
-            <button type="button" class="mw-btn mw-btn-small" id="mw-cal-eye" title="Record the bit's position as this hole's center, without moving. Jog a pin or V-bit into the hole until it's centered first.">Centered by Eye</button>
+            <button type="button" class="mw-btn mw-btn-small" id="mw-cal-probe" data-cal-mode="probe">Probe This Hole</button>
+            <button type="button" class="mw-btn mw-btn-small" id="mw-cal-eye" data-cal-mode="eye" title="Record the bit's position as this hole's center, without moving. Jog a pin or V-bit into the hole until it's centered first.">Centered by Eye</button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-apply" disabled>Apply to Setup</button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-clear">Clear</button>
           </div>
@@ -2958,7 +2967,7 @@
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'),
       stockZMode: $('mw-stock-zmode').value,
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, stockPoint: stockPoint(),
-      cut: cutBody(), surfaceAck: holes.surfaceAck || ''
+      cut: cutBody(), surfaceAck: holes.surfaceAck || '', calMode: calMode()
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
@@ -3210,6 +3219,7 @@
     holes.hidden = saved.holeHidden && typeof saved.holeHidden === 'object' ? saved.holeHidden : {};
     applySetup(setupFields(saved, state.imperial));
     setHoleOrigin(saved.holeOrigin);
+    $('mw-cal-mode').value = saved.calMode === 'probe' ? 'probe' : 'eye';
     holes.blocks = Array.isArray(saved.holeBlocks) ? saved.holeBlocks.filter(function(z) {
       return z && [z.minX, z.maxX, z.minY, z.maxY].every(function(v) { return typeof v === 'number' && isFinite(v); });
     }).map(function(z) { return { block: true, name: 'Blocked', minX: z.minX, maxX: z.maxX, minY: z.minY, maxY: z.maxY }; }) : [];
@@ -5413,6 +5423,13 @@
       await sendCommand('G90');
     }
   }
+  // Only the chosen way's hint and button show, so a pin can't be sent
+  // probing into a hole's wall by the wrong button. By eye unless chosen.
+  function calMode() { return $('mw-cal-mode').value === 'probe' ? 'probe' : 'eye'; }
+  function showCalMode() {
+    var m = calMode();
+    $('mw-cal').querySelectorAll('[data-cal-mode]').forEach(function(el) { el.hidden = el.getAttribute('data-cal-mode') !== m; });
+  }
   function calBusy(on) {
     cal.busy = on;
     ['mw-cal-probe', 'mw-cal-eye', 'mw-cal-clear'].forEach(function(id) { $(id).disabled = on; });
@@ -5420,6 +5437,7 @@
   }
   async function probeHole() {
     var note = $('mw-cal-note'), inches = false, gen = cal.gen;
+    if (calMode() !== 'probe') return;
     calBusy(true);
     note.removeAttribute('data-state');
     note.textContent = 'Probing\u2026';
@@ -5514,8 +5532,9 @@
       list.appendChild(li);
     });
     var f = calFit(), fit = $('mw-cal-fit');
-    $('mw-cal-apply').disabled = cal.busy || !f || !!f.pitch;
+    $('mw-cal-apply').disabled = cal.busy || !f || !!f.pitch || cal.meas.length < 2;
     if (!f) { fit.textContent = cal.meas.length ? '' : 'No holes measured yet.'; return; }
+    if (cal.meas.length < 2 && !f.pitch) { fit.textContent = 'Measure another hole, far from this one, to fit Setup to them.'; return; }
     if (f.pitch) { fit.textContent = 'With a Panel Pitch set, the spacing can\u2019t be fitted this way yet.'; return; }
     var u = ' ' + unitName();
     fit.textContent = 'Fitted: spacing X ' + (f.fittedX ? shown(f.sx) + u : 'kept') + ', Y ' + (f.fittedY ? shown(f.sy) + u : 'kept') +
@@ -5543,6 +5562,8 @@
   function wireCal() {
     $('mw-cal-open').addEventListener('click', function() { showCal($('mw-cal').hidden); });
     $('mw-cal-probe').addEventListener('click', probeHole);
+    $('mw-cal-mode').addEventListener('change', function() { showCalMode(); saveSettings(); });
+    showCalMode();
     $('mw-cal-eye').addEventListener('click', eyeHole);
     $('mw-cal-apply').addEventListener('click', applyCal);
     $('mw-cal-clear').addEventListener('click', function() { cal.meas = []; renderCal(); });
@@ -5607,7 +5628,7 @@
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>SBT: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
-      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. Two or more holes far apart fit the spacing too, and two in the same row or column how far the spoilboard is turned (measure along a row and up a column for both). <strong>Apply to Setup</strong> writes them in, Turn included.',
+      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. <strong>Measure with</strong> picks which: only that way&rsquo;s button shows (by eye to start), so a pin is never sent probing into a wall. Measure at least two holes far apart: that fits the spacing too, and two in the same row or column how far the spoilboard is turned (measure along a row and up a column for both). <strong>Apply to Setup</strong> writes them in, Turn included.',
       '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and the Spoilboard and Stock programs all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
