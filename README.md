@@ -271,6 +271,11 @@ hole nearest A1, the far end of its row and the top of its column, clear of keep
 areas and the stock), and holding **Go to** moves over the next one at Safe Z, so there's no hunting on
 the map; any other hole works too.
 
+With a 3D probe it can do all three on its own: jog the tip to a few mm above the spoilboard and hold
+**Probe Suggested Holes**. It lifts to Safe Z, moves over each hole, goes 6 mm down into it (and stops
+if it touches the spoilboard's top instead, since Setup is then off by about a hole there), touches the
+walls twice to center itself, and records it. It ends back at Safe Z.
+
 ![Measure Holes: a 3D probe touches a hole's four sides, or a pin is centered by eye with an even gap;
 measuring three holes far apart fits Setup's grid, spacing, insets and Turn, to the real
 holes](docs/measure-holes.png)

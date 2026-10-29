@@ -12,6 +12,9 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Measure Holes suggests which holes:** the one nearest A1, the far end of its row and the top of its
   column, clear of keepout zones, Exclude Picks areas and the stock, and holding **Go to** moves over the
   next one at Safe Z.
+- **Probe Suggested Holes:** with a 3D probe, one hold measures them all: Safe Z between holes, 6 mm
+  down into each (it stops if it touches the spoilboard's top instead of finding the hole), and two
+  rounds of wall touches so it centers itself.
 - **Nothing typed is lost on close:** fields save half a second after you stop typing, not only when you
   leave them, so closing the plugin right after typing a number keeps it.
 

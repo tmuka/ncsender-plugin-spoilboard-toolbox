@@ -603,7 +603,8 @@
           </div>
           <p class="mw-hint" data-cal-mode="probe"><strong>With a touch probe</strong> (a 3D probe that triggers when its tip is pushed sideways; wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t) in the spindle and connected: jog its tip into a hole, below the spoilboard&rsquo;s top
             and roughly centered, and press <strong>Probe This Hole</strong>. It touches the hole&rsquo;s sides in X and Y at the Z0 macros&rsquo; Probe Feed and
-            finds its center.</p>
+            finds its center. Or let it do the suggested holes: jog the tip to a few mm above the spoilboard and hold <strong>Probe Suggested Holes</strong>.
+            It goes to each at Safe Z, 6 mm down into it (stopping if it touches the spoilboard&rsquo;s top instead), and centers itself.</p>
           <p class="mw-hint" data-cal-mode="eye"><strong>By eye</strong>, with no probe: put a pin, a dowel or a V-bit in the spindle, jog it (keyboard, gamepad or pendant) down into
             the hole&rsquo;s mouth until it&rsquo;s centered, with an even gap all round, and press <strong>Centered by Eye</strong>. It records where the bit is,
             without moving; a pin that just fits the hole centers itself.</p>
@@ -612,6 +613,7 @@
           <p class="mw-hint" id="mw-cal-next"></p>
           <div class="mw-inline-row">
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-cal-goto" hidden title="Hold to move over the suggested hole's center from Setup: up to ncSender's Safe Z first, then across. Then jog down into it to measure."><span class="mw-hold-fill"></span><span id="mw-cal-goto-label">Go to</span><span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-cal-auto" data-cal-mode="probe" title="Hold to probe each suggested hole in turn: start with the probe tip a few mm above the spoilboard. It lifts to Safe Z between holes, goes 6 mm down into each and stops if it touches the spoilboard's top instead."><span class="mw-hold-fill"></span>Probe Suggested Holes<span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small" id="mw-cal-probe" data-cal-mode="probe">Probe This Hole</button>
             <button type="button" class="mw-btn mw-btn-small" id="mw-cal-eye" data-cal-mode="eye" title="Record the bit's position as this hole's center, without moving. Jog a pin or V-bit into the hole until it's centered first.">Centered by Eye</button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cal-apply" disabled>Apply to Setup</button>
@@ -3302,7 +3304,7 @@
     $('mw-hole-here').addEventListener('click', holeInsetsFromHere);
     $('mw-hole-add').addEventListener('click', addHoleHere);
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
-    ['mw-hole-goto', 'mw-hole-set', 'mw-hole-setz', 'mw-cal-goto'].forEach(function(id) {
+    ['mw-hole-goto', 'mw-hole-set', 'mw-hole-setz', 'mw-cal-goto', 'mw-cal-auto'].forEach(function(id) {
       var btn = $(id);
       btn.addEventListener('pointerdown', function(evt) { if (evt.button === 0) startHold(btn, evt); });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(type) {
@@ -4775,7 +4777,7 @@
   var hold = { raf: null, start: 0, active: false, btn: null };
   // Hold buttons (Go to Selected, Set), like ncSender's XY0: fill over a
   // second, act at the end, blink when let go early. One at a time.
-  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : btn.id === 'mw-hole-setz' ? setZZero : btn.id === 'mw-cal-goto' ? calGoto : goToHole; }
+  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : btn.id === 'mw-hole-setz' ? setZZero : btn.id === 'mw-cal-goto' ? calGoto : btn.id === 'mw-cal-auto' ? probeSuggested : goToHole; }
   function holdFill(btn, pct) { btn.querySelector('.mw-hold-fill').style.width = pct + '%'; }
   function startHold(btn, evt) {
     if (btn.disabled || hold.active) return;
@@ -5470,6 +5472,78 @@
     ['mw-cal-probe', 'mw-cal-eye', 'mw-cal-clear'].forEach(function(id) { $(id).disabled = on; });
     renderCal();
   }
+  // Finds the center of the hole the probe tip is in, from `from` (machine
+  // mm): touches in X, then in Y through the X center; then again from that
+  // center, so a start off to one side doesn't skew it. Ends over the center.
+  async function probeCenterFrom(from, reach, feed) {
+    var back = function(x, y) { return sendCommand('G53 G21 G90 G0 X' + fmt(x) + ' Y' + fmt(y)); };
+    var touch = async function(axis, dist) {
+      var t = await probeTouch(axis, dist, feed);
+      if (!t || !t.ok) throw new Error('no touch within ' + shown(Math.abs(dist)) + ' ' + unitName() + ' along ' + (dist > 0 ? '+' : '\u2212') + axis + ': is the tip in the hole, below its top?');
+      return t;
+    };
+    var c = from;
+    for (var pass = 0; pass < 2; pass++) {
+      var xa = await touch('X', reach); await back(c.x, c.y);
+      var xb = await touch('X', -reach);
+      var cx = (xa.x + xb.x) / 2; await back(cx, c.y);
+      var ya = await touch('Y', reach); await back(cx, c.y);
+      var yb = await touch('Y', -reach);
+      c = probedCenter(xa.x, xb.x, ya.y, yb.y);
+      await back(c.x, c.y);
+    }
+    return c;
+  }
+  // Probe Suggested Holes: from the tip's height now (a few mm above the
+  // spoilboard), for each suggested hole not yet measured: up to Safe Z,
+  // over where Setup puts it, back down to that height, then 6 mm down into
+  // it. A touch on the way down is the spoilboard's top, not a hole, so it
+  // stops. In the hole it finds the center and records it. Back to Safe Z
+  // at the end, or on any error.
+  var CAL_DIVE_MM = 6;
+  async function probeSuggested() {
+    var note = $('mw-cal-note'), inches = false, gen = cal.gen, z0 = null, done = [];
+    if (calMode() !== 'probe') return;
+    calBusy(true);
+    note.removeAttribute('data-state');
+    try {
+      await machineReady();
+      if (state.reportInches) throw new Error('grblHAL reports positions in inches ($13=1); set $13=0 first');
+      var gc = parseGcState((await ask('$G', 500)).lines);
+      inches = !!(gc && gc.imperial);
+      var hh = readHoles(), grid = calGrid(), todo = calNext().plan.filter(function(q) { return !cal.meas.some(function(m) { return m.key === holeKey(q); }); });
+      if (!hh || !todo.length) throw new Error('no suggested hole is left to measure');
+      var feed = unitVal($('mw-feed')) * (state.imperial ? MM_PER_INCH : 1);
+      if (!(feed > 0)) throw new Error('set a Probe Feed on the Z0 macros tab');
+      z0 = parseFloat(String((state.machine || {}).MPos || '').split(',')[2]);
+      if (!isFinite(z0)) throw new Error('couldn\u2019t read the spindle\u2019s height');
+      if (state.safeZMm != null && z0 >= state.safeZMm - 1) throw new Error('jog the probe tip down to a few mm above the spoilboard first: it starts from there');
+      for (var i = 0; i < todo.length; i++) {
+        var h = todo[i], name = holeName(h), mz = parseFloat(String((state.machine || {}).MPos || '').split(',')[2]);
+        note.textContent = 'Probing ' + name + ' (' + (i + 1) + ' of ' + todo.length + ')\u2026';
+        await sendHoleCommands(holeGotoCommands(h.x, h.y, state.safeZMm, isFinite(mz) ? mz : z0));
+        var r = await sendCommand('G53 G21 G90 G0 Z' + fmt(z0));
+        if (!r.ok) throw new Error('the controller rejected the move down over ' + name);
+        var dive = await probeTouch('Z', -CAL_DIVE_MM, feed);
+        if (dive && dive.ok) throw new Error('at ' + name + ' the probe touched ' + shown(z0 - dive.z) + ' ' + unitName() + ' down: that\u2019s the spoilboard\u2019s top, not a hole. Setup\u2019s grid is off by about a hole there: Grab First Hole Center, or measure that hole by hand');
+        var c = await probeCenterFrom({ x: h.x, y: h.y }, holeR(h, hh) + 3, feed);
+        done.push(recordCenter(c, grid, hh, gen));
+        await sendCommand('G53 G21 G90 G0 Z' + fmt(z0));
+        renderCal();
+      }
+      note.setAttribute('data-state', 'ok');
+      note.textContent = 'Measured ' + done.join(', ') + '. Check the fit below, then Apply to Setup.';
+    } catch (e) {
+      note.setAttribute('data-state', 'bad');
+      note.textContent = (done.length ? 'Measured ' + done.join(', ') + ', then stopped: ' : 'Stopped: ') + e.message + '.';
+    } finally {
+      // Up to Safe Z (or the start height, if that's higher) whatever happened.
+      var up = state.safeZMm != null ? (z0 != null && isFinite(z0) ? Math.max(state.safeZMm, z0) : state.safeZMm) : z0;
+      if (up != null && isFinite(up)) await sendCommand('G53 G21 G90 G0 Z' + fmt(up)).catch(function() {});
+      if (inches) await sendCommand('G20').catch(function() {});
+      calBusy(false);
+    }
+  }
   async function probeHole() {
     var note = $('mw-cal-note'), inches = false, gen = cal.gen;
     if (calMode() !== 'probe') return;
@@ -5490,19 +5564,7 @@
       // there, so a touch within that and 3 mm, or the probe isn't working.
       var reach = holeR(grid[near.index], hh) + 3, feed = unitVal($('mw-feed')) * (state.imperial ? MM_PER_INCH : 1);
       if (!(feed > 0)) throw new Error('set a Probe Feed on the Z0 macros tab');
-      var back = function(x, y) { return sendCommand('G53 G21 G90 G0 X' + fmt(x) + ' Y' + fmt(y)); };
-      var touch = async function(axis, dist) {
-        var t = await probeTouch(axis, dist, feed);
-        if (!t || !t.ok) throw new Error('no touch within ' + shown(Math.abs(dist)) + ' ' + unitName() + ' along ' + (dist > 0 ? '+' : '\u2212') + axis + ': is the tip in the hole, below its top?');
-        return t;
-      };
-      var xa = await touch('X', reach); await back(here.x, here.y);
-      var xb = await touch('X', -reach);
-      var cx = (xa.x + xb.x) / 2; await back(cx, here.y);
-      var ya = await touch('Y', reach); await back(cx, here.y);
-      var yb = await touch('Y', -reach);
-      var c = probedCenter(xa.x, xb.x, ya.y, yb.y);
-      await back(c.x, c.y);
+      var c = await probeCenterFrom(here, reach, feed);
       note.setAttribute('data-state', 'ok');
       note.textContent = recordCenter(c, grid, hh, gen) + ' measured.';
     } catch (e) {
@@ -5573,6 +5635,7 @@
     go.hidden = !n.next;
     if (n.next) $('mw-cal-goto-label').textContent = 'Go to ' + holeName(n.next);
     go.disabled = cal.busy || holes.busy;
+    $('mw-cal-auto').disabled = cal.busy || holes.busy || !n.next;
   }
   // Moves over the next suggested hole's center (Setup's numbers), lifting
   // to Safe Z first, like Go to Selected.
@@ -5708,7 +5771,7 @@
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>SBT: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
-      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. It suggests three holes to measure (the one nearest A1, the far end of its row and the top of its column, clear of keepout zones, Exclude Picks areas and the stock), and <strong>Go to</strong> (hold) moves over the next at Safe Z; any other hole works too. <strong>Measure with</strong> picks which: only that way&rsquo;s button shows (by eye to start), so a pin is never sent probing into a wall. Measure at least two holes far apart: that fits the spacing too, and two in the same row or column how far the spoilboard is turned (measure along a row and up a column for both). <strong>Apply to Setup</strong> writes them in, Turn included.',
+      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. It suggests three holes to measure (the one nearest A1, the far end of its row and the top of its column, clear of keepout zones, Exclude Picks areas and the stock), and <strong>Go to</strong> (hold) moves over the next at Safe Z; any other hole works too. With a 3D probe, jog its tip to a few mm above the spoilboard and hold <strong>Probe Suggested Holes</strong>: it does them all, up to Safe Z between holes, 6 mm down into each (stopping if it touches the spoilboard&rsquo;s top instead, which means Setup is off there) and touching the walls twice to center itself. <strong>Measure with</strong> picks which: only that way&rsquo;s button shows (by eye to start), so a pin is never sent probing into a wall. Measure at least two holes far apart: that fits the spacing too, and two in the same row or column how far the spoilboard is turned (measure along a row and up a column for both). <strong>Apply to Setup</strong> writes them in, Turn included.',
       '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and the Spoilboard and Stock programs all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
