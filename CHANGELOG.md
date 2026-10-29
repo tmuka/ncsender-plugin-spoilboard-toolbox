@@ -3,6 +3,12 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## 0.4.5
+
+### ✨ New
+- XY0 Picker on wide screens: the controls column is wider (300 px), so the Stock size, Z0 and corner
+  fit without crowding, and the map's card ends with the controls instead of leaving a gap.
+
 ## 0.4.4
 
 **Nearly full screen, like ncCAM.**
