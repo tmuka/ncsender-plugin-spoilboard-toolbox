@@ -5,6 +5,11 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ## Unreleased
 
+### ✨ New
+- **Fixture plate** (Spoilboard tab): confine the dog holes, T-tracks, grid lines, chamfers and labels
+  to the XY0 Picker's Stock, to make a removable plate that matches the spoilboard. Nothing goes past
+  its edges or deeper than its thickness, and Z0 goes on its top.
+
 ### 🐛 Fixes
 - The **Bit and depth** card no longer has a blank strip at the bottom.
 
