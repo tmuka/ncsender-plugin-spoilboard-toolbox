@@ -856,7 +856,7 @@
         <h3 class="mw-card-title">Bit and depth</h3>
         <div class="mw-row mw-row-5">
           <div class="mw-field">
-            <label for="mw-cut-bit" id="mw-cut-bit-label" class="mw-label-link" title="Click to use the loaded tool's diameter from ncSender's tool table">Bit Diameter (<span class="mw-unit">mm</span>)</label>
+            <label for="mw-cut-bit" id="mw-cut-bit-label" class="mw-label-link" tabindex="0" role="button" title="Click to use the loaded tool's diameter from ncSender's tool table">Bit Diameter (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-bit" value="6.35" title="The bit that's loaded. Each hole is drilled when the bit is its size, spiralled down when it's up to twice the bit, else cleared in rings.">
           </div>
           <div class="mw-field">
@@ -896,6 +896,7 @@
             <label class="mw-extra"><input type="checkbox" id="mw-cut-flood"><span>Flood (M8)</span></label>
           </div>
         </div>
+        <p class="mw-status" id="mw-cut-bit-note" role="status"></p>
       </section>
       </div>
       <section class="mw-card" data-sec="holes">
@@ -3786,6 +3787,7 @@
   // Setup's fields from setupFields; grid 1's numbers it doesn't have stay
   // as the fields have them (the defaults on a fresh install).
   function applySetup(f) {
+    calReset();
     if (holes.gridRaw.length) gridToDom(holes.gridRaw[0]);
     var r0 = gridFromDom();
     [['dia', f.dia], ['sx', f.sx], ['sy', f.sy], ['ix', f.ix], ['iy', f.iy]].forEach(function(d) { if (d[1] != null) r0[d[0]] = String(d[1]); });
@@ -3908,6 +3910,7 @@
     $('mw-grid-remove').hidden = holes.activeGrid === 0;
   }
   function setActiveGrid(k) {
+    calReset();
     syncGrid();
     disarmGridRemove();
     holes.activeGrid = Math.max(0, Math.min(k, holes.gridRaw.length - 1));
@@ -4019,6 +4022,7 @@
   function loadProfile(name) {
     var p = profileOf(name);
     if (!p) return;
+    calReset();
     holes.profile = name;
     holes.ask = null;
     holes.hidden = {};
@@ -4872,7 +4876,7 @@
     var inside = all.filter(function(q) { return !state.travel || !(bit > 0) || holeInTravel(q, Math.max(0, q.diaMm / 2 - bit / 2), state.travel); });
     return {
       holes: inside, pastTravel: all.length - inside.length, travel: state.travel,
-      tool: state.cutTool && Math.abs(state.cutTool.mm - bit) < 0.001 ? state.cutTool.n : null,
+      tool: state.cutTool && Math.abs(state.cutTool.mm - bit) < 0.002 ? state.cutTool.n : null,
       zWcs: zero && ms[w.toLowerCase()] ? parseFloat(String(ms[w.toLowerCase()]).split(',')[2]) : null,
       bitMm: bit, thickMm: cutMm('mw-cut-thick'), depthMm: cutMm('mw-cut-depth'), stepMm: cutMm('mw-cut-step'),
       stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
@@ -4966,7 +4970,7 @@
   // table, as QuickCut's (the loaded T<n> is a slot or a Tool ID, by
   // Settings > Tool Changer > Tool Numbering).
   async function cutLoadedBit() {
-    var note = $('mw-cut-note');
+    var note = $('mw-cut-bit-note');
     try {
       await readMachineState();
       var n = Number((state.machine || {}).tool);
@@ -4976,15 +4980,16 @@
       var tool = (tools || []).filter(function(t) { return (byId ? t.toolId : t.toolNumber) === n; })[0];
       if (!tool || !(tool.diameter > 0)) throw new Error('T' + n + ' has no diameter in ncSender\u2019s tool table');
       $('mw-cut-bit').value = +(tool.diameter / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
-      state.cutTool = { n: n, mm: cutMm('mw-cut-bit') };
+      state.cutTool = { n: n, mm: +tool.diameter };
       note.setAttribute('data-state', 'ok');
       note.textContent = 'Bit Diameter from T' + n + (tool.name ? ' (' + tool.name + ')' : '') + ': the programs start with M6 T' + n + '.';
       saveSettings();
+      renderCutTab();
     } catch (e) {
+      renderCutTab();
       note.setAttribute('data-state', 'bad');
       note.textContent = /fetch|JSON/i.test(e.message) ? 'Couldn\u2019t read the tool table from ncSender.' : e.message + '.';
     }
-    renderCut();
   }
   // Loads a program into ncSender's visualizer and closes the dialog.
   async function loadProgram(name, lines, note, btn) {
@@ -5023,9 +5028,9 @@
       var tool = (tools || []).filter(function(t) { return (byId ? t.toolId : t.toolNumber) === tl.n; })[0];
       if (tool && Math.abs(tool.diameter - tl.mm) < 0.001) return true;
       state.cutTool = null;
-      note.setAttribute('data-state', 'bad');
-      note.textContent = 'T' + tl.n + ' isn\u2019t ' + shown(tl.mm) + ' ' + unitName() + ' in ncSender\u2019s tool table any more: click Bit Diameter again, or type the size and load the bit yourself.';
       renderCutTab();
+      var why = 'T' + tl.n + ' isn\u2019t ' + shown(tl.mm) + ' ' + unitName() + ' in ncSender\u2019s tool table any more: click Bit Diameter again, or type the size and load the bit yourself.';
+      [note, $('mw-cut-bit-note')].forEach(function(el) { el.setAttribute('data-state', 'bad'); el.textContent = why; });
       return false;
     } catch (e) {
       return true;
@@ -5294,8 +5299,11 @@
       $('mw-' + k).addEventListener('change', function() { renderCutTab(); saveSettings(); });
     });
     $('mw-cut-bit-label').addEventListener('click', function(evt) { evt.preventDefault(); cutLoadedBit(); });
+    $('mw-cut-bit-label').addEventListener('keydown', function(evt) {
+      if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); cutLoadedBit(); }
+    });
     // A typed size: the user loads the bit, so no tool change.
-    $('mw-cut-bit').addEventListener('input', function() { state.cutTool = null; }, true);
+    $('mw-cut-bit').addEventListener('input', function() { state.cutTool = null; $('mw-cut-bit-note').textContent = ''; }, true);
     $('mw-cut-generate').addEventListener('click', generateCut);
     $('mw-sh-generate').addEventListener('click', generateStockHoles);
     ROOT.querySelectorAll('#mw-cut-secs .mw-sec').forEach(function(b) { b.addEventListener('click', function() { showCutSection(b.getAttribute('data-sec')); }); });
@@ -5315,7 +5323,16 @@
   // Fits Setup's spacing and insets to real holes: each one probed on its
   // sides in X and Y (G38.3, so a miss isn't an alarm) from inside it, its
   // center the middle of each pair. The touches are machine positions.
-  var cal = { meas: [] };
+  var cal = { meas: [], busy: false };
+  // Measurements are the active grid's: switching grids or profiles, or
+  // loading a preset, drops them so Apply can't write them into another.
+  function calReset() {
+    if (!cal || !cal.meas.length) return;
+    cal.meas = [];
+    $('mw-cal-note').removeAttribute('data-state');
+    $('mw-cal-note').textContent = '';
+    renderCal();
+  }
   function showCal(on) {
     $('mw-cal').hidden = !on;
     $('mw-cal-open').setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -5342,9 +5359,14 @@
       await sendCommand('G90');
     }
   }
+  function calBusy(on) {
+    cal.busy = on;
+    ['mw-cal-probe', 'mw-cal-eye', 'mw-cal-clear'].forEach(function(id) { $(id).disabled = on; });
+    renderCal();
+  }
   async function probeHole() {
-    var note = $('mw-cal-note'), btn = $('mw-cal-probe'), inches = false;
-    btn.disabled = true;
+    var note = $('mw-cal-note'), inches = false;
+    calBusy(true);
     note.removeAttribute('data-state');
     note.textContent = 'Probing\u2026';
     try {
@@ -5381,8 +5403,7 @@
       note.textContent = 'Couldn\u2019t measure it: ' + e.message + '.';
     } finally {
       if (inches) await sendCommand('G20').catch(function() {});
-      btn.disabled = false;
-      renderCal();
+      calBusy(false);
     }
   }
   function calGrid() {
@@ -5401,11 +5422,12 @@
   }
   // By eye: the bit's position now is the hole's center. Nothing moves.
   async function eyeHole() {
-    var note = $('mw-cal-note'), btn = $('mw-cal-eye');
-    btn.disabled = true;
+    var note = $('mw-cal-note');
+    calBusy(true);
     note.removeAttribute('data-state');
     try {
       await machineReady();
+      if (state.reportInches) throw new Error('grblHAL reports positions in inches ($13=1); set $13=0 first');
       var hh = readHoles(), here = xyOf((state.machine || {}).MPos);
       if (!hh || !here) throw new Error('Setup needs a grid first');
       var name = recordCenter(here, calGrid(), hh);
@@ -5415,8 +5437,7 @@
       note.setAttribute('data-state', 'bad');
       note.textContent = 'Couldn\u2019t record it: ' + e.message + '.';
     } finally {
-      btn.disabled = false;
-      renderCal();
+      calBusy(false);
     }
   }
   function calFit() {
@@ -5432,13 +5453,13 @@
       var li = document.createElement('li');
       li.textContent = m.tag + ': ' + shown(Math.hypot(m.offX, m.offY)) + ' ' + unitName() + ' from where Setup puts it (X ' + shown(m.offX) + ', Y ' + shown(m.offY) + ') ';
       var x = document.createElement('button');
-      x.type = 'button'; x.className = 'mw-btn mw-btn-small mw-btn-quiet'; x.textContent = 'Remove';
+      x.type = 'button'; x.className = 'mw-btn mw-btn-small mw-btn-quiet'; x.textContent = 'Remove'; x.disabled = cal.busy;
       x.addEventListener('click', function() { cal.meas.splice(i, 1); renderCal(); });
       li.appendChild(x);
       list.appendChild(li);
     });
     var f = calFit(), fit = $('mw-cal-fit');
-    $('mw-cal-apply').disabled = !f || !!f.pitch;
+    $('mw-cal-apply').disabled = cal.busy || !f || !!f.pitch;
     if (!f) { fit.textContent = cal.meas.length ? '' : 'No holes measured yet.'; return; }
     if (f.pitch) { fit.textContent = 'With a Panel Pitch set, the spacing can\u2019t be fitted this way yet.'; return; }
     var u = ' ' + unitName();
@@ -5530,7 +5551,7 @@
       '<strong>For example:</strong> push the stock against bench dogs in the holes, jog roughly near the corner hole, press <strong>Pick Nearest Hole</strong> and hold <strong>Set</strong> (or one key, with the nearest-hole macro), and X0 Y0 is exactly on the hole: no edge finder, no XY probe, no typing coordinates. Then jog roughly to the opposite corner and run <strong>SBT: Set XY0 to Midpoint</strong> (a Z0 macros extra), and X0 Y0 is the stock&rsquo;s center, without measuring.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
-      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. Two or more holes far apart fit the spacing too, and how far the spoilboard is turned. <strong>Apply to Setup</strong> writes them in, Turn included.',
+      '<strong>Measure Holes</strong> (Setup unlocked) fits the spacing and insets to the real holes: with a touch probe connected (wood doesn&rsquo;t conduct, so a plain pin can&rsquo;t trigger), jog its tip into a hole, below the top, and press <strong>Probe This Hole</strong>; it touches the sides in X and Y and finds the center. With no probe, put a pin, dowel or V-bit in the spindle, jog it (keyboard, gamepad or pendant) into the hole&rsquo;s mouth until the gap is even all round, and press <strong>Centered by Eye</strong>: it records where the bit is, without moving. Two or more holes far apart fit the spacing too, and two in the same row or column how far the spoilboard is turned (measure along a row and up a column for both). <strong>Apply to Setup</strong> writes them in, Turn included.',
       '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and the Spoilboard and Stock programs all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
