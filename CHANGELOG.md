@@ -14,6 +14,8 @@ open each once: the new one does the move and the old button goes away.
 
 ### 📖 Docs
 - **What you need** says a plain spoilboard is fine: the plugin cuts the holes.
+- **Help** has **Getting started** and the README link at the top, and its Field tips list keeps the
+  names to a narrow column (one column on a small screen) with every name readable.
 
 ## 0.3.37
 

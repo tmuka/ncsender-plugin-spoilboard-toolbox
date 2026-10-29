@@ -56,8 +56,14 @@
   .mw-close { width: 100%; }
   .mw-help-card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
   .mw-help-card li { line-height: 1.45; }
-  .mw-help-tips { display: grid; grid-template-columns: minmax(110px, max-content) 1fr; gap: 6px 14px; margin: 0; line-height: 1.45; }
-  .mw-help-tips dt { font-weight: 600; }
+  .mw-help-tips { display: grid; grid-template-columns: minmax(110px, 14em) minmax(0, 1fr); gap: 6px 14px; margin: 0; line-height: 1.45; }
+  .mw-help-tips dt { font-weight: 600; overflow-wrap: anywhere; }
+  @media (max-width: 760px) {
+    .mw-help-tips { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .mw-help-tips dd { margin-bottom: 8px; }
+  }
+  .mw-help-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .mw-help-links a { color: var(--color-accent); font-size: 0.9rem; }
   .mw-help-tips dd { margin: 0; }
   .mw-help-card a { color: var(--color-accent); }
   .mw-help-card kbd {
@@ -482,7 +488,7 @@
         <div class="mw-holebar" id="mw-holebar">
           <div class="mw-dots-wrap"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
           <div class="mw-holebar-info">
-            <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
+            <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" aria-label="Favorite" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
             <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Pick Nearest Hole.</span>
             <span class="mw-hint mw-hole-dist" id="mw-hole-dist" hidden></span>
             <span class="mw-hint mw-hole-dist" id="mw-hole-z" hidden></span>
@@ -523,9 +529,9 @@
             </div>
             <div class="mw-maptools-row">
               <span class="mw-zoom" role="group" aria-label="Zoom the map">
-                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-out" title="Zoom out (or the mouse wheel, or pinch).">&minus;</button>
+                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-out" aria-label="Zoom out" title="Zoom out (or the mouse wheel, or pinch).">&minus;</button>
                 <span class="mw-hint mw-zoom-level" id="mw-zoom-level">1&times;</span>
-                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-in" title="Zoom in on the spindle, or on the middle when it isn't homed (or the mouse wheel over a spot, or pinch). Drag the map to look around.">+</button>
+                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-in" aria-label="Zoom in" title="Zoom in on the spindle, or on the middle when it isn't homed (or the mouse wheel over a spot, or pinch). Drag the map to look around.">+</button>
                 <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-fit" title="Show the whole travel again.">Fit</button>
                 <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-follow" aria-pressed="false" title="While zoomed in, keep the spindle in the middle as you jog. Dragging the map turns it off.">Follow</button>
               </span>
@@ -1243,9 +1249,12 @@
     </div>
     <div class="mw-tab" data-tab="help" hidden>
       <h2 class="mw-help-title">Help: <span id="mw-help-for"></span></h2>
+      <div class="mw-help-links">
+        <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-help-welcome">Getting started</button>
+        <a id="mw-help-readme" target="_blank" rel="noopener">The README (full guide)</a>
+      </div>
       <div id="mw-help-body" class="mw-help-body"></div>
-      <div class="mw-inline-row"><button type="button" class="mw-btn" id="mw-help-back">Back</button>
-        <button type="button" class="mw-btn mw-btn-quiet" id="mw-help-welcome">Getting started</button></div>
+      <div><button type="button" class="mw-btn" id="mw-help-back">Back</button></div>
     </div>
     </main>
   </div>
@@ -6122,10 +6131,19 @@
     tab.querySelectorAll('[title]').forEach(function(el) {
       var tip = String(el.getAttribute('title') || '').replace(/\s*Type mm or inches.*$/, '');
       var lab = el.id && ROOT.querySelector('label[for="' + el.id + '"]');
+      // A label's text without the parts its layout hides (Holes / Extra
+      // holes); a control's own text with its unit, not its other parts.
+      var shownText = function(node) {
+        return Array.prototype.map.call(node.childNodes, function(n) {
+          return n.nodeType === 3 ? n.textContent : n.nodeType === 1 && getComputedStyle(n).display !== 'none' ? shownText(n) : '';
+        }).join('');
+      };
       var own = el.getAttribute('aria-label') || Array.prototype.filter.call(el.childNodes, function(n) {
-        return n.nodeType === 3 || (n.nodeType === 1 && (n.hasAttribute('data-hole-wcs') || n.classList.contains('mw-hold-label')));
+        return n.nodeType === 3 || (n.nodeType === 1 && (n.hasAttribute('data-hole-wcs') || n.classList.contains('mw-hold-label') || n.classList.contains('mw-unit')));
       }).map(function(n) { return n.textContent; }).join('');
-      var name = (lab ? lab.textContent : own).replace(/\s+/g, ' ').trim();
+      var name = (lab ? shownText(lab) : own).replace(/\s+/g, ' ').trim();
+      // A label that does something itself (Bit Diameter's) is its own entry.
+      if (el.tagName === 'LABEL') name += ' (click)';
       if (!tip || !name || seen[name]) return;
       seen[name] = true;
       out.push('<dt>' + helpEscape(name) + '</dt><dd>' + helpEscape(tip) + '</dd>');
@@ -6137,8 +6155,8 @@
     $('mw-help-for').textContent = t.name;
     $('mw-help-body').innerHTML =
       '<section class="mw-card mw-help-card"><ul>' + t.notes.map(function(n) { return '<li>' + n + '</li>'; }).join('') + '</ul></section>' +
-      (tips ? '<section class="mw-card mw-help-card"><h3 class="mw-card-title">Field tips</h3><dl class="mw-help-tips">' + tips + '</dl></section>' : '') +
-      '<p class="mw-hint">More in the <a href="' + HELP_DOCS + '" target="_blank" rel="noopener">README</a>.</p>';
+      (tips ? '<section class="mw-card mw-help-card"><h3 class="mw-card-title">Field tips</h3><dl class="mw-help-tips">' + tips + '</dl></section>' : '');
+    $('mw-help-readme').href = HELP_DOCS;
   }
   // Leaving the welcome: to Setup, unlocked, with the chosen path's next
   // steps above it; or straight to the XY0 Picker.
