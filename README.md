@@ -551,7 +551,7 @@ macros only move straight down from where you put the bit, then back off upward.
 ## Install
 
 1. Download the latest `com.tmuka.zeroswapper_v….zip` from this repository's
-   [Releases](https://github.com/tmuka/ncsender-plugin-zero-swapper/releases).
+   [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 2. In ncSender: **Settings → Plugins → Install Plugin → ZIP**, pick the file and press **Install from
    File**, or paste the zip's link and press **Install from URL**.
 3. Open **Spoilboard Toolbox** from the plugin tool menu.
