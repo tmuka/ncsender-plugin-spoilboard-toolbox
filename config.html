@@ -717,6 +717,7 @@
           <div class="mw-holes-tools">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-add" title="Jog the bit over the center of a hole and press this to add it to the list.">Add Current Position</button>
             <span class="mw-hint" id="mw-hole-list-note"></span>
+            <span class="mw-status" id="mw-hole-add-note" role="status"></span>
           </div>
         </div>
         <div class="mw-holes-tools">
@@ -1453,11 +1454,15 @@
   // Each stop line's comment says why. The same condition also divides
   // the value a G10 line stores, so a wrong Z0 can't be set even where the
   // rest of a macro would still be sent.
+  // A tool length offset in effect. grblHAL's soft reset (ncSender sends
+  // one after an error or abort) turns G43.1 off, so #<_tool_offset> reads
+  // 0, but keeps the measured offset applied (#5403); a restart clears both.
+  var TLO_ACTIVE = '[#<_tool_offset> OR [ABS[#5403] GT 0.0005]]';
   function buildMacros(o) {
     var wcs = WCS_NAMES[o.wcs], slot = WCS_NAMES[o.slot], bak = WCS_NAMES[o.backup], thk = WCS_NAMES[o.thick];
     var cur = '#' + offsetZParam(o.wcs), spoil = '#' + offsetZParam(o.slot);
     var saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
-    var HOMED = '#<_homed_state>', TLO = '#<_tool_offset>';
+    var HOMED = '#<_homed_state>', TLO = TLO_ACTIVE;
     var hasSpoil = '[' + spoil + ' NE 0]', hasThick = '[' + thick + ' NE 0]';
     function stop(cond, why) { return '#1=[1 / ' + cond + '] (SBT stop: ' + why + ')'; }
     var needHomed = stop(HOMED, 'home the machine first');
@@ -2190,7 +2195,7 @@
   function zAboveSpoilLines(o, P, hMm) {
     var cur = '#' + offsetZParam(P), spoil = '#' + offsetZParam(o.slot), saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
     var markX = '#' + (offsetZParam(o.thick) - 2), markY = '#' + (offsetZParam(o.thick) - 1);
-    var ok = '[#<_homed_state> AND #<_tool_offset> AND [' + spoil + ' NE 0] AND [ABS[#5213] LT 0.0005]]';
+    var ok = '[#<_homed_state> AND ' + TLO_ACTIVE + ' AND [' + spoil + ' NE 0] AND [ABS[#5213] LT 0.0005]]';
     // The previous Z0 is only kept for the Z0 macros' own work offset
     // (their "back to saved" restores that one), and not when it's one the
     // plugin set: the spoilboard, the stock top, this height, or the last
@@ -2200,7 +2205,7 @@
     return [
       'G21',
       '#1=[1 / #<_homed_state>] (SBT stop: home the machine first)',
-      '#1=[1 / #<_tool_offset>] (SBT stop: no tool length offset active)',
+      '#1=[1 / ' + TLO_ACTIVE + '] (SBT stop: no tool length offset active)',
       '#1=[1 / [' + spoil + ' NE 0]] (SBT stop: record the spoilboard height first)',
       '#1=[1 / [ABS[#5213] LT 0.0005]] (SBT stop: a G92 Z offset is active; G92.1 clears it)'
     ].concat(save ? [
@@ -2546,7 +2551,7 @@
     // controller restart drops while the work offset stays.
     if (o.zMacro && !o.laser) {
       var cur = '#' + (yp + 1), sp = '#' + o.zMacro.spoil, th = '#' + o.zMacro.thick, mk = '#' + (o.zMacro.thick - 2);
-      L.push('#1=[1 / [#<_tool_offset> OR [' + sp + ' EQ 0] OR [[ABS[' + cur + ' - ' + sp + '] GT 0.001] AND [ABS[' + cur + ' - ' + sp + ' - ' + th +
+      L.push('#1=[1 / [' + TLO_ACTIVE + ' OR [' + sp + ' EQ 0] OR [[ABS[' + cur + ' - ' + sp + '] GT 0.001] AND [ABS[' + cur + ' - ' + sp + ' - ' + th +
         '] GT 0.001] AND [ABS[' + cur + ' - ' + sp + ' - ' + mk + '] GT 0.001]]]] (SBT stop: no tool length offset active)');
     }
     if (o.mist) L.push('M7');
@@ -5235,9 +5240,11 @@
   // With the bit centered over any hole: the insets that put a hole there.
   // List layout: append the spindle's position, relative to the reference
   // point, as a new line.
+  // Its result goes beside the button, where it was pressed: the picker's
+  // status line is often scrolled out of sight by then.
   async function addHoleHere() {
     await holeAction(async function() {
-      var status = $('mw-hole-status'), t = state.travel, k = state.imperial ? MM_PER_INCH : 1;
+      var status = $('mw-hole-add-note'), t = state.travel, k = state.imperial ? MM_PER_INCH : 1;
       try { await machineReady(); } catch (err) {
         status.setAttribute('data-state', 'bad');
         status.textContent = 'Couldn\u2019t add it: ' + err.message + '.';
@@ -5248,8 +5255,14 @@
       var here = xyOf((state.machine || {}).MPos), ix = pv(r0.ix) * k, iy = pv(r0.iy) * k;
       if (!t || !here || !isFinite(ix) || !isFinite(iy)) { status.setAttribute('data-state', 'bad'); status.textContent = 'Needs the machine\u2019s travel, the reference point and its position.'; return; }
       var rel = { name: '', xMm: t.dirX * here.x - ix, yMm: t.dirY * here.y - iy };
-      var dup = parseHoleList($('mw-hole-list').value, state.imperial).holes.filter(function(o) { return Math.hypot(o.xMm - rel.xMm, o.yMm - rel.yMm) < 0.5; })[0];
-      if (dup) { status.setAttribute('data-state', 'bad'); status.textContent = 'That hole is already listed' + (dup.name ? ' as ' + dup.name : '') + '.'; return; }
+      var listed = parseHoleList($('mw-hole-list').value, state.imperial), at = -1;
+      listed.holes.forEach(function(o, i) { if (at < 0 && Math.hypot(o.xMm - rel.xMm, o.yMm - rel.yMm) < 0.5) at = i; });
+      if (at >= 0) {
+        var dup = listed.holes[at];
+        status.setAttribute('data-state', 'bad');
+        status.textContent = 'Already listed' + (dup.name ? ' as ' + dup.name : '') + ', on line ' + listed.lines[at] + '.';
+        return;
+      }
       var line = formatHoleList([rel], state.imperial);
       var box = $('mw-hole-list'), text = box.value.replace(/\s+$/, '');
       box.value = (text ? text + '\n' : '') + line;

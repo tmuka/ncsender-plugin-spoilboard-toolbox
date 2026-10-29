@@ -6,6 +6,12 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### 🐛 Fixes
+- **Programs and Z0 macros no longer stop with "no tool length offset active" after a reset.**
+  grblHAL's soft reset (ncSender sends one after an error or an abort) turns G43.1 off but keeps the
+  measured offset applied, so the check now accepts a kept offset. The stop still catches a
+  controller restart, which clears the offset. Make the program again to pick this up.
+- **Add Current Position says "already listed" beside the button**, with the line it's on,
+  instead of in the status line at the top that you may have scrolled away from.
 - **XY0 Picker warns after a jog.** Set always uses the picked hole's grid position, never the
   spindle's. If you jog after picking a hole (or after Go to Selected), the picker now says how far
   the spindle is from the picked point, and that ncSender's XY0 is the way to zero where the spindle is.

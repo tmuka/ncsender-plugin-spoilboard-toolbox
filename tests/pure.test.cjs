@@ -116,12 +116,12 @@ test('offset Z parameters: G54 #5223, G55 #5243, G59.2 #5363, G59.3 #5383', () =
 test('record macro probes, then stores trigger + offset - block - TLO in the slot', () => {
   assert.deepEqual(code(buildMacros(base).record.body), [
     '#1=[1 / #<_homed_state>]',
-    '#1=[1 / #<_tool_offset>]',
+    '#1=[1 / [#<_tool_offset> OR [ABS[#5403] GT 0.0005]]]',
     'G21',
     'G54',
     'G91 G38.2 Z-30.000 F100.000',
     'G90',
-    'G10 L2 P9 Z[[#5063 + #5223 - 15.000 - #5403] / [#<_homed_state> AND #<_tool_offset>]]',
+    'G10 L2 P9 Z[[#5063 + #5223 - 15.000 - #5403] / [#<_homed_state> AND [#<_tool_offset> OR [ABS[#5403] GT 0.0005]]]]',
     'G91 G0 Z5.000',
     'G90'
   ]);
@@ -153,7 +153,7 @@ test('macros: the core five always, extras only when ticked', () => {
 
 test('measure stores stock top minus the spoilboard in the thickness slot', () => {
   const m = buildMacros(base);
-  assert.match(m.measure.body, /^G10 L2 P7 Z\[\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\] \/ \[#<_homed_state> AND #<_tool_offset> AND \[#5383 NE 0\]\]\]$/m);
+  assert.match(m.measure.body, /^G10 L2 P7 Z\[\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\] \/ \[#<_homed_state> AND \[#<_tool_offset> OR \[ABS\[#5403\] GT 0\.0005\]\] AND \[#5383 NE 0\]\]\]$/m);
   // G54 Z -77.5; tool with TLO 12; block (15) on 18 mm stock on a spoilboard at -95
   // (zero-length tool): the tip touches the block at machine -95 + 18 + 15 + 12 = -50,
   // which is -50 - (-77.5) = 27.5 in G54.
@@ -235,7 +235,7 @@ test('other work offset and slots', () => {
   const m = buildMacros(Object.assign({}, base, { wcs: 2, slot: 8, backup: 7, thick: 9 }));
   assert.match(m.record.body, /^G55$/m);
   assert.match(m.record.body, /G10 L2 P8 Z\[\[#5063 \+ #5243 - 15\.000 - #5403\]/);
-  assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND #<_tool_offset> AND \[#5363 NE 0\] AND \[ABS\[#5213\] LT 0\.0005\]\]\]$/m);
+  assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND \[#<_tool_offset> OR \[ABS\[#5403\] GT 0\.0005\]\] AND \[#5363 NE 0\] AND \[ABS\[#5213\] LT 0\.0005\]\]\]$/m);
   assert.match(m.set.body, /^G10 L2 P7 Z\[#5343 \+ \[#5243 - #5343\]/m);
   assert.equal(m.set.name, 'SBT: G55 Z0 on spoilboard');
   const p = Object.assign({ 5363: -90, 5243: -70, 5343: 0 }, ready);
@@ -284,7 +284,7 @@ test('guards: nothing changes unless homed, an offset is active and the values e
   const start = { 5223: -77.5, 5383: -95, 5343: 18, 5363: 0, 5403: 12, 5063: 27.5 };
   const cases = [
     ['not homed', { _homed_state: 0, _tool_offset: 1 }, 'home the machine first'],
-    ['no tool length offset', { _homed_state: 1, _tool_offset: 0 }, 'no tool length offset active']
+    ['no tool length offset', { _homed_state: 1, _tool_offset: 0, 5403: 0 }, 'no tool length offset active']
   ];
   for (const k of ['record', 'measure', 'set', 'stock']) {
     for (const [what, state, why] of cases) {
@@ -293,6 +293,11 @@ test('guards: nothing changes unless homed, an offset is active and the values e
       assert.ok(m[k].body.includes(p._error + ' (SBT stop: ' + why + ')'), k + ': says why');
       assert.deepEqual([p[5223], p[5383], p[5343], p[5363]], [-77.5, -95, 18, 0], k + ' changes nothing when ' + what);
     }
+  }
+  // After a soft reset grblHAL turns G43.1 off but keeps the offset applied.
+  for (const k of ['record', 'measure', 'set', 'stock']) {
+    const p = run(m[k].body, Object.assign({}, start, { _homed_state: 1, _tool_offset: 0, 5403: -55.173 }));
+    assert.ok(!p._error || !m[k].body.includes(p._error + ' (SBT stop: no tool length offset active)'), k + ' takes a kept offset as active');
   }
   // No spoilboard height recorded yet.
   for (const k of ['measure', 'set', 'stock']) {
@@ -967,6 +972,7 @@ test('Z0 above the spoilboard: spoilboard height + h for any tool, saved Z0 kept
   assert.equal(p._error, undefined);
   assert.equal(p[offsetZParam(2)], -80 + 63.5);
   assert.equal(p[offsetZParam(8)], -40, 'the old Z0 is saved for Z0 back to saved');
+  assert.equal(run(lines, Object.assign({}, base, { _tool_offset: 0, 5403: -55.173 }))._error, undefined, 'an offset kept through a soft reset counts');
   for (const [k, v] of [['_homed_state', 0], ['_tool_offset', 0], [5383, 0], [5213, 1.5]]) {
     const q = runAll(lines, Object.assign({}, base, { [k]: v }));
     assert.equal(q[offsetZParam(2)], -40, k + ': Z0 unchanged even if every line is sent');
@@ -1478,8 +1484,9 @@ test('cut programs: a Z0 the Z0 macros set needs a tool length offset', () => {
   assert.ok(line && line.length < 255, line);
   assert.ok(L.indexOf(line) < L.findIndex(l => /^G[0-3] /.test(l)));
   const check = line.replace(/\s*\(.*$/, '').replace(/^#1=/, '');
-  const at = (tlo, z, spoil = -80, thick = 19, mark = 0) => () => evalExpr(check, { _tool_offset: tlo, 5223: z, 5343: spoil, 5383: thick, 5381: mark });
+  const at = (tlo, z, spoil = -80, thick = 19, mark = 0, kept = 0) => () => evalExpr(check, { _tool_offset: tlo, 5223: z, 5343: spoil, 5383: thick, 5381: mark, 5403: kept });
   assert.equal(at(1, -80)(), 1);                       // offset active: fine
+  assert.equal(at(0, -61, -80, 19, 0, -55.173)(), 1);  // G43.1 off by a soft reset, offset kept
   assert.throws(at(0, -80), /error:72/);               // Z0 on the spoilboard, no offset
   assert.throws(at(0, -61), /error:72/);               // Z0 on the stock top
   assert.throws(at(0, -55, -80, 19, 25), /error:72/);  // a fixture's height Set Z0 put down
