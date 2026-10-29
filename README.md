@@ -75,7 +75,7 @@ That's enough for:
 - **Measure Holes by eye**, with a pin or dowel in the spindle (or a V-bit);
 - the **nearest-hole keyboard macros**;
 - **cutting the board**: dog holes, T-tracks, fit test, and chamfers and labels with a V-bit;
-- drilling **stock holes** (bolts and flip pins).
+- drilling **stock holes** (bolts, flip pins and fixture plates).
 
 Put Z0 on the spoilboard (or the stock) any way you like for these: paper, a touch plate, or the Z0 macros.
 
@@ -257,7 +257,10 @@ you're on. Each grid has its own name, hole diameter, spacing, insets, T-tracks 
 **Use for Nearest** decides whether Pick Nearest Hole and the keyboard macros snap to its holes (untick
 it for a pin grid you only ever pick on the map), and **Remove Grid** deletes it. The eye on each chip
 shows or hides that grid's holes on the map, handy for picking or suppressing holes where two grids
-overlap. Hidden holes can't be picked on the map or by Pick Nearest Hole, but the keyboard macros still
+overlap. **+ Inserts** adds a grid of threaded inserts on the grid lines, halfway between the holes
+(along X or Y), at the insert's hole size, so the dog holes stay free for pins: Cut Holes drills it, the
+Stock tab's **Fixture plate** bolts to it, and Pick Nearest Hole leaves it out. Hidden holes can't be
+picked on the map or by Pick Nearest Hole, but the keyboard macros still
 use them (untick Use for Nearest to leave a grid out of those too). More than one grid makes the macros
 about 50 lines longer, plus about 30 per further grid.
 
@@ -499,7 +502,7 @@ once and never cut](docs/two-layer.png)
 one is unharmed. [Flanged 1/4-20 threaded inserts](https://www.amazon.com/dp/B091L3Y6VJ) installed from the back, behind the holes, give clamps
 something to screw into.
 
-## Stock: bolt holes and flip pins
+## Stock: bolt holes, flip pins and fixture plates
 
 ![Flip pins: two pin holes drilled through the stock over spoilboard holes on the middle row; flipped
 onto dowel pins, side 2 drops back exactly where side 1 was, mirrored across the pin line](docs/flip-pins.png)
@@ -514,6 +517,11 @@ size and thickness); the holes come from the grid picked in Setup.
   stock over that line for its second side and the pins drop it back exactly where it was. The summary
   gives the line to mirror the second side's toolpaths across in your CAM, and, when the stock isn't
   centered on it, how far the flipped stock lands from where it was.
+- **Fixture plate:** a plate that comes off and goes back square, in one program. Two pin holes over
+  dog holes, as far apart as fit, so it locates; bolt holes over an insert grid between the dog holes
+  (**+ Inserts** in Setup makes one), counterbored if you like; and an optional **corner stop**: a hole
+  in the middle of the grid square nearest the corner you pick, for a stop pin to square work against.
+  The stop's hole stops short of the plate's bottom, since there's no spoilboard hole under it.
 - Each hole goes **Break Through** (1 mm) below the stock into the spoilboard hole, and can't be bigger
   than that hole, so the spoilboard isn't cut. Threaded inserts must sit at least that far below the
   surface (installed from the back, they do).

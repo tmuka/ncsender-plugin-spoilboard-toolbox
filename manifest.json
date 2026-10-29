@@ -1,7 +1,7 @@
 {
   "id": "com.tmuka.spoilboard-toolbox",
   "name": "Spoilboard Toolbox",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "minAppVersion": "2.0.163",
   "configUi": "config.html",
   "icon": "icon.png",

@@ -3,6 +3,19 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+**Fixture plates that bolt down between the dog holes.**
+
+### ✨ New
+- **+ Inserts** (XY0 Picker Setup): adds a grid of threaded inserts on the grid lines, halfway between
+  your holes along X or Y, at the insert's hole size. The dog holes stay free for pins. Cut Holes drills
+  the inserts; T-track panels and a turned grid are handled; Pick Nearest Hole leaves them out.
+- **Fixture plate** (Stock tab): one program for a plate that comes off and goes back square. Two pin
+  holes over dog holes as far apart as fit, bolt holes over the insert grid (counterbored if you like),
+  and an optional **corner stop** hole in the middle of the grid square nearest a corner. The stop's
+  hole stops short of the plate's bottom. Holes that would run together are refused.
+
 ## 0.4.2
 
 **Safety stops that trust a kept tool offset, and smaller fixes from the shop floor.**
