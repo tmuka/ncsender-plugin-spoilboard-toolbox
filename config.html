@@ -2956,6 +2956,17 @@
       units: state.imperial ? 'imperial' : 'metric'
     };
   }
+  // Typing saves half a second after the last key, as well as on leaving
+  // the field, so a value typed just before the dialog closes isn't lost
+  // (the timer still runs once ncSender has removed the dialog).
+  var saveSoon = null;
+  function saveLater() {
+    clearTimeout(saveSoon);
+    saveSoon = setTimeout(function() { saveSoon = null; saveSettings(); }, 500);
+  }
+  function saveNow() {
+    if (saveSoon) { clearTimeout(saveSoon); saveSoon = null; saveSettings(); }
+  }
   function saveSettings() {
     var u = fieldVal;
     var body = Object.assign({
@@ -3367,7 +3378,9 @@
     });
     $('mw-help-btn').addEventListener('click', function() { showTab(help.tab === 'help' ? help.from : 'help'); });
     $('mw-help-back').addEventListener('click', function() { showTab(help.from); });
-    $('mw-close').addEventListener('click', function() { window.postMessage({ type: 'close-plugin-dialog' }, '*'); });
+    $('mw-close').addEventListener('click', function() { saveNow(); window.postMessage({ type: 'close-plugin-dialog' }, '*'); });
+    ROOT.addEventListener('input', function(evt) { if (/^(INPUT|TEXTAREA|SELECT)$/.test(evt.target.tagName)) saveLater(); });
+    window.addEventListener('pagehide', saveNow);
     $('mw-unit-badge').textContent = state.imperial ? 'IMPERIAL (in)' : 'METRIC (mm)';
     $('mw-hole-map').addEventListener('click', function(evt) {
       // Not the click a paint or block gesture ends with, even if Escape

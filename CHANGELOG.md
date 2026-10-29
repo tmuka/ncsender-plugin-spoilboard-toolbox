@@ -9,6 +9,8 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Measure Holes** has a **Measure with** menu, a pin by eye (to start) or a 3D touch probe, and shows only
   that way's button, so a pin in a hole can't be sent probing into the wall by mistake.
 - **Apply to Setup** waits for two measured holes.
+- **Nothing typed is lost on close:** fields save half a second after you stop typing, not only when you
+  leave them, so closing the plugin right after typing a number keeps it.
 
 ## 0.3.36
 
