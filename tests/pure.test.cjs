@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, flipPins, flipRect, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1516,4 +1516,41 @@ test('spoilboard height: a spot on the top beside the hole, clear of holes, zone
   assert.deepEqual(surfaceSpot(h, 4, [{ x: 112, y: 100, rMm: 4 }], [], [], travel), { x: 92, y: 100 });
   // Hard against the travel's corner with every way blocked: none.
   assert.equal(surfaceSpot({ x: 3, y: 3 }, 4, [{ x: 11, y: 3, rMm: 4 }, { x: 3, y: 11, rMm: 4 }], [], [], travel), null);
+});
+
+test('grid lines: every row and column, half a spacing past the ends, clipped and broken by zones', () => {
+  const travel = { xMm: 400, yMm: 300, dirX: 1, dirY: 1 }, g = [];
+  for (let r = 1; r <= 3; r++) for (let c = 1; c <= 4; c++) g.push({ col: c, row: r, x: 50 * c, y: 50 * r });
+  const segs = gridLineSegments(g, travel, [], 0.5);
+  assert.equal(segs.filter(s => s.kind === 'row').length, 3);
+  assert.equal(segs.filter(s => s.kind === 'col').length, 4);
+  const r1 = segs[0], xs = [r1.a.x, r1.b.x].sort((a, b) => a - b);
+  assert.deepEqual([xs[0], xs[1], r1.a.y], [25, 225, 50]);           // half a spacing past A1 and A4
+  assert.ok(segs[1].a.x > segs[1].b.x);                               // the next one runs back
+  // A keepout zone across the middle of row 2 splits it; nothing enters the zone.
+  const z = { minX: 110, maxX: 140, minY: 90, maxY: 110 }, cut = gridLineSegments(g, travel, [z], 0.5);
+  assert.equal(cut.filter(s => s.key === 'r0:2').length, 2);
+  assert.ok(cut.every(s => !lineCrossesZone(s.a, s.b, z, 0)));
+  // Hard against the travel's edge: clipped inside it.
+  const edge = gridLineSegments([{ col: 1, row: 1, x: 2, y: 10 }, { col: 2, row: 1, x: 52, y: 10 }], travel, [], 0.5);
+  assert.equal(Math.min(edge[0].a.x, edge[0].b.x), 0.5);
+  // A T-track along X between rows 1 and 2 (y 75, 19 mm wide): each column line breaks there; row lines don't.
+  const trk = gridLineSegments(g, travel, [], 0.5, [{ a: { x: 0, y: 75 }, b: { x: 400, y: 75 }, halfMm: 9.5 }]);
+  assert.equal(trk.filter(s => s.kind === 'col').length, 8);
+  assert.equal(trk.filter(s => s.kind === 'row').length, 3);
+  assert.ok(trk.filter(s => s.kind === 'col').every(s => Math.max(s.a.y, s.b.y) <= 65 + 1e-9 || Math.min(s.a.y, s.b.y) >= 85 - 1e-9));
+});
+
+test('laser test: a cross per power and feed, labelled, then a program with each one\'s S and F', () => {
+  const pat = laserTestPattern([200, 600, 1000], [500, 1500], 12, 5, 3);
+  assert.equal(pat.groups.length, 3 * 2 + 1);
+  const crosses = pat.groups.slice(0, 6);
+  assert.deepEqual(crosses.map(g => g.power + '@' + g.feed), ['200@500', '600@500', '1000@500', '200@1500', '600@1500', '1000@1500']);
+  assert.ok(pat.groups.flatMap(g => g.strokes.flat()).every(p => p.x >= 5 - 1e-9 && p.y >= 5 - 1e-9 && p.x <= pat.wMm && p.y <= pat.hMm));
+  const o = { wcs: { p: 1, x: 0, y: 0 }, laser: true, power: 200, feed: 500, zones: [], safeZMm: -5 };
+  const L = strokesProgram(o, 'laser test', pat.groups);
+  assert.ok(L.includes('M4 S200'));
+  assert.ok(L.some(l => / F1500 S1000$/.test(l)));
+  assert.ok(!L.some(l => /Z-?\d/.test(l) && !/^G53|SBT|#1=/.test(l)), 'a laser never moves Z');
+  assert.ok(L.indexOf('M5') > L.lastIndexOf('M4 S200'));
 });

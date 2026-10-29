@@ -12,6 +12,13 @@ and uninstalls the old copy, then says what it did. The old settings stay on dis
 SBT: macros and their shortcuts aren't touched. If you see two Spoilboard Toolbox buttons after updating,
 open each once: the new one does the move and the old button goes away.
 
+### ✨ New
+- **Grid lines** (Spoilboard tab): laser or V-bit engrave the grid instead of drilling it, a line along
+  every row and column crossing where the holes would be, clear of zones and broken at T-tracks.
+- **Laser test** (Spoilboard tab): a labelled cross for every power and feed on scrap, to pick the
+  settings for crisp grid lines and labels.
+- **Read more help** at the bottom of the welcome screen.
+
 ### 📖 Docs
 - **What you need** says a plain spoilboard is fine: the plugin cuts the holes.
 - **Help is a set of short pages**: each tab's Help opens on an index of topics, grouped (Start here, Set up

@@ -422,7 +422,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 
 The **Spoilboard** tab writes the programs that make (or remake) the spoilboard from the XY0 Picker's
 holes, so the board and the map come from the same numbers. Pick what to cut with the chips at its top
-(**Dog holes**, **T-tracks**, **Fit test**, **Chamfers**, **Labels**). Load the bit, put Z0 on the
+(**Dog holes**, **T-tracks**, **Grid lines**, **Fit test**, **Laser test**, **Chamfers**, **Labels**). Load the bit, put Z0 on the
 spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the depth and feeds in the shared
 **Bit and depth** card, and press **Generate**: the program opens in ncSender's visualizer to check and
 run.
@@ -452,6 +452,13 @@ the plugin reminds you to re-record the spoilboard height.
   5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. There's
   no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck), so
   check the bit and Z0 before pressing Start.
+
+**No holes, just lines:** **Grid lines** lasers (grblHAL's laser mode, `$32=1`) or V-bit engraves a line
+along every row and column of Setup's grids, crossing exactly where the holes would be, half a spacing past
+the end ones. They stop short of the travel's edges and keepout zones, break at T-tracks, and run back and
+forth so the moves between them are short. Then set Hole Diameter to the line's width and zero on the
+crossings. Not sure of the power and speed? The **Laser test** marks a small cross for every power
+(columns) and feed (rows) on scrap, labelled, so you can pick the crispest before doing the whole bed.
 
 **Before and after:**
 - **Dowel fit test:** cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top),

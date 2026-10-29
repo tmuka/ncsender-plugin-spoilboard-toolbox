@@ -910,7 +910,9 @@
       <div class="mw-secs" id="mw-cut-secs" role="tablist" aria-label="What to cut">
         <button type="button" class="mw-sec" role="tab" data-sec="holes" aria-selected="true">Dog holes</button>
         <button type="button" class="mw-sec" role="tab" data-sec="tracks" aria-selected="false">T-tracks</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="lines" aria-selected="false">Grid lines</button>
         <button type="button" class="mw-sec" role="tab" data-sec="fit" aria-selected="false">Fit test</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="lasertest" aria-selected="false">Laser test</button>
         <button type="button" class="mw-sec" role="tab" data-sec="chamfer" aria-selected="false">Chamfers</button>
         <button type="button" class="mw-sec" role="tab" data-sec="labels" aria-selected="false">Labels</button>
       </div>
@@ -1038,6 +1040,72 @@
         </div>
         <p class="mw-status" id="mw-chm-note" role="status"></p>
         <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-chm-generate">Generate Chamfers</button></div>
+      </section>
+      <section class="mw-card" data-sec="lines">
+        <h3 class="mw-card-title">Grid lines</h3>
+        <p class="mw-hint">No holes, just lines: a line along every row and column of Setup&rsquo;s grids, crossing where the holes would be, with a laser or a V-bit.
+          They stop short of keepout zones and break at T-tracks (Track Width from the T-tracks section).
+          Then set Hole Diameter to the line&rsquo;s width and zero on the crossings. Z0 on the spoilboard&rsquo;s top (for a laser: focused on it).
+          Not sure of the laser&rsquo;s power and speed? Run the <strong>Laser test</strong> first.</p>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-gl-tool">With</label>
+            <select class="mw-select" id="mw-gl-tool" title="A V-bit in the spindle, or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
+              <option value="laser" selected>Laser</option>
+              <option value="vbit">V-bit</option>
+            </select>
+          </div>
+          <div class="mw-field mw-gl-vbit" hidden>
+            <label for="mw-gl-depth">Depth (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-gl-depth" value="0.3" title="How deep the V-bit cuts the lines.">
+          </div>
+          <div class="mw-field mw-gl-laser">
+            <label for="mw-gl-power">Laser Power (S)</label>
+            <input class="mw-input" type="number" id="mw-gl-power" min="1" step="1" value="600" title="The laser's power, as the S value grblHAL uses (up to its $30). The Laser test finds a good one.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-gl-feed">Feed (<span class="mw-unit">mm</span>/min)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-gl-feed" value="1500" title="How fast the lines are drawn.">
+          </div>
+        </div>
+        <p class="mw-hint" id="mw-gl-summary"></p>
+        <p class="mw-status" id="mw-gl-note" role="status"></p>
+        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-gl-generate">Generate Grid Lines</button></div>
+      </section>
+      <section class="mw-card" data-sec="lasertest">
+        <h3 class="mw-card-title">Laser test</h3>
+        <p class="mw-hint">Find the laser&rsquo;s power and speed for crisp lines: a small cross for every power and feed, on scrap of the same material.
+          X0 Y0 on the scrap&rsquo;s front left corner, the laser focused on its top. Each row is labelled with its feed, each column with its power;
+          use the best for Grid lines and Labels.</p>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-lt-pmin">Power From (S)</label>
+            <input class="mw-input" type="number" id="mw-lt-pmin" min="1" step="1" value="200" title="The lowest power, in the left column.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-lt-pmax">Power To (S)</label>
+            <input class="mw-input" type="number" id="mw-lt-pmax" min="1" step="1" value="1000" title="The highest power, in the right column (up to grblHAL's $30).">
+          </div>
+          <div class="mw-field">
+            <label for="mw-lt-pn">Columns</label>
+            <input class="mw-input" type="number" id="mw-lt-pn" min="2" max="10" step="1" value="5" title="How many powers, 2 to 10.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-lt-fmin">Feed From (<span class="mw-unit">mm</span>/min)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-lt-fmin" value="500" title="The slowest feed, in the bottom row.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-lt-fmax">Feed To (<span class="mw-unit">mm</span>/min)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-lt-fmax" value="3000" title="The fastest feed, in the top row.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-lt-fn">Rows</label>
+            <input class="mw-input" type="number" id="mw-lt-fn" min="2" max="10" step="1" value="4" title="How many feeds, 2 to 10.">
+          </div>
+        </div>
+        <p class="mw-hint" id="mw-lt-summary"></p>
+        <p class="mw-status" id="mw-lt-note" role="status"></p>
+        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-lt-generate">Generate Laser Test</button></div>
       </section>
       <section class="mw-card" data-sec="labels">
         <h3 class="mw-card-title">Engrave the labels</h3>
@@ -1274,7 +1342,10 @@
         </section>
       </div>
       <p class="mw-hint" id="mw-welcome-needs"></p>
-      <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-welcome-skip">Skip: I know my way around</button></div>
+      <div class="mw-inline-row">
+        <button type="button" class="mw-btn mw-btn-quiet" id="mw-welcome-help">Read more help</button>
+        <button type="button" class="mw-btn mw-btn-quiet" id="mw-welcome-skip">Skip: I know my way around</button>
+      </div>
     </div>
     <div class="mw-tab" data-tab="help" hidden>
       <h2 class="mw-help-title">Help: <span id="mw-help-for"></span></h2>
@@ -2665,6 +2736,124 @@
   // strokes, 5 mm between labels and to Safe Z over a zone), or a laser at
   // power (M4, which grblHAL's laser mode keeps off on rapids; Z never
   // moves, so it stays where it's focused).
+  // Grid lines to engrave or laser instead of drilling: a line along every
+  // row and every column of each grid, through the holes' centers (turned
+  // with the grid) and half a spacing past the end holes, so they cross
+  // where the holes would be. Clipped to the travel less `margin`, and
+  // broken around the zones grown by it, and where they cross a T-track
+  // ({ a, b, halfMm } centerlines, as labelTracks gives). holes: grid holes
+  // (col != null). Returns [{ a, b, kind: 'row' | 'col', key }], every other
+  // one reversed so the rapids between them stay short.
+  function gridLineSegments(holes, travel, zones, margin, tracks) {
+    var groups = {}, out = [];
+    holes.forEach(function(q) {
+      if (q.col == null) return;
+      var g = q.layer || 0;
+      (groups['r' + g + ':' + q.row] = groups['r' + g + ':' + q.row] || []).push(q);
+      (groups['c' + g + ':' + q.col] = groups['c' + g + ':' + q.col] || []).push(q);
+    });
+    var minX = travel.dirX > 0 ? 0 : -travel.xMm, minY = travel.dirY > 0 ? 0 : -travel.yMm;
+    var rect = { minX: minX + margin, maxX: minX + travel.xMm - margin, minY: minY + margin, maxY: minY + travel.yMm - margin };
+    Object.keys(groups).sort(function(k1, k2) {
+      var a1 = groups[k1][0], a2 = groups[k2][0], row1 = k1[0] === 'r', row2 = k2[0] === 'r';
+      if (row1 !== row2) return row1 ? -1 : 1;
+      return row1 ? (a1.layer || 0) - (a2.layer || 0) || a1.row - a2.row : (a1.layer || 0) - (a2.layer || 0) || a1.col - a2.col;
+    }).forEach(function(key) {
+      var row = key[0] === 'r', list = groups[key].slice().sort(function(p, q) { return row ? p.col - q.col : p.row - q.row; });
+      if (list.length < 2) return;
+      var a = list[0], b = list[list.length - 1], len = Math.hypot(b.x - a.x, b.y - a.y);
+      if (!(len > 0)) return;
+      var ux = (b.x - a.x) / len, uy = (b.y - a.y) / len, ext = len / (list.length - 1) / 2;
+      var A = { x: a.x - ux * ext, y: a.y - uy * ext }, B = { x: b.x + ux * ext, y: b.y + uy * ext };
+      var keep = clipToRect(A, B, rect);
+      if (!keep) return;
+      var spans = [keep];
+      (zones || []).forEach(function(z) {
+        var hit = clipToRect(A, B, { minX: z.minX - margin, maxX: z.maxX + margin, minY: z.minY - margin, maxY: z.maxY + margin });
+        if (!hit) return;
+        spans = spans.reduce(function(acc, sp) {
+          if (hit[1] <= sp[0] || hit[0] >= sp[1]) return acc.concat([sp]);
+          if (hit[0] > sp[0]) acc.push([sp[0], hit[0]]);
+          if (hit[1] < sp[1]) acc.push([hit[1], sp[1]]);
+          return acc;
+        }, []);
+      });
+      // A track's band is where the line's distance from its centerline is
+      // under its half width (plus the margin): linear along the line.
+      (tracks || []).forEach(function(t) {
+        var tl = Math.hypot(t.b.x - t.a.x, t.b.y - t.a.y);
+        if (!(tl > 0)) return;
+        var d = function(P) { return ((t.b.x - t.a.x) * (P.y - t.a.y) - (t.b.y - t.a.y) * (P.x - t.a.x)) / tl; };
+        var d0 = d(A), d1 = d(B), w = t.halfMm + margin, lo, hi;
+        if (Math.abs(d1 - d0) < 1e-9) { if (Math.abs(d0) >= w) return; lo = 0; hi = 1; }
+        else { var ta = (-w - d0) / (d1 - d0), tb = (w - d0) / (d1 - d0); lo = Math.min(ta, tb); hi = Math.max(ta, tb); }
+        spans = spans.reduce(function(acc, sp) {
+          if (hi <= sp[0] || lo >= sp[1]) return acc.concat([sp]);
+          if (lo > sp[0]) acc.push([sp[0], lo]);
+          if (hi < sp[1]) acc.push([hi, sp[1]]);
+          return acc;
+        }, []);
+      });
+      var full = Math.hypot(B.x - A.x, B.y - A.y);
+      spans.forEach(function(sp) {
+        if ((sp[1] - sp[0]) * full < 1) return;
+        var p = { x: A.x + (B.x - A.x) * sp[0], y: A.y + (B.y - A.y) * sp[0] }, q = { x: A.x + (B.x - A.x) * sp[1], y: A.y + (B.y - A.y) * sp[1] };
+        out.push(out.length % 2 ? { a: q, b: p, kind: row ? 'row' : 'col', key: key } : { a: p, b: q, kind: row ? 'row' : 'col', key: key });
+      });
+    });
+    return out;
+  }
+  // The laser test: a cross (a grid crossing's shape) per power and feed,
+  // powers along X and feeds up Y, from X0 Y0 on the scrap's front left
+  // corner, edgeMm in; each row's feed engraved to its left, each column's
+  // power above it, at the middle power and feed. Local mm (X0 Y0 at 0, 0).
+  // Returns { groups: [{ comment, power, feed, strokes }], wMm, hMm }.
+  function laserTestPattern(powers, feeds, cellMm, edgeMm, textMm) {
+    var arm = cellMm * 0.35, groups = [], mid = function(v) { return v[Math.floor((v.length - 1) / 2)]; };
+    var left = edgeMm + Math.max.apply(null, feeds.map(function(f) { return textWidth(String(f), textMm); })) + 3;
+    var labels = [];
+    feeds.forEach(function(f, j) {
+      var y = edgeMm + j * cellMm + cellMm / 2;
+      labels = labels.concat(textStrokes(String(f), edgeMm, y - textMm / 2, textMm));
+      powers.forEach(function(pw, i) {
+        var x = left + i * cellMm + cellMm / 2;
+        groups.push({ comment: 'SBT laser test: S' + pw + ' at F' + f, power: pw, feed: f,
+          strokes: [[{ x: x - arm, y: y }, { x: x + arm, y: y }], [{ x: x, y: y - arm }, { x: x, y: y + arm }]] });
+      });
+    });
+    var top = edgeMm + feeds.length * cellMm + 2;
+    powers.forEach(function(pw, i) {
+      var t = String(pw), x = left + i * cellMm + cellMm / 2 - textWidth(t, textMm) / 2;
+      labels = labels.concat(textStrokes(t, x, top, textMm));
+    });
+    groups.push({ comment: 'SBT laser test: the feeds (left) and powers (top)', power: mid(powers), feed: mid(feeds), strokes: labels });
+    return { groups: groups, wMm: left + powers.length * cellMm + edgeMm, hMm: top + textMm + edgeMm };
+  }
+  // Strokes (polylines, machine mm) engraved with a V-bit or a laser, in
+  // groups that may each set their own power and feed (the laser test).
+  // Like engraveProgram: a laser in M4 with Z left alone; a V-bit plunges
+  // at each stroke and hops 5 mm between groups, to Safe Z past a zone.
+  function strokesProgram(o, title, groups) {
+    var c = gComment, f3 = function(v) { return gf(v, 3); }, L = cutStart(o, title), at = null;
+    if (o.laser) L.push('M4 S' + Math.round(o.power));
+    groups.forEach(function(g) {
+      if (g.comment) L.push(c(g.comment));
+      var feed = Math.round(g.feed || o.feed), power = Math.round(g.power || o.power);
+      g.strokes.forEach(function(st, k) {
+        var a = st[0], to = { x: a.x, y: a.y };
+        if (!o.laser && at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, VBIT_R); })) L.push(cutSafe(o));
+        L.push('G0 X' + f3(a.x - o.wcs.x) + ' Y' + f3(a.y - o.wcs.y));
+        if (!o.laser) { if (k === 0) L.push('G0 Z5.000'); L.push('G0 Z1.000'); L.push('G1 Z' + f3(-o.depthMm) + ' F' + o.plunge); }
+        st.slice(1).forEach(function(q, j) {
+          L.push('G1 X' + f3(q.x - o.wcs.x) + ' Y' + f3(q.y - o.wcs.y) + (j === 0 ? ' F' + feed + (o.laser ? ' S' + power : '') : ''));
+        });
+        if (!o.laser) L.push('G0 Z2.000');
+        at = st[st.length - 1];
+      });
+      if (!o.laser) L.push('G0 Z5.000');
+    });
+    return cutEnd(o, L);
+  }
   function engraveProgram(o) {
     var n = o.labels.length, c = gComment, f3 = function(v) { return gf(v, 3); };
     var L = cutStart(o, 'engrave ' + n + ' fixture table label' + (n === 1 ? '' : 's') + ', ' + fmt(o.textMm) + ' mm tall, ' +
@@ -3675,6 +3864,13 @@
     $('mw-welcome-new').addEventListener('click', function() { welcomeGo('new'); });
     $('mw-welcome-map').addEventListener('click', function() { welcomeGo('map'); });
     $('mw-welcome-skip').addEventListener('click', function() { welcomeGo(''); });
+    $('mw-welcome-help').addEventListener('click', function() {
+      state.welcomed = true;
+      saveSettings();
+      help.from = 'holes';
+      help.page = null;
+      showTab('help');
+    });
     $('mw-welcome-needs').innerHTML = HELP_NEEDS;
     $('mw-close').addEventListener('click', function() { saveNow(); window.postMessage({ type: 'close-plugin-dialog' }, '*'); });
     ROOT.addEventListener('input', function(evt) { if (/^(INPUT|TEXTAREA|SELECT)$/.test(evt.target.tagName)) saveLater(); });
@@ -5300,13 +5496,14 @@
   // units then (settings.units).
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
-      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-margin', 'sh-break', 'trk-width', 'trk-depth'],
-    plain: ['cut-stepover', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis'],
+      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-margin', 'sh-break', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
+    plain: ['cut-stepover', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-thick': 0.75, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
     'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
-    'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75 };
+    'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
+    'gl-depth': 0.012, 'gl-feed': 60, 'lt-fmin': 20, 'lt-fmax': 120 };
   function cutBody() {
     var b = { 'cut-tool': state.cutTool || null };
     CUT_SAVED.lengths.forEach(function(k) { b[k] = fieldVal('mw-' + k); });
@@ -5480,6 +5677,86 @@
       grids.push(Object.assign({ travelXMm: t.xMm, travelYMm: t.yMm, dirX: t.dirX, dirY: t.dirY }, g));
     });
     return grids;
+  }
+  // Grid lines: Setup's grids (shown ones), with a laser or a V-bit.
+  function gridLineSettings() {
+    var o = cutSettings();
+    o.tool = null;
+    var laser = $('mw-gl-tool').value === 'laser', probs = placeProblems(o), hh = readHoles();
+    var usable = holes.grid.filter(function(q) { return q.col != null && !q.hidden; });
+    var segs = state.travel && hh ? gridLineSegments(usable, state.travel, o.zones, laser ? 0.5 : VBIT_R, labelTracks(hh)) : [];
+    Object.assign(o, { laser: laser, power: parseFloat($('mw-gl-power').value), depthMm: cutMm('mw-gl-depth'), feed: Math.round(cutMm('mw-gl-feed')), segs: segs });
+    if (!hh) probs.push('Setup’s grid has a field that can’t be read: fix it in the XY0 Picker');
+    else if (hh.layout === 'list') probs.push('Grid lines need a grid: set Setup’s layout to Grid or Grid + List');
+    else if (!segs.length) probs.push('No grid line fits inside the travel, clear of the zones');
+    if (!(o.feed > 0)) probs.push('Feed must be more than 0');
+    if (laser && !(o.power > 0)) probs.push('Laser Power must be more than 0');
+    if (laser && state.laserMode !== true) probs.push('Turn on grblHAL’s laser mode ($32=1) first: without it the laser stays on during rapids');
+    if (!laser && !(o.depthMm > 0)) probs.push('Depth must be more than 0');
+    if (!laser && !(o.plunge > 0)) probs.push('Plunge (above) must be more than 0');
+    return { o: o, probs: probs };
+  }
+  function gridLineProgram(o) {
+    var rows = o.segs.filter(function(g) { return g.kind === 'row'; }).length;
+    return strokesProgram(o, 'grid lines, ' + rows + ' along rows and ' + (o.segs.length - rows) + ' along columns, ' +
+      (o.laser ? 'laser at S' + Math.round(o.power) : fmt(o.depthMm) + ' mm deep with a V-bit'),
+      o.segs.map(function(g, i) { return { comment: i === 0 || g.kind !== o.segs[i - 1].kind ? 'SBT grid lines along ' + (g.kind === 'row' ? 'the rows' : 'the columns') : '', strokes: [[g.a, g.b]] }; }));
+  }
+  function renderGridLines() {
+    var l = gridLineSettings(), laser = l.o.laser;
+    $('mw-gl-depth').closest('.mw-field').hidden = laser;
+    $('mw-gl-power').closest('.mw-field').hidden = !laser;
+    var total = l.o.segs.reduce(function(t, g) { return t + Math.hypot(g.b.x - g.a.x, g.b.y - g.a.y); }, 0);
+    var lines = l.probs.length ? null : gridLineProgram(l.o);
+    $('mw-gl-summary').textContent = l.o.segs.length + ' line' + (l.o.segs.length === 1 ? '' : 's') + ', ' + shown(total) + ' ' + unitName() + ' in all' +
+      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.');
+    showProblems($('mw-gl-note'), l.probs);
+    $('mw-gl-generate').disabled = !!l.probs.length;
+  }
+  async function generateGridLines() {
+    await readMachineState(); await readTlo();
+    var l = gridLineSettings();
+    if (l.probs.length) { renderGridLines(); return; }
+    await loadProgram('SBT-GridLines_' + l.o.segs.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '.nc', gridLineProgram(l.o), $('mw-gl-note'), $('mw-gl-generate'));
+  }
+  // The laser test, from X0 Y0 on the scrap's front left corner.
+  var LT_CELL_MM = 12, LT_EDGE_MM = 5, LT_TEXT_MM = 3;
+  function spread(a, b, n) {
+    var out = [];
+    for (var i = 0; i < n; i++) out.push(Math.round(a + (b - a) * (n === 1 ? 0 : i / (n - 1))));
+    return out;
+  }
+  function laserTestSettings() {
+    var o = cutSettings();
+    o.tool = null;
+    var probs = placeProblems(o), pn = Math.round(parseFloat($('mw-lt-pn').value)), fn = Math.round(parseFloat($('mw-lt-fn').value));
+    var pmin = parseFloat($('mw-lt-pmin').value), pmax = parseFloat($('mw-lt-pmax').value), fmin = cutMm('mw-lt-fmin'), fmax = cutMm('mw-lt-fmax');
+    if (!(pmin > 0 && pmax > 0)) probs.push('Power From and To must be more than 0');
+    if (!(fmin > 0 && fmax > 0)) probs.push('Feed From and To must be more than 0');
+    if (!(pn >= 2 && pn <= 10) || !(fn >= 2 && fn <= 10)) probs.push('Columns and Rows must be 2 to 10');
+    if (state.laserMode !== true) probs.push('Turn on grblHAL’s laser mode ($32=1) first: without it the laser stays on during rapids');
+    var pat = probs.length ? { groups: [], wMm: 0, hMm: 0 } : laserTestPattern(spread(pmin, pmax, pn), spread(fmin, fmax, fn), LT_CELL_MM, LT_EDGE_MM, LT_TEXT_MM);
+    var groups = o.wcs ? pat.groups.map(function(g) {
+      return Object.assign({}, g, { strokes: g.strokes.map(function(st) { return st.map(function(p) { return { x: p.x + o.wcs.x, y: p.y + o.wcs.y }; }); }) });
+    }) : [];
+    Object.assign(o, { laser: true, zWhat: 'the scrap (the laser focused on it)', power: pmin, feed: fmin, groups: groups, wMm: pat.wMm, hMm: pat.hMm, pn: pn, fn: fn });
+    var hit = groups.some(function(g) { return g.strokes.some(function(st) { return st.some(function(p) { return holeKeepout(p.x, p.y, 0.5, o.zones); }); }); });
+    if (hit) probs.push('The test reaches into a keepout zone or Exclude Picks area: put X0 Y0 somewhere clear');
+    return { o: o, probs: probs };
+  }
+  function renderLaserTest() {
+    var l = laserTestSettings();
+    $('mw-lt-summary').textContent = l.o.groups.length ? l.o.pn + ' powers × ' + l.o.fn + ' feeds, on scrap at least ' +
+      shown(l.o.wMm) + ' × ' + shown(l.o.hMm) + ' ' + unitName() + '.' : '';
+    showProblems($('mw-lt-note'), l.probs);
+    $('mw-lt-generate').disabled = !!l.probs.length;
+  }
+  async function generateLaserTest() {
+    await readMachineState();
+    var l = laserTestSettings();
+    if (l.probs.length) { renderLaserTest(); return; }
+    await loadProgram('SBT-LaserTest_' + l.o.pn + 'x' + l.o.fn + '.nc',
+      strokesProgram(l.o, 'laser test, ' + l.o.pn + ' powers x ' + l.o.fn + ' feeds, X0 Y0 on the scrap’s front left corner', l.o.groups), $('mw-lt-note'), $('mw-lt-generate'));
   }
   // The fixture table's labels, with a V-bit or a laser.
   function labelSettings() {
@@ -5663,7 +5940,7 @@
     await loadProgram('SBT-Tracks_' + tr.o.slots.length + 'x_W-' + shown(tr.o.widthMm) + '_D-' + shown(tr.o.depthMm) + '_' + unitName() + '.nc',
       trackProgram(tr.o), $('mw-trk-note'), $('mw-trk-generate'));
   }
-  function renderCutTab() { renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderLabels(); }
+  function renderCutTab() { renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderLabels(); renderGridLines(); renderLaserTest(); }
   function wireCut() {
     CUT_SAVED.lengths.concat(CUT_SAVED.plain).forEach(function(k) {
       $('mw-' + k).addEventListener('input', renderCutTab);
@@ -5686,6 +5963,8 @@
     $('mw-fit-generate').addEventListener('click', generateFit);
     $('mw-chm-generate').addEventListener('click', generateChamfer);
     $('mw-lab-generate').addEventListener('click', generateLabels);
+    $('mw-gl-generate').addEventListener('click', generateGridLines);
+    $('mw-lt-generate').addEventListener('click', generateLaserTest);
     wireCal();
     $('mw-moved-ok').addEventListener('click', function() { $('mw-moved').hidden = true; });
     $('mw-surface-ok').addEventListener('click', function() { holes.surfaceAck = holes.surfaceKey; $('mw-surface').hidden = true; saveSettings(); });
@@ -6148,10 +6427,10 @@
         '<li>A height below the spoilboard or past the Z travel (a unit typo, say) is flagged and refused.</li></ul>',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
-      '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines.',
+      '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines. No grid on the board yet? <strong>Spoilboard &rsaquo; Grid lines</strong> lasers or engraves it from Setup.',
       HELP_NEEDS, HELP_UNITS ] },
     cut: { name: 'Spoilboard', notes: [
-      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, a <strong>Fit test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The bit, feeds and spindle card is shared by all of them (and by the Stock tab).',
+      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The bit, feeds and spindle card is shared by all of them (and by the Stock tab).',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
@@ -6162,7 +6441,13 @@
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, Edge Distance in from its edges, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
-      '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.' ] },
+      '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.',
+      '<p><strong>Grid lines</strong> instead of holes: a line along every row and column of Setup&rsquo;s shown grids, through where the holes would be (turned with a turned grid) and half a spacing past the end ones, so they cross at each hole&rsquo;s place. With a laser (grblHAL&rsquo;s laser mode, <code>$32=1</code>) or a V-bit, Z0 on the board&rsquo;s top.</p><ul>' +
+        '<li>Lines stop short of the travel&rsquo;s edges and keepout zones, and break at T-tracks.</li>' +
+        '<li>They run back and forth, so the moves between them are short.</li>' +
+        '<li>Then set Hole Diameter to the line&rsquo;s width and zero on the crossings, as for any lasered grid.</li></ul>',
+      '<p><strong>Laser test:</strong> a small cross, a grid crossing&rsquo;s shape, for every pair of powers (columns) and feeds (rows), labelled, on scrap of the same material with X0 Y0 on its front left corner and the laser focused on its top.</p>' +
+        '<p>Pick the crispest cross and use its power and feed for Grid lines and Labels. The summary gives the scrap size it needs.</p>' ] },
     stock: { name: 'Stock', notes: [
       '<p><strong>Stock that bolts down and flips true.</strong> Clamp the stock some other way, put Z0 on its top, and drill it right over spoilboard holes:</p><ul>' +
         '<li><strong>Bolts:</strong> a clearance hole (6.9 mm for 1/4-20) over the hole nearest each corner, or every hole under it, with an optional counterbore, to bolt into threaded inserts.</li>' +
@@ -6232,9 +6517,9 @@
         { id: 'keys', icon: 'keys', title: 'From the keyboard', short: 'Nearest hole in one keypress at the machine.', notes: [17] },
         { id: 'surfacing', icon: 'refresh', title: 'After surfacing', short: 'Re-record the spoilboard height.', notes: [8] },
         { id: 'units', icon: 'units', title: 'Typing units', short: 'mm or inches, fractions too.', notes: [31] } ] } ] },
-    cut: { intro: 'The programs that cut the spoilboard: holes, T-tracks, a fit test, chamfers and labels.', groups: [
+    cut: { intro: 'The programs that make the spoilboard: holes, T-tracks, grid lines, tests, chamfers and labels.', groups: [
       { title: 'Start here', pages: [
-        { id: 'what', icon: 'start', title: 'What it cuts', short: 'Every hole from the map, in one program.', notes: [0, 1] },
+        { id: 'what', icon: 'start', title: 'What it makes', short: 'Every hole from the map, in one program.', notes: [0, 1] },
         { id: 'surface', icon: 'refresh', title: 'Surfacing is QuickCut’s', short: 'Flatten first with QuickCut, then cut.', notes: [2] } ] },
       { title: 'Dog holes', pages: [
         { id: 'how', icon: 'drill', title: 'Which holes, and how', short: 'Drilled, spiralled or cleared, by size.', notes: [3, 4] },
@@ -6244,7 +6529,10 @@
         { id: 'tracks', icon: 'slot', title: 'T-tracks', short: 'A two-layer board whose top you can replace.', notes: [8] },
         { id: 'fit', icon: 'ruler', title: 'Dowel fit test', short: 'Find the size your dowels fit, in scrap.', notes: [9] },
         { id: 'chamfer', icon: 'vbit', title: 'Chamfers', short: 'A bevel round each hole with a V-bit.', notes: [10] },
-        { id: 'labels', icon: 'text', title: 'Labels', short: 'Engrave the hole names, V-bit or laser.', notes: [11] } ] } ] },
+        { id: 'labels', icon: 'text', title: 'Labels', short: 'Engrave the hole names, V-bit or laser.', notes: [11] } ] },
+      { title: 'No holes: lines', pages: [
+        { id: 'lines', icon: 'map', title: 'Grid lines', short: 'Laser or engrave the grid instead of drilling it.', notes: [12] },
+        { id: 'lasertest', icon: 'laser', title: 'Laser test', short: 'Find the power and speed for crisp lines.', notes: [13] } ] } ] },
     stock: { intro: 'Drill the stock right over spoilboard holes: bolt it down, or flip it true.', groups: [
       { title: 'Stock holes', pages: [
         { id: 'holes', icon: 'box', title: 'Bolt holes and flip pins', short: 'What each does, and what keeps the board safe.', notes: [0] },
