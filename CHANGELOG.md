@@ -3,7 +3,9 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.3.37
+
+**Measure your holes without hunting for them, and a welcome that asks where you're starting.**
 
 ### 🎯 Easier to use
 - **A welcome screen** on a fresh install: pick **No holes yet** (lay out and cut a new board) or
