@@ -2760,7 +2760,7 @@
   // (col != null). Returns [{ a, b, kind: 'row' | 'col', key }], every other
   // one reversed so the rapids between them stay short.
   function gridLineSegments(holes, travel, zones, margin, tracks) {
-    var groups = {}, out = [];
+    var groups = {}, out = [], lineNo = 0;
     holes.forEach(function(q) {
       if (q.col == null) return;
       var g = q.layer || 0;
@@ -2809,11 +2809,13 @@
           return acc;
         }, []);
       });
-      var full = Math.hypot(B.x - A.x, B.y - A.y);
+      // Every other line runs back, its pieces in that order too.
+      var full = Math.hypot(B.x - A.x, B.y - A.y), back = lineNo++ % 2 === 1;
+      spans = spans.filter(function(sp) { return (sp[1] - sp[0]) * full >= 1; });
+      if (back) spans.reverse();
       spans.forEach(function(sp) {
-        if ((sp[1] - sp[0]) * full < 1) return;
         var p = { x: A.x + (B.x - A.x) * sp[0], y: A.y + (B.y - A.y) * sp[0] }, q = { x: A.x + (B.x - A.x) * sp[1], y: A.y + (B.y - A.y) * sp[1] };
-        out.push(out.length % 2 ? { a: q, b: p, kind: row ? 'row' : 'col', key: key } : { a: p, b: q, kind: row ? 'row' : 'col', key: key });
+        out.push(back ? { a: q, b: p, kind: row ? 'row' : 'col', key: key } : { a: p, b: q, kind: row ? 'row' : 'col', key: key });
       });
     });
     return out;
@@ -2823,13 +2825,17 @@
   // corner, edgeMm in; each row's feed engraved to its left, each column's
   // power above it, at the middle power and feed. Local mm (X0 Y0 at 0, 0).
   // Returns { groups: [{ comment, power, feed, strokes }], wMm, hMm }.
-  function laserTestPattern(powers, feeds, cellMm, edgeMm, textMm) {
+  // feedText: how a feed is written (in the user's units); the columns widen
+  // to fit the longest power.
+  function laserTestPattern(powers, feeds, cellMm, edgeMm, textMm, feedText) {
+    var ft = feedText || function(f) { return String(f); };
+    cellMm = Math.max(cellMm, Math.max.apply(null, powers.map(function(pw) { return textWidth(String(pw), textMm); })) + 3);
     var arm = cellMm * 0.35, groups = [], mid = function(v) { return v[Math.floor((v.length - 1) / 2)]; };
-    var left = edgeMm + Math.max.apply(null, feeds.map(function(f) { return textWidth(String(f), textMm); })) + 3;
+    var left = edgeMm + Math.max.apply(null, feeds.map(function(f) { return textWidth(ft(f), textMm); })) + 3;
     var labels = [];
     feeds.forEach(function(f, j) {
       var y = edgeMm + j * cellMm + cellMm / 2;
-      labels = labels.concat(textStrokes(String(f), edgeMm, y - textMm / 2, textMm));
+      labels = labels.concat(textStrokes(ft(f), edgeMm, y - textMm / 2, textMm));
       powers.forEach(function(pw, i) {
         var x = left + i * cellMm + cellMm / 2;
         groups.push({ comment: 'SBT laser test: S' + pw + ' at F' + f, power: pw, feed: f,
@@ -3643,7 +3649,7 @@
   // The whole keyboardBindings object is sent, since ncSender's page merges
   // a settings change shallowly and a partial one would hide the others.
   async function migrateFromOldId(saved) {
-    var notes = [], hasOwn = Object.keys(saved).length > 0, copied = false;
+    var notes = [], hasOwn = Object.keys(saved).length > 0, copied = false, keysDone = false;
     try {
       var list = await (await fetch(BASE_URL + '/api/plugins')).json();
       list = Array.isArray(list) ? list : (list && list.plugins) || [];
@@ -3657,31 +3663,36 @@
         if (!put.ok) throw new Error('saving them under the new ID failed (' + put.status + ')');
         copied = true;
         notes.push('your Setup, profiles and settings came across');
-        var nc = await (await fetch(BASE_URL + '/api/settings')).json();
-        var kb = nc && nc.keyboardBindings, from = 'Plugin:' + OLD_PLUGIN_ID + ':', n = 0;
-        if (kb && typeof kb === 'object') {
-          var next = {};
-          Object.keys(kb).forEach(function(k) {
-            if (k.indexOf(from) !== 0) { next[k] = kb[k]; return; }
-            next[k] = null;
-            next['Plugin:' + PLUGIN_ID + ':' + k.slice(from.length)] = kb[k];
-            if (kb[k]) n++;
+      }
+      // Its shortcuts move whenever any are left under the old ID, so a
+      // first open that stopped part-way finishes the job on the next.
+      var nc = await (await fetch(BASE_URL + '/api/settings')).json();
+      var kb = nc && nc.keyboardBindings, from = 'Plugin:' + OLD_PLUGIN_ID + ':', n = 0;
+      if (kb && typeof kb === 'object') {
+        var next = {};
+        Object.keys(kb).forEach(function(k) {
+          if (k.indexOf(from) !== 0 || !kb[k]) { next[k] = kb[k]; return; }
+          next[k] = null;
+          var to = 'Plugin:' + PLUGIN_ID + ':' + k.slice(from.length);
+          if (!kb[to]) next[to] = kb[k];
+          n++;
+        });
+        if (n) {
+          var pr = await fetch(BASE_URL + '/api/settings', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyboardBindings: next })
           });
-          if (n) {
-            var pr = await fetch(BASE_URL + '/api/settings', {
-              method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyboardBindings: next })
-            });
-            notes.push(pr.ok ? n + ' keyboard shortcut' + (n === 1 ? '' : 's') + ' for it moved too' : 'its keyboard shortcuts didn\u2019t move: set them again in Settings \u203a Controls');
-          }
+          if (!pr.ok) throw new Error('moving its keyboard shortcuts failed (' + pr.status + ')');
+          notes.push(n + ' keyboard shortcut' + (n === 1 ? '' : 's') + ' for it moved too');
         }
       }
-      if (oldInstalled && (hasOwn || copied || !(old && Object.keys(old).length))) {
+      keysDone = true;
+      if (oldInstalled) {
         var del = await fetch(BASE_URL + '/api/plugins/' + OLD_PLUGIN_ID, { method: 'DELETE' });
-        notes.push(del.ok ? 'the old copy (' + OLD_PLUGIN_ID + ') was uninstalled, its settings kept on disk as a backup'
+        notes.push(del.ok ? 'the old copy (' + OLD_PLUGIN_ID + ') was uninstalled' + (copied ? ', its settings kept on disk as a backup' : '')
           : 'uninstall the old copy (' + OLD_PLUGIN_ID + ') from the Plugins tab');
       }
     } catch (e) {
-      notes.push('moving the old settings didn\u2019t finish (' + e.message + '); the old copy is still installed, so nothing is lost');
+      notes.push('moving over from the old ID didn\u2019t finish (' + e.message + ')' + (keysDone ? '' : '; it tries again next time you open this') + ', and nothing old was removed');
     }
     return { saved: saved, notes: notes };
   }
@@ -5698,7 +5709,7 @@
     var o = cutSettings();
     o.tool = null;
     var laser = $('mw-gl-tool').value === 'laser', probs = placeProblems(o), hh = readHoles();
-    var usable = holes.grid.filter(function(q) { return q.col != null && !q.hidden; });
+    var usable = holes.grid.filter(function(q) { return q.col != null && !q.hidden && !q.suppressed && !q.blocked; });
     var segs = state.travel && hh ? gridLineSegments(usable, state.travel, o.zones, laser ? 0.5 : VBIT_R, labelTracks(hh)) : [];
     Object.assign(o, { laser: laser, power: parseFloat($('mw-gl-power').value), depthMm: cutMm('mw-gl-depth'), feed: Math.round(cutMm('mw-gl-feed')), segs: segs });
     if (!hh) probs.push('Setup’s grid has a field that can’t be read: fix it in the XY0 Picker');
@@ -5730,6 +5741,7 @@
   }
   async function generateGridLines() {
     await readMachineState(); await readTlo();
+    if ($('mw-gl-tool').value === 'laser') await readLaserMode();
     var l = gridLineSettings();
     if (l.probs.length) { renderGridLines(); return; }
     await loadProgram('SBT-GridLines_' + l.o.segs.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '.nc', gridLineProgram(l.o), $('mw-gl-note'), $('mw-gl-generate'));
@@ -5750,13 +5762,19 @@
     if (!(fmin > 0 && fmax > 0)) probs.push('Feed From and To must be more than 0');
     if (!(pn >= 2 && pn <= 10) || !(fn >= 2 && fn <= 10)) probs.push('Columns and Rows must be 2 to 10');
     if (state.laserMode !== true) probs.push('Turn on grblHAL’s laser mode ($32=1) first: without it the laser stays on during rapids');
-    var pat = probs.length ? { groups: [], wMm: 0, hMm: 0 } : laserTestPattern(spread(pmin, pmax, pn), spread(fmin, fmax, fn), LT_CELL_MM, LT_EDGE_MM, LT_TEXT_MM);
+    // Feeds are mm/min in the program; the labels say them as typed (in/min
+    // on an inch setup), to copy into Grid lines and Labels.
+    var feedText = function(f) { return String(Math.round(state.imperial ? f / MM_PER_INCH : f)); };
+    var pat = probs.length ? { groups: [], wMm: 0, hMm: 0 } : laserTestPattern(spread(pmin, pmax, pn), spread(fmin, fmax, fn), LT_CELL_MM, LT_EDGE_MM, LT_TEXT_MM, feedText);
     var groups = o.wcs ? pat.groups.map(function(g) {
       return Object.assign({}, g, { strokes: g.strokes.map(function(st) { return st.map(function(p) { return { x: p.x + o.wcs.x, y: p.y + o.wcs.y }; }); }) });
     }) : [];
     Object.assign(o, { laser: true, zWhat: 'the scrap (the laser focused on it)', power: pmin, feed: fmin, groups: groups, wMm: pat.wMm, hMm: pat.hMm, pn: pn, fn: fn });
-    var hit = groups.some(function(g) { return g.strokes.some(function(st) { return st.some(function(p) { return holeKeepout(p.x, p.y, 0.5, o.zones); }); }); });
-    if (hit) probs.push('The test reaches into a keepout zone or Exclude Picks area: put X0 Y0 somewhere clear');
+    var pts = [];
+    groups.forEach(function(g) { g.strokes.forEach(function(st) { pts = pts.concat(st); }); });
+    if (pts.some(function(p) { return holeKeepout(p.x, p.y, 0.5, o.zones); })) probs.push('The test reaches into a keepout zone or Exclude Picks area: put X0 Y0 somewhere clear');
+    var t = state.travel;
+    if (t && pts.some(function(p) { return targetProblem(p.x, p.y, t, []) === 'outside the machine\u2019s travel'; })) probs.push('The test runs past the machine\u2019s travel from this X0 Y0: put X0 Y0 on scrap farther in');
     return { o: o, probs: probs };
   }
   function renderLaserTest() {
@@ -5767,7 +5785,7 @@
     $('mw-lt-generate').disabled = !!l.probs.length;
   }
   async function generateLaserTest() {
-    await readMachineState();
+    await readMachineState(); await readLaserMode();
     var l = laserTestSettings();
     if (l.probs.length) { renderLaserTest(); return; }
     await loadProgram('SBT-LaserTest_' + l.o.pn + 'x' + l.o.fn + '.nc',
@@ -5808,8 +5826,18 @@
     showProblems($('mw-lab-note'), l.probs);
     $('mw-lab-generate').disabled = !!l.probs.length;
   }
+  // $32 asked of the controller now: it may have been switched since the
+  // plugin opened (spindle and laser on one machine), and with it off an M4
+  // program keeps the laser on during rapids.
+  async function readLaserMode() {
+    try {
+      var m = /\$32=(\d+)/.exec((await ask('$32', 500)).lines.join('\n'));
+      if (m) state.laserMode = m[1] === '1';
+    } catch (e) { /* keep what loadMachine read */ }
+  }
   async function generateLabels() {
     await readMachineState(); await readTlo();
+    if ($('mw-lab-tool').value === 'laser') await readLaserMode();
     var l = labelSettings();
     if (l.probs.length) { renderLabels(); return; }
     await loadProgram('SBT-Labels_' + l.o.labels.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '_H-' + shown(l.o.textMm) + '_' + unitName() + '.nc',
@@ -6459,7 +6487,8 @@
       '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.',
       '<p><strong>Grid lines</strong> instead of holes: a line along every row and column of Setup&rsquo;s shown grids, through where the holes would be (turned with a turned grid) and half a spacing past the end ones, so they cross at each hole&rsquo;s place. With a laser (grblHAL&rsquo;s laser mode, <code>$32=1</code>) or a V-bit, Z0 on the board&rsquo;s top.</p><ul>' +
         '<li>Lines stop short of the travel&rsquo;s edges and keepout zones, and break at T-tracks.</li>' +
-        '<li>They run back and forth, so the moves between them are short.</li>' +
+        '<li>Every other line runs back the other way, so most moves between them are short.</li>' +
+        '<li>A laser moves between lines at its focus height, Z untouched, over zones too: keep tall clamps off the bed.</li>' +
         '<li>Then set Hole Diameter to the line&rsquo;s width and zero on the crossings, as for any lasered grid.</li></ul>',
       '<p><strong>Laser test:</strong> a small cross, a grid crossing&rsquo;s shape, for every pair of powers (columns) and feeds (rows), labelled, on scrap of the same material with X0 Y0 on its front left corner and the laser focused on its top.</p>' +
         '<p>Pick the crispest cross and use its power and feed for Grid lines and Labels. The summary gives the scrap size it needs.</p>' ] },

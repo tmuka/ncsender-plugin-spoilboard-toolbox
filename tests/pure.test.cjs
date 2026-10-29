@@ -1554,3 +1554,22 @@ test('laser test: a cross per power and feed, labelled, then a program with each
   assert.ok(!L.some(l => /Z-?\d/.test(l) && !/^G53|SBT|#1=/.test(l)), 'a laser never moves Z');
   assert.ok(L.indexOf('M5') > L.lastIndexOf('M4 S200'));
 });
+
+test('grid lines: a line broken at a T-track keeps its pieces in running order, every other line back', () => {
+  const travel = { xMm: 400, yMm: 300, dirX: 1, dirY: 1 }, g = [];
+  for (let r = 1; r <= 2; r++) for (let c = 1; c <= 4; c++) g.push({ col: c, row: r, x: 50 * c, y: 50 * r });
+  const trk = [{ a: { x: 125, y: 0 }, b: { x: 125, y: 300 }, halfMm: 9.5 }];
+  const rows = gridLineSegments(g, travel, [], 0.5, trk).filter(s => s.kind === 'row');
+  assert.equal(rows.length, 4);
+  assert.ok(rows[0].a.x < rows[0].b.x && rows[0].b.x <= rows[1].a.x, 'row 1: left piece, then right piece, forward');
+  assert.ok(rows[2].a.x > rows[2].b.x && rows[2].b.x >= rows[3].a.x, 'row 2: right piece, then left piece, back');
+});
+
+test('laser test: columns widen for 5-digit powers, and feeds are labelled in the given units', () => {
+  const pat = laserTestPattern([1000, 12000, 24000], [508, 1524], 12, 5, 3, f => String(Math.round(f / 25.4)));
+  const xs = pat.groups.slice(0, 3).map(g => g.strokes[0][0].x);
+  assert.ok(xs[1] - xs[0] >= 14 + 3 - 1e-9, 'a 5-digit power fits its column');
+  assert.equal(pat.groups[0].feed, 508);                 // the program's feed stays mm/min
+  const labels = pat.groups[pat.groups.length - 1].strokes;
+  assert.ok(labels.length > 0);
+});

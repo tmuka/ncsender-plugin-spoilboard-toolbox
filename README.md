@@ -87,7 +87,7 @@ Put Z0 on the spoilboard (or the stock) any way you like for these: paper, a tou
 | **A touch plate** (ncSender's Standard Block, on the probe input), with measured tool lengths | **Record spoilboard height** and **Measure stock thickness**, which the Z0 macros need once |
 | **Tools in ncSender's tool table** | Click **Bit Diameter** to take the loaded tool's size, and the programs start with a tool change (`M6`) to it |
 | **A 3D touch probe** | **Probe This Hole** and **Probe Suggested Holes** in Measure Holes; with its tool length offset measured, **Also record the spoilboard height**. *Feedback wanted: not yet tried on a real probe.* |
-| **A laser** with grblHAL's laser mode on (`$32=1`) | Engrave the hole labels with the laser instead of a V-bit |
+| **A laser** with grblHAL's laser mode on (`$32=1`) | **Grid lines** and the hole labels lasered instead of cut with a V-bit, and the **Laser test** to find its power and speed |
 | **Keepout zones** (ncSender's, or the ATCi tool rack's `$684`–`$687`) | The map shows them, picks avoid them, and the programs lift over them |
 | **The [QuickCut](https://github.com/siganberg/ncsender-plugin-quickcut) plugin** | Spoilboard surfacing (left to QuickCut on purpose), and a reminder to re-record the height after it |
 
@@ -456,7 +456,8 @@ the plugin reminds you to re-record the spoilboard height.
 **No holes, just lines:** **Grid lines** lasers (grblHAL's laser mode, `$32=1`) or V-bit engraves a line
 along every row and column of Setup's grids, crossing exactly where the holes would be, half a spacing past
 the end ones. They stop short of the travel's edges and keepout zones, break at T-tracks, and run back and
-forth so the moves between them are short. Then set Hole Diameter to the line's width and zero on the
+forth (every other line runs back) so most moves between them are short. A laser moves between lines at
+its focus height, over zones too, so keep tall clamps off the bed. Then set Hole Diameter to the line's width and zero on the
 crossings. Not sure of the power and speed? The **Laser test** marks a small cross for every power
 (columns) and feed (rows) on scrap, labelled, so you can pick the crispest before doing the whole bed.
 

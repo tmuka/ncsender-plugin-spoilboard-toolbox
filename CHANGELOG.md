@@ -3,14 +3,14 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.4.0
 
 **A new plugin ID, moved over for you.** The plugin's ID is now `com.tmuka.spoilboard-toolbox` (it was
 `com.tmuka.zeroswapper`, from the Zero Swapper days). Update as usual from the Plugins tab; the first
 time you open the new one it copies your Setup, profiles and settings across, moves its keyboard shortcut,
 and uninstalls the old copy, then says what it did. The old settings stay on disk as a backup, and the
 SBT: macros and their shortcuts aren't touched. If you see two Spoilboard Toolbox buttons after updating,
-open each once: the new one does the move and the old button goes away.
+open the new one (0.4.0): it does the move and the old button goes away.
 
 ### ✨ New
 - **Grid lines** (Spoilboard tab): laser or V-bit engrave the grid instead of drilling it, a line along
@@ -25,6 +25,7 @@ open each once: the new one does the move and the old button goes away.
   your board, Using the map...), each a tile with an icon and one line. A tile opens its page, with
   Previous and Next; the longest pages are now short paragraphs and lists. **Getting started** and the
   README link are at the top, and Field tips is a page of its own with the names in a narrow column.
+
 ### 🐛 Fixes
 - **Easier to read, light or dark (WCAG AA contrast):** accent-colored text, links and lines, warnings,
   errors and status notes are darker in light mode and lighter in dark; input and chip borders, the map's
