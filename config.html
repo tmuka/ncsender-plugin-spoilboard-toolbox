@@ -3532,9 +3532,10 @@
   async function readTlo() {
     try {
       var gc = parseGcState((await ask('$G', 500)).lines), hash = parseHashReport((await ask('$#', 900)).lines);
-      state.tloMm = gc && gc.tloActive && isFinite(hash.TLO) ? hash.TLO * (state.reportInches ? MM_PER_INCH : 1) : 0;
+      // null: an offset is (or may be) active but its size didn't come back.
+      state.tloMm = !gc ? null : !gc.tloActive ? 0 : isFinite(hash.TLO) ? hash.TLO * (state.reportInches ? MM_PER_INCH : 1) : null;
     } catch (e) {
-      state.tloMm = 0;
+      state.tloMm = null;
     }
   }
   async function readMachineState() {
@@ -4919,7 +4920,7 @@
       rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
       wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial,
-      zMacro: { spoil: offsetZParam(+$('mw-slot').value), thick: offsetZParam(+$('mw-thick').value) }, tloMm: state.tloMm || 0
+      zMacro: { spoil: offsetZParam(+$('mw-slot').value), thick: offsetZParam(+$('mw-thick').value) }, tloMm: state.tloMm === undefined ? 0 : state.tloMm
     };
   }
   // What the programs say about the bit: a tool change when Bit Diameter
@@ -4937,7 +4938,8 @@
     // Lifting to Safe Z between holes over a zone mustn't go down: Safe Z
     // (G53, so without the tool length offset) must put the tip above the
     // 5 mm hop.
-    if (o.wcs && o.zWcs != null && state.safeZMm != null && state.safeZMm - (o.tloMm || 0) < o.zWcs + 5) out.push('ncSender\u2019s Safe Z puts this tool\u2019s tip less than 5 mm above ' + o.wcsName + ' Z0: raise it, since the programs lift to it to pass over zones');
+    if (o.tloMm === null) out.push('Couldn\u2019t read the tool length offset from the controller ($G, $#), so Safe Z can\u2019t be checked: try Generate again');
+    else if (o.wcs && o.zWcs != null && state.safeZMm != null && state.safeZMm - (o.tloMm || 0) < o.zWcs + 5) out.push('ncSender\u2019s Safe Z puts this tool\u2019s tip less than 5 mm above ' + o.wcsName + ' Z0: raise it, since the programs lift to it to pass over zones');
     if (!o.wcs) out.push(ms.connected ? o.wcsName + ' is active, and ncSender only reports G54\u2013G59\u2019s X0 Y0: switch to one of those' : 'Connect to the controller first');
     return out;
   }
@@ -5373,11 +5375,13 @@
   // Fits Setup's spacing and insets to real holes: each one probed on its
   // sides in X and Y (G38.3, so a miss isn't an alarm) from inside it, its
   // center the middle of each pair. The touches are machine positions.
-  var cal = { meas: [], busy: false };
+  var cal = { meas: [], busy: false, gen: 0 };
   // Measurements are the active grid's: switching grids or profiles, or
   // loading a preset, drops them so Apply can't write them into another.
   function calReset() {
-    if (!cal || !cal.meas.length) return;
+    if (!cal) return;
+    cal.gen++;
+    if (!cal.meas.length) return;
     cal.meas = [];
     $('mw-cal-note').removeAttribute('data-state');
     $('mw-cal-note').textContent = '';
@@ -5415,7 +5419,7 @@
     renderCal();
   }
   async function probeHole() {
-    var note = $('mw-cal-note'), inches = false;
+    var note = $('mw-cal-note'), inches = false, gen = cal.gen;
     calBusy(true);
     note.removeAttribute('data-state');
     note.textContent = 'Probing\u2026';
@@ -5447,7 +5451,7 @@
       var c = probedCenter(xa.x, xb.x, ya.y, yb.y);
       await back(c.x, c.y);
       note.setAttribute('data-state', 'ok');
-      note.textContent = recordCenter(c, grid, hh) + ' measured.';
+      note.textContent = recordCenter(c, grid, hh, gen) + ' measured.';
     } catch (e) {
       note.setAttribute('data-state', 'bad');
       note.textContent = 'Couldn\u2019t measure it: ' + e.message + '.';
@@ -5461,7 +5465,8 @@
   }
   // Matched to the hole Setup puts nearest; too far from every one and it
   // would be matched to the wrong column or row. Returns the hole's name.
-  function recordCenter(c, grid, hh) {
+  function recordCenter(c, grid, hh, gen) {
+    if (gen !== cal.gen) throw new Error('the grid or profile changed while measuring; measure it again');
     var match = nearestHole(grid, c.x, c.y);
     if (!match) throw new Error('no grid holes to measure');
     var hole = grid[match.index];
@@ -5472,7 +5477,7 @@
   }
   // By eye: the bit's position now is the hole's center. Nothing moves.
   async function eyeHole() {
-    var note = $('mw-cal-note');
+    var note = $('mw-cal-note'), gen = cal.gen;
     calBusy(true);
     note.removeAttribute('data-state');
     try {
@@ -5480,7 +5485,7 @@
       if (state.reportInches) throw new Error('grblHAL reports positions in inches ($13=1); set $13=0 first');
       var hh = readHoles(), here = xyOf((state.machine || {}).MPos);
       if (!hh || !here) throw new Error('Setup needs a grid first');
-      var name = recordCenter(here, calGrid(), hh);
+      var name = recordCenter(here, calGrid(), hh, gen);
       note.setAttribute('data-state', 'ok');
       note.textContent = name + ' recorded where the bit is.';
     } catch (e) {
@@ -5555,6 +5560,7 @@
     var ps = GRID_PRESETS[i], st = $('mw-hole-status'), k = state.imperial ? MM_PER_INCH : 1;
     if (!ps) return;
     if (holeLocked()) { st.setAttribute('data-state', 'bad'); st.textContent = 'Unlock Setup to load a preset.'; return; }
+    calReset();
     syncGrid();
     var r = holes.gridRaw[holes.activeGrid];
     var v = function(mm) { return mm === '' ? '' : String(+(mm / k).toFixed(4)); };
