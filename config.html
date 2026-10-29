@@ -94,6 +94,10 @@
     padding: 20px;
   }
   .mw-tab { display: flex; flex-direction: column; gap: var(--mw-gap); max-width: 1200px; }
+  /* The XY0 Picker's map is held back by the panel's height, so it may use the width;
+     the rest of the tab keeps to 1200 px. */
+  .mw-tab[data-tab="holes"] { max-width: none; }
+  .mw-tab[data-tab="holes"] > :not(.mw-pick-card) { max-width: 1200px; }
   .mw-tab[hidden] { display: none; }
   .mw-help-body { display: flex; flex-direction: column; gap: var(--mw-gap); }
   /* ncSender's dialog styles every button (accent, white, no border) and
@@ -435,11 +439,11 @@
      the right, unless the panel is portrait; otherwise they sit below the map. */
   .mw-hole-map { width: 100%; max-width: 100%; height: 300px; display: block; flex: none; overflow: visible; }
   .mw-pick-card.mw-tall {
-    display: grid; grid-template-columns: minmax(0, 1fr) 230px; grid-template-rows: auto 1fr;
+    display: grid; grid-template-columns: minmax(0, 1fr) var(--mw-side, 230px); grid-template-rows: auto 1fr;
     gap: 10px 16px; align-items: start;
   }
   .mw-pick-card.mw-tall .mw-hole-map { grid-row: 1 / span 2; }
-  /* Nothing in the narrow column may push it wider than its 230 px. */
+  /* Nothing in the narrow column may push it wider than its 230 px (300 on wide screens). */
   .mw-pick-card.mw-tall > *, .mw-pick-card.mw-tall .mw-holebar > *, .mw-maptools > * { min-width: 0; max-width: 100%; }
   .mw-pick-card.mw-tall .mw-holebar { flex-direction: column; align-items: stretch; }
   .mw-pick-card.mw-tall .mw-dots-wrap { align-self: center; }
@@ -4957,7 +4961,9 @@
     var card = $('mw-pick-card'), svg = $('mw-hole-map'), panel = ROOT.querySelector('.mw-panel');
     var tall = t.yMm > t.xMm && panel.clientWidth > panel.clientHeight * 0.8;
     card.classList.toggle('mw-tall', tall);
+    card.style.setProperty('--mw-side', panel.clientWidth >= 1300 ? '300px' : '230px');
     card.style.gridTemplateColumns = '';
+    card.style.alignSelf = '';
     svg.style.width = '';
     var w = svg.getBoundingClientRect().width;
     if (!w) return { w: 700, h: 400 };
@@ -5016,8 +5022,12 @@
     svg.style.width = w.toFixed(0) + 'px';
     svg.style.height = ht.toFixed(0) + 'px';
     // Tall maps stop short of the column on wide screens: the controls
-    // follow the map rather than the panel's far edge.
-    if ($('mw-pick-card').classList.contains('mw-tall')) $('mw-pick-card').style.gridTemplateColumns = w.toFixed(0) + 'px 230px';
+    // follow the map, and the card ends with them.
+    var card = $('mw-pick-card');
+    if (card.classList.contains('mw-tall')) {
+      card.style.gridTemplateColumns = w.toFixed(0) + 'px var(--mw-side, 230px)';
+      card.style.alignSelf = 'flex-start';
+    }
     // Zoomed in, the map shows part of the travel (vw) at k times the
     // scale, following the spindle when Follow is on.
     var zm = holes.zoom, ms0 = state.machine || {}, here0 = ms0.homed ? xyOf(ms0.MPos) : null;
