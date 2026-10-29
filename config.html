@@ -80,29 +80,33 @@
   .mw-tab { display: flex; flex-direction: column; gap: var(--mw-gap); }
   .mw-tab[hidden] { display: none; }
   .mw-help-body { display: flex; flex-direction: column; gap: var(--mw-gap); }
-  .mw-help-lead { margin: 0; font-size: 1rem; line-height: 1.45; color: var(--color-text-primary); }
-  .mw-help-group { margin: 6px 0 -4px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); }
+  /* ncSender's dialog styles every button (accent, white, no border) and
+     every p and heading inside a plugin, so these win with !important. */
+  .mw-help-lead { margin: 0 !important; font-size: 1rem; line-height: 1.45; color: var(--color-text-primary) !important; }
+  .mw-help-group { margin: 6px 0 -4px !important; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary) !important; }
   .mw-help-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
-  .mw-help-tile { display: flex; align-items: flex-start; gap: 12px; text-align: left; padding: 12px 14px; border-radius: 10px; cursor: pointer;
-    border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); background: var(--color-surface); color: var(--color-text-primary); font: inherit; }
-  .mw-help-tile:hover, .mw-help-tile:focus-visible { background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface)); outline: none; }
+  .mw-help-tile { display: flex !important; align-items: flex-start; gap: 12px; text-align: left !important; padding: 12px 14px !important; border-radius: 10px !important; cursor: pointer;
+    border: 1px solid var(--color-border) !important; border-left: 3px solid var(--color-accent) !important; background: var(--color-surface) !important;
+    color: var(--color-text-primary) !important; font: inherit !important; font-weight: 400 !important; opacity: 1 !important; }
+  .mw-help-tile:hover, .mw-help-tile:focus-visible { background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface)) !important; outline: none; }
   .mw-help-tile-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .mw-help-tile-text strong { font-size: 0.95rem; }
+  .mw-help-tile-text strong { font-size: 0.95rem; font-weight: 600; }
   .mw-help-tile-text span { font-size: 0.8rem; line-height: 1.35; color: var(--color-text-secondary); }
   .mw-help-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%;
     background: color-mix(in srgb, var(--color-accent) 18%, transparent); color: var(--color-accent); }
   .mw-help-icon svg { width: 18px; height: 18px; }
-  .mw-help-crumb { align-self: flex-start; background: none; border: none; padding: 0; cursor: pointer; color: var(--color-accent); font: inherit; font-size: 0.85rem; }
+  .mw-help-crumb { align-self: flex-start; background: none !important; border: none !important; padding: 0 !important; cursor: pointer;
+    color: var(--color-accent) !important; font: inherit !important; font-size: 0.85rem !important; }
   .mw-help-page-head { display: flex; align-items: center; gap: 12px; }
   .mw-help-page .mw-card-title { font-size: 1.15rem; }
-  .mw-help-short { margin: 0; color: var(--color-text-secondary); font-size: 0.9rem; }
+  .mw-help-short { margin: 0 !important; color: var(--color-text-secondary) !important; font-size: 0.9rem; }
   .mw-help-note { line-height: 1.55; display: flex; flex-direction: column; gap: 8px; }
-  .mw-help-note p, .mw-help-note ul { margin: 0; }
+  .mw-help-note p, .mw-help-note ul { margin: 0 !important; }
   .mw-help-note ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
   .mw-help-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .mw-help-step { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 10px; cursor: pointer; text-align: left;
-    border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-primary); font: inherit; }
-  .mw-help-step:last-child { text-align: right; }
+  .mw-help-step { display: flex !important; flex-direction: column; gap: 2px; padding: 10px 14px !important; border-radius: 10px !important; cursor: pointer; text-align: left !important;
+    border: 1px solid var(--color-border) !important; background: var(--color-surface) !important; color: var(--color-text-primary) !important; font: inherit !important; opacity: 1 !important; }
+  .mw-help-step:last-child { text-align: right !important; }
   .mw-help-step span { font-size: 0.75rem; color: var(--color-text-secondary); }
   .mw-help-title { margin: 0; font-size: 1.1rem; font-weight: 600; }
   .mw-holebar {
