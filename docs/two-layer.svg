@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <rect width="1200" height="500" fill="#111720"/>
+  <text x="40" y="50" fill="#e6ecf2" font-size="28" font-weight="700">A spoilboard that lasts: two layers, one cut</text>
+  <text x="40" y="82" fill="#93a2b4" font-size="18">Seen from the side. Install the T-tracks and threaded inserts once; the top layer is the only part you ever replace.</text>
+
+  <!-- top sacrificial layer, with a T-track slot and dog holes cut through -->
+  <g transform="translate(40,140) scale(0.93)">
+    <path d="M0,0 H330 V70 H0 Z" fill="#b08a55"/>
+    <path d="M410,0 H760 V70 H410 Z" fill="#b08a55"/>
+    <path d="M840,0 H1120 V70 H840 Z" fill="#b08a55"/>
+    <!-- dog holes through the top layer -->
+    <rect x="140" y="0" width="34" height="70" fill="#111720"/>
+    <rect x="570" y="0" width="34" height="70" fill="#111720"/>
+    <rect x="970" y="0" width="34" height="70" fill="#111720"/>
+    <!-- lower permanent layer -->
+    <rect x="0" y="70" width="1120" height="130" fill="#7a5f3a"/>
+    <!-- T-track channels in the lower layer -->
+    <g fill="#9aa5b1" stroke="#5d6772" stroke-width="2">
+      <path d="M330,70 h80 v18 h12 v40 h-104 v-40 h12 z"/>
+      <path d="M760,70 h80 v18 h12 v40 h-104 v-40 h12 z"/>
+    </g>
+    <!-- threaded inserts below each dog hole -->
+    <g fill="#d4af37" stroke="#8a6d1f" stroke-width="2">
+      <rect x="143" y="76" width="28" height="44"/><rect x="573" y="76" width="28" height="44"/><rect x="973" y="76" width="28" height="44"/>
+    </g>
+    <g stroke="#8a6d1f" stroke-width="2">
+      <line x1="146" y1="86" x2="168" y2="82"/><line x1="146" y1="96" x2="168" y2="92"/><line x1="146" y1="106" x2="168" y2="102"/>
+      <line x1="576" y1="86" x2="598" y2="82"/><line x1="576" y1="96" x2="598" y2="92"/><line x1="576" y1="106" x2="598" y2="102"/>
+      <line x1="976" y1="86" x2="998" y2="82"/><line x1="976" y1="96" x2="998" y2="92"/><line x1="976" y1="106" x2="998" y2="102"/>
+    </g>
+    <!-- labels -->
+    <text x="1135" y="42" fill="#e6ecf2" font-size="16" font-weight="700">Top</text>
+    <text x="1135" y="140" fill="#e6ecf2" font-size="16" font-weight="700">Base</text>
+    <path d="M370,-14 V-4" stroke="#1abc9c" stroke-width="3"/>
+    <text x="370" y="-22" fill="#1abc9c" font-size="16" text-anchor="middle" font-weight="700">Cut the T-tracks</text>
+    <text x="157" y="-22" fill="#1abc9c" font-size="16" text-anchor="middle" font-weight="700">Dog holes</text>
+    <path d="M157,-14 V-4" stroke="#1abc9c" stroke-width="3"/>
+  </g>
+
+  <g transform="translate(40,380)">
+    <rect width="540" height="96" rx="12" fill="#1a222e" stroke="rgba(26,188,156,.5)"/>
+    <text x="20" y="34" fill="#1abc9c" font-size="19" font-weight="700">Top layer: sacrificial</text>
+    <text x="20" y="60" fill="#93a2b4" font-size="16">Cut the T-tracks, then the dog holes, right through it.</text>
+    <text x="20" y="82" fill="#93a2b4" font-size="16">Chewed up? Surface it or swap it, and cut it again.</text>
+    <rect x="580" width="540" height="96" rx="12" fill="#1a222e" stroke="rgba(212,175,55,.5)"/>
+    <text x="600" y="34" fill="#d4af37" font-size="19" font-weight="700">Base layer: install once</text>
+    <text x="600" y="60" fill="#93a2b4" font-size="16">T-tracks and threaded inserts. The depth can never</text>
+    <text x="600" y="82" fill="#93a2b4" font-size="16">pass the top layer's thickness, so they're never touched.</text>
+  </g>
+</svg>

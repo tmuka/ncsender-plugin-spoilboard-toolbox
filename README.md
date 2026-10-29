@@ -41,6 +41,9 @@ red, and the Pick Nearest Hole, Go to Selected and Set G54 XY buttons](docs/xy0-
 
 ## What a job looks like
 
+![X0 Y0 on a dog hole in two taps: jog roughly near a hole, tap Pick Nearest Hole and it takes the
+grid's exact position, then hold Set and G54 X0 Y0 lands on the hole's center](docs/two-taps.png)
+
 **Zero on a stock corner, no probing.** Push the stock against bench dogs in your spoilboard holes,
 jog roughly near the corner hole (a few mm off is fine), and press **Pick Nearest Hole** then hold **Set**, or
 one key with the nearest-hole macro. X0 Y0 lands exactly on the hole's edge or center, with no edge
@@ -265,6 +268,10 @@ doesn't conduct, so a plain probe pin can't trigger), jog its tip into a hole be
 (along a row and up a column) fit the spacing as well as the insets, and how far the spoilboard is
 turned; **Apply to Setup** writes them in.
 
+![Measure Holes: a 3D probe touches a hole's four sides, or a pin is centered by eye with an even gap;
+measuring three holes far apart fits Setup's grid, spacing, insets and Turn, to the real
+holes](docs/measure-holes.png)
+
 No probe? Measure **by eye** instead: put a pin, a dowel or a V-bit in the spindle, jog it with the
 keyboard, a gamepad or the pendant down into the hole's mouth until the gap is even all round, and press
 **Centered by Eye**. It records where the bit is, without moving. A pin that just fits the hole centers
@@ -344,6 +351,9 @@ spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the dept
 **Bit and depth** card, and press **Generate**: the program opens in ncSender's visualizer to check and
 run.
 
+![The Spoilboard tab: chips for Dog holes, T-tracks, Fit test, Chamfers and Labels, the Bit and depth
+card, and a summary of 425 holes ready to generate, starting with a tool change to T3](docs/spoilboard-tab.png)
+
 **Surfacing isn't here, on purpose.** Flattening the spoilboard is left to the
 [QuickCut](https://github.com/siganberg/ncsender-plugin-quickcut) plugin's **Wasteboard Surfacing**, which
 already does it well. Surface first, then cut the holes. When a surfacing job finishes, a note at the top of
@@ -379,6 +389,10 @@ layer of MDF, and lay a thinner sacrificial layer over it. **Cut the T-tracks** 
 each of Setup's T-tracks at your **Track Width** (19.05 mm, 3/4", to start), so the tracks below show;
 then **Dog holes** cuts the holes through the same layer, over the inserts. When the top gets chewed up,
 surface it off or replace it and cut it again, and the tracks and inserts are never touched.
+
+![A two-layer spoilboard seen from the side: the top sacrificial layer has the T-track slots and dog
+holes cut through it, over a base layer holding the T-tracks and threaded inserts, which are installed
+once and never cut](docs/two-layer.png)
 - **Depth** blank goes the **Spoilboard Thickness**, which must be the top layer's thickness alone; a
   smaller Depth cuts dados to set new track into the layer itself. It can never go deeper than the
   Spoilboard Thickness, so the lower layer and its inserts are safe.
@@ -391,6 +405,9 @@ one is unharmed. [Flanged 1/4-20 threaded inserts](https://www.amazon.com/dp/B09
 something to screw into.
 
 ## Stock: bolt holes and flip pins
+
+![Flip pins: two pin holes drilled through the stock over spoilboard holes on the middle row; flipped
+onto dowel pins, side 2 drops back exactly where side 1 was, mirrored across the pin line](docs/flip-pins.png)
 
 The **Stock** tab drills the stock right over spoilboard holes, with Z0 on the stock's top and
 the stock clamped some other way while it drills. The stock is the XY0 Picker's (tick **Stock**, with its

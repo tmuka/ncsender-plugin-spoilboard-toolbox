@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="530" viewBox="0 0 1200 530" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1abc9c"/></marker>
+    <g id="grid" fill="#14100a" stroke="#5c4d33" stroke-width="2">
+      <circle cx="40" cy="40" r="9"/><circle cx="110" cy="40" r="9"/><circle cx="180" cy="40" r="9"/><circle cx="250" cy="40" r="9"/><circle cx="320" cy="40" r="9"/>
+      <circle cx="40" cy="110" r="9"/><circle cx="110" cy="110" r="9"/><circle cx="180" cy="110" r="9"/><circle cx="250" cy="110" r="9"/><circle cx="320" cy="110" r="9"/>
+      <circle cx="40" cy="180" r="9"/><circle cx="110" cy="180" r="9"/><circle cx="180" cy="180" r="9"/><circle cx="250" cy="180" r="9"/><circle cx="320" cy="180" r="9"/>
+      <circle cx="40" cy="250" r="9"/><circle cx="110" cy="250" r="9"/><circle cx="180" cy="250" r="9"/><circle cx="250" cy="250" r="9"/><circle cx="320" cy="250" r="9"/>
+    </g>
+  </defs>
+  <rect width="1200" height="530" fill="#111720"/>
+  <text x="40" y="50" fill="#e6ecf2" font-size="28" font-weight="700">Flip pins: a two-sided part that drops back exactly where it was</text>
+
+  <g transform="translate(40,90)">
+    <rect width="360" height="290" rx="14" fill="#2a2418"/>
+    <use href="#grid"/>
+    <rect x="70" y="70" width="220" height="150" fill="#c9a66b" opacity=".92" stroke="#8a6d3b" stroke-width="3"/>
+    <text x="180" y="100" fill="#3b2c14" font-size="16" text-anchor="middle" font-weight="700">SIDE 1</text>
+    <line x1="60" y1="145" x2="300" y2="145" stroke="#1abc9c" stroke-width="2" stroke-dasharray="8 6"/>
+    <g fill="#1abc9c" stroke="#0e6e5b" stroke-width="2"><circle cx="110" cy="145" r="10"/><circle cx="250" cy="145" r="10"/></g>
+    <text x="0" y="320" fill="#1abc9c" font-size="20" font-weight="700">1. Drill two pin holes</text>
+    <text x="0" y="345" fill="#93a2b4" font-size="17">Through the stock, right over two</text>
+    <text x="0" y="367" fill="#93a2b4" font-size="17">spoilboard holes on the middle row.</text>
+  </g>
+
+  <path d="M430,200 C480,140 520,140 570,200" fill="none" stroke="#1abc9c" stroke-width="4" marker-end="url(#ar)"/>
+  <text x="500" y="128" fill="#1abc9c" font-size="17" text-anchor="middle" font-weight="700">flip</text>
+
+  <g transform="translate(600,90)">
+    <rect width="360" height="290" rx="14" fill="#2a2418"/>
+    <use href="#grid"/>
+    <rect x="70" y="70" width="220" height="150" fill="#a8844f" opacity=".95" stroke="#8a6d3b" stroke-width="3"/>
+    <text x="180" y="210" fill="#2c210f" font-size="16" text-anchor="middle" font-weight="700">SIDE 2</text>
+    <line x1="60" y1="145" x2="300" y2="145" stroke="#1abc9c" stroke-width="2" stroke-dasharray="8 6"/>
+    <g fill="#1abc9c" stroke="#0e6e5b" stroke-width="2"><circle cx="110" cy="145" r="10"/><circle cx="250" cy="145" r="10"/></g>
+    <text x="0" y="320" fill="#1abc9c" font-size="20" font-weight="700">2. Flip it onto dowel pins</text>
+    <text x="0" y="345" fill="#93a2b4" font-size="17">The pins put it back to the hole,</text>
+    <text x="0" y="367" fill="#93a2b4" font-size="17">mirrored across the dashed line.</text>
+  </g>
+
+  <g transform="translate(990,110)">
+    <text x="0" y="20" fill="#e6ecf2" font-size="18" font-weight="700">The summary</text>
+    <text x="0" y="46" fill="#93a2b4" font-size="16">gives the line to</text>
+    <text x="0" y="68" fill="#93a2b4" font-size="16">mirror side 2's</text>
+    <text x="0" y="90" fill="#93a2b4" font-size="16">toolpaths across</text>
+    <text x="0" y="112" fill="#93a2b4" font-size="16">in your CAM.</text>
+    <text x="0" y="160" fill="#e6ecf2" font-size="18" font-weight="700">Or bolt it down</text>
+    <text x="0" y="186" fill="#93a2b4" font-size="16">Bolt holes over</text>
+    <text x="0" y="208" fill="#93a2b4" font-size="16">threaded inserts,</text>
+    <text x="0" y="230" fill="#93a2b4" font-size="16">counterbored.</text>
+  </g>
+  <text x="40" y="510" fill="#93a2b4" font-size="17">Each hole goes just 1 mm into the spoilboard hole below and is never bigger than it, so the spoilboard isn't cut.</text>
+</svg>

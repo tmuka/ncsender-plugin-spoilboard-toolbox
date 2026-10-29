@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1abc9c"/></marker>
+    <marker id="aw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f1c40f"/></marker>
+  </defs>
+  <rect width="1200" height="560" fill="#111720"/>
+  <text x="40" y="50" fill="#e6ecf2" font-size="28" font-weight="700">Measure Holes: fit the grid to the real board, probe or no probe</text>
+
+  <!-- Probe, seen from above -->
+  <g transform="translate(40,90)">
+    <rect width="260" height="260" rx="14" fill="#1a222e" stroke="rgba(255,255,255,.12)"/>
+    <circle cx="130" cy="130" r="80" fill="#14100a" stroke="#5c4d33" stroke-width="3"/>
+    <circle cx="130" cy="130" r="14" fill="#c9d3de"/>
+    <g stroke="#f1c40f" stroke-width="3" marker-end="url(#aw)">
+      <line x1="146" y1="130" x2="205" y2="130"/><line x1="114" y1="130" x2="55" y2="130"/>
+      <line x1="130" y1="114" x2="130" y2="55"/><line x1="130" y1="146" x2="130" y2="205"/>
+    </g>
+    <text x="0" y="295" fill="#1abc9c" font-size="20" font-weight="700">With a 3D probe</text>
+    <text x="0" y="320" fill="#93a2b4" font-size="17">Probe This Hole touches its four</text>
+    <text x="0" y="342" fill="#93a2b4" font-size="17">sides and finds the center.</text>
+  </g>
+
+  <!-- By eye -->
+  <g transform="translate(330,90)">
+    <rect width="260" height="260" rx="14" fill="#1a222e" stroke="rgba(255,255,255,.12)"/>
+    <circle cx="130" cy="130" r="80" fill="#14100a" stroke="#5c4d33" stroke-width="3"/>
+    <circle cx="130" cy="130" r="64" fill="none" stroke="#1abc9c" stroke-width="2" stroke-dasharray="6 5"/>
+    <circle cx="130" cy="130" r="56" fill="#c9a66b" stroke="#8a6d3b" stroke-width="3"/>
+    <circle cx="130" cy="130" r="5" fill="#5c4d33"/>
+    <text x="130" y="236" fill="#1abc9c" font-size="15" text-anchor="middle">even gap all round</text>
+    <text x="0" y="295" fill="#1abc9c" font-size="20" font-weight="700">Or by eye, no probe</text>
+    <text x="0" y="320" fill="#93a2b4" font-size="17">Jog a pin or dowel in, center it,</text>
+    <text x="0" y="342" fill="#93a2b4" font-size="17">press Centered by Eye.</text>
+  </g>
+
+  <line x1="615" y1="220" x2="665" y2="220" stroke="#1abc9c" stroke-width="4" marker-end="url(#ar)"/>
+
+  <!-- The fit -->
+  <g transform="translate(690,90)">
+    <rect width="470" height="260" rx="14" fill="#1a222e" stroke="rgba(255,255,255,.12)"/>
+    <g fill="none" stroke="#7f90a6" stroke-width="2" stroke-dasharray="4 4">
+      <circle cx="80" cy="200" r="14"/><circle cx="170" cy="200" r="14"/><circle cx="260" cy="200" r="14"/><circle cx="350" cy="200" r="14"/>
+      <circle cx="80" cy="110" r="14"/><circle cx="170" cy="110" r="14"/><circle cx="260" cy="110" r="14"/><circle cx="350" cy="110" r="14"/>
+    </g>
+    <g transform="rotate(-4 80 200) translate(6 -5)" fill="#14100a" stroke="#c9a66b" stroke-width="3">
+      <circle cx="80" cy="200" r="14"/><circle cx="170" cy="200" r="14"/><circle cx="260" cy="200" r="14"/><circle cx="350" cy="200" r="14"/>
+      <circle cx="80" cy="110" r="14"/><circle cx="170" cy="110" r="14"/><circle cx="260" cy="110" r="14"/><circle cx="350" cy="110" r="14"/>
+    </g>
+    <g transform="rotate(-4 80 200) translate(6 -5)" stroke="#1abc9c" stroke-width="3">
+      <line x1="70" y1="200" x2="90" y2="200"/><line x1="80" y1="190" x2="80" y2="210"/>
+      <line x1="340" y1="200" x2="360" y2="200"/><line x1="350" y1="190" x2="350" y2="210"/>
+      <line x1="70" y1="110" x2="90" y2="110"/><line x1="80" y1="100" x2="80" y2="120"/>
+    </g>
+    <text x="400" y="118" fill="#93a2b4" font-size="15">dashed:</text>
+    <text x="400" y="137" fill="#93a2b4" font-size="15">Setup</text>
+    <text x="400" y="190" fill="#c9a66b" font-size="15">solid:</text>
+    <text x="400" y="209" fill="#c9a66b" font-size="15">real holes</text>
+    <text x="20" y="40" fill="#e6ecf2" font-size="17" font-weight="700">Three holes measured (+), far apart</text>
+    <text x="20" y="62" fill="#93a2b4" font-size="15">Turn exaggerated to show it</text>
+    <text x="0" y="295" fill="#1abc9c" font-size="20" font-weight="700">Apply to Setup</text>
+    <text x="0" y="320" fill="#93a2b4" font-size="17">Spacing, insets and Turn fitted in one press,</text>
+    <text x="0" y="342" fill="#93a2b4" font-size="17">with how far the grid misses the holes you measured.</text>
+  </g>
+  <text x="40" y="480" fill="#e6ecf2" font-size="19" font-weight="700">Why it matters on a big bed:</text>
+  <text x="40" y="508" fill="#93a2b4" font-size="18">a board mounted just 0.1° off square puts the far holes 4 mm out on an 8 ft machine. After the fit,</text>
+  <text x="40" y="532" fill="#93a2b4" font-size="18">the map, Pick Nearest Hole, Set, the keyboard macros and every program use the real, turned positions.</text>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="530" viewBox="0 0 1200 530" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1abc9c"/></marker>
+    <g id="board">
+      <rect x="0" y="0" width="300" height="300" rx="14" fill="#2a2418"/>
+      <rect x="0" y="0" width="300" height="300" rx="14" fill="none" stroke="#4a3f2a" stroke-width="2"/>
+      <g fill="#14100a" stroke="#5c4d33" stroke-width="2">
+        <circle cx="60" cy="60" r="20"/><circle cx="150" cy="60" r="20"/><circle cx="240" cy="60" r="20"/>
+        <circle cx="60" cy="150" r="20"/><circle cx="150" cy="150" r="20"/><circle cx="240" cy="150" r="20"/>
+        <circle cx="60" cy="240" r="20"/><circle cx="150" cy="240" r="20"/><circle cx="240" cy="240" r="20"/>
+      </g>
+    </g>
+    <g id="spindle">
+      <circle r="30" fill="none" stroke="#c9d3de" stroke-width="5" opacity=".9"/>
+      <circle r="5" fill="#e6ecf2"/>
+    </g>
+  </defs>
+  <rect width="1200" height="530" fill="#111720"/>
+  <text x="40" y="50" fill="#e6ecf2" font-size="28" font-weight="700">X0 Y0 on a dog hole in two taps, no probe</text>
+
+  <g transform="translate(40,100)">
+    <use href="#board"/>
+    <use href="#spindle" x="172" y="128"/>
+    <text x="0" y="335" fill="#1abc9c" font-size="20" font-weight="700">1. Jog roughly near a hole</text>
+    <text x="0" y="360" fill="#93a2b4" font-size="17">Keyboard, gamepad or pendant.</text>
+    <text x="0" y="382" fill="#93a2b4" font-size="17">A few mm off is fine.</text>
+  </g>
+  <line x1="365" y1="250" x2="430" y2="250" stroke="#1abc9c" stroke-width="4" marker-end="url(#ar)"/>
+
+  <g transform="translate(450,100)">
+    <use href="#board"/>
+    <use href="#spindle" x="172" y="128"/>
+    <circle cx="150" cy="150" r="27" fill="none" stroke="#1abc9c" stroke-width="4"/>
+    <line x1="166" y1="134" x2="157" y2="143" stroke="#1abc9c" stroke-width="3" marker-end="url(#ar)"/>
+    <text x="150" y="208" fill="#e6ecf2" font-size="18" font-weight="700" text-anchor="middle">E5</text>
+    <text x="0" y="335" fill="#1abc9c" font-size="20" font-weight="700">2. Tap Pick Nearest Hole</text>
+    <text x="0" y="360" fill="#93a2b4" font-size="17">It takes the grid's exact position,</text>
+    <text x="0" y="382" fill="#93a2b4" font-size="17">not where the bit happens to be.</text>
+  </g>
+  <line x1="775" y1="250" x2="840" y2="250" stroke="#1abc9c" stroke-width="4" marker-end="url(#ar)"/>
+
+  <g transform="translate(860,100)">
+    <use href="#board"/>
+    <use href="#spindle" x="172" y="128"/>
+    <g stroke="#1abc9c" stroke-width="4" stroke-linecap="round">
+      <line x1="150" y1="110" x2="150" y2="190"/><line x1="110" y1="150" x2="190" y2="150"/>
+    </g>
+    <circle cx="150" cy="150" r="6" fill="#1abc9c"/>
+    <text x="196" y="196" fill="#1abc9c" font-size="17" font-weight="700">G54 X0 Y0</text>
+    <text x="0" y="335" fill="#1abc9c" font-size="20" font-weight="700">3. Hold Set</text>
+    <text x="0" y="360" fill="#93a2b4" font-size="17">Zero lands on the hole's center</text>
+    <text x="0" y="382" fill="#93a2b4" font-size="17">or edge. Same hole, same zero.</text>
+  </g>
+  <text x="40" y="510" fill="#93a2b4" font-size="17">Nothing moves. Or make it one key: SBT: Set XY0 at nearest hole (no move).</text>
+</svg>
