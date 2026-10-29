@@ -3,6 +3,19 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## 0.4.4
+
+**Nearly full screen, like ncCAM.**
+
+### ✨ New
+- The dialog fills the screen, 24 px clear all round, in landscape and portrait. Tabs stop at 1200 px
+  wide so the forms don't stretch on big screens.
+- XY0 Picker: on a wide screen the controls sit right beside the map; on a portrait screen they go
+  under it, so the map fills the width.
+
+### 🐛 Fixes
+- On narrow screens the Setup Lock button and the Set button no longer run off the right edge.
+
 ## 0.4.3
 
 **Fixture plates that bolt down between the dog holes.**
