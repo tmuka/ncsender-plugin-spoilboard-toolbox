@@ -9,6 +9,8 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **XY0 Picker warns after a jog.** Set always uses the picked hole's grid position, never the
   spindle's. If you jog after picking a hole (or after Go to Selected), the picker now says how far
   the spindle is from the picked point, and that ncSender's XY0 is the way to zero where the spindle is.
+- **Holes through the stock: a Counterbore of 0 means none**, as blank does, instead of an error.
+  Counterbore Depth is greyed out when there's no counterbore, since it isn't used.
 
 ## 0.4.1
 

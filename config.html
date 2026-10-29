@@ -1205,11 +1205,11 @@
           </div>
           <div class="mw-field mw-sh-bolt">
             <label for="mw-sh-cb">Counterbore (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-cb" value="" placeholder="none" title="Optional: a wider, shallow hole on top for the bolt's head and washer, so it sits below the surface. Leave blank for none.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-cb" value="" placeholder="none" title="Optional: a wider, shallow hole on top for the bolt's head and washer, so it sits below the surface. Leave blank or 0 for none.">
           </div>
           <div class="mw-field mw-sh-bolt">
             <label for="mw-sh-cbd">Counterbore Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-cbd" value="6" title="How deep the counterbore goes below the stock's top.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-cbd" value="6" title="How deep the counterbore goes below the stock's top. Not used without a Counterbore.">
           </div>
           <div class="mw-field mw-sh-pins" hidden>
             <label for="mw-sh-axis">Flip</label>
@@ -5954,7 +5954,9 @@
       if (above < thick / 2) probs.push(o.wcsName + ' Z0 is ' + (Math.abs(above) < 0.05 ? 'on the spoilboard' : shown(above) + ' ' + unitName() + ' above the spoilboard') + ', not on the stock\u2019s top: put it there first (SBT: Z0 on stock top, or touch off)');
       else if (Math.abs(above - thick) > 0.5) res.warn = o.wcsName + ' Z0 is ' + shown(above) + ' ' + unitName() + ' above the spoilboard but the stock is ' + shown(thick) + ' ' + unitName() + ' thick: check Z0 is on its top and T is right.';
     } else if (thick > 0) res.warn = 'Couldn\u2019t check that Z0 is on the stock\u2019s top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.';
-    var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '';
+    // Blank or 0: no counterbore, and its depth doesn't matter.
+    var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '' && cb !== 0;
+    res.hasCb = hasCb;
     if (hasCb && !(cb > size)) probs.push('Counterbore must be bigger than Hole Size');
     if (hasCb && !(cbd > 0 && cbd < thick)) probs.push('Counterbore Depth must be more than 0 and less than the stock\u2019s thickness');
     if (!hh) probs.push('Setup\u2019s grid has a field that can\u2019t be read: fix it in the XY0 Picker');
@@ -5990,6 +5992,7 @@
     var s = stockHoleSettings(), o = s.o, u = ' ' + unitName(), text = '';
     ROOT.querySelectorAll('.mw-sh-bolt').forEach(function(el) { el.hidden = s.pins; });
     ROOT.querySelectorAll('.mw-sh-pins').forEach(function(el) { el.hidden = !s.pins; });
+    $('mw-sh-cbd').disabled = !s.hasCb;
     if (s.chosen.length) {
       text = (s.pins ? 'Pins at ' : 'Bolts at ') + s.chosen.map(holeName).join(', ') +
         (!s.pins && o.holes.length > s.chosen.length ? ', each counterbored ' + shown(o.holes[0].diaMm) + u + ' wide, ' + shown(o.holes[0].depthMm) + u + ' deep' : '') + '.';
