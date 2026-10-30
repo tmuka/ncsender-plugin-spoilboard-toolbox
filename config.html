@@ -194,7 +194,32 @@
   .mw-stock .mw-select.mw-stock-corner { width: auto !important; min-height: 0 !important; padding: 4px 6px !important; }
   .mw-stock .mw-stock-dots { width: 34px; height: 26px; margin: 6px 8px; border-style: solid; border-radius: 2px; }
   .mw-stock .mw-stock-dots::before { display: none; }
-  .mw-stock:not(.mw-stock-active) > :not(.mw-stock-on) { display: none; }
+  /* Hole or Stock: the controls of the other mode are hidden. */
+  .mw-pick-card[data-zmode="hole"] .mw-only-stock, .mw-pick-card[data-zmode="stock"] .mw-only-hole { display: none !important; }
+  .mw-stock[data-by="pins"] .mw-by-zero { display: none !important; }
+  .mw-seg-group { flex: 1 1 100%; display: flex; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+  .mw-seg { flex: 1 1 0; margin: 0 !important; padding: 7px 10px !important; min-height: 0 !important; border: 0 !important; border-radius: 0 !important;
+    background: transparent !important; color: var(--color-text-secondary) !important; font: inherit !important; font-weight: 600 !important; cursor: pointer; }
+  .mw-seg + .mw-seg { border-left: 1px solid var(--color-border) !important; }
+  .mw-seg[aria-pressed="true"] { background: color-mix(in srgb, var(--color-accent) 22%, transparent) !important; color: var(--color-text-primary) !important; }
+  .mw-seg:focus-visible { outline: 2px solid var(--mw-accent-text) !important; outline-offset: -2px; }
+  .mw-stockby .mw-seg { padding: 5px 8px !important; font-size: 0.8rem !important; }
+  .mw-stock-which { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mw-stock-which:empty { display: none; }
+  .mw-stock-which .mw-btn { min-height: 0 !important; padding: 3px 10px !important; }
+  .mw-hole-move { font-variant-numeric: tabular-nums; }
+  .mw-zero-inset { flex: none; width: 150px; height: 112px; align-self: center; overflow: hidden; border-radius: 8px; background: var(--color-surface); }
+  .mw-zero-inset text { font-size: 9px; fill: var(--color-text-secondary); font-family: inherit; }
+  .mw-zero-inset .mw-i-hole { fill: var(--color-surface); stroke: var(--mw-line); stroke-width: 1; }
+  .mw-zero-inset .mw-i-pin { fill: color-mix(in srgb, var(--color-text-primary) 35%, transparent); stroke: var(--color-text-secondary); stroke-width: 1; }
+  .mw-zero-inset .mw-i-stock { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--mw-accent-text); stroke-width: 1.2; }
+  .mw-zero-inset .mw-i-line { stroke: var(--mw-line); stroke-width: 1; stroke-dasharray: 3 3; }
+  .mw-zero-inset .mw-i-dim { stroke: var(--color-text-secondary); stroke-width: 0.8; }
+  .mw-zero-inset .mw-i-target { stroke: var(--mw-warn); stroke-width: 1.6; fill: none; }
+  .mw-zero-inset .mw-i-val { fill: var(--mw-accent-text); font-weight: 700; }
+  .mw-hole-map .mw-h-pin { fill: var(--mw-accent-text); stroke: var(--color-surface); stroke-width: 1.5; pointer-events: none; }
+  .mw-hole-map .mw-h-stock-alt { fill: color-mix(in srgb, var(--color-accent) 6%, transparent); stroke: var(--mw-accent-text); stroke-width: 1; stroke-dasharray: 5 4; pointer-events: none; }
+  .mw-hole-map .mw-h-alt-label { fill: var(--mw-accent-text); font-size: 11px; font-weight: 700; pointer-events: none; }
   .mw-stock-wl { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   .mw-maptools-row .mw-btn { min-height: 0 !important; padding: 4px 10px !important; }
   .mw-btn.mw-btn-quiet[aria-pressed="true"] { background: color-mix(in srgb, var(--color-accent) 32%, transparent) !important; border-color: var(--color-accent) !important; }
@@ -544,6 +569,10 @@
       </div>
     </aside>
     <main class="mw-panel">
+    <div class="mw-banner" id="mw-migrated" hidden>
+      <span id="mw-migrated-text"></span>
+      <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-migrated-ok">Got It</button>
+    </div>
     <div class="mw-banner" id="mw-moved" hidden>
       <span id="mw-moved-text"></span>
       <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-moved-ok">Done</button>
@@ -553,21 +582,53 @@
       <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-surface-ok">Done</button>
     </div>
     <div class="mw-tab" data-tab="holes">
-      <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a dog hole or grid line crossing.</strong> Click a hole, or jog near one
-        and press <strong>Pick Nearest Hole</strong>; the dots pick its center or a side. Hold <strong>Go to Selected</strong> to move there at Safe Z;
+      <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a dog hole, or on stock against pins in them.</strong>
+        <strong>Hole</strong>: tap a hole, and the dots pick its center, a side or a corner. <strong>Stock</strong>: tap the holes your pins are in,
+        and the dots pick a point on the stock. The line beside <strong>Set</strong> says where, with the numbers. Hold <strong>Go to Selected</strong> to move there at Safe Z;
         hold <strong>Set</strong> to make it X0 Y0 without moving.</p>
-      <section class="mw-card mw-pick-card" id="mw-pick-card" aria-label="Pick a hole">
+      <section class="mw-card mw-pick-card" id="mw-pick-card" data-zmode="hole" aria-label="Pick a hole or place the stock">
         <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
         <div class="mw-holebar" id="mw-holebar">
-          <div class="mw-dots-wrap"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
+          <div class="mw-seg-group mw-zmode" role="group" aria-label="What X0 Y0 goes on">
+            <button type="button" class="mw-seg" data-zmode="hole" aria-pressed="true" title="X0 Y0 on a hole: its center, a side or a corner of the hole itself. Tap a hole or press Pick Nearest Hole. The stock, if placed, stays put.">Hole</button>
+            <button type="button" class="mw-seg" data-zmode="stock" aria-pressed="false" title="X0 Y0 on the stock: placed against pins in dog holes, or by its corner on X0 Y0. Then pick its corner, an edge or its center.">Stock</button>
+          </div>
+          <div class="mw-stock mw-only-stock" id="mw-stock-panel" data-by="pins">
+            <input type="checkbox" id="mw-stock-on" hidden>
+            <div class="mw-seg-group mw-stockby" role="group" aria-label="How the stock is placed">
+              <button type="button" class="mw-seg" data-by="pins" aria-pressed="true" title="The stock is pushed against pins in dog holes: tap the holes the pins are in (two along one edge, one along the other). Its corner is worked out from them, a pin radius off each line.">Against Pins</button>
+              <button type="button" class="mw-seg" data-by="zero" aria-pressed="false" title="A corner of the stock is on the work offset's X0 Y0 as it is when you press From X0 Y0 Now (zero on the corner first, by touch or probe). It stays put when X0 Y0 changes.">Corner at X0 Y0</button>
+            </div>
+            <span class="mw-stock-wl"><input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" placeholder="Width" aria-label="Stock width, along X" title="The stock's size along X. Needed for any X0 Y0 other than the pinned corner, and for the Stock Holes tab.">
+            <span class="mw-hint">&times;</span>
+            <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" placeholder="Length" aria-label="Stock length, along Y" title="The stock's size along Y.">
+            <span class="mw-hint mw-unit">mm</span></span>
+            <span class="mw-stock-wl"><span class="mw-hint">T</span>
+            <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
+            <span class="mw-hint mw-unit">mm</span></span>
+            <select class="mw-select mw-stock-corner" id="mw-stock-zmode" aria-label="Where Set Z0 puts Z0" title="Where Set Z0 puts Z0: on the spoilboard the stock sits on, or on the stock's top (that plus its thickness).">
+              <option value="bottom">Z0: spoilboard</option>
+              <option value="top">Z0: stock top</option>
+            </select>
+            <select class="mw-select mw-stock-corner mw-by-zero" id="mw-stock-corner" aria-label="Which stock corner is on X0 Y0" title="Which corner of the stock is on X0 Y0 as taken: the stock runs away from it.">
+              <option value="front-left">Front left on X0 Y0</option><option value="front-right">Front right on X0 Y0</option>
+              <option value="back-left">Back left on X0 Y0</option><option value="back-right">Back right on X0 Y0</option>
+            </select>
+            <span class="mw-dots-wrap"><span class="mw-dots-cap">X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
+            <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><span class="mw-stock-which" id="mw-stock-which"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">From X0 Y0 Now</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear</button></span>
+          </div>
+          <div class="mw-dots-wrap mw-only-hole"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
           <div class="mw-holebar-info">
             <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" aria-label="Favorite" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
             <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Pick Nearest Hole.</span>
+            <span class="mw-hint mw-coords" id="mw-hole-coords" hidden></span>
+            <span class="mw-hint mw-hole-move" id="mw-hole-move" hidden></span>
             <span class="mw-hint mw-hole-dist" id="mw-hole-dist" hidden></span>
             <span class="mw-hint mw-hole-dist" id="mw-hole-z" hidden></span>
           </div>
+          <svg class="mw-zero-inset" id="mw-zero-inset" viewBox="0 0 150 112" role="img" aria-label="Zoomed in, to scale: where X0 Y0 goes" style="display: none"></svg>
           <div class="mw-holebar-actions">
-            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Pick Nearest Hole</button>
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-only-hole" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Pick Nearest Hole</button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill"></span>Go to Selected<span class="mw-hold-hint">Hold</span></button>
             <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
               <option value="" selected>Active</option>
@@ -579,26 +640,6 @@
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset in the menu on the surface shown above it: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label">Set <span data-hole-wcs>G54</span> Z0</span><span class="mw-hold-hint">Hold</span></button>
           </div>
           <div class="mw-maptools">
-            <div class="mw-stock">
-              <label class="mw-extra mw-stock-on"><input type="checkbox" id="mw-stock-on"><span><strong>Stock</strong></span></label>
-              <span class="mw-stock-wl"><input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" placeholder="Width" aria-label="Stock width, along X" title="The stock's size along X. With a size, X0 Y0 goes on the stock (picked with the box of dots) instead of the hole, and the map draws it.">
-              <span class="mw-hint">&times;</span>
-              <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" placeholder="Length" aria-label="Stock length, along Y" title="The stock's size along Y.">
-              <span class="mw-hint mw-unit">mm</span></span>
-              <span class="mw-stock-wl"><span class="mw-hint">T</span>
-              <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
-              <span class="mw-hint mw-unit">mm</span></span>
-              <select class="mw-select mw-stock-corner" id="mw-stock-zmode" aria-label="Where Set Z0 puts Z0" title="Where Set Z0 puts Z0: on what the stock sits on (the spoilboard, or a picked fixture point's surface), or on the stock's top (that plus its thickness).">
-                <option value="bottom">Z0: spoilboard</option>
-                <option value="top">Z0: stock top</option>
-              </select>
-              <select class="mw-select mw-stock-corner" id="mw-stock-corner" aria-label="Which stock corner is on the picked point" title="Which corner of the stock sits on the point: the hole's picked point, or X0 Y0 when no hole is picked. Auto: the stock runs away from the hole (back right of a hole takes the stock's front left corner); from X0 Y0, its front left corner.">
-                <option value="auto">Corner: auto</option>
-                <option value="front-left">Front left at point</option><option value="front-right">Front right at point</option>
-                <option value="back-left">Back left at point</option><option value="back-right">Back right at point</option>
-              </select>
-              <span class="mw-dots-wrap"><span class="mw-dots-cap">X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
-              <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the corner on the picked point (or X0 Y0) to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-anchor" title="With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when Stock was ticked, so setting X0 Y0 on the stock doesn't move it. Press this to take X0 Y0 as it is now.">From X0 Y0 now</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-lock" aria-pressed="false" title="Keep the stock where it's drawn now: picking other holes to go to then aims at the hole itself and leaves the stock alone. Tap a stock dot to aim at the stock again.">Lock Position</button></span>
             </div>
             <div class="mw-maptools-row">
               <span class="mw-zoom" role="group" aria-label="Zoom the map">
@@ -1047,7 +1088,8 @@
             <option value="mdf" selected>MDF / Plywood</option>
             <option value="softwood">Softwood</option>
             <option value="hardwood">Hardwood</option>
-            <option value="plastic">Plastic (HDPE, acrylic)</option>
+            <option value="hdpe">HDPE / UHMW</option>
+            <option value="acrylic">Acrylic</option>
             <option value="aluminum">Aluminum</option>
             <option value="foam">Foam / tooling board</option>
           </select>
@@ -2605,7 +2647,9 @@
     return holeDiaMm <= 2 * bitMm ? 'helix' : 'clear';
   }
 
-  // Starting speeds and feeds by material, as ncCAM's (src/core/tools.js):
+  // Starting speeds and feeds by material, as ncCAM's (src/core/tools.js),
+  // with HDPE and acrylic apart (thin chips melt HDPE) and a bigger chip
+  // for aluminum (a thin one rubs and welds to the edge):
   // the chip each tooth takes grows with the bit up to a cap; feed = RPM x
   // flutes x chip; plunge 30% of the feed; depth per pass and stepover a
   // share of the bit. limits: the machine's max feed and spindle range.
@@ -2613,8 +2657,9 @@
     softwood: { rpm: 18000, chip: 0.012, maxChip: 0.25, stepdown: 0.5, stepover: 0.45 },
     hardwood: { rpm: 18000, chip: 0.009, maxChip: 0.2, stepdown: 0.35, stepover: 0.4 },
     mdf: { rpm: 18000, chip: 0.012, maxChip: 0.25, stepdown: 0.5, stepover: 0.45 },
-    plastic: { rpm: 16000, chip: 0.01, maxChip: 0.2, stepdown: 0.3, stepover: 0.4 },
-    aluminum: { rpm: 18000, chip: 0.003, maxChip: 0.05, stepdown: 0.1, stepover: 0.25 },
+    hdpe: { rpm: 15000, chip: 0.02, maxChip: 0.25, stepdown: 0.3, stepover: 0.4 },
+    acrylic: { rpm: 16000, chip: 0.015, maxChip: 0.2, stepdown: 0.3, stepover: 0.4 },
+    aluminum: { rpm: 18000, chip: 0.0045, maxChip: 0.06, stepdown: 0.1, stepover: 0.25 },
     foam: { rpm: 12000, chip: 0.02, maxChip: 0.4, stepdown: 1, stepover: 0.6 }
   };
   function startingFeeds(bitMm, flutes, material, limits) {
@@ -3298,6 +3343,71 @@
     });
     return out;
   }
+  // A grid's directions in machine X Y: ux along a row (column number
+  // going up), uy along a column (row going up), from its holes, so a
+  // turned grid or a machine running -X / -Y is right. Square to the
+  // machine when the grid has no two holes to tell.
+  function gridAxes(hs, layer) {
+    var ux = null, uy = null, by = {};
+    hs.forEach(function(p) { if (p.col != null && (p.layer || 0) === (layer || 0)) by[p.col + ',' + p.row] = p; });
+    Object.keys(by).some(function(k) {
+      var p = by[k], r = by[(p.col + 1) + ',' + p.row], c = by[p.col + ',' + (p.row + 1)];
+      if (!ux && r) ux = { x: r.x - p.x, y: r.y - p.y };
+      if (!uy && c) uy = { x: c.x - p.x, y: c.y - p.y };
+      return ux && uy;
+    });
+    var unit = function(v, d) { var n = v && Math.hypot(v.x, v.y); return n ? { x: v.x / n, y: v.y / n } : d; };
+    return { ux: unit(ux, { x: 1, y: 0 }), uy: unit(uy, { x: 0, y: 1 }) };
+  }
+  // Stock pushed against pins in grid holes: the pins in one row touch one
+  // edge, the pins in one column the other (an L). Every way the pins read
+  // as an L, each { corner (machine mm), cornerName (the stock's corner
+  // there), side (where the stock lies from the crossing), H (where the pin
+  // row and column cross), rowPins, colPins, rpRow, rpCol, sx, sy }; or
+  // { problem } when they don't. The corner is a pin radius off each
+  // line, toward the stock: H + sx rpCol ux + sy rpRow uy. Two pins
+  // diagonally can be read both ways, so the caller asks which. A pin
+  // right at the crossing touches neither edge (the corner is rp x 1.4
+  // from it): it's ignored, and named in `ignored`.
+  function stockOnPins(pins, axes) {
+    if (pins.length < 2) return { problem: 'few' };
+    if (pins.some(function(p) { return p.col == null; })) return { problem: 'list' };
+    var layer = pins[0].layer || 0;
+    if (pins.some(function(p) { return (p.layer || 0) !== layer; })) return { problem: 'grids' };
+    var ux = axes.ux, uy = axes.uy, rows = {}, cols = {}, out = [], crossing = null, sides = false;
+    pins.forEach(function(p) { rows[p.row] = 1; cols[p.col] = 1; });
+    var rad = function(p) { return (p.pinMm > 0 ? p.pinMm : p.diaMm) / 2; };
+    var dot = function(a, b) { return a.x * b.x + a.y * b.y; };
+    Object.keys(rows).forEach(function(R) {
+      Object.keys(cols).forEach(function(C) {
+        R = +R; C = +C;
+        if (!pins.every(function(p) { return p.row === R || p.col === C; })) return;
+        var rowPins = pins.filter(function(p) { return p.row === R && p.col !== C; });
+        var colPins = pins.filter(function(p) { return p.col === C && p.row !== R; });
+        var cross = pins.filter(function(p) { return p.row === R && p.col === C; })[0] || null;
+        if (!rowPins.length || !colPins.length) { if (cross) crossing = cross; return; }
+        // H: the row line (through a row pin, along ux) meets the column
+        // line (through a column pin, along uy).
+        var A = rowPins[0], B = colPins[0], den = ux.x * uy.y - ux.y * uy.x;
+        var a = ((B.x - A.x) * uy.y - (B.y - A.y) * uy.x) / den, H = { x: A.x + a * ux.x, y: A.y + a * ux.y };
+        var sgn = function(list, u) {
+          var s = list.map(function(p) { return dot({ x: p.x - H.x, y: p.y - H.y }, u) > 0 ? 1 : -1; });
+          return s.every(function(v) { return v === s[0]; }) ? s[0] : 0;
+        };
+        var sx = sgn(rowPins, ux), sy = sgn(colPins, uy);
+        if (!sx || !sy) { sides = true; return; }
+        var rpRow = rad(rowPins[0]), rpCol = rad(colPins[0]);
+        var corner = { x: H.x + sx * rpCol * ux.x + sy * rpRow * uy.x, y: H.y + sx * rpCol * ux.y + sy * rpRow * uy.y };
+        var right = sx * ux.x + sy * uy.x > 0, back = sx * ux.y + sy * uy.y > 0;
+        out.push({ corner: corner, H: H, sx: sx, sy: sy, rpRow: rpRow, rpCol: rpCol, rowPins: rowPins, colPins: colPins, row: R, col: C, ignored: cross,
+                   cornerName: (back ? 'front' : 'back') + '-' + (right ? 'left' : 'right'), side: (back ? 'back' : 'front') + '-' + (right ? 'right' : 'left') });
+      });
+    });
+    if (out.length) return { fits: out };
+    if (crossing) return { problem: 'oneLine', pin: crossing };
+    if (sides) return { problem: 'sides' };
+    return { problem: Object.keys(rows).length === 1 || Object.keys(cols).length === 1 ? 'oneLine' : 'notL' };
+  }
   // How holes spread out: how many, and in how many columns (along X) and
   // rows (along Y). Grid holes count by their own grid's column and row;
   // listed ones by position, to 0.01 mm.
@@ -3754,7 +3864,8 @@
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'),
       stockZMode: $('mw-stock-zmode').value,
-      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, stockPoint: stockPoint(),
+      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.zeroMode, stockBy: holes.stockBy,
+      stockPins: holes.pins.slice(), stockPinSide: holes.pinSide, stockDotSet: !!holes.stockDotSet, stockAnchor: holes.stockAnchor,
       cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
@@ -4078,15 +4189,23 @@
       var v = parseFloat(saved['stock' + k]);
       if (isFinite(v) && v > 0) $('mw-stock-' + k.toLowerCase()).value = +(v * conv).toFixed(4);
     });
-    if (/^(auto|front-left|front-right|back-left|back-right)$/.test(saved.stockCorner || '')) $('mw-stock-corner').value = saved.stockCorner;
+    if (/^(front|back)-(left|right)$/.test(saved.stockCorner || '')) $('mw-stock-corner').value = saved.stockCorner;
     setStockZero(saved.stockZero);
     loadCut(saved.cut, conv);
     holes.surfaceAck = saved.surfaceAck || '';
     // Where the stock was drawn from comes back once the grid is placed
     // (restoreStock), so a reopen draws it where it was.
-    holes.stockAnchor = null;
-    holes.stockLock = null;
-    holes.savedStock = saved.stockPoint || null;
+    // 0.5 keeps the mode and how the stock is placed; older settings are
+    // moved over once the grid is placed (restoreStock).
+    holes.zeroMode = saved.zeroMode === 'stock' ? 'stock' : 'hole';
+    holes.stockBy = saved.stockBy === 'zero' ? 'zero' : 'pins';
+    holes.pins = Array.isArray(saved.stockPins) ? saved.stockPins.filter(function(k) { return typeof k === 'string'; }) : [];
+    holes.pinSide = typeof saved.stockPinSide === 'string' ? saved.stockPinSide : '';
+    holes.stockDotSet = !!saved.stockDotSet;
+    var an = saved.stockAnchor;
+    holes.stockAnchor = an && isFinite(an.x) && isFinite(an.y) ? { x: +an.x, y: +an.y, wcs: String(an.wcs || 'G54') } : null;
+    holes.migrate = null;
+    if (saved.zeroMode == null && saved.stockOn) { holes.zeroMode = 'stock'; holes.migrate = { stockPoint: saved.stockPoint, stockCorner: saved.stockCorner, holeOrigin: saved.holeOrigin }; }
     holes.profiles = Array.isArray(saved.holeProfiles) ? saved.holeProfiles.filter(function(x) { return x && typeof x.name === 'string' && x.name.trim(); }) : [];
     holes.profile = holes.profiles.some(function(x) { return x.name === saved.holeProfile; }) ? saved.holeProfile : '';
     // The welcome opens first only on a fresh install: nothing set up yet.
@@ -4190,22 +4309,25 @@
     var fav = $('mw-hole-fav');
     fav.addEventListener('click', toggleFavorite);
     fav.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); toggleFavorite(); } });
-    function stockSync() { $('mw-stock-on').closest('.mw-stock').classList.toggle('mw-stock-active', $('mw-stock-on').checked); renderHoles(); saveSettings(); }
-    $('mw-stock-on').addEventListener('change', function() { holes.stockLock = null; if ($('mw-stock-on').checked) anchorStock(); }, true);
-    $('mw-stock-lock').addEventListener('click', function() { if (holes.stockLock) unlockStock(); else lockStock(); stockSync(); });
-    $('mw-stock-anchor').addEventListener('click', function() { readMachineState().then(function() { anchorStock(); stockSync(); }); });
+    function stockSync() { renderHoles(); saveSettings(); }
+    ROOT.querySelectorAll('.mw-zmode .mw-seg').forEach(function(b) { b.addEventListener('click', function() { setZeroMode(b.getAttribute('data-zmode')); stockSync(); }); });
+    ROOT.querySelectorAll('.mw-stockby .mw-seg').forEach(function(b) {
+      b.addEventListener('click', function() { readMachineState().then(function() { setStockBy(b.getAttribute('data-by')); stockSync(); }); });
+    });
+    $('mw-stock-anchor').addEventListener('click', function() { readMachineState().then(function() { anchorStock(); $('mw-stock-on').checked = true; stockSync(); }); });
+    $('mw-stock-clear').addEventListener('click', function() { clearStock(); stockSync(); });
+    $('mw-migrated-ok').addEventListener('click', function() { $('mw-migrated').hidden = true; });
     $('mw-stock-far').addEventListener('click', function() { readMachineState().then(function() { stockFromSpindle(); stockSync(); }); });
     $('mw-stock-t').addEventListener('input', function() { holes.thickFrom = 'typed'; });
-    ['mw-stock-on', 'mw-stock-corner', 'mw-stock-zmode'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
+    ['mw-stock-corner', 'mw-stock-zmode'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
     ['mw-stock-w', 'mw-stock-l', 'mw-stock-t'].forEach(function(id) {
       $(id).addEventListener('input', function() { renderHoles(); });
       $(id).addEventListener('change', stockSync);
     });
-    $('mw-stock-on').closest('.mw-stock').classList.toggle('mw-stock-active', $('mw-stock-on').checked);
     ROOT.querySelectorAll('#mw-stock-dots .mw-dot').forEach(function(d) {
       d.addEventListener('click', function() {
         setStockZero(d.getAttribute('data-origin'));
-        if (holes.stockLock && holes.picked >= 0) { disarmGoto(); holes.picked = -1; holes.refXY = spindleXY(); }
+        holes.stockDotSet = true;
         renderHoles(); saveSettings();
       });
       d.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); d.click(); } });
@@ -4263,7 +4385,11 @@
       // left the mode mid-drag.
       if (holes.mode || holes.skipClick) return;
       var el = evt.target.closest && evt.target.closest('[data-hole]');
-      if (el) pickHole(+el.getAttribute('data-hole'));
+      if (!el) return;
+      if (holes.zeroMode !== 'stock') return pickHole(+el.getAttribute('data-hole'));
+      if (holes.stockBy === 'pins') return togglePin(+el.getAttribute('data-hole'));
+      $('mw-hole-status').setAttribute('data-state', 'bad');
+      $('mw-hole-status').textContent = 'The stock\u2019s corner is on X0 Y0, so taps don\u2019t move it: switch to Against Pins to tap pins, or to Hole to pick a hole.';
     });
     render();
     loadMachine().then(checkSurfacing);
@@ -4274,6 +4400,7 @@
   // X0 Y0 and the spindle position from ncSender's machine state.
   var holes = { grid: [], picked: -1, origin: 'center', suppressed: [], profiles: [], profile: '', ask: null,
                 gridRaw: [], activeGrid: 0, hidden: {}, gridBad: [],
+                zeroMode: 'hole', stockBy: 'pins', pins: [], pinSide: '', stockDotSet: false, stockAnchor: null, migrate: null,
                 mode: '', drag: null, blocks: [], favorites: [], stockZero: 'center', view: null, liveNear: null, liveKey: '',
                 zoom: { k: 1, cx: null, cy: null, follow: false }, ptrs: {}, pan: null };
   var ORIGIN_NOTES = {
@@ -4294,47 +4421,122 @@
     var s = readSettings();
     return s ? s.wcs : 1;
   }
-  // The picked side of a hole, and the target: that point, or the point
-  // picked on the stock when Stock is on with a size.
+  // The picked side of a hole: its center, or a side or corner one hole
+  // radius out (Hole mode's dots).
   function holePoint(p) {
     var h = readHoles();
     var o = holeOriginOffset(holes.origin, h ? holeR(p, h) : 0);
     return { x: p.x + o.dx, y: p.y + o.dy };
   }
-  function holeTarget(p) {
-    var pt = holePoint(p), r = holes.stockLock ? null : stockAt(pt);
-    return r ? rectPoint(r, holes.stockZero) : pt;
-  }
-  // The stock's rectangle with its corner on pt, or null when Stock is
-  // off or its size isn't set. fromZero: drawn from X0 Y0, so Auto is
-  // its front left corner.
-  function stockAt(pt, fromZero) {
-    if (!pt || !$('mw-stock-on').checked) return null;
+  function holeTarget(p) { return holePoint(p); }
+  // The stock's width and length in mm, or null when they aren't set.
+  function stockSize() {
     var k = state.imperial ? MM_PER_INCH : 1, w = unitVal($('mw-stock-w')) * k, l = unitVal($('mw-stock-l')) * k;
-    if (!(w > 0 && l > 0)) return null;
-    var c = $('mw-stock-corner').value;
-    return stockRect(pt.x, pt.y, w, l, c !== 'auto' ? c : fromZero ? 'front-left' : stockCornerFor(holes.origin));
+    return w > 0 && l > 0 ? { w: w, l: l } : null;
   }
-  function stockActive() { return !!stockAt({ x: 0, y: 0 }); }
-  // Lock Position: the stock stays where it was drawn (holes.stockLock:
-  // the point it hung off, machine mm, and which corner sits on it) while
-  // other holes are picked; its size can still change from that corner.
-  function lockedStock() {
-    var L = holes.stockLock, r = L && stockAt(L);
-    return r ? stockRect(L.x, L.y, r.maxX - r.minX, r.maxY - r.minY, L.corner) : null;
+  // The stock's rectangle with its `corner` on pt; null without a size.
+  function stockAt(pt, corner) {
+    var sz = stockSize();
+    return pt && sz ? stockRect(pt.x, pt.y, sz.w, sz.l, corner || 'front-left') : null;
   }
-  function lockStock() {
-    var p = holes.grid[holes.picked], pt = p ? holePoint(p) : holes.stockAnchor;
-    if (!stockAt(pt)) return;
-    var c = $('mw-stock-corner').value;
-    holes.stockLock = { x: pt.x, y: pt.y, corner: c !== 'auto' ? c : p ? stockCornerFor(holes.origin) : 'front-left',
-      zMm: p && p.zMm != null ? p.zMm : null, on: p ? holeName(p) : holes.stockAnchor.wcs + ' X0 Y0' };
-    // Still aimed at the stock, as before locking.
-    if (p) { disarmGoto(); holes.picked = -1; holes.refXY = spindleXY(); }
+  function stockActive() { return $('mw-stock-on').checked && !!stockSize(); }
+  function pinHole(key) {
+    for (var i = 0; i < holes.grid.length; i++) if (holeKey(holes.grid[i]) === key) return holes.grid[i];
+    return null;
   }
-  function unlockStock() {
-    holes.stockLock = null;
-    if (!holes.grid[holes.picked] && !holes.stockAnchor) anchorStock();
+  function pinR(p) { var h = readHoles(); return p.pinMm > 0 ? p.pinMm / 2 : h ? holeR(p, h) : p.diaMm / 2; }
+  // Where the stock is, set in Stock mode and kept while holes are picked
+  // in Hole mode: against pins in grid holes (stockOnPins), or its corner
+  // on the work offset's X0 Y0 as taken (holes.stockAnchor). { by, corner,
+  // cornerName, rect (null without a size), fit, fits (two pins read two
+  // ways), pins, problem, problemPin, notes }; null when there's no stock.
+  function stockPlacement() {
+    if (!$('mw-stock-on').checked) return null;
+    var out = { by: holes.stockBy, notes: [] };
+    if (holes.stockBy === 'pins') {
+      var hh = readHoles(), pins = holes.pins.map(pinHole), lost = pins.filter(function(q) { return !q; }).length;
+      // Grid 1's holes take the grid's diameter: give each pin its own.
+      pins = pins.filter(Boolean).map(function(q) { return Object.assign({}, q, { diaMm: hh ? 2 * holeR(q, hh) : q.diaMm }); });
+      out.pins = pins;
+      if (lost) out.notes.push(lost + ' pin hole' + (lost === 1 ? ' is' : 's are') + ' no longer on the map (Setup changed).');
+      var r = stockOnPins(pins, gridAxes(holes.grid, pins.length ? pins[0].layer || 0 : 0));
+      if (r.problem) { out.problem = r.problem; out.problemPin = r.pin; return out; }
+      var fit = r.fits.length === 1 ? r.fits[0] : r.fits.filter(function(f) { return f.side === holes.pinSide; })[0];
+      if (!fit) { out.fits = r.fits; out.problem = 'which'; return out; }
+      out.fit = fit; out.corner = fit.corner; out.cornerName = fit.cornerName;
+    } else {
+      if (!holes.stockAnchor) { out.problem = 'anchor'; return out; }
+      out.corner = { x: holes.stockAnchor.x, y: holes.stockAnchor.y }; out.cornerName = $('mw-stock-corner').value;
+    }
+    out.rect = stockAt(out.corner, out.cornerName);
+    var f = out.fit;
+    if (f) {
+      if (f.ignored) out.notes.push(holeName(f.ignored) + ' is at the corner: it doesn’t touch the stock.');
+      if (f.rowPins.length === 1 && f.colPins.length === 1) out.notes.push('One pin on each edge: the stock can still turn. Two along the longer edge square it.');
+      var ax = gridAxes(holes.grid, out.pins[0].layer || 0), deg = Math.atan2(ax.ux.y, ax.ux.x) * 180 / Math.PI;
+      deg = deg > 90 ? deg - 180 : deg < -90 ? deg + 180 : deg;
+      if (Math.abs(deg) > 0.005) {
+        var reach = out.rect ? Math.max(out.rect.maxX - out.rect.minX, out.rect.maxY - out.rect.minY) : 0;
+        out.notes.push('The grid is turned ' + +deg.toFixed(2) + '°, and the stock with it; X0 Y0 doesn’t turn the toolpaths' +
+          (reach ? ', so they’re ' + shown(reach * Math.abs(Math.tan(deg * Math.PI / 180))) + ' ' + unitName() + ' off at its far end.' : '.'));
+      }
+    }
+    if (out.rect && out.pins) {
+      var R = out.rect, eps = 0.01;
+      var under = out.pins.filter(function(q) { return q.x > R.minX + eps && q.x < R.maxX - eps && q.y > R.minY + eps && q.y < R.maxY - eps; })[0];
+      if (under) { out.problem = 'under'; out.problemPin = under; return out; }
+      var past = f.rowPins.filter(function(q) { return q.x < R.minX - pinR(q) || q.x > R.maxX + pinR(q); })
+        .concat(f.colPins.filter(function(q) { return q.y < R.minY - pinR(q) || q.y > R.maxY + pinR(q); }));
+      if (past.length) out.notes.push(past.map(holeName).join(', ') + (past.length === 1 ? ' is' : ' are') + ' past the stock’s end: ' + (past.length === 1 ? 'it touches' : 'they touch') + ' nothing.');
+    }
+    return out;
+  }
+  // The stock as placed and usable (for the map's other uses, Stock Holes
+  // and a plate), or null.
+  function stockShown() {
+    var s = stockPlacement();
+    return s && !s.problem ? s.rect : null;
+  }
+  // Stock mode's X0 Y0 on the stock: the pinned corner needs no size.
+  function stockTarget(s) {
+    if (!s || s.problem || !s.corner) return null;
+    if (s.rect) return rectPoint(s.rect, holes.stockZero);
+    return holes.stockZero === s.cornerName ? { x: s.corner.x, y: s.corner.y } : null;
+  }
+  function setZeroMode(m) {
+    holes.zeroMode = m === 'stock' ? 'stock' : 'hole';
+    if (holes.zeroMode === 'stock' && !$('mw-stock-on').checked) {
+      $('mw-stock-on').checked = true;
+      if (holes.stockBy === 'zero' && !holes.stockAnchor) anchorStock();
+    }
+    disarmGoto();
+    holes.nearMm = null;
+    holes.refXY = spindleXY();
+    $('mw-hole-status').textContent = '';
+  }
+  function setStockBy(b) {
+    holes.stockBy = b === 'zero' ? 'zero' : 'pins';
+    if (holes.stockBy === 'zero' && !holes.stockAnchor) anchorStock();
+    $('mw-stock-on').checked = true;
+  }
+  // A tap in Stock mode (Against Pins) puts a pin in that hole or takes it
+  // out. The first time the pins place the stock, X0 Y0 goes on the
+  // pinned corner: the one point that doesn't hang on the typed size.
+  function togglePin(i) {
+    var p = holes.grid[i], status = $('mw-hole-status');
+    status.textContent = '';
+    if (!p || p.blocked || p.hidden) return;
+    if (p.col == null) { status.setAttribute('data-state', 'bad'); status.textContent = 'Listed holes can’t be pins: tap grid holes, or use Corner at X0 Y0.'; return; }
+    if (p.suppressed) { status.setAttribute('data-state', 'bad'); status.textContent = holeName(p) + ' is suppressed (it isn’t there): restore it in Setup to put a pin in it.'; return; }
+    var key = holeKey(p), at = holes.pins.indexOf(key);
+    if (at >= 0) holes.pins.splice(at, 1); else holes.pins.push(key);
+    $('mw-stock-on').checked = true;
+    var s = stockPlacement();
+    if (s && s.fit && !holes.stockDotSet) setStockZero(s.cornerName);
+    renderHoles(); saveSettings();
+  }
+  function clearStock() {
+    holes.pins = []; holes.pinSide = ''; holes.stockAnchor = null; holes.stockDotSet = false;
   }
   // The stock's Thick field follows the thickness slot (what Measure stock
   // thickness or Store wrote) until it's typed in this session.
@@ -4347,78 +4549,193 @@
     el.classList.remove('mw-invalid');
     saveSettings();
   }
-  // Width and length from the spindle over the stock's far corner: the
-  // corner on the picked point (or X0 Y0) is the one facing away from it.
+  // Width and length from the spindle over the stock's far corner, from
+  // the placed corner (against the pins, or on X0 Y0 as taken).
   function stockFromSpindle() {
     var status = $('mw-hole-status'), ms = state.machine || {}, here = ms.homed ? xyOf(ms.MPos) : null;
-    var p = holes.grid[holes.picked];
-    if (!p && !holes.stockAnchor) anchorStock();
-    var pt = p ? holePoint(p) : holes.stockAnchor;
     var bad = function(text) { status.setAttribute('data-state', 'bad'); status.textContent = text; };
     if (!here) return bad('Home the machine first: the stock size comes from the spindle’s machine position.');
-    if (!pt) return bad('Pick the hole the stock is aligned on (or set X0 Y0 on its corner) first.');
-    var dx = here.x - pt.x, dy = here.y - pt.y;
+    var sp = stockPlacement();
+    if (!sp || !sp.corner) return bad(holes.stockBy === 'pins' ? 'Place the stock against its pins first (tap the holes they’re in): the size is measured from that corner.' : 'Zero on the stock’s corner and press From X0 Y0 Now first.');
+    var dx = here.x - sp.corner.x, dy = here.y - sp.corner.y;
     if (Math.abs(dx) < 1 || Math.abs(dy) < 1) return bad('Jog the bit over the stock’s opposite corner first, then press Far Corner Here.');
     var corner = (dy > 0 ? 'front' : 'back') + '-' + (dx > 0 ? 'left' : 'right');
-    var auto = p ? stockCornerFor(holes.origin) : 'front-left';
-    $('mw-stock-corner').value = corner === auto ? 'auto' : corner;
+    if (holes.stockBy === 'pins' && corner !== sp.cornerName) return bad('The spindle is on the pins’ side of the stock’s corner: jog over its far corner.');
+    if (holes.stockBy === 'zero') $('mw-stock-corner').value = corner;
     var k = state.imperial ? MM_PER_INCH : 1, d = state.imperial ? 4 : 3;
     $('mw-stock-w').value = +(Math.abs(dx) / k).toFixed(d);
     $('mw-stock-l').value = +(Math.abs(dy) / k).toFixed(d);
     ['mw-stock-w', 'mw-stock-l'].forEach(function(id) { $(id).classList.remove('mw-invalid'); });
     status.setAttribute('data-state', 'ok');
-    status.textContent = 'Stock size from the spindle: ' + shown(Math.abs(dx)) + ' × ' + shown(Math.abs(dy)) + ' ' + unitName() +
-      ', its ' + corner.replace('-', ' ') + ' corner on ' + (p ? 'the picked point' : holes.stockAnchor.wcs + ' X0 Y0') + '.';
+    status.textContent = 'Stock size from the spindle: ' + shown(Math.abs(dx)) + ' × ' + shown(Math.abs(dy)) + ' ' + unitName() + ', from its ' + stockPointName(corner) + '.';
   }
-  // With no hole picked, the stock hangs off the work offset's X0 Y0 as it
-  // was when Stock was ticked (holes.stockAnchor, machine mm), not as it
-  // is now: setting X0 Y0 on the stock then doesn't move the stock.
-  // Dropped when a hole is picked.
+  // The work offset's X0 Y0 as it is now, as the stock's corner (Corner at
+  // X0 Y0): machine mm, so setting X0 Y0 elsewhere on the stock afterwards
+  // doesn't move the stock.
   function anchorStock() {
     var ms = state.machine || {}, z = xyOf(ms[(WCS_NAMES[holeWcs()] || '').toLowerCase()]);
     holes.stockAnchor = z ? { x: z.x, y: z.y, wcs: WCS_NAMES[holeWcs()] } : null;
   }
-  // What the stock hangs off, saved so it comes back on reopen: the
-  // picked hole, or the X0 Y0 it was anchored to.
-  function stockPoint() {
-    var p = holes.grid[holes.picked];
-    if (!$('mw-stock-on').checked) return null;
-    if (holes.stockLock) return { lock: holes.stockLock };
-    if (p) return { hole: holeKey(p) };
-    return holes.stockAnchor ? { x: holes.stockAnchor.x, y: holes.stockAnchor.y, wcs: holes.stockAnchor.wcs } : null;
-  }
+  // Saved before 0.5 (a Stock tick that hung the stock off a picked hole,
+  // a lock or X0 Y0): once the grid is placed, the stock goes to Stock
+  // mode, Corner at X0 Y0, at the corner it was drawn at, so Set still
+  // aims where it did. A hole that's gone leaves it unplaced, and says so.
   function restoreStock() {
-    var sp = holes.savedStock;
-    holes.savedStock = null;
-    if (!$('mw-stock-on').checked || holes.grid[holes.picked] || holes.stockAnchor || holes.stockLock) return;
-    var L = sp && sp.lock;
-    if (L && isFinite(L.x) && isFinite(L.y) && HOLE_ORIGINS.indexOf(L.corner) >= 0) {
-      holes.stockLock = { x: +L.x, y: +L.y, corner: L.corner, zMm: isFinite(L.zMm) && L.zMm !== null ? +L.zMm : null, on: String(L.on || '') };
-      renderHoles();
-      return;
-    }
-    if (sp && sp.hole) {
-      for (var i = 0; i < holes.grid.length; i++) {
-        if (holeKey(holes.grid[i]) === sp.hole) { holes.picked = i; renderHoles(); return; }
+    var m = holes.migrate;
+    holes.migrate = null;
+    if (!m) return;
+    var sp = m.stockPoint || {}, corner = null, pt = null;
+    if (sp.lock && isFinite(sp.lock.x) && isFinite(sp.lock.y)) { pt = { x: +sp.lock.x, y: +sp.lock.y }; corner = sp.lock.corner; }
+    else if (sp.hole) {
+      var p = pinHole(sp.hole), h = readHoles();
+      if (p && h) {
+        var origin = HOLE_ORIGINS.indexOf(m.holeOrigin) >= 0 ? m.holeOrigin : 'center', o = holeOriginOffset(origin, holeR(p, h));
+        pt = { x: p.x + o.dx, y: p.y + o.dy };
+        corner = m.stockCorner === 'auto' || !m.stockCorner ? stockCornerFor(origin) : m.stockCorner;
       }
-    }
-    if (sp && isFinite(sp.x) && isFinite(sp.y) && sp.wcs) holes.stockAnchor = { x: +sp.x, y: +sp.y, wcs: String(sp.wcs) };
-    else anchorStock();
+    } else if (isFinite(sp.x) && isFinite(sp.y)) { pt = { x: +sp.x, y: +sp.y }; corner = m.stockCorner === 'auto' || !m.stockCorner ? 'front-left' : m.stockCorner; }
+    holes.stockBy = 'zero';
+    holes.stockAnchor = pt ? { x: pt.x, y: pt.y, wcs: String(sp.wcs || WCS_NAMES[holeWcs()]) } : null;
+    if (/^(front|back)-(left|right)$/.test(corner || '')) $('mw-stock-corner').value = corner;
+    $('mw-migrated-text').textContent = 'New: the XY0 Picker has Hole and Stock modes. Your stock moved to Stock mode' +
+      (pt ? ', its ' + stockPointName($('mw-stock-corner').value) + ' where it was drawn (Corner at X0 Y0). Check the target before you Set; Against Pins now places stock pushed against pins.'
+        : ', but the hole it was drawn from is gone: place it again (Against Pins, or Corner at X0 Y0).');
+    $('mw-migrated').hidden = false;
     renderHoles();
+    saveSettings();
   }
-  // What Go to and Set aim at: the picked hole's point (on the stock when
-  // Stock is on), or with no hole picked, the stock's point from X0 Y0.
+  // What Go to and Set aim at: in Hole mode the picked hole's point, in
+  // Stock mode the point picked on the placed stock.
   function pickTarget() {
+    if (holes.zeroMode === 'stock') {
+      var sp = stockPlacement(), tg = stockTarget(sp);
+      return tg ? { p: null, stock: sp, tg: tg } : null;
+    }
     var p = holes.grid[holes.picked];
-    if (p) return { p: p, tg: holeTarget(p) };
-    var r = holes.stockLock ? lockedStock() : stockAt(holes.stockAnchor, true);
-    return r ? { p: null, tg: rectPoint(r, holes.stockZero) } : null;
+    return p ? { p: p, tg: holePoint(p) } : null;
+  }
+  // A point on the stock by its dot's name: its center, front left corner,
+  // back edge...
+  function stockPointName(name) {
+    var n = String(name || 'center');
+    return n === 'center' ? 'center' : /-center$/.test(n) ? n.replace('-center', '') + ' edge' : n.replace('-', ' ') + ' corner';
   }
   function targetText(t) {
-    var stock = stockActive() && !holes.stockLock;
-    if (!t.p) return 'the stock\u2019s ' + ORIGIN_NOTES[holes.stockZero] + (holes.stockLock ? ', locked in place' : ' drawn from ' + holes.stockAnchor.wcs + ' X0 Y0');
-    var hole = 'the ' + ORIGIN_NOTES[holes.origin] + ' of ' + holeName(t.p).replace(/^Column/, 'column');
-    return stock ? 'the stock\u2019s ' + ORIGIN_NOTES[holes.stockZero] + ' (from ' + hole + ')' : hole;
+    if (t.stock) return 'the stock’s ' + stockPointName(holes.stockZero) + (t.stock.by === 'pins' ? ' (against the pins)' : '');
+    return 'the ' + ORIGIN_NOTES[holes.origin] + ' of ' + holeName(t.p).replace(/^Column/, 'column');
+  }
+  // "4.000 right and 4.000 back": a move in machine X and Y (back is +Y).
+  function moveWords(dx, dy) {
+    var u = ' ' + unitName(), out = [];
+    if (Math.abs(dx) >= 0.0005) out.push(shown(Math.abs(dx)) + u + (dx > 0 ? ' right' : ' left'));
+    if (Math.abs(dy) >= 0.0005) out.push(shown(Math.abs(dy)) + u + (dy > 0 ? ' back' : ' forward'));
+    return out.join(' and ');
+  }
+  // A grid hole's row letter or column number, from its label (C4).
+  function lineName(p, which) {
+    var m = /^([A-Z]+)(\d+)$/.exec(holeLabel(p));
+    return m ? (which === 'row' ? 'row ' + m[1] : 'column ' + m[2]) : holeName(p);
+  }
+  // Before Set, in words with the numbers: what X0 Y0 goes on and how it's
+  // worked out, so a wrong dot or pin size shows as a wrong number.
+  function targetSentence(t) {
+    var u = ' ' + unitName();
+    if (!t.stock) {
+      var h = readHoles(), r = h ? holeR(t.p, h) : 0, o = holeOriginOffset(holes.origin, r), name = holeName(t.p).replace(/^Column/, 'column');
+      return holes.origin === 'center' ? 'X0 Y0 → the center of ' + name + '.'
+        : 'X0 Y0 → ' + name + '’s ' + ORIGIN_NOTES[holes.origin] + ': ' + moveWords(o.dx, o.dy) + ' from its center (hole Ø ' + shown(2 * r) + u + ').';
+    }
+    var sp = t.stock, at = holes.stockZero === sp.cornerName, sz = stockSize();
+    var size = at || !sz ? '' : ' and the size you typed, ' + shown(sz.w) + ' × ' + shown(sz.l) + u;
+    var how;
+    if (sp.by === 'pins') {
+      var f = sp.fit, pinsD = f.rpRow === f.rpCol ? shown(2 * f.rpRow) + u : shown(2 * f.rpCol) + ' and ' + shown(2 * f.rpRow) + u;
+      how = moveWords(sp.corner.x - f.H.x, sp.corner.y - f.H.y) + ' from where ' + lineName(f.colPins[0], 'col') + ' and ' + lineName(f.rowPins[0], 'row') + ' cross (pins Ø ' + pinsD + ')';
+    } else how = 'on ' + holes.stockAnchor.wcs + ' X0 Y0 as taken';
+    return at ? 'X0 Y0 → the stock’s ' + stockPointName(sp.cornerName) + ', ' + how + '.'
+      : 'X0 Y0 → the stock’s ' + stockPointName(holes.stockZero) + ', from its ' + stockPointName(sp.cornerName) + ' (' + how + ')' + size + '.';
+  }
+  // The name of a known point at pt (the stock's dots, a hole's dots), or
+  // null: to say where X0 Y0 is now.
+  function pointName(pt) {
+    var near = function(q) { return Math.abs(q.x - pt.x) < 0.01 && Math.abs(q.y - pt.y) < 0.01; };
+    var sp = stockPlacement(), found = null;
+    if (sp && sp.rect) HOLE_ORIGINS.some(function(o) { if (near(rectPoint(sp.rect, o))) { found = 'the stock’s ' + stockPointName(o); return true; } return false; });
+    if (sp && !found && sp.corner && near(sp.corner)) found = 'the stock’s ' + stockPointName(sp.cornerName);
+    if (found) return found;
+    var h = readHoles(), best = null, bd = Infinity;
+    if (!h) return null;
+    holes.grid.forEach(function(p) { var d = Math.hypot(p.x - pt.x, p.y - pt.y); if (d < bd) { bd = d; best = p; } });
+    if (!best || bd > holeR(best, h) * 1.5 + 0.02) return null;
+    HOLE_ORIGINS.some(function(o) {
+      var off = holeOriginOffset(o, holeR(best, h));
+      if (near({ x: best.x + off.dx, y: best.y + off.dy })) { found = holeName(best).replace(/^Column/, 'column') + (o === 'center' ? '’s center' : '’s ' + ORIGIN_NOTES[o]); return true; }
+      return false;
+    });
+    return found;
+  }
+  // How far Set moves the work offset's X0 Y0 from where it is now. An
+  // unexplained move of exactly a hole or pin radius or diameter is the
+  // usual sign of re-zeroing on the wrong dot, so that's said.
+  function zeroMove(tg) {
+    var ms = state.machine || {}, w = WCS_NAMES[holeWcs()];
+    if (holeWcs() > 6 || !ms.homed) return null;
+    var cur = xyOf(ms[w.toLowerCase()]);
+    if (!cur) return null;
+    var dx = tg.x - cur.x, dy = tg.y - cur.y;
+    if (Math.abs(dx) < 0.0005 && Math.abs(dy) < 0.0005) return { text: 'Set changes nothing: ' + w + ' X0 Y0 is there already.' };
+    var from = pointName(cur), text = 'Set moves ' + w + ' X0 Y0 ' + moveWords(dx, dy) + (from ? ', from ' + from : '') + '.';
+    if (from) return { text: text };
+    var h = readHoles(), sizes = [];
+    holes.grid.slice(0, 1).concat((stockPlacement() || {}).pins || []).forEach(function(p) {
+      if (!h) return;
+      var r = holeR(p, h), rp = pinR(p);
+      sizes.push([r, 'a hole radius'], [2 * r, 'a hole diameter'], [rp, 'a pin radius'], [2 * rp, 'a pin diameter']);
+    });
+    var hit = null;
+    [dx, dy].some(function(d) { return sizes.some(function(z) { if (z[0] > 0.05 && Math.abs(Math.abs(d) - z[0]) < 0.01) { hit = [Math.abs(d), z[1]]; return true; } return false; }); });
+    return hit ? { text: text + ' ' + shown(hit[0]) + ' ' + unitName() + ' is exactly ' + hit[1] + ': if X0 Y0 is already where you want it, don’t Set.', warn: true } : { text: text };
+  }
+  // The zoomed-in view beside Set: the hole and where X0 Y0 goes on it,
+  // to scale; or how the stock's corner sits against its pins (a detail:
+  // the pins drawn closer than they are, at their real size).
+  function drawZeroInset(t) {
+    var svg = $('mw-zero-inset'), ns = 'http://www.w3.org/2000/svg', u = ' ' + unitName();
+    svg.textContent = '';
+    var add = function(tag, at, text) { var el = document.createElementNS(ns, tag); Object.keys(at).forEach(function(k) { el.setAttribute(k, at[k]); }); if (text != null) el.textContent = text; svg.appendChild(el); return el; };
+    var cross = function(x, y) { add('path', { class: 'mw-i-target', d: 'M' + (x - 6) + ' ' + y + 'H' + (x + 6) + 'M' + x + ' ' + (y - 6) + 'V' + (y + 6) }); add('circle', { class: 'mw-i-target', cx: x, cy: y, r: 3 }); };
+    var h = readHoles();
+    var off = !t || !h || (t.stock && t.stock.by !== 'pins');
+    svg.style.display = off ? 'none' : '';
+    if (off) return;
+    if (!t.stock) {
+      var r = holeR(t.p, h), o = holeOriginOffset(holes.origin, r), k = 34 / r, cx = 75, cy = 52;
+      add('circle', { class: 'mw-i-hole', cx: cx, cy: cy, r: 34 });
+      add('path', { class: 'mw-i-dim', d: 'M' + (cx - 3) + ' ' + cy + 'H' + (cx + 3) + 'M' + cx + ' ' + (cy - 3) + 'V' + (cy + 3) });
+      var tx = cx + o.dx * k, ty = cy - o.dy * k;
+      if (o.dx) { add('path', { class: 'mw-i-dim', d: 'M' + cx + ' 98V94M' + cx + ' 96H' + tx + 'M' + tx + ' 98V94' }); add('text', { x: (cx + tx) / 2, y: 108, 'text-anchor': 'middle', class: 'mw-i-val' }, shown(Math.abs(o.dx))); }
+      if (o.dy) { add('path', { class: 'mw-i-dim', d: 'M114 ' + cy + 'H118M116 ' + cy + 'V' + ty + 'M114 ' + ty + 'H118' }); add('text', { x: 121, y: (cy + ty) / 2 + 3, 'text-anchor': 'start', class: 'mw-i-val' }, shown(Math.abs(o.dy))); }
+      add('text', { x: 4, y: 10 }, 'hole Ø ' + shown(2 * r) + u);
+      cross(tx, ty);
+      return;
+    }
+    var f = t.stock.fit;
+    // In the view right is machine +X and up is machine +Y (back); a pin
+    // radius is 11 px, the pins drawn closer than they are.
+    var dxm = t.stock.corner.x - f.H.x, dym = t.stock.corner.y - f.H.y, sgx = dxm >= 0 ? 1 : -1, sgy = dym >= 0 ? 1 : -1;
+    var kk = 11 / Math.max(f.rpRow, f.rpCol, 0.01), Hx = 75 - sgx * 30, Hy = 56 + sgy * 24;
+    var Cx = Hx + sgx * f.rpCol * kk, Cy = Hy - sgy * f.rpRow * kk;
+    add('path', { class: 'mw-i-line', d: 'M' + Hx + ' 0V112M0 ' + Hy + 'H150' });
+    add('rect', { class: 'mw-i-stock', x: sgx > 0 ? Cx : Cx - 200, y: sgy > 0 ? Cy - 200 : Cy, width: 200, height: 200 });
+    add('circle', { class: 'mw-i-pin', cx: Hx, cy: Hy - sgy * 46, r: f.rpCol * kk });
+    add('circle', { class: 'mw-i-pin', cx: Hx + sgx * 46, cy: Hy, r: f.rpRow * kk });
+    add('path', { class: 'mw-i-dim', d: 'M' + Hx + ' ' + (Hy + sgy * 9) + 'H' + Cx });
+    add('text', { x: (Hx + Cx) / 2, y: Hy + sgy * 9 + (sgy > 0 ? 10 : -3), 'text-anchor': 'middle', class: 'mw-i-val' }, shown(f.rpCol));
+    add('path', { class: 'mw-i-dim', d: 'M' + (Hx - sgx * 9) + ' ' + Hy + 'V' + Cy });
+    add('text', { x: Hx - sgx * 12, y: (Hy + Cy) / 2 + 3, 'text-anchor': sgx > 0 ? 'end' : 'start', class: 'mw-i-val' }, shown(f.rpRow));
+    add('text', { x: 4, y: 10 }, 'pins Ø ' + shown(2 * f.rpCol) + u);
+    if (holes.stockZero === t.stock.cornerName) cross(Cx, Cy);
+    else add('text', { x: Cx + sgx * 6, y: Cy - sgy * 12, 'text-anchor': sgx > 0 ? 'start' : 'end', class: 'mw-i-val' }, '→ ' + stockPointName(holes.stockZero));
   }
   function setStockZero(name) {
     holes.stockZero = HOLE_ORIGINS.indexOf(name) >= 0 ? name : 'center';
@@ -4447,7 +4764,8 @@
       var rx = parseFloat(set['110'] && set['110'].value), ry = parseFloat(set['111'] && set['111'].value);
       state.rapidMmMin = rx > 0 && ry > 0 ? Math.min(rx, ry) : null;
       var smax = parseFloat(set['30'] && set['30'].value), smin = parseFloat(set['31'] && set['31'].value);
-      state.spindleMax = smax > 0 ? smax : null;
+      // grblHAL's default $30 is 1000: not a router's real top speed.
+      state.spindleMax = smax >= 5000 ? smax : null;
       state.spindleMin = smin > 0 ? smin : null;
       state.laserMode = set['32'] ? String(set['32'].value).trim() === '1' : null;
       state.reportInches = set['13'] ? String(set['13'].value).trim() === '1' : false;
@@ -4705,7 +5023,7 @@
       c.setAttribute('role', 'button'); c.tabIndex = 0;
       c.textContent = p.col == null ? holeLabel(p) : (holes.gridRaw.length > 1 ? gridName(p.layer || 0) + ' ' : '') + holeLabel(p);
       c.title = 'Pick ' + holeName(p);
-      c.addEventListener('click', function() { if (!p.blocked) pickHole(i); });
+      c.addEventListener('click', function() { if (p.blocked) return; if (holes.zeroMode === 'stock') { setZeroMode('hole'); saveSettings(); } pickHole(i); });
       c.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); c.click(); } });
       box.appendChild(c);
     });
@@ -5427,6 +5745,20 @@
       var sx0 = Math.max(stock.minX, minX), sx1 = Math.min(stock.maxX, minX + t.xMm), sy0 = Math.max(stock.minY, minY), sy1 = Math.min(stock.maxY, minY + t.yMm);
       if (sx1 > sx0 && sy1 > sy0) add('rect', { class: 'mw-h-stock', x: X(sx0), y: Y(sy1), width: ((sx1 - sx0) * sc).toFixed(1), height: ((sy1 - sy0) * sc).toFixed(1) });
     }
+    // The pins, drawn at their size in every mode, and the two ways two
+    // pins can hold the stock while it isn't decided.
+    var placed = stockPlacement(), pinsNow = $('mw-stock-on').checked && holes.stockBy === 'pins' ? holes.pins.map(pinHole).filter(Boolean) : [];
+    if (placed && placed.problem === 'which') {
+      placed.fits.forEach(function(f) {
+        var r = stockAt(f.corner, f.cornerName);
+        if (!r) r = stockRect(f.corner.x, f.corner.y, h ? holeSpacingMm(h) * 2 : 100, h ? holeSpacingMm(h) * 2 : 100, f.cornerName);
+        add('rect', { class: 'mw-h-stock-alt', x: X(Math.max(r.minX, minX)), y: Y(Math.min(r.maxY, minY + t.yMm)),
+          width: ((Math.min(r.maxX, minX + t.xMm) - Math.max(r.minX, minX)) * sc).toFixed(1), height: ((Math.min(r.maxY, minY + t.yMm) - Math.max(r.minY, minY)) * sc).toFixed(1) });
+        var lx = (r.minX + r.maxX) / 2, ly = (r.minY + r.maxY) / 2;
+        add('text', { class: 'mw-h-alt-label', x: X(lx), y: Y(ly), 'text-anchor': 'middle' }, '?');
+      });
+    }
+    pinsNow.forEach(function(q) { if (inView(q.x, q.y, pinR(q))) add('circle', { class: 'mw-h-pin', cx: X(q.x), cy: Y(q.y), r: Math.max(5, pinR(q) * sc).toFixed(1) }); });
     var aim = pickTarget();
     if (aim && (holes.origin !== 'center' || stock)) {
       var tg = aim.tg, tx = +X(tg.x), ty = +Y(tg.y);
@@ -5458,9 +5790,6 @@
     showOnMap(holes.grid[i]);
     holes.nearMm = null;
     holes.refXY = spindleXY();
-    // A hole picked replaces any stock hung off X0 Y0, so if the hole is
-    // later excluded or hidden, Set doesn't quietly fall back to it.
-    holes.stockAnchor = null;
     $('mw-hole-status').textContent = '';
     renderHoles();
     if ($('mw-stock-on').checked) saveSettings();
@@ -5494,7 +5823,6 @@
     holes.picked = near.index;
     holes.nearMm = near.distanceMm;
     holes.refXY = here;
-    holes.stockAnchor = null;
     showOnMap(holes.grid[near.index]);
     var any = nearestHole(holes.grid.map(function(g) { return { x: g.x, y: g.y, hidden: g.hidden || (g.col != null && !gridNearest(g)) }; }), here.x, here.y);
     var under = any && (holes.grid[any.index].blocked || holes.grid[any.index].suppressed) ? holes.grid[any.index] : null;
@@ -5530,34 +5858,59 @@
     var off = Math.hypot(here.x - tg.x, here.y - tg.y);
     return off > JOG_WARN_MM ? off : null;
   }
+  // Pin-placement problems, in words.
+  var PIN_PROBLEMS = {
+    few: 'Tap the holes your pins are in: two along one edge of the stock, one along the other.',
+    list: 'Listed holes can’t be pins: tap grid holes, or use Corner at X0 Y0.',
+    grids: 'The pins are in different grids: use holes of one grid.',
+    oneLine: 'The pins are all in one line: add a pin along the stock’s other edge.',
+    notL: 'The pins don’t make an L (one row and one column): tap a pin to take it out.',
+    sides: 'There are pins on both sides of the corner along one edge: the stock touches only one side.',
+    which: 'Two pins can hold the stock two ways: which is it?',
+    anchor: 'Zero on the stock’s corner (touch off or probe), then press From X0 Y0 Now.'
+  };
   function updatePicked() {
-    var p = holes.grid[holes.picked], aim = pickTarget(), tg = aim && aim.tg;
-    var grabbable = p && p.col != null && (p.layer || 0) === holes.activeGrid && $('mw-hole-layout').value !== 'list';
-    $('mw-hole-here').textContent = grabbable ? 'Grab ' + holeLabel(p) + ' Center' : 'Grab First Hole Center';
-    var onStock = p && stockActive() && !holes.stockLock, live = holes.liveNear && holes.grid[holes.liveNear.index];
-    $('mw-hole-picked').textContent = p ? holeName(p) + ' \u00b7 ' + ORIGIN_NOTES[holes.origin] + (onStock ? ' \u00b7 stock ' + ORIGIN_NOTES[holes.stockZero] : '')
-      : aim ? 'Stock ' + ORIGIN_NOTES[holes.stockZero] + ' \u00b7 ' + (holes.stockLock ? 'locked in place' : 'from ' + holes.stockAnchor.wcs + ' X0 Y0') : 'No hole picked';
+    var stockMode = holes.zeroMode === 'stock';
+    var p = stockMode ? null : holes.grid[holes.picked], aim = pickTarget(), tg = aim && aim.tg;
+    var card = $('mw-pick-card');
+    card.setAttribute('data-zmode', holes.zeroMode);
+    $('mw-stock-panel').setAttribute('data-by', holes.stockBy);
+    ROOT.querySelectorAll('.mw-zmode .mw-seg').forEach(function(b) { b.setAttribute('aria-pressed', b.getAttribute('data-zmode') === holes.zeroMode ? 'true' : 'false'); });
+    ROOT.querySelectorAll('.mw-stockby .mw-seg').forEach(function(b) { b.setAttribute('aria-pressed', b.getAttribute('data-by') === holes.stockBy ? 'true' : 'false'); });
+    var hp = holes.grid[holes.picked];
+    var grabbable = hp && hp.col != null && (hp.layer || 0) === holes.activeGrid && $('mw-hole-layout').value !== 'list';
+    $('mw-hole-here').textContent = grabbable ? 'Grab ' + holeLabel(hp) + ' Center' : 'Grab First Hole Center';
+    var live = holes.liveNear && holes.grid[holes.liveNear.index];
+    $('mw-hole-picked').textContent = stockMode ? 'Stock · ' + stockPointName(holes.stockZero) + (holes.stockBy === 'pins' ? ' · against pins' : ' · corner at X0 Y0')
+      : p ? holeName(p) + ' · ' + ORIGIN_NOTES[holes.origin] : 'No hole picked';
     $('mw-hole-dots').classList.toggle('mw-has-hole', !!p);
     $('mw-hole-fav').hidden = !p;
     $('mw-hole-fav').setAttribute('aria-pressed', p && holes.favorites.indexOf(holeKey(p)) >= 0 ? 'true' : 'false');
-    // The machine position on one line (smaller, never wrapped), the
-    // distance from the spindle on the next.
-    $('mw-hole-pos').textContent = aim ? 'Machine X ' + shown(tg.x) + '  Y ' + shown(tg.y) + ' ' + unitName()
+    var sp = stockPlacement();
+    var problem = p && p.suppressed ? 'suppressed' : aim && state.travel ? targetProblem(tg.x, tg.y, state.travel, uiZones()) : null;
+    // The sentence: what X0 Y0 goes on, with the numbers; or what to do.
+    var pos = $('mw-hole-pos');
+    pos.textContent = problem === 'suppressed' ? 'This hole is suppressed: Edit Holes in Setup to restore it.'
+      : problem ? (stockMode ? 'That point on the stock is ' : 'This side of the hole is ') + problem + ': pick another dot' + (stockMode ? '.' : ' or hole.')
+      : aim ? targetSentence(aim)
+      : stockMode ? (sp && sp.corner && !sp.rect ? 'Give the stock’s width and length for that point, or pick its ' + stockPointName(sp.cornerName) + '.' : 'Place the stock to see where X0 Y0 goes.')
       : live ? 'Nearest the spindle: ' + holeName(live) + ', ' + shown(holes.liveNear.distanceMm) + ' ' + unitName() + ' away. Click a hole, or press Pick Nearest Hole.'
       : 'Click a hole, or jog near one and press Pick Nearest Hole.';
-    var problem = p && p.suppressed ? 'suppressed' : aim && state.travel ? targetProblem(tg.x, tg.y, state.travel, uiZones()) : null;
-    if (problem === 'suppressed') $('mw-hole-pos').textContent = 'This hole is suppressed: Edit Holes in Setup to restore it.';
-    else if (problem) $('mw-hole-pos').textContent = (onStock || !p ? 'That point on the stock is ' : 'This side of the hole is ') + problem + ': pick another dot or hole.';
-    $('mw-hole-pos').classList.toggle('mw-bad-text', !!problem);
-    $('mw-hole-pos').classList.toggle('mw-coords', !!aim && !problem);
-    // The spindle's distance from the hole Pick Nearest Hole took: only
-    // when that hole itself is the target, not a point on the stock.
-    var dist = aim && aim.p && !onStock && !problem && holes.nearMm != null;
+    pos.classList.toggle('mw-bad-text', !!problem);
+    $('mw-hole-coords').hidden = !aim || !!problem;
+    $('mw-hole-coords').textContent = aim ? 'Machine X ' + shown(tg.x) + '  Y ' + shown(tg.y) + ' ' + unitName() : '';
+    var mv = aim && !problem ? zeroMove(tg) : null;
+    $('mw-hole-move').hidden = !mv;
+    $('mw-hole-move').textContent = mv ? mv.text : '';
+    $('mw-hole-move').classList.toggle('mw-warn-text', !!(mv && mv.warn));
+    // The spindle's distance from the hole Pick Nearest Hole took.
+    var dist = aim && aim.p && !problem && holes.nearMm != null;
     var away = aim && aim.p && !problem ? joggedAwayMm(tg) : null;
     $('mw-hole-dist').hidden = !dist && away == null;
-    $('mw-hole-dist').textContent = away != null ? 'Jogged since picking: Set uses the picked point, not the spindle (' + shown(away) + ' ' + unitName() + ' away). To zero where the spindle is, use ncSender\u2019s XY0.'
+    $('mw-hole-dist').textContent = away != null ? 'Jogged since picking: Set uses the picked point, not the spindle (' + shown(away) + ' ' + unitName() + ' away). To zero where the spindle is, use ncSender’s XY0.'
       : dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
     $('mw-hole-dist').classList.toggle('mw-warn-text', away != null);
+    drawZeroInset(aim && !problem ? aim : null);
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
     var zt = zTarget();
@@ -5569,19 +5922,28 @@
     $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy;
     if (!zt && hold.btn && hold.btn.id === 'mw-hole-setz') stopHold(false);
     if (!aim || problem || holes.busy) disarmGoto();
-    var on = $('mw-stock-on').checked, a = holes.stockAnchor, L = holes.stockLock;
-    $('mw-stock-note').textContent = !on ? '' : L ? 'Locked where it was drawn from ' + L.on + ': picking other holes aims at the hole and leaves the stock here. Tap a stock dot to aim at the stock.'
-      : p ? 'Drawn from the picked hole.'
-      : a ? 'No hole picked: drawn from ' + a.wcs + ' X0 Y0 as taken (machine X ' + shown(a.x) + ', Y ' + shown(a.y) + ' ' + unitName() + '); it stays put when X0 Y0 changes.'
-      : holeWcs() > 6 ? 'Pick a hole: ncSender doesn\u2019t report ' + WCS_NAMES[holeWcs()] + '\u2019s X0 Y0, so the stock can only hang off G54\u2013G59.'
-      : 'Pick a hole, or set X0 Y0 and press From X0 Y0 now.';
-    $('mw-stock-anchor').hidden = !on || !!p || !!L;
-    $('mw-stock-far').disabled = !!L;
-    $('mw-stock-corner').disabled = !!L;
-    $('mw-stock-lock').hidden = !on;
-    $('mw-stock-lock').disabled = !L && !stockShown();
-    $('mw-stock-lock').setAttribute('aria-pressed', L ? 'true' : 'false');
-    $('mw-stock-lock').textContent = L ? 'Unlock Position' : 'Lock Position';
+    // The stock panel: how it's placed, or what's missing.
+    var note = $('mw-stock-note'), which = $('mw-stock-which'), msg = '';
+    which.textContent = '';
+    if (!sp) msg = holes.stockBy === 'pins' ? PIN_PROBLEMS.few : PIN_PROBLEMS.anchor;
+    else if (sp.problem === 'under') msg = holeName(sp.problemPin) + ' is under the stock: a wrong tap, or the size is too big.';
+    else if (sp.problem === 'which') {
+      msg = PIN_PROBLEMS.which;
+      sp.fits.forEach(function(f) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'mw-btn mw-btn-small mw-btn-quiet';
+        b.textContent = f.side.replace('-', ' ') + ' of the pins';
+        b.addEventListener('click', function() { holes.pinSide = f.side; if (!holes.stockDotSet) setStockZero(f.cornerName); renderHoles(); saveSettings(); });
+        which.appendChild(b);
+      });
+    } else if (sp.problem === 'few' && sp.pins.length === 1) msg = 'One pin so far: tap the holes of the others (two along one edge, one along the other).';
+    else if (sp.problem) msg = PIN_PROBLEMS[sp.problem] || '';
+    else if (sp.by === 'zero') msg = 'Its ' + stockPointName(sp.cornerName) + ' is on ' + holes.stockAnchor.wcs + ' X0 Y0 as taken (machine X ' + shown(sp.corner.x) + ', Y ' + shown(sp.corner.y) + ' ' + unitName() + '); it stays put when X0 Y0 changes.';
+    else msg = 'Against ' + sp.fit.rowPins.concat(sp.fit.colPins).map(holeName).join(', ') + '; the stock is ' + sp.fit.side.replace('-', ' ') + ' of them.';
+    if (sp && sp.notes.length && sp.problem !== 'which') msg += ' ' + sp.notes.join(' ');
+    note.textContent = msg;
+    note.classList.toggle('mw-warn-text', !!(sp && sp.problem && sp.problem !== 'which') || (!sp && stockMode && holes.stockBy === 'zero'));
+    $('mw-stock-clear').hidden = !sp || (sp.by === 'pins' ? !holes.pins.length : !holes.stockAnchor);
     suppressButtons();
   }
   // One hole action at a time (Go, Set, Pick Nearest Hole, Grab), so their
@@ -5832,12 +6194,11 @@
   // stock's bottom (on that, or on the spoilboard) or its top. Null when
   // there's nothing to set Z0 on.
   function zTarget() {
-    var p = holes.grid[holes.picked];
+    var stockMode = holes.zeroMode === 'stock', p = stockMode ? null : holes.grid[holes.picked];
     if (p && (p.suppressed || p.hidden)) p = null;
     var base = p && p.zMm != null ? p.zMm : null;
     var on = p ? (p.name ? '\u201c' + p.name + '\u201d' : holeName(p).replace(/^Column/, 'column')) : '';
-    if ($('mw-stock-on').checked) {
-      if (holes.stockLock) { base = holes.stockLock.zMm; on = holes.stockLock.on; }
+    if (stockMode && $('mw-stock-on').checked) {
       var top = $('mw-stock-zmode').value === 'top', t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
       if (top && !(t > 0)) return null;
       var under = base != null ? on : 'the spoilboard';
@@ -5936,7 +6297,8 @@
     var f = feedsNow(), k = state.imperial ? MM_PER_INCH : 1, fu = state.imperial ? ' in/min' : ' mm/min';
     $('mw-cut-feeds-note').textContent = !f ? '' : f.rpm + ' RPM, ' + shown(f.chipMm) + ' ' + unitName() + ' a tooth: ' +
       +(f.feedMm / k).toFixed(state.imperial ? 1 : 0) + fu + (f.capped ? ' (the machine\u2019s max)' : '') + ', plunge ' + +(f.plungeMm / k).toFixed(state.imperial ? 1 : 0) +
-      ', ' + shown(f.stepMm) + ' ' + unitName() + ' a pass, stepover ' + f.stepoverPct + '%';
+      ', ' + shown(f.stepMm) + ' ' + unitName() + ' a pass, stepover ' + f.stepoverPct + '%' +
+      ($('mw-cut-mat').value === 'aluminum' ? '. Aluminum: a 1-flute bit, air or mist, and spiral in rather than plunge.' : '');
   }
   function fillStartingFeeds() {
     var f = feedsNow(), k = state.imperial ? MM_PER_INCH : 1;
@@ -6389,8 +6751,7 @@
   // flip pins. Z0 on the stock's top.
   function stockHoleSettings() {
     var o = cutSettings(true), probs = placeProblems(o), hh = readHoles(), k = state.imperial ? MM_PER_INCH : 1;
-    var p = holes.grid[holes.picked], rect = stockShown();
-    if (holes.stockLock) p = holes.stockLock.zMm != null ? { zMm: holes.stockLock.zMm } : null;
+    var placed = stockPlacement(), rect = stockShown();
     var mode = $('mw-sh-mode').value, pins = mode === 'pins', fix = mode === 'fixture';
     var thick = unitVal($('mw-stock-t')) * k;
     var size = cutMm(pins ? 'mw-sh-pin' : 'mw-sh-bolt'), pinSize = fix ? cutMm('mw-sh-pin') : NaN, cb = pins ? NaN : cutMm('mw-sh-cb'), cbd = cutMm('mw-sh-cbd');
@@ -6399,9 +6760,9 @@
     var blind = String($('mw-sh-depth').value).trim() !== '', blindMm = cutMm('mw-sh-depth');
     var margin = cutMm('mw-sh-margin'), brk = cutMm('mw-sh-break'), depth = blind ? blindMm : thick + brk;
     var res = { o: o, probs: probs, rect: rect, mode: mode, pins: pins, fix: fix, chosen: [], flip: null, warn: '', blind: blind, depthMm: depth };
-    if (!$('mw-stock-on').checked || !stockAt({ x: 0, y: 0 })) probs.push('Tick Stock in the XY0 Picker and give its width and length');
-    else if (!rect) probs.push('Pick the hole the stock is on in the XY0 Picker, or press From X0 Y0 now');
-    else if (p && p.zMm != null) probs.push('The stock sits on a fixture point, not over the spoilboard holes');
+    if (!placed || (placed.problem && placed.problem !== 'under')) probs.push('Place the stock in the XY0 Picker\u2019s Stock mode: against its pins, or its corner at X0 Y0');
+    else if (placed.problem === 'under') probs.push('A pin is under the stock in the XY0 Picker: check the pins and the size');
+    else if (!rect) probs.push('Give the stock\u2019s width and length in the XY0 Picker\u2019s Stock mode');
     if (!(thick > 0)) probs.push('Give the stock a thickness (T) in the XY0 Picker');
     if (!(size > 0)) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' must be more than 0');
     if (fix && !(pinSize > 0)) probs.push('Pin Size must be more than 0');
@@ -6973,12 +7334,6 @@
     if (!cal.meas.length || !t) return null;
     if (String(r0.pp || '').trim()) return { pitch: true };
     return fitGrid(cal.meas, t.dirX, t.dirY, parseFloat(r0.sx) * k, parseFloat(r0.sy) * k, parseTurn(r0.turn) || 0);
-  }
-  // The stock as drawn on the map, if any: its holes aren't suggested.
-  function stockShown() {
-    if (holes.stockLock) return lockedStock();
-    var p = holes.grid[holes.picked];
-    return p ? stockAt(holePoint(p)) : stockAt(holes.stockAnchor, true);
   }
   function calNext() {
     var plan = calPlan(holes.grid, holes.activeGrid, stockShown()), done = {};

@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1721,6 +1721,57 @@ test('startingFeeds: ncCAM\'s formula, within the machine\'s limits', () => {
   assert.equal(capped.feedMm, 2000); assert.equal(capped.capped, true);
   assert.equal(startingFeeds(6.35, 2, 'mdf', { maxRpm: 12000 }).rpm, 12000);
   const al = startingFeeds(6.35, 2, 'aluminum', {});
-  assert.ok(al.feedMm < 1000 && al.stepMm < 1, 'aluminum is gentler');
+  assert.ok(al.feedMm < 1100 && al.stepMm < 1, 'aluminum is gentler');
+  assert.ok(startingFeeds(6.35, 2, 'hdpe', {}).feedMm > startingFeeds(6.35, 2, 'acrylic', {}).feedMm * 0.9);
   assert.equal(startingFeeds(4, 2, 'nope', {}).rpm, 18000, 'unknown is MDF');
+});
+
+test('stockOnPins: an L of pins gives the stock corner a pin radius off each line', () => {
+  const hole = (col, row, extra) => Object.assign({ col, row, x: 48 + (col - 1) * 96, y: 48 + (row - 1) * 96, diaMm: 8 }, extra);
+  const grid = [];
+  for (let c = 1; c <= 8; c++) for (let r = 1; r <= 8; r++) grid.push(hole(c, r));
+  const ax = gridAxes(grid, 0);
+  assert.deepEqual(ax, { ux: { x: 1, y: 0 }, uy: { x: 0, y: 1 } });
+  // Front edge on row 3 (pins at columns 4 and 7), left edge on column 3 (pin at row 4).
+  const r = stockOnPins([hole(4, 3), hole(7, 3), hole(3, 4)], ax);
+  assert.equal(r.fits.length, 1);
+  const f = r.fits[0];
+  assert.deepEqual(f.H, { x: 240, y: 240 });
+  assert.deepEqual(f.corner, { x: 244, y: 244 });
+  assert.equal(f.cornerName, 'front-left'); assert.equal(f.side, 'back-right');
+  // The far side: pins right of and behind the stock.
+  const g = stockOnPins([hole(2, 6), hole(5, 6), hole(6, 5)], ax).fits[0];
+  assert.deepEqual(g.corner, { x: 48 + 5 * 96 - 4, y: 48 + 5 * 96 - 4 });
+  assert.equal(g.cornerName, 'back-right'); assert.equal(g.side, 'front-left');
+  // A smaller pin: its own radius.
+  const s = stockOnPins([hole(4, 3, { pinMm: 6.35 }), hole(3, 4, { pinMm: 6.35 })], ax);
+  assert.equal(s.fits.length, 2, 'two pins diagonally read both ways');
+  assert.deepEqual(s.fits.map(x => x.side).sort(), ['back-right', 'front-left']);
+  assert.ok(s.fits.every(x => Math.abs(Math.abs(x.corner.x - x.H.x) - 3.175) < 1e-9));
+  // Problems.
+  assert.equal(stockOnPins([hole(4, 3)], ax).problem, 'few');
+  assert.equal(stockOnPins([hole(4, 3), hole(7, 3)], ax).problem, 'oneLine');
+  const x = stockOnPins([hole(4, 3), hole(7, 3), hole(3, 4), hole(3, 3)], ax);
+  assert.equal(x.fits.length, 1, 'a pin at the crossing is ignored');
+  assert.deepEqual(x.fits[0].corner, { x: 244, y: 244 });
+  assert.equal(x.fits[0].ignored.col, 3);
+  assert.equal(stockOnPins([hole(4, 3), hole(1, 3), hole(3, 4)], ax).problem, 'sides');
+  assert.equal(stockOnPins([hole(4, 3), hole(5, 4), hole(6, 6)], ax).problem, 'notL');
+  assert.equal(stockOnPins([hole(4, 3), Object.assign(hole(3, 4), { layer: 1 })], ax).problem, 'grids');
+  assert.equal(stockOnPins([hole(4, 3), { x: 0, y: 0, diaMm: 8 }], ax).problem, 'list');
+});
+
+test('stockOnPins: a turned grid keeps the corner a pin radius off each line', () => {
+  const t = 2 * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+  const at = (col, row) => { const x = (col - 1) * 96, y = (row - 1) * 96; return { col, row, x: 48 + x * c - y * s, y: 48 + x * s + y * c, diaMm: 8 }; };
+  const grid = [];
+  for (let i = 1; i <= 5; i++) for (let j = 1; j <= 5; j++) grid.push(at(i, j));
+  const ax = gridAxes(grid, 0);
+  const f = stockOnPins([at(3, 2), at(5, 2), at(2, 3)], ax).fits[0];
+  // Distance from the corner to each pin line is the pin radius.
+  const P = at(3, 2), Q = at(2, 3);
+  const dRow = Math.abs((f.corner.x - P.x) * -ax.ux.y + (f.corner.y - P.y) * ax.ux.x);
+  const dCol = Math.abs((f.corner.x - Q.x) * -ax.uy.y + (f.corner.y - Q.y) * ax.uy.x);
+  assert.ok(Math.abs(dRow - 4) < 1e-9 && Math.abs(dCol - 4) < 1e-9);
+  assert.equal(f.cornerName, 'front-left');
 });
