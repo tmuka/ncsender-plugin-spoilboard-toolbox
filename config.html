@@ -587,7 +587,7 @@
                 <option value="back-left">Back left at point</option><option value="back-right">Back right at point</option>
               </select>
               <span class="mw-dots-wrap"><span class="mw-dots-cap">X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
-              <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the corner on the picked point (or X0 Y0) to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-anchor" title="With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when Stock was ticked, so setting X0 Y0 on the stock doesn't move it. Press this to take X0 Y0 as it is now.">From X0 Y0 now</button></span>
+              <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the corner on the picked point (or X0 Y0) to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-anchor" title="With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when Stock was ticked, so setting X0 Y0 on the stock doesn't move it. Press this to take X0 Y0 as it is now.">From X0 Y0 now</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-lock" aria-pressed="false" title="Keep the stock where it's drawn now: picking other holes to go to then aims at the hole itself and leaves the stock alone. Tap a stock dot to aim at the stock again.">Lock Position</button></span>
             </div>
             <div class="mw-maptools-row">
               <span class="mw-zoom" role="group" aria-label="Zoom the map">
@@ -3919,6 +3919,7 @@
     // Where the stock was drawn from comes back once the grid is placed
     // (restoreStock), so a reopen draws it where it was.
     holes.stockAnchor = null;
+    holes.stockLock = null;
     holes.savedStock = saved.stockPoint || null;
     holes.profiles = Array.isArray(saved.holeProfiles) ? saved.holeProfiles.filter(function(x) { return x && typeof x.name === 'string' && x.name.trim(); }) : [];
     holes.profile = holes.profiles.some(function(x) { return x.name === saved.holeProfile; }) ? saved.holeProfile : '';
@@ -4024,7 +4025,8 @@
     fav.addEventListener('click', toggleFavorite);
     fav.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); toggleFavorite(); } });
     function stockSync() { $('mw-stock-on').closest('.mw-stock').classList.toggle('mw-stock-active', $('mw-stock-on').checked); renderHoles(); saveSettings(); }
-    $('mw-stock-on').addEventListener('change', function() { if ($('mw-stock-on').checked) anchorStock(); }, true);
+    $('mw-stock-on').addEventListener('change', function() { holes.stockLock = null; if ($('mw-stock-on').checked) anchorStock(); }, true);
+    $('mw-stock-lock').addEventListener('click', function() { if (holes.stockLock) unlockStock(); else lockStock(); stockSync(); });
     $('mw-stock-anchor').addEventListener('click', function() { readMachineState().then(function() { anchorStock(); stockSync(); }); });
     $('mw-stock-far').addEventListener('click', function() { readMachineState().then(function() { stockFromSpindle(); stockSync(); }); });
     $('mw-stock-t').addEventListener('input', function() { holes.thickFrom = 'typed'; });
@@ -4035,7 +4037,11 @@
     });
     $('mw-stock-on').closest('.mw-stock').classList.toggle('mw-stock-active', $('mw-stock-on').checked);
     ROOT.querySelectorAll('#mw-stock-dots .mw-dot').forEach(function(d) {
-      d.addEventListener('click', function() { setStockZero(d.getAttribute('data-origin')); renderHoles(); saveSettings(); });
+      d.addEventListener('click', function() {
+        setStockZero(d.getAttribute('data-origin'));
+        if (holes.stockLock && holes.picked >= 0) { disarmGoto(); holes.picked = -1; holes.refXY = spindleXY(); }
+        renderHoles(); saveSettings();
+      });
       d.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); d.click(); } });
     });
     startLive();
@@ -4130,7 +4136,7 @@
     return { x: p.x + o.dx, y: p.y + o.dy };
   }
   function holeTarget(p) {
-    var pt = holePoint(p), r = stockAt(pt);
+    var pt = holePoint(p), r = holes.stockLock ? null : stockAt(pt);
     return r ? rectPoint(r, holes.stockZero) : pt;
   }
   // The stock's rectangle with its corner on pt, or null when Stock is
@@ -4144,6 +4150,26 @@
     return stockRect(pt.x, pt.y, w, l, c !== 'auto' ? c : fromZero ? 'front-left' : stockCornerFor(holes.origin));
   }
   function stockActive() { return !!stockAt({ x: 0, y: 0 }); }
+  // Lock Position: the stock stays where it was drawn (holes.stockLock:
+  // the point it hung off, machine mm, and which corner sits on it) while
+  // other holes are picked; its size can still change from that corner.
+  function lockedStock() {
+    var L = holes.stockLock, r = L && stockAt(L);
+    return r ? stockRect(L.x, L.y, r.maxX - r.minX, r.maxY - r.minY, L.corner) : null;
+  }
+  function lockStock() {
+    var p = holes.grid[holes.picked], pt = p ? holePoint(p) : holes.stockAnchor;
+    if (!stockAt(pt)) return;
+    var c = $('mw-stock-corner').value;
+    holes.stockLock = { x: pt.x, y: pt.y, corner: c !== 'auto' ? c : p ? stockCornerFor(holes.origin) : 'front-left',
+      zMm: p && p.zMm != null ? p.zMm : null, on: p ? holeName(p) : holes.stockAnchor.wcs + ' X0 Y0' };
+    // Still aimed at the stock, as before locking.
+    if (p) { disarmGoto(); holes.picked = -1; holes.refXY = spindleXY(); }
+  }
+  function unlockStock() {
+    holes.stockLock = null;
+    if (!holes.grid[holes.picked] && !holes.stockAnchor) anchorStock();
+  }
   // The stock's Thick field follows the thickness slot (what Measure stock
   // thickness or Store wrote) until it's typed in this session.
   function takeMeasuredThickness(mm) {
@@ -4191,13 +4217,20 @@
   function stockPoint() {
     var p = holes.grid[holes.picked];
     if (!$('mw-stock-on').checked) return null;
+    if (holes.stockLock) return { lock: holes.stockLock };
     if (p) return { hole: holeKey(p) };
     return holes.stockAnchor ? { x: holes.stockAnchor.x, y: holes.stockAnchor.y, wcs: holes.stockAnchor.wcs } : null;
   }
   function restoreStock() {
     var sp = holes.savedStock;
     holes.savedStock = null;
-    if (!$('mw-stock-on').checked || holes.grid[holes.picked] || holes.stockAnchor) return;
+    if (!$('mw-stock-on').checked || holes.grid[holes.picked] || holes.stockAnchor || holes.stockLock) return;
+    var L = sp && sp.lock;
+    if (L && isFinite(L.x) && isFinite(L.y) && HOLE_ORIGINS.indexOf(L.corner) >= 0) {
+      holes.stockLock = { x: +L.x, y: +L.y, corner: L.corner, zMm: isFinite(L.zMm) && L.zMm !== null ? +L.zMm : null, on: String(L.on || '') };
+      renderHoles();
+      return;
+    }
     if (sp && sp.hole) {
       for (var i = 0; i < holes.grid.length; i++) {
         if (holeKey(holes.grid[i]) === sp.hole) { holes.picked = i; renderHoles(); return; }
@@ -4212,12 +4245,12 @@
   function pickTarget() {
     var p = holes.grid[holes.picked];
     if (p) return { p: p, tg: holeTarget(p) };
-    var r = stockAt(holes.stockAnchor, true);
+    var r = holes.stockLock ? lockedStock() : stockAt(holes.stockAnchor, true);
     return r ? { p: null, tg: rectPoint(r, holes.stockZero) } : null;
   }
   function targetText(t) {
-    var stock = stockActive();
-    if (!t.p) return 'the stock\u2019s ' + ORIGIN_NOTES[holes.stockZero] + ' drawn from ' + holes.stockAnchor.wcs + ' X0 Y0';
+    var stock = stockActive() && !holes.stockLock;
+    if (!t.p) return 'the stock\u2019s ' + ORIGIN_NOTES[holes.stockZero] + (holes.stockLock ? ', locked in place' : ' drawn from ' + holes.stockAnchor.wcs + ' X0 Y0');
     var hole = 'the ' + ORIGIN_NOTES[holes.origin] + ' of ' + holeName(t.p).replace(/^Column/, 'column');
     return stock ? 'the stock\u2019s ' + ORIGIN_NOTES[holes.stockZero] + ' (from ' + hole + ')' : hole;
   }
@@ -5211,7 +5244,7 @@
       ztip.textContent = wcs + ' X0 Y0: machine X ' + fmt(zero.x) + ', Y ' + fmt(zero.y) + ' mm' + (off ? ', outside the machine\u2019s travel (shown at the nearest edge). Set it again on a hole if you use it.' : '');
       zl.appendChild(ztip);
     }
-    var picked = holes.grid[holes.picked], stock = picked ? stockAt(holePoint(picked)) : stockAt(holes.stockAnchor, true);
+    var stock = stockShown();
     if (stock) {
       // Clipped to the bed: stock hanging past the travel stops at its edge.
       var sx0 = Math.max(stock.minX, minX), sx1 = Math.min(stock.maxX, minX + t.xMm), sy0 = Math.max(stock.minY, minY), sy1 = Math.min(stock.maxY, minY + t.yMm);
@@ -5324,9 +5357,9 @@
     var p = holes.grid[holes.picked], aim = pickTarget(), tg = aim && aim.tg;
     var grabbable = p && p.col != null && (p.layer || 0) === holes.activeGrid && $('mw-hole-layout').value !== 'list';
     $('mw-hole-here').textContent = grabbable ? 'Grab ' + holeLabel(p) + ' Center' : 'Grab First Hole Center';
-    var onStock = p && stockActive(), live = holes.liveNear && holes.grid[holes.liveNear.index];
+    var onStock = p && stockActive() && !holes.stockLock, live = holes.liveNear && holes.grid[holes.liveNear.index];
     $('mw-hole-picked').textContent = p ? holeName(p) + ' \u00b7 ' + ORIGIN_NOTES[holes.origin] + (onStock ? ' \u00b7 stock ' + ORIGIN_NOTES[holes.stockZero] : '')
-      : aim ? 'Stock ' + ORIGIN_NOTES[holes.stockZero] + ' \u00b7 from ' + holes.stockAnchor.wcs + ' X0 Y0' : 'No hole picked';
+      : aim ? 'Stock ' + ORIGIN_NOTES[holes.stockZero] + ' \u00b7 ' + (holes.stockLock ? 'locked in place' : 'from ' + holes.stockAnchor.wcs + ' X0 Y0') : 'No hole picked';
     $('mw-hole-dots').classList.toggle('mw-has-hole', !!p);
     $('mw-hole-fav').hidden = !p;
     $('mw-hole-fav').setAttribute('aria-pressed', p && holes.favorites.indexOf(holeKey(p)) >= 0 ? 'true' : 'false');
@@ -5359,12 +5392,19 @@
     $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy;
     if (!zt && hold.btn && hold.btn.id === 'mw-hole-setz') stopHold(false);
     if (!aim || problem || holes.busy) disarmGoto();
-    var on = $('mw-stock-on').checked, a = holes.stockAnchor;
-    $('mw-stock-note').textContent = !on ? '' : p ? 'Drawn from the picked hole.'
+    var on = $('mw-stock-on').checked, a = holes.stockAnchor, L = holes.stockLock;
+    $('mw-stock-note').textContent = !on ? '' : L ? 'Locked where it was drawn from ' + L.on + ': picking other holes aims at the hole and leaves the stock here. Tap a stock dot to aim at the stock.'
+      : p ? 'Drawn from the picked hole.'
       : a ? 'No hole picked: drawn from ' + a.wcs + ' X0 Y0 as taken (machine X ' + shown(a.x) + ', Y ' + shown(a.y) + ' ' + unitName() + '); it stays put when X0 Y0 changes.'
       : holeWcs() > 6 ? 'Pick a hole: ncSender doesn\u2019t report ' + WCS_NAMES[holeWcs()] + '\u2019s X0 Y0, so the stock can only hang off G54\u2013G59.'
       : 'Pick a hole, or set X0 Y0 and press From X0 Y0 now.';
-    $('mw-stock-anchor').hidden = !on || !!p;
+    $('mw-stock-anchor').hidden = !on || !!p || !!L;
+    $('mw-stock-far').disabled = !!L;
+    $('mw-stock-corner').disabled = !!L;
+    $('mw-stock-lock').hidden = !on;
+    $('mw-stock-lock').disabled = !L && !stockShown();
+    $('mw-stock-lock').setAttribute('aria-pressed', L ? 'true' : 'false');
+    $('mw-stock-lock').textContent = L ? 'Unlock Position' : 'Lock Position';
     suppressButtons();
   }
   // One hole action at a time (Go, Set, Pick Nearest Hole, Grab), so their
@@ -5620,6 +5660,7 @@
     var base = p && p.zMm != null ? p.zMm : null;
     var on = p ? (p.name ? '\u201c' + p.name + '\u201d' : holeName(p).replace(/^Column/, 'column')) : '';
     if ($('mw-stock-on').checked) {
+      if (holes.stockLock) { base = holes.stockLock.zMm; on = holes.stockLock.on; }
       var top = $('mw-stock-zmode').value === 'top', t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
       if (top && !(t > 0)) return null;
       var under = base != null ? on : 'the spoilboard';
@@ -6146,7 +6187,8 @@
   // flip pins. Z0 on the stock's top.
   function stockHoleSettings() {
     var o = cutSettings(true), probs = placeProblems(o), hh = readHoles(), k = state.imperial ? MM_PER_INCH : 1;
-    var p = holes.grid[holes.picked], rect = p ? stockAt(holePoint(p)) : stockAt(holes.stockAnchor, true);
+    var p = holes.grid[holes.picked], rect = stockShown();
+    if (holes.stockLock) p = holes.stockLock.zMm != null ? { zMm: holes.stockLock.zMm } : null;
     var mode = $('mw-sh-mode').value, pins = mode === 'pins', fix = mode === 'fixture';
     var thick = unitVal($('mw-stock-t')) * k;
     var size = cutMm(pins ? 'mw-sh-pin' : 'mw-sh-bolt'), pinSize = fix ? cutMm('mw-sh-pin') : NaN, cb = pins ? NaN : cutMm('mw-sh-cb'), cbd = cutMm('mw-sh-cbd');
@@ -6648,6 +6690,7 @@
   }
   // The stock as drawn on the map, if any: its holes aren't suggested.
   function stockShown() {
+    if (holes.stockLock) return lockedStock();
     var p = holes.grid[holes.picked];
     return p ? stockAt(holePoint(p)) : stockAt(holes.stockAnchor, true);
   }
@@ -6831,6 +6874,7 @@
       '<p><strong>Stock:</strong> tick it and type its width (X) and length (Y). It&rsquo;s drawn from the picked side of the picked hole (<strong>Corner</strong> picks which stock corner sits there), and its own dots put X0 Y0 on its center, a corner or an edge. Go to and Set use that point; the keyboard macros always use the hole.</p>' +
         '<ul><li><strong>No hole picked:</strong> it hangs off X0 Y0. Zero on a corner, tick Stock, hold Set for its center. <strong>From X0 Y0 now</strong> takes X0 Y0 again.</li>' +
         '<li><strong>No tape measure:</strong> jog over the far corner and press <strong>Far Corner Here</strong>.</li>' +
+        '<li><strong>Lock Position:</strong> the stock stays where it is while you pick other holes to go to; tap a stock dot to aim at the stock again.</li>' +
         '<li><strong>Thickness</strong> fills in from SBT: Measure stock thickness until you type one.</li></ul>' +
         '<p>It stays where it was when you close and reopen the plugin.</p>',
       '<strong>Zoom</strong> for a big bed: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',

@@ -409,8 +409,10 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; **From X0 Y0 now** takes
   X0 Y0 again, and picking a hole replaces it. Reopening the plugin keeps the stock where it was. No
   tape measure? Jog the bit over the stock's opposite corner and press **Far Corner Here** for its width
-  and length; its thickness fills in from **SBT: Measure stock thickness** until you type one. The
-  keyboard macros always use the hole itself.
+  and length; its thickness fills in from **SBT: Measure stock thickness** until you type one.
+  **Lock Position** keeps the stock where it is while you pick other holes to go to: picks then aim at
+  the hole itself, and tapping a stock dot aims at the stock again. The keyboard macros always use the
+  hole itself.
 - **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
   rectangle over it. This map then won't pick its holes, Pick Nearest Hole skips them, and Go to and Set
   won't target a point inside it. **That's all it does: it's a note for the picker, not a keepout
