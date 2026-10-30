@@ -238,6 +238,10 @@
   .mw-hole-map.mw-zoomed { touch-action: none; cursor: grab; }
   .mw-hole-map.mw-zoomed.mw-editing { cursor: crosshair; }
   .mw-zoom { display: inline-flex; align-items: center; gap: 4px; }
+  /* Under the map: what only changes the view, never the machine or the pick. */
+  .mw-mapview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
+  .mw-mapview-cap { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-secondary); }
+  .mw-mapview .mw-btn { min-height: 0 !important; padding: 4px 10px !important; }
   .mw-zoom .mw-btn { min-width: 34px; }
   .mw-zoom-level { min-width: 2.6em; text-align: center; }
   .mw-hole-map.mw-editing .mw-h-spot { cursor: crosshair; }
@@ -481,7 +485,7 @@
     display: grid; grid-template-columns: minmax(0, 1fr) var(--mw-side, 230px); grid-template-rows: auto 1fr;
     gap: 10px 16px; align-items: start;
   }
-  .mw-pick-card.mw-tall .mw-hole-map { grid-row: 1 / span 2; }
+  .mw-pick-card.mw-tall .mw-mapcol { grid-row: 1 / span 2; }
   /* Nothing in the narrow column may push it wider than its 230 px (300 on wide screens). */
   .mw-pick-card.mw-tall > *, .mw-pick-card.mw-tall .mw-holebar > *, .mw-maptools > * { min-width: 0; max-width: 100%; }
   .mw-pick-card.mw-tall .mw-holebar { flex-direction: column; align-items: stretch; }
@@ -492,7 +496,8 @@
   .mw-pick-card.mw-tall .mw-holebar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 0; align-items: stretch; }
   .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-wcs, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-set,
   .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-setz { grid-column: 1 / -1; }
-  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-goto {
+  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-goto,
+  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-stock-gocenter {
     min-width: 0 !important; padding-left: 6px !important; padding-right: 6px !important; white-space: normal; line-height: 1.15;
   }
   .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
@@ -590,7 +595,19 @@
         and the dots pick a point on the stock. The line beside <strong>Set</strong> says where, with the numbers. Hold <strong>Go to Selected</strong> to move there at Safe Z;
         hold <strong>Set</strong> to make it X0 Y0 without moving.</p>
       <section class="mw-card mw-pick-card" id="mw-pick-card" data-zmode="hole" aria-label="Pick a hole or place the stock">
-        <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
+        <div class="mw-mapcol">
+          <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
+          <div class="mw-mapview" role="group" aria-labelledby="mw-mapview-cap">
+            <span class="mw-mapview-cap" id="mw-mapview-cap">Map view</span>
+            <span class="mw-zoom">
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-out" aria-label="Zoom out" title="Zoom out (or the mouse wheel, or pinch).">&minus;</button>
+              <span class="mw-hint mw-zoom-level" id="mw-zoom-level">1&times;</span>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-in" aria-label="Zoom in" title="Zoom in on the spindle, or on the middle when it isn't homed (or the mouse wheel over a spot, or pinch). Drag the map to look around.">+</button>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-fit" title="Show the whole travel again.">Fit</button>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-follow" aria-pressed="false" title="While zoomed in, keep the spindle in the middle as you jog. Dragging the map turns it off.">Follow</button>
+            </span>
+          </div>
+        </div>
         <div class="mw-holebar" id="mw-holebar">
           <div class="mw-seg-group mw-zmode" role="group" aria-label="What X0 Y0 goes on">
             <button type="button" class="mw-seg" data-zmode="hole" aria-pressed="true" title="X0 Y0 on a hole: its center, a side or a corner of the hole itself. Tap a hole or press Pick Nearest Hole. The stock, if placed, stays put.">Hole</button>
@@ -632,6 +649,7 @@
           <svg class="mw-zero-inset" id="mw-zero-inset" viewBox="0 0 150 112" role="img" aria-label="Zoomed in, to scale: where X0 Y0 goes" style="display: none"></svg>
           <div class="mw-holebar-actions">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-only-hole" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Pick Nearest Hole</button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-only-stock" id="mw-stock-gocenter" disabled title="Hold to move the spindle over the stock's center, whichever dot X0 Y0 is on: first up to ncSender's Safe Z, then across. Nothing is set."><span class="mw-hold-fill"></span>Go to Stock Center<span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill"></span>Go to Selected<span class="mw-hold-hint">Hold</span></button>
             <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
               <option value="" selected>Active</option>
@@ -644,13 +662,6 @@
           </div>
           <div class="mw-maptools">
             <div class="mw-maptools-row">
-              <span class="mw-zoom" role="group" aria-label="Zoom the map">
-                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-out" aria-label="Zoom out" title="Zoom out (or the mouse wheel, or pinch).">&minus;</button>
-                <span class="mw-hint mw-zoom-level" id="mw-zoom-level">1&times;</span>
-                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-in" aria-label="Zoom in" title="Zoom in on the spindle, or on the middle when it isn't homed (or the mouse wheel over a spot, or pinch). Drag the map to look around.">+</button>
-                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-fit" title="Show the whole travel again.">Fit</button>
-                <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-follow" aria-pressed="false" title="While zoomed in, keep the spindle in the middle as you jog. Dragging the map turns it off.">Follow</button>
-              </span>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-area" aria-pressed="false" title="Mark a clamp or fixture on the map for this job: drag a rectangle. This map then won't pick its holes, and Go to and Set won't target a point inside it. It's only a reminder for this picker: jogging, jobs and the keyboard macros don't know about it. Tap an excluded area to remove it.">Exclude Picks</button>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-clear" hidden title="Remove every excluded area.">Clear Exclusions</button>
               <span class="mw-favs" id="mw-favs"></span>
@@ -4280,7 +4291,7 @@
     $('mw-ins-add').addEventListener('click', addInsertGrid);
     $('mw-ins-cancel').addEventListener('click', function() { $('mw-ins-panel').hidden = true; renderGridBar(); });
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
-    ['mw-hole-goto', 'mw-hole-set', 'mw-hole-setz', 'mw-cal-goto', 'mw-cal-auto'].forEach(function(id) {
+    ['mw-hole-goto', 'mw-stock-gocenter', 'mw-hole-set', 'mw-hole-setz', 'mw-cal-goto', 'mw-cal-auto'].forEach(function(id) {
       var btn = $(id);
       btn.addEventListener('pointerdown', function(evt) { if (evt.button === 0) startHold(btn, evt); });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(type) {
@@ -5526,7 +5537,7 @@
     var w = svg.getBoundingClientRect().width;
     if (!w) return { w: 700, h: 400 };
     var top = svg.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
-    var below = 20 + 13;
+    var below = 20 + 13 + $('mw-hole-map').nextElementSibling.offsetHeight + 8;
     if (!tall) below += $('mw-holebar').offsetHeight + Math.max($('mw-hole-status').offsetHeight, 18) + 20;
     return { w: w, h: Math.max(260, panel.clientHeight - top - below) };
   }
@@ -5944,6 +5955,7 @@
     drawZeroInset(aim && !problem ? aim : null);
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
+    $('mw-stock-gocenter').disabled = !stockCenter() || holes.busy;
     var zt = zTarget();
     $('mw-hole-setz').hidden = !zt;
     $('mw-hole-z').hidden = !zt;
@@ -5952,7 +5964,8 @@
     $('mw-hole-z').classList.toggle('mw-bad-text', !!zbad);
     $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy;
     if (!zt && hold.btn && hold.btn.id === 'mw-hole-setz') stopHold(false);
-    if (!aim || problem || holes.busy) disarmGoto();
+    var centerHeld = hold.btn && hold.btn.id === 'mw-stock-gocenter';
+    if (centerHeld ? $('mw-stock-gocenter').disabled : !aim || problem || holes.busy) disarmGoto();
     // The stock panel: how it's placed, or what's missing.
     var note = $('mw-stock-note'), which = $('mw-stock-which'), msg = '';
     which.textContent = '';
@@ -6145,7 +6158,7 @@
   var hold = { raf: null, start: 0, active: false, btn: null };
   // Hold buttons (Go to Selected, Set), like ncSender's XY0: fill over a
   // second, act at the end, blink when let go early. One at a time.
-  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : btn.id === 'mw-hole-setz' ? setZZero : btn.id === 'mw-cal-goto' ? calGoto : btn.id === 'mw-cal-auto' ? probeSuggested : goToHole; }
+  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : btn.id === 'mw-hole-setz' ? setZZero : btn.id === 'mw-cal-goto' ? calGoto : btn.id === 'mw-cal-auto' ? probeSuggested : btn.id === 'mw-stock-gocenter' ? goToStockCenter : goToHole; }
   function holdFill(btn, pct) { btn.querySelector('.mw-hold-fill').style.width = pct + '%'; }
   function startHold(btn, evt) {
     if (btn.disabled || hold.active) return;
@@ -6186,18 +6199,28 @@
     }
   }
   function disarmGoto() { stopHold(false); }
-  async function goToHole() {
+  // The placed stock's center, when it has a size and the spindle can go
+  // there: Go to Center, whichever dot X0 Y0 is on.
+  function stockCenter() {
+    if (holes.zeroMode !== 'stock') return null;
+    var sp = stockPlacement();
+    if (!sp || sp.problem || !sp.rect) return null;
+    var tg = rectPoint(sp.rect, 'center');
+    return state.travel && !targetProblem(tg.x, tg.y, state.travel, uiZones()) ? { p: null, stock: sp, tg: tg, center: true } : null;
+  }
+  function goToStockCenter() { return goToHole(true); }
+  async function goToHole(center) {
     if (!rootAlive()) return;
     var status = $('mw-hole-status');
     await holeAction(async function() {
       try {
-        var t = usableTarget();
+        var t = center === true ? stockCenter() : usableTarget();
         if (!t) return;
         await machineReady();
         var mz = parseFloat(String((state.machine || {}).MPos || '').split(',')[2]);
         await sendHoleCommands(holeGotoCommands(t.tg.x, t.tg.y, state.safeZMm, mz));
         status.setAttribute('data-state', 'ok');
-        status.textContent = 'Moving to ' + targetText(t) + ' at ' +
+        status.textContent = 'Moving to ' + (t.center ? 'the stock\u2019s center' : targetText(t)) + ' at ' +
           (state.safeZMm != null ? 'Safe Z' : 'machine Z0 (no Safe Z set in ncSender)') + ', or the current height if that\u2019s higher.';
         holes.nearMm = null;
         holes.refXY = { x: t.tg.x, y: t.tg.y };
@@ -7657,7 +7680,7 @@
         '<li><strong>Hole:</strong> the dots pick where on the hole: its center, or an edge or corner of the hole one hole radius out in machine X and Y (back is +Y, right is +X). For a part on a pin, a flip pin, a jig&rsquo;s home hole, or moving around the bed.</li>' +
         '<li><strong>Stock:</strong> the dots pick a point on the stock. A placed stock stays put while you pick holes in Hole mode.</li></ul>' +
         '<p>Beside Set, one line says where X0 Y0 goes, with the numbers, and the next how far Set moves the work offset and from where (a hole&rsquo;s dot or the stock&rsquo;s, when it&rsquo;s on one). A move of exactly a hole or pin radius from an unnamed spot is flagged: the usual sign of the wrong dot. The small view beside it shows it zoomed in.</p>',
-      '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves.',
+      '<strong>Go to Selected</strong> moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves. In <strong>Stock</strong> mode, <strong>Go to Stock Center</strong> beside it moves over the stock&rsquo;s center the same way, whichever dot X0 Y0 is on: handy for checking the stock, or for work from its center.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the silver ring with a dot in it is the spindle, as ncSender&rsquo;s Top view shows it from above (the dot is the bit&rsquo;s center). The numbers along the bottom (X) and right (Y) are machine coordinates in ncSender&rsquo;s units.',
       'Keepout zones that are on (ncSender&rsquo;s in Settings &rsaquo; Advanced, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Pick Nearest Hole skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, pick any hole on the map, jog the bit over its real center and press <strong>Grab B3 Center</strong> (the button names the picked hole): the insets are set so that hole is under the bit, with a warning if that&rsquo;s more than half a spacing from where Setup had it. With no hole picked it&rsquo;s <strong>Grab First Hole Center</strong>: the bit over the first hole, or any hole when the first is less than one spacing from machine X0 Y0. The machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
@@ -7676,7 +7699,7 @@
         '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Here</strong>. The pinned corner needs no size; every other point does, and the line beside Set says so.</li>' +
         '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one.</li></ul>' +
         '<p>It stays where it is when you close and reopen the plugin, and the Stock Holes tab and Cut Board&rsquo;s plate use it. The keyboard macros always use a hole.</p>',
-      '<strong>Zoom</strong> for a big bed: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
+      '<strong>Zoom</strong> for a big bed, with <strong>Map view</strong> under the map: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too). <strong>+ Inserts</strong> is for a board whose threaded inserts are a grid of their own, halfway between the dog holes (along X or Y): it adds that grid at the insert&rsquo;s hole size. Cut Board’s Dog holes drills it, Stock Holes can bolt to it, and Pick Nearest Hole skips it. Inserts behind the dog holes themselves need no extra grid.',

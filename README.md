@@ -398,7 +398,8 @@ or corner one hole radius out (back is +Y, right is +X), e.g. back right for a s
 **Go to Selected** moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0
 when none is set; it never moves down, so a spindle already above Safe Z stays there). Like ncSender's
 XY0, hold it for a second, since it moves the machine. A side of a hole that would land in a keepout
-zone or outside the travel can't be used.
+zone or outside the travel can't be used. In **Stock** mode, **Go to Stock Center** beside it moves over
+the stock's center the same way (hold it), whichever dot X0 Y0 is on.
 **Set G54 XY** (hold it for a second too, so a stray tap can't move your zero) sends
 `G21 G10 L2 P1 X… Y…`, which sets that work offset without moving anything. The
 menu beside it picks the offset: **Active** (the default) asks the controller which one is in use, so
@@ -409,7 +410,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 
 ### Map tools
 
-- **Zoom** for a big bed (an 8 × 5 ft machine's holes are a few pixels apart on a small screen): **+**
+- **Zoom** for a big bed, with **Map view** under the map (an 8 × 5 ft machine's holes are a few pixels apart on a small screen): **+**
   zooms in on the spindle, the mouse wheel on the spot under it, or pinch with two fingers. Drag the
   zoomed map to look around, and **Fit** shows the whole travel again. **Follow** keeps the spindle in
   the middle as you jog. Pick Nearest Hole and favorites bring the hole they pick into view.
