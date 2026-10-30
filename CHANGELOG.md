@@ -9,6 +9,13 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Lock Position** (XY0 Picker, Stock): keeps the stock where it's drawn while you pick other holes to
   go to. Picks then aim at the hole itself; tap a stock dot to aim at the stock again. The lock is kept
   when you reopen the plugin; untick Stock or press Unlock Position to let it follow picks again.
+- **Stock tab diagram:** a side view of the stock on the spoilboard with your numbers: Z0 on the
+  stock's top, how deep the holes go (T + Break Through), the counterbore and stop depths, and Z0's
+  height as measured against the recorded spoilboard.
+
+### 🐛 Fixes
+- The "Z0 is ... above the spoilboard" warning now says where the height comes from, what to touch off
+  to check it, and what to do if Z0 is right but the recorded spoilboard height isn't.
 
 ## 0.4.5
 

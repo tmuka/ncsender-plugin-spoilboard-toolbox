@@ -236,6 +236,15 @@
   .mw-diagram .mw-d-line { stroke: var(--mw-accent-text); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
   .mw-diagram .mw-d-dim { stroke: var(--color-text-secondary); stroke-width: 1; fill: none; }
   .mw-diagram .mw-d-edge { stroke: var(--color-border); stroke-width: 1; }
+  .mw-sh-diagram { max-width: 760px; margin: 4px 0; }
+  .mw-diagram .mw-d-warn { fill: var(--mw-warn); font-weight: 600; }
+  .mw-diagram .mw-d-ok { fill: var(--mw-ok); font-weight: 600; }
+  .mw-diagram .mw-d-stock { fill: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface-muted)); stroke: var(--mw-accent-text); stroke-width: 1; }
+  .mw-diagram .mw-d-spoil { fill: color-mix(in srgb, var(--color-text-secondary) 16%, var(--color-surface)); stroke: var(--mw-line); stroke-width: 1; }
+  .mw-diagram .mw-d-cut { fill: var(--color-surface); stroke: var(--color-text-primary); stroke-width: 1; }
+  .mw-diagram .mw-d-hole { fill: var(--color-surface); stroke: var(--mw-line); stroke-width: 1; }
+  .mw-diagram .mw-d-insert { fill: color-mix(in srgb, var(--mw-warn) 35%, var(--color-surface)); stroke: var(--mw-warn); stroke-width: 1; }
+  .mw-diagram .mw-d-pin { fill: color-mix(in srgb, var(--color-text-primary) 30%, transparent); stroke: var(--color-text-secondary); stroke-width: 1; }
   .mw-welcome { display: flex; flex-direction: column; gap: 14px; }
   .mw-welcome-title { margin: 0; font-size: 1.35rem; font-weight: 700; }
   .mw-welcome-frame { background: #111720; border-radius: 10px; padding: 8px; border: 1px solid var(--mw-line); }
@@ -1292,6 +1301,7 @@
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-break" value="1" title="How far below the stock's bottom the hole goes, into the spoilboard hole under it, so it comes out clean.">
           </div>
         </div>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-sh-diagram" viewBox="0 0 700 214" role="img" aria-label="Side view of the stock on the spoilboard: where Z0 is and how deep each hole goes."></svg>
         <p class="mw-hint" id="mw-sh-summary"></p>
         <p class="mw-status" id="mw-sh-note" role="status"></p>
         <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-sh-generate">Generate Stock Holes</button></div>
@@ -6208,9 +6218,12 @@
     // are from it. Checked against the spoilboard height the Z0 macros
     // recorded, when it's known.
     if (thick > 0 && o.zWcs != null && state.spoilZ) {
-      var above = o.zWcs - state.spoilZ;
+      var above = o.zWcs - state.spoilZ, slotName = WCS_NAMES[+$('mw-slot').value] || 'G59.3';
+      res.above = above;
       if (above < thick / 2) probs.push(o.wcsName + ' Z0 is ' + (Math.abs(above) < 0.05 ? 'on the spoilboard' : shown(above) + ' ' + unitName() + ' above the spoilboard') + ', not on the stock’s top: put it there first (SBT: Z0 on stock top, or touch off)');
-      else if (Math.abs(above - thick) > 0.5) res.warn = o.wcsName + ' Z0 is ' + shown(above) + ' ' + unitName() + ' above the spoilboard but the stock is ' + shown(thick) + ' ' + unitName() + ' thick: check Z0 is on its top and T is right.';
+      else if (Math.abs(above - thick) > 0.5) res.warn = o.wcsName + ' Z0 is ' + shown(above) + ' ' + unitName() + ' above the spoilboard height recorded in ' + slotName + ' Z, but T is ' + shown(thick) + ' ' + unitName() +
+        '. The holes are cut down from Z0, so check it\u2019s on this stock\u2019s top: touch the bit to the top and ncSender\u2019s Z should read 0. If it does, something ' + shown(above - thick) + ' ' + unitName() +
+        ' thick is under the stock, or the recorded spoilboard height is out of date (record it again in Z0 macros before using SBT: Z0 on spoilboard).';
     } else if (thick > 0) res.warn = 'Couldn’t check that Z0 is on the stock’s top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.';
     // Blank or 0: no counterbore, and its depth doesn't matter.
     var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '' && cb !== 0;
@@ -6302,6 +6315,68 @@
       if (el.value !== String(want)) el.removeAttribute('data-want');
     });
   }
+  // A side view of the stock on the spoilboard, not to scale, with this
+  // program's numbers: Z0 on the stock's top, every hole measured down
+  // from it, and Z0's height as checked against the recorded spoilboard.
+  function stockDiagram(s) {
+    var u = ' ' + unitName(), k = state.imperial ? MM_PER_INCH : 1, thick = unitVal($('mw-stock-t')) * k, brk = cutMm('mw-sh-break');
+    var cbd = cutMm('mw-sh-cbd'), stopd = cutMm('mw-sh-stopdepth'), wcs = s.o.wcsName || 'G54';
+    var num = function(v) { return isFinite(v) && v >= 0 ? shown(v) + u : '?'; };
+    var esc = function(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var TOP = 62, SB = 128, BOT = 186, BRK = 7, out = [];
+    var rect = function(cls, x0, y0, x1, y1) { out.push('<rect class="' + cls + '" x="' + x0 + '" y="' + y0 + '" width="' + (x1 - x0) + '" height="' + (y1 - y0) + '"/>'); };
+    var line = function(cls, x0, y0, x1, y1) { out.push('<line class="' + cls + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'); };
+    var text = function(x, y, t, cls, anchor) { out.push('<text x="' + x + '" y="' + y + '"' + (cls ? ' class="' + cls + '"' : '') + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + esc(t) + '</text>'); };
+    rect('mw-d-spoil', 30, SB, 430, BOT);
+    rect('mw-d-stock', 60, TOP, 400, SB);
+    text(36, BOT - 8, 'Spoilboard', 'mw-d-note');
+    text(66, SB - 8, s.fix ? 'Fixture plate' : 'Stock', 'mw-d-note');
+    var parts = s.fix ? [['pin', 210], ['bolt', 290], ['stop', 365]] : s.pins ? [['pin', 220], ['pin', 330]] : [['bolt', 270]];
+    parts.forEach(function(f) {
+      var kind = f[0], x = f[1];
+      if (kind === 'stop') {
+        var d = thick > 0 && stopd > 0 ? Math.min(SB - 10, TOP + (SB - TOP) * stopd / thick) : TOP + 34;
+        rect('mw-d-cut', x - 9, TOP, x + 9, d);
+        text(x, BOT + 16, 'stop', 'mw-d-note', 'middle');
+        return;
+      }
+      var w = kind === 'pin' ? 11 : 9;
+      if (kind === 'pin') {
+        rect('mw-d-hole', x - w, SB, x + w, BOT - 12);
+      } else {
+        rect('mw-d-hole', x - 13, SB, x + 13, BOT - 12);
+        rect('mw-d-insert', x - 11, SB + BRK + 3, x + 11, BOT - 22);
+        for (var y = SB + BRK + 7; y < BOT - 24; y += 5) line('mw-d-insert', x - 11, y, x + 11, y);
+      }
+      rect('mw-d-cut', x - w, TOP, x + w, SB + BRK);
+      if (kind === 'bolt' && s.hasCb) rect('mw-d-cut', x - 17, TOP, x + 17, TOP + 16);
+      if (kind === 'pin') rect('mw-d-pin', x - w + 3, TOP - 14, x + w - 3, BOT - 16);
+      text(x, BOT + 16, kind === 'pin' ? 'pin, dog hole' : 'bolt, insert', 'mw-d-note', 'middle');
+    });
+    // Z0 on the stock's top, the spoilboard's top, and the cut's bottom.
+    line('mw-d-line', 20, TOP, 420, TOP);
+    text(24, TOP - 8, wcs + ' Z0: the stock\u2019s top', 'mw-d-z0');
+    line('mw-d-dim', 404, SB + BRK, 424, SB + BRK);
+    line('mw-d-dim', 412, TOP, 412, SB + BRK);
+    line('mw-d-dim', 52, TOP, 52, SB);
+    line('mw-d-dim', 46, TOP, 58, TOP); line('mw-d-dim', 46, SB, 58, SB);
+    out.push('<text x="0" y="0" text-anchor="middle" class="mw-d-note" transform="translate(42 ' + ((TOP + SB) / 2) + ') rotate(-90)">T ' + esc(num(thick)) + '</text>');
+    // The numbers, on the right.
+    var X = 446, y = 26;
+    var say = function(t, cls, gap) { text(X, y, t, cls); y += gap || 15; };
+    say('Holes go ' + num(thick + brk) + ' down from Z0', 'mw-d-val');
+    say('T ' + num(thick) + ' + Break Through ' + num(brk), 'mw-d-note', 20);
+    if (s.hasCb) say('Counterbores ' + num(cbd) + ' deep', 'mw-d-note');
+    if (s.fix && s.stop) say('Stop ' + num(stopd) + ' deep, not through', 'mw-d-note');
+    y += 8;
+    if (s.above != null) {
+      var off = isFinite(thick) && Math.abs(s.above - thick) > 0.5;
+      say(wcs + ' Z0 now: ' + num(s.above), off ? 'mw-d-warn' : 'mw-d-ok');
+      say('above the recorded spoilboard', off ? 'mw-d-warn' : 'mw-d-note');
+      say(off ? 'Expected about T, ' + num(thick) : 'Matches T', off ? 'mw-d-warn' : 'mw-d-note');
+    } else say('Z0\u2019s height can\u2019t be checked yet', 'mw-d-note');
+    $('mw-sh-diagram').innerHTML = out.join('');
+  }
   function renderStockHoles() {
     fillShGrids();
     var s = stockHoleSettings(), o = s.o, u = ' ' + unitName(), text = '';
@@ -6332,6 +6407,7 @@
     }
     if (s.warn) text += (text ? ' ' : '') + s.warn;
     $('mw-sh-summary').textContent = text;
+    stockDiagram(s);
     showProblems($('mw-sh-note'), s.probs);
     $('mw-sh-generate').disabled = !!s.probs.length;
   }
