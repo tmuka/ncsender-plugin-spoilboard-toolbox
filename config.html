@@ -688,7 +688,7 @@
           </div>
           <div class="mw-field">
             <label for="mw-ins-dia">Insert Hole (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-ins-dia" value="" placeholder="e.g. 10mm" title="The hole each threaded insert goes in, as its maker gives it. Cut Holes drills the inserts' grid at this size.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-ins-dia" value="" placeholder="e.g. 10mm" title="The hole each threaded insert goes in, as its maker gives it. Cut Board drills the inserts' grid at this size.">
           </div>
           <div class="mw-field">
             <label aria-hidden="true">&nbsp;</label>
@@ -714,7 +714,7 @@
           </div>
           <div class="mw-field mw-grid-only">
             <label for="mw-hole-pin">Pin &Oslash; (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-pin" placeholder="= hole" title="The diameter of the pins (dogs, dowels) you put in these holes, where the stock touches them: Stock on Pins puts the stock's edge one pin radius from the hole's center. Blank: the same as the hole. Measure your dowel: an 8 mm dowel in an 8.1 mm hole is 8.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-pin" placeholder="= hole" title="The diameter of the pins (dogs, dowels) you put in these holes, where the stock touches them: Against Pins puts the stock's edge one pin radius from the hole's center. Blank: the same as the hole. Measure your dowel: an 8 mm dowel in an 8.1 mm hole is 8.">
           </div>
           <div class="mw-field mw-grid-only">
             <label for="mw-hole-sx">X Spacing (<span class="mw-unit">mm</span>)</label>
@@ -1355,7 +1355,7 @@
             </select>
           </div>
           <div class="mw-field" data-sh="pins fixture" hidden>
-            <label for="mw-sh-pin">Pin Size (<span class="mw-unit">mm</span>)</label>
+            <label for="mw-sh-pin">Pin Hole &Oslash; (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-pin" value="8" title="The hole for each pin through the stock: the size the dowel fits snugly (the Dowel fit test below finds it). No bigger than the spoilboard holes.">
           </div>
           <div class="mw-field" data-sh="pins fixture" hidden>
@@ -5274,7 +5274,7 @@
     saveSettings(); render();
     var st = $('mw-hole-status');
     st.setAttribute('data-state', 'ok');
-    st.textContent = 'Added \u201cInserts\u201d, halfway between ' + from + '\u2019s holes along ' + axis.toUpperCase() + '. Pick Nearest Hole skips it. Cut Holes drills it at its Hole Diameter; Stock Holes can bolt to it.';
+    st.textContent = 'Added \u201cInserts\u201d, halfway between ' + from + '\u2019s holes along ' + axis.toUpperCase() + '. Pick Nearest Hole skips it. Cut Board’s Dog holes drills it at its Hole Diameter; Stock Holes can bolt to it.';
   }
   var gridRemoveArmed = null;
   function disarmGridRemove() {
@@ -6304,7 +6304,7 @@
   }
 
 
-  // ---------- Cut Holes ----------
+  // ---------- Cut Board ----------
   //
   // The XY0 Picker's holes (holes.grid, as the map last placed them, with
   // its suppressed, hidden and blocked marks) cut by holeCutProgram and
@@ -6538,7 +6538,7 @@
     }
     $('mw-cut-diagram').innerHTML = out.join('');
   }
-  // The Cut Holes tab's fields, saved by id (less "mw-") in the machine's
+  // The Cut Board tab's fields, saved by id (less "mw-") in the machine's
   // units then (settings.units).
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
@@ -6567,7 +6567,7 @@
       else if (state.imperial && CUT_INCH_DEFAULTS[k] != null) $('mw-' + k).value = CUT_INCH_DEFAULTS[k];
     });
     if (!isFinite(parseFloat(c['fit-size']))) $('mw-fit-size').value = $('mw-hole-dia').value;
-    if (!isFinite(parseFloat(c['sh-pin']))) $('mw-sh-pin').value = $('mw-hole-dia').value;
+    if (!isFinite(parseFloat(c['sh-pin']))) $('mw-sh-pin').value = $('mw-hole-pin').value || $('mw-hole-dia').value;
     // A grid menu's options come later: it keeps the wanted value till then.
     CUT_SAVED.plain.forEach(function(k) { if (c[k] != null && c[k] !== '') { $('mw-' + k).value = c[k]; $('mw-' + k).setAttribute('data-want', c[k]); } });
     CUT_SAVED.checks.forEach(function(k) { if (typeof c[k] === 'boolean') $('mw-' + k).checked = c[k]; });
@@ -6685,7 +6685,7 @@
       holeCutProgram(f.o), $('mw-fit-note'), $('mw-fit-generate'));
   }
 
-  // A V-bit chamfer on the holes Cut Holes cuts.
+  // A V-bit chamfer on the holes Cut Board cuts.
   function chamferSettings() {
     var o = cutSettings(), probs = placeProblems(o);
     o.tool = null;
@@ -6890,8 +6890,8 @@
     else if (placed.problem === 'under') probs.push('A pin is under the stock in the XY0 Picker: check the pins and the size');
     else if (!rect) probs.push('Give the stock\u2019s width and length in the XY0 Picker\u2019s Stock mode');
     if (!(thick > 0)) probs.push('Give the stock a thickness (T) in the XY0 Picker');
-    if (!(size > 0)) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' must be more than 0');
-    if (fix && !(pinSize > 0)) probs.push('Pin Size must be more than 0');
+    if (!(size > 0)) probs.push((pins ? 'Pin Hole Ø' : 'Hole Size') + ' must be more than 0');
+    if (fix && !(pinSize > 0)) probs.push('Pin Hole Ø must be more than 0');
     if (!(slot >= 0) || slot > 10) probs.push('Slot + must be 0 to 10 ' + unitName() + ' (0: both pin holes round)');
     if (!(margin >= 0)) probs.push('Edge Margin must be 0 or more');
     if (blind && !(blindMm > 0)) probs.push('Depth must be more than 0, or blank to drill through');
@@ -6935,7 +6935,7 @@
       res.chosen = stockBoltHoles(stockHoleCandidates(layerHoles(bg), rect, (hasCb ? cb : size) / 2, margin).filter(function(q) { return pinKeys.indexOf(holeKey(q)) < 0; }), rect, $('mw-sh-which').value);
       if (!res.chosen.length) probs.push('No other ' + gridName(bg) + ' hole is under the plate, clear of its edge, for a bolt: try a smaller Edge Margin');
       var smallPin = blind ? [] : res.pinsAt.filter(function(q) { return pinSize > 2 * holeR(q, hh) + 0.05; });
-      if (smallPin.length) probs.push('Pin Size is bigger than the spoilboard hole under it (' + holeName(smallPin[0]) + '): breaking through would cut the spoilboard');
+      if (smallPin.length) probs.push('Pin Hole Ø is bigger than the spoilboard hole under it (' + holeName(smallPin[0]) + '): breaking through would cut the spoilboard');
       // Holes too close to each other run together.
       var all = res.pinsAt.map(function(q) { return { q: q, r: pinSize / 2 + slot / 2 }; })
         .concat(res.chosen.map(function(q) { return { q: q, r: (hasCb ? cb : size) / 2 }; }));
@@ -6960,7 +6960,7 @@
       }
     }
     var small = blind ? [] : res.chosen.filter(function(q) { return size > 2 * holeR(q, hh) + 0.05; });
-    if (small.length) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' is bigger than the spoilboard hole under it (' + holeName(small[0]) + '): breaking through would cut the spoilboard');
+    if (small.length) probs.push((pins ? 'Pin Hole Ø' : 'Hole Size') + ' is bigger than the spoilboard hole under it (' + holeName(small[0]) + '): breaking through would cut the spoilboard');
     if (pins) pinHoles(res.chosen, size, slot, depth).forEach(function(h) { o.holes.push(h); });
     else cutOrder(res.chosen).forEach(function(q) {
       if (hasCb) o.holes.push({ x: q.x, y: q.y, diaMm: cb, depthMm: cbd, label: holeName(q) + ' counterbore' });
@@ -7658,7 +7658,7 @@
       '<strong>Zoom</strong> for a big bed: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
-      '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too). <strong>+ Inserts</strong> is for a board whose threaded inserts are a grid of their own, halfway between the dog holes (along X or Y): it adds that grid at the insert&rsquo;s hole size. Cut Holes drills it, Stock Holes can bolt to it, and Pick Nearest Hole skips it. Inserts behind the dog holes themselves need no extra grid.',
+      '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too). <strong>+ Inserts</strong> is for a board whose threaded inserts are a grid of their own, halfway between the dog holes (along X or Y): it adds that grid at the insert&rsquo;s hole size. Cut Board’s Dog holes drills it, Stock Holes can bolt to it, and Pick Nearest Hole skips it. Inserts behind the dog holes themselves need no extra grid.',
       '<strong>Grid + List</strong> adds extra holes to a grid, one per line, measured from the first grid&rsquo;s first hole. A third value is that hole&rsquo;s own diameter, e.g. <kbd>pin: 130, 40, 6mm</kbd>; the map draws it at that size, and the dots put X0 Y0 on its own edge.',
       '<p><strong>Fixtures with a height</strong> (a vise, a jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard: <kbd>vise: 400, 250, , 63.5mm</kbd> (blank third value: Hole Diameter).</p>' +
         '<p>Pick it and hold <strong>Set Z0</strong>: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. In <strong>Stock</strong> mode, the <strong>Z0</strong> menu puts Z0 on the spoilboard under the stock or on the stock&rsquo;s top instead.</p><ul>' +
@@ -7670,7 +7670,7 @@
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines. No grid on the board yet? <strong>Spoilboard &rsaquo; Grid lines</strong> lasers or engraves it from Setup.',
       HELP_NEEDS, HELP_UNITS ] },
     cut: { name: 'Cut Board', notes: [
-      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The bit, feeds and spindle card is shared by all of them (and by the Stock tab).',
+      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The bit, feeds and spindle card is shared by all of them (and by Stock Holes).',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
