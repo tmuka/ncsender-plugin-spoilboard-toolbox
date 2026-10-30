@@ -1,7 +1,5 @@
 # Spoilboard Toolbox
 
-*Formerly **Zero Swapper**: same plugin, same settings and macros, a name for everything it does now.*
-
 **Your spoilboard's holes are already a precision fixture. Spoilboard Toolbox cuts them, measures them,
 and turns every one into a work zero you can hit again tomorrow.**
 
@@ -614,7 +612,7 @@ size and thickness; the holes come from the grid picked in Setup.
      spoilboard.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
-   - **Delete SBT: macros** removes every macro whose name starts with "SBT:" (or "ZS:", "MW:" or "Macro Wiz:", its names before; for example
+   - **Delete SBT: macros** removes every macro whose name starts with "SBT:" (or "ZS:", "MW:" or "Macro Wiz:", from older versions; for example
      ones left over from older settings or another work offset) and nothing else. The first press lists
      them and turns into **Confirm delete**; a second press within a few seconds deletes. Keyboard
      shortcuts set on deleted macros stop working (recreated macros get new numbers), so to change
