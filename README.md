@@ -10,9 +10,10 @@ and turns every one into a work zero you can hit again tomorrow.**
   Same hole, same zero, every job. Put it on a key and it's one press.
 - **Z0 for every tool, probed once.** Record the spoilboard height once. After that any measured tool
   puts Z0 on the spoilboard or the stock top in one click, and one more puts your old Z0 back.
-- **Zero anywhere on the stock, no tape measure.** Jog to the stock's far corner and press **Far
-  Corner Here** (or type its size), then put X0 Y0 on its center or any corner or edge, drawn right on
-  the map. Give a vise or fixture its height and Z0 goes on its jaw too.
+- **Zero on stock pushed against pins, worked out, not guessed.** Push the stock against pins in two
+  or three dog holes and tap those holes: the stock's corner is a pin radius off the pins, exact, and
+  X0 Y0 goes on that corner, an edge or its center. A line beside **Set** says where, with the numbers,
+  and flags a move that's exactly a hole or pin radius: the classic wrong-dot mistake.
 - **A whole spoilboard from one Generate.** Every dog hole drilled, spiralled or cleared at its own
   size, in one program you check in ncSender's 3D visualizer before it cuts. Then chamfer every hole and
   engrave fixture-table labels (A1, B3…) with a V-bit or a laser. The board and the map come from the
@@ -23,8 +24,13 @@ and turns every one into a work zero you can hit again tomorrow.**
   square (0.1° is 4 mm at the far end of an 8 ft bed).
 - **A spoilboard that lasts.** Cut just the T-tracks in a sacrificial top layer over a permanent layer
   of tracks and threaded inserts: surface or replace the top, never the inserts.
-- **Stock that bolts down and flips true.** Drill bolt holes right over threaded inserts, or two flip
-  pins so a part flipped for its second side drops back exactly where it was.
+- **Stock that bolts down, locates and flips true.** Drill bolt holes right over threaded inserts, a
+  plate with two locating pins (one round, one slotted) that goes back exactly where it was, or two
+  flip pins so a part flipped for its second side drops back where it was.
+- **Pictures where the words get close.** Live diagrams show what Inset, Spacing, Hole Ø and Pin Ø
+  measure, how deep each hole goes and what's left under it, and where X0 Y0 lands on a hole or
+  against the pins, with your numbers as you type. Starting feeds and speeds by material (MDF,
+  plywood, hardwood, HDPE, acrylic, aluminum) are a click away.
 - **Every bed, any size.** Missing holes, T-track panels, dog holes plus a pin grid, custom pins,
   lasered grid lines, keepout zones, a saved profile for every board, and zoom for an 8 × 5 ft bed.
 
@@ -32,8 +38,9 @@ Spoilboard Toolbox is a plugin for [ncSender](https://github.com/siganberg/ncSen
 grblHAL CNC routers. Its **XY0 Picker** shows your machine's bed with every hole on it, live as you jog,
 and sets the work offset (G54–G59.3) without moving the machine. Its **Z0 macros** tab checks your
 grblHAL controller, then writes ncSender macros you run from the Macros tab or, best of all, a
-keyboard shortcut. Its **Spoilboard** and **Stock** tabs write the programs that cut the board and
-drill the stock, from the same grid.
+keyboard shortcut. Its **Cut Board** tab writes the programs that cut the board's own pattern (or
+copy it onto a plate), and **Stock Holes** the ones that drill a workpiece so it bolts down, locates
+or flips, from the same grid.
 
 ![Spoilboard Toolbox's XY0 Picker in ncSender: a map of the CNC bed's dog hole grid between T-tracks, a
 hole picked with a sheet of stock drawn from it, the spindle, the ATCi tool rack's keepout zone in
@@ -44,16 +51,21 @@ red, and the Pick Nearest Hole, Go to Selected and Set G54 XY buttons](docs/xy0-
 ![X0 Y0 on a dog hole in two taps: jog roughly near a hole, tap Pick Nearest Hole and it takes the
 grid's exact position, then hold Set and G54 X0 Y0 lands on the hole's center](docs/two-taps.png)
 
-**Zero on a stock corner, no probing.** Push the stock against bench dogs in your spoilboard holes,
-jog roughly near the corner hole (a few mm off is fine), and press **Pick Nearest Hole** then hold **Set**, or
-one key with the nearest-hole macro. X0 Y0 lands exactly on the hole's edge or center, with no edge
-finder, no XY probe and nothing typed into the terminal. Use the same holes next time and you get the
-same zero back.
+**Zero on a stock corner, no probing.** Push the stock against pins in your dog holes, two along one
+edge and one along the other. In the XY0 Picker's **Stock** mode, tap those three holes: the stock's
+corner is worked out a pin radius off the pins' row and column, and the line beside **Set** says so
+("X0 Y0 → the stock's front left corner, 4.000 mm right and 4.000 mm back from where column 3 and
+row B cross, pins Ø 8.000"). Hold **Set**: no edge finder, no XY probe, nothing typed. Use the same
+holes next time and you get the same zero back.
 
-**Zero anywhere on the stock, no measuring.** Tick **Stock** and type its size: the map draws it from
-the picked hole, and a second box of dots puts X0 Y0 on its center or any corner or edge. Or, at the
+**Zero anywhere on the stock, no measuring.** Type its size (or jog over the far corner and press
+**Far Corner Here**), and the stock's dots put X0 Y0 on its center or any corner or edge. Or, at the
 machine: with X0 Y0 on one corner, jog roughly to the opposite corner and run **Set XY0 to Midpoint**
 for the exact center (**Midpoint XY** moves the spindle there first, at Safe Z).
+
+**Zero on a hole.** In **Hole** mode, jog roughly near a hole and press **Pick Nearest Hole**, or tap
+it, and hold **Set**: X0 Y0 lands on its center, or a side or corner of the hole (one hole radius
+out), for a part on a pin, a jig's home hole, or a flip pin.
 
 **New tool, same Z0.** Change to any measured tool and run **Z0 on stock top** (or **Z0 on
 spoilboard** for through-cuts). No re-probing.
@@ -75,7 +87,7 @@ That's enough for:
 - **Measure Holes by eye**, with a pin or dowel in the spindle (or a V-bit);
 - the **nearest-hole keyboard macros**;
 - **cutting the board**: dog holes, T-tracks, fit test, and chamfers and labels with a V-bit;
-- drilling **stock holes** (bolts, flip pins and fixture plates).
+- drilling **stock holes** (bolts, locating pins and flip pins).
 
 Put Z0 on the spoilboard (or the stock) any way you like for these: paper, a touch plate, or the Z0 macros.
 
@@ -214,9 +226,11 @@ coordinates, the work origin is exact and repeatable, with no edge finding, touc
 The plugin opens on its **XY0 Picker** tab; the Z0 macros are on the **Z0 macros** tab, and
 **Help** in the sidebar explains whichever tab you're on.
 
-Describe your spoilboard's grid once under **Setup** on that tab: **Hole Diameter**, **X Spacing**
-and **Y Spacing** (center to center), and **Inset X** / **Inset Y** (from machine X0 Y0 to the center
-of the first hole, into the machine's travel). Or jog the bit to the center of the first hole and press
+Describe your spoilboard's grid once under **Setup** on that tab: **Hole Diameter**, **Pin Ø** (the
+pins you put in the holes, where the stock touches them; blank for the hole's), **X Spacing** and
+**Y Spacing** (center to center), and **Inset X** / **Inset Y** (from machine X0 Y0 to the center of
+the first hole, into the machine's travel). A small picture under the fields shows which is which,
+with your numbers. Or jog the bit to the center of the first hole and press
 **Grab First Hole Center** to fill the insets in (with the machine connected and homed; any hole
 works when the first one is less than one spacing from machine X0 Y0). Better: **pick any hole on the
 map** first (one that's easy to reach, say), jog the bit over its real center, and press the button,
@@ -259,9 +273,10 @@ you're on. Each grid has its own name, hole diameter, spacing, insets, T-tracks 
 **Use for Nearest** decides whether Pick Nearest Hole and the keyboard macros snap to its holes (untick
 it for a pin grid you only ever pick on the map), and **Remove Grid** deletes it. The eye on each chip
 shows or hides that grid's holes on the map, handy for picking or suppressing holes where two grids
-overlap. **+ Inserts** adds a grid of threaded inserts on the grid lines, halfway between the holes
-(along X or Y), at the insert's hole size, so the dog holes stay free for pins: Cut Holes drills it, the
-Stock tab's **Fixture plate** bolts to it, and Pick Nearest Hole leaves it out. Hidden holes can't be
+overlap. **+ Inserts** is for a board whose threaded inserts are a grid of their own, halfway between
+the dog holes (along X or Y): it adds that grid at the insert's hole size. Cut Holes drills it, Stock
+Holes can bolt to it, and Pick Nearest Hole leaves it out. Inserts behind the dog holes themselves need
+no extra grid. Hidden holes can't be
 picked on the map or by Pick Nearest Hole, but the keyboard macros still
 use them (untick Use for Nearest to leave a grid out of those too). More than one grid makes the macros
 about 50 lines longer, plus about 30 per further grid.
@@ -402,19 +417,25 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   the middle as you jog. Pick Nearest Hole and favorites bring the hole they pick into view.
 - **Live position:** while you jog, the spindle (a silver ring, as ncSender's Top view shows it) moves and the hole nearest it gets a dashed ring,
   with its name and distance under the map, so you can see which hole Pick Nearest Hole will take.
-- **Stock:** tick it and type the stock's width (X) and length (Y). The stock is drawn from the picked
-  point of the picked hole, running away from the hole (the back right side of a hole takes the
-  stock's front left corner; **Corner** overrides that). The second box of dots picks where X0 Y0 goes
-  on the stock: its center, a corner or an edge. **Go to Selected** and **Set** then use that point.
-  With no hole picked, the stock is drawn from the work offset's X0 Y0 as it was when you ticked
-  Stock (its front left corner there, unless **Corner** says otherwise), so you can zero on a corner,
-  tick Stock, and hold Set for its center. It stays put when X0 Y0 changes; **From X0 Y0 now** takes
-  X0 Y0 again, and picking a hole replaces it. Reopening the plugin keeps the stock where it was. No
-  tape measure? Jog the bit over the stock's opposite corner and press **Far Corner Here** for its width
-  and length; its thickness fills in from **SBT: Measure stock thickness** until you type one.
-  **Lock Position** keeps the stock where it is while you pick other holes to go to: picks then aim at
-  the hole itself, and tapping a stock dot aims at the stock again. The keyboard macros always use the
-  hole itself.
+- **Hole or Stock:** the switch at the top of the controls picks what X0 Y0 goes on. **Hole**: the
+  dots pick the hole's center, a side or a corner. **Stock**: the stock is placed, and its dots pick its
+  center, a corner or an edge. A placed stock stays put while you pick holes in Hole mode.
+- **Stock, Against Pins:** push the stock against pins in dog holes, two along one edge and one along
+  the other (an L), and tap those holes. Each edge is a pin radius off its pins' row or column
+  (Setup's **Pin Ø**, blank for the hole's), so the corner is exact, on a turned grid too. Two pins on
+  a diagonal can hold the stock either way, so it asks which. A pin at the corner itself touches nothing
+  and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused. The first time
+  the pins place it, X0 Y0 goes on the pinned corner: the one point that doesn't hang on the size you
+  typed.
+- **Stock, Corner at X0 Y0:** zero on a corner by touch or probe, press **From X0 Y0 Now**, and pick
+  which corner it is. It stays put when X0 Y0 changes.
+- **Stock size:** type its width (X) and length (Y), or jog over the far corner and press **Far Corner
+  Here**; its thickness fills in from **SBT: Measure stock thickness** until you type one.
+- **Before you Set:** one line says where X0 Y0 goes, with the numbers; the next how far Set moves the
+  work offset and from where (a hole's dot or the stock's, when it's on one). A move of exactly a hole
+  or pin radius or diameter from somewhere unnamed is flagged. A small view beside it shows the hole,
+  or the pins and the stock's corner, zoomed in. Reopening the plugin keeps the mode and the stock. The
+  keyboard macros always use a hole.
 - **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
   rectangle over it. This map then won't pick its holes, Pick Nearest Hole skips them, and Go to and Set
   won't target a point inside it. **That's all it does: it's a note for the picker, not a keepout
@@ -426,7 +447,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   home hole. Favorites are ringed on the map and listed under it; tap one to pick it. They're kept
   in the board's profile.
 
-## Spoilboard: cut the dog holes, T-tracks, chamfers and labels
+## Cut Board: the dog holes, T-tracks, chamfers and labels
 
 The **Spoilboard** tab writes the programs that make (or remake) the spoilboard from the XY0 Picker's
 holes, so the board and the map come from the same numbers. Pick what to cut with the chips at its top
@@ -435,7 +456,7 @@ spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the dept
 **Bit and depth** card, and press **Generate**: the program opens in ncSender's visualizer to check and
 run.
 
-![The Spoilboard tab: chips for Dog holes, T-tracks, Fit test, Chamfers and Labels, the Bit and depth
+![The Cut Board tab (Spoilboard before 0.5): chips for Dog holes, T-tracks, Fit test, Chamfers and Labels, the Bit and depth
 card, and a summary of 425 holes ready to generate, starting with a tool change to T3](docs/spoilboard-tab.png)
 
 **Surfacing isn't here, on purpose.** Flattening the spoilboard is left to the
@@ -451,6 +472,13 @@ the plugin reminds you to re-record the spoilboard height.
   0.5 mm to snap the chip, as QuickCut's Drill) or **None** (one plunge). Spiralled down when the hole is up to twice
   the bit, else cleared in rings out from a spiral in its middle. Climb milling, as QuickCut does; the
   circle milling is QuickCut's.
+- **Starting feeds:** under Bit and depth, pick the material (MDF / plywood, softwood, hardwood, HDPE,
+  acrylic, aluminum, foam) and the bit's flutes, and **Fill In** puts starting numbers in RPM, Feed,
+  Plunge, Depth per Pass and Stepover: ncCAM's formula (the chip each tooth takes grows with the bit, up
+  to a cap), within your machine's max feed (`$110`/`$111`) and spindle range (`$30`/`$31`). A start:
+  listen, look at the chips, and adjust.
+- **The picture** under Holes shows one hole in the board (or plate) with your numbers: how deep it
+  goes, what's left under it, a step for every Depth per Pass, and how it'll be cut.
 - **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before
   moving if the machine isn't homed, a G92 offset is active, X0 Y0 has moved since it was generated, or Z0 is one the
   Z0 macros set and no tool length offset is active (after a controller restart, say).
@@ -463,8 +491,8 @@ the plugin reminds you to re-record the spoilboard height.
   no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck), so
   check the bit and Z0 before pressing Start.
 
-**Removable fixtures:** tick **Fixture plate** and every Spoilboard program is confined to the XY0
-Picker's **Stock**, so you can make a plate (MDF, say) whose holes, slots or lines match the spoilboard
+**Removable fixtures:** tick **Into a plate on top** and every Cut Board program is confined to the XY0
+Picker's **Stock**, so you can make a plate (MDF, say) whose holes, slots or lines copy the spoilboard's
 and lift it off when you're done. Dog holes, chamfers and labels use only the holes wholly on it, 3 mm in
 from its edges; slots, grid lines, chamfers and labels stay at least 3 mm in too; nothing cuts deeper than
 its thickness (T), and Z0 goes on its top. Once the spoilboard height is recorded, Generate refuses unless
@@ -508,26 +536,30 @@ once and never cut](docs/two-layer.png)
 one is unharmed. [Flanged 1/4-20 threaded inserts](https://www.amazon.com/dp/B091L3Y6VJ) installed from the back, behind the holes, give clamps
 something to screw into.
 
-## Stock: bolt holes, flip pins and fixture plates
+## Stock Holes: bolts, locating pins and flip pins
 
 ![Flip pins: two pin holes drilled through the stock over spoilboard holes on the middle row; flipped
 onto dowel pins, side 2 drops back exactly where side 1 was, mirrored across the pin line](docs/flip-pins.png)
 
-The **Stock** tab drills the stock right over spoilboard holes, with Z0 on the stock's top and
-the stock clamped some other way while it drills. The stock is the XY0 Picker's (tick **Stock**, with its
-size and thickness); the holes come from the grid picked in Setup.
-- **Bolts:** a clearance hole (6.9 mm, 0.272", for 1/4-20) over the spoilboard hole nearest each corner
-  of the stock, or every one under it, with an optional counterbore for the head. Bolt the stock to
+**Stock Holes** drills a workpiece or plate right over spoilboard holes so it holds on the board, with
+Z0 on the stock's top and the stock clamped some other way while it drills. (To cut the board's own
+pattern, use **Cut Board**.) The stock is the one placed in the XY0 Picker's **Stock** mode, with its
+size and thickness; the holes come from the grid picked in Setup.
+- **Bolts:** a clearance hole over the spoilboard hole nearest each corner of the stock, or every one
+  under it (the summary counts them, along X and Y), with an optional counterbore for the head.
+  **Bolt** fills the sizes for M6 (6.6 / 11 mm), M8 (9 / 14) or 1/4-20 (6.9 / 10.5). Bolt the stock to
   threaded inserts in the spoilboard; keep the bolts out of the part's toolpaths.
-- **Flip pins:** two holes for dowels on the grid row (or column) nearest the stock's middle. Flip the
-  stock over that line for its second side and the pins drop it back exactly where it was. The summary
-  gives the line to mirror the second side's toolpaths across in your CAM, and, when the stock isn't
-  centered on it, how far the flipped stock lands from where it was.
-- **Fixture plate:** a plate that comes off and goes back square, in one program. Two pin holes over
-  dog holes, as far apart as fit, so it locates; bolt holes over an insert grid between the dog holes
-  (**+ Inserts** in Setup makes one), counterbored if you like; and an optional **corner stop**: a hole
-  in the middle of the grid square nearest the corner you pick, for a stop pin to square work against.
-  The stop's hole stops short of the plate's bottom, since there's no spoilboard hole under it.
+- **Locating Pins + Bolts:** a plate that comes off and goes back exactly, in one program. Two pin
+  holes over dog holes, as far apart as fit (diagonally): the first round, so it locates, and the
+  second a slot toward it (**Slot +**, 0.75 mm by default), so the plate can't bind when MDF moves with
+  the seasons. Bolt holes go in the other holes of the same grid (inserts behind the dog holes) or in an
+  insert grid of their own (**+ Inserts** in Setup), counterbored if you like.
+- **Flip Pins:** two holes for dowels on the grid row (or column) nearest the stock's middle, the
+  second slotted too. Flip the stock over that line for its second side and the pins drop it back
+  exactly where it was. The summary gives the line to mirror the second side's toolpaths across in your
+  CAM, and, when the stock isn't centered on it, how far the flipped stock lands; **Zero on the Flip
+  Pin** opens the XY0 Picker on the round pin's center, which stays put when the stock turns over.
+- **Take the pins out** of the holes under the stock before it runs: the bit goes into them.
 - Each hole goes **Break Through** (1 mm) below the stock into the spoilboard hole, and can't be bigger
   than that hole, so the spoilboard isn't cut. Threaded inserts must sit at least that far below the
   surface (installed from the back, they do).

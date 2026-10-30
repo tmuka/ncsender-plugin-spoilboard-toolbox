@@ -3,6 +3,39 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased (0.5.0)
+
+**Zero on stock pushed against pins, worked out from the pins. Clearer tabs, live pictures, starting
+feeds by material.**
+
+### ✨ New
+- **XY0 Picker: Hole and Stock modes.** **Hole** puts X0 Y0 on a hole's center, a side or a corner of
+  the hole, as before. **Stock** places the stock and puts X0 Y0 on its corner, an edge or its center.
+  A placed stock stays put while you pick holes in Hole mode (this replaces Lock Position).
+- **Stock against pins:** push the stock against pins in dog holes (two along one edge, one along the
+  other) and tap those holes. The corner is a pin radius off the pins' row and column, on a turned grid
+  too. Two diagonal pins ask which way the stock sits; a pin at the corner is ignored; a pin under the
+  stock is refused. Or place it by its **Corner at X0 Y0**, as before.
+- **Pin Ø** per grid in Setup: the pins' size where the stock touches them (blank: the hole's).
+- **Before Set:** a sentence says where X0 Y0 goes, with the numbers, and the next how far Set moves
+  the work offset and from where. A move of exactly a hole or pin radius or diameter from somewhere
+  unnamed is flagged, the usual wrong-dot mistake. A small zoomed view shows the hole or the pins.
+- **Stock Holes, Locating Pins + Bolts** (was Fixture plate): pins and bolts can share the dog-hole grid
+  (inserts behind the holes); the second pin hole is a slot toward the first (**Slot +**), so the plate
+  can't bind when MDF moves. Flip Pins slot their second hole too, and **Zero on the Flip Pin** opens
+  the XY0 Picker on the round pin. **Bolt** fills M6, M8 or 1/4-20 sizes.
+- **Starting feeds by material** (Bit and depth): MDF / plywood, softwood, hardwood, HDPE, acrylic,
+  aluminum or foam, and the flutes; **Fill In** puts ncCAM's starting numbers in RPM, Feed, Plunge,
+  Depth per Pass and Stepover, within the machine's limits.
+- **Live pictures:** Setup shows what Inset, Spacing, Hole Ø and Pin Ø measure; Cut Board shows a
+  hole's depth, what's left under it and the passes.
+
+### 🔧 Changed
+- Tabs: **Spoilboard** is now **Cut Board** and **Stock** is **Stock Holes**, each saying what it's for;
+  Cut Board's Fixture plate tick is **Into a plate on top**.
+- The corner stop is gone (pins in the plate's own grid do that better), and so are Lock Position and
+  Corner: auto. Your stock moves to Stock mode at the corner it was drawn at, with a one-time note.
+
 ## 0.4.6
 
 ### ✨ New
