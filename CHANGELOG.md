@@ -19,10 +19,17 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
   Pass at a time. Pick **Clear chips** (up to 2 mm above the top and back, as before), **Break chips**
   (back off 0.5 mm, as QuickCut's Drill), or **None** (one plunge). The Stock tab's summary says how the
   holes will be cut.
+- **Math in length and feed boxes**, as CAD tools allow: `8mm*2`, `12/6`, `4+6`, `1in+4mm`, with
+  brackets. It's worked out when you leave the box.
 
 ### 🐛 Fixes
 - The "Z0 is ... above the spoilboard" warning now says where the height comes from, what to touch off
   to check it, and what to do if Z0 is right but the recorded spoilboard height isn't.
+- A false "Safe Z puts this tool's tip less than 5 mm above Z0" problem, which also disabled Generate:
+  the tool length offset counted as 0 until Generate had read it, and after a soft reset (G49 in `$G`,
+  though grblHAL keeps the offset applied) even then. Set Z0, recording the spoilboard height and the
+  controller check list now count an offset kept through a reset too.
+- Stepover is only required when a hole will be cleared in rings, so 0 no longer blocks drilling.
 
 ## 0.4.5
 

@@ -201,7 +201,9 @@ So you probe once per new stock, not once per tool.
 
 Every length and feed box takes mm or inches, whichever you have to hand, and converts it to the
 machine's units when you leave the box: `1/4"`, `5/4"`, `.25in`, `1-1/2"`, `6.35mm`, and for feeds
-`100ipm`, `2540mm/min`, `25mm/s`.
+`100ipm`, `2540mm/min`, `25mm/s`. They also do simple math, as CAD tools do: `8mm*2`, `12/6`, `4+6`,
+`1in+4mm`, `(1/4"+2mm)/2`. A number without a unit is in the machine's units when it's added or
+subtracted, and a plain factor when it multiplies or divides.
 
 ## XY0 Picker: X0 Y0 on a dog hole or grid line
 

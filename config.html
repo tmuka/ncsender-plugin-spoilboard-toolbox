@@ -2406,8 +2406,98 @@
   // machine uses, as a number in the machine's units (inches when imperial,
   // else mm): 6.35, 1/4", 1-1/2 in, 6.35mm, 0.635cm; feeds also 100ipm,
   // 2540 mm/min, 1.667ips. No unit means the machine's units already. null
-  // when it can't be read. The same as QuickCut's lib/unit-input.cjs.
+  // when it can't be read. The same as QuickCut's lib/unit-input.cjs, plus
+  // simple math (parseUnitMath) when it isn't a single value.
   function parseUnitValue(text, isImperial, kind) {
+    var one = parseUnitQuantity(text, isImperial, kind);
+    return one !== null ? one : parseUnitMath(text, isImperial, kind);
+  }
+  // mm per unit (per minute for feeds) of the units a field takes.
+  function unitMmPer(kind) {
+    var MM_PER = { mm: 1, cm: 10, 'in': 25.4, inch: 25.4, inches: 25.4, '"': 25.4 };
+    if (kind === 'feed') {
+      // Per minute (what G94 feeds use); "/m" is read as per minute.
+      MM_PER['mm/min'] = 1;
+      MM_PER['mm/m'] = 1;
+      MM_PER['in/min'] = 25.4;
+      MM_PER['in/m'] = 25.4;
+      MM_PER['inch/min'] = 25.4;
+      MM_PER.ipm = 25.4;
+      // Per second, scaled to per minute.
+      MM_PER['mm/s'] = 60;
+      MM_PER['mm/sec'] = 60;
+      MM_PER['in/s'] = 25.4 * 60;
+      MM_PER['in/sec'] = 25.4 * 60;
+      MM_PER.ips = 25.4 * 60;
+    }
+    return MM_PER;
+  }
+  // Simple math in a field, as CAD tools allow: + - * / and brackets, each
+  // number with or without a unit: 8mm*2, 4+6, 1in+4mm, (1/4"+2mm)/2. A
+  // number without a unit is in the machine's units when added or
+  // subtracted, else a plain factor. null when it can't be read, or for a
+  // length times a length or anything divided by a length or by 0.
+  function parseUnitMath(text, isImperial, kind) {
+    var s = String(text == null ? '' : text).trim().toLowerCase().replace(/[”″]/g, '"').replace(/''/g, '"');
+    var per = unitMmPer(kind), k = isImperial ? 25.4 : 1, i = 0;
+    var ws = function() { while (s[i] === ' ') i++; };
+    // A number, a fraction (1/4) and a unit: { v: mm, or the bare number;
+    // d: 1 for a length (or feed), 0 for a plain number }.
+    var quantity = function() {
+      var m = /^(?:(\d+)\/(\d+)(?![\d.])|(\d+(?:\.\d*)?|\.\d+))\s*([a-z"]+(?:\/[a-z]+)?)?/.exec(s.slice(i));
+      if (!m || +m[2] === 0) return null;
+      i += m[0].length;
+      var v = m[1] != null ? m[1] / m[2] : parseFloat(m[3]);
+      if (!m[4]) return { v: v, d: 0 };
+      return Object.prototype.hasOwnProperty.call(per, m[4]) ? { v: v * per[m[4]], d: 1 } : null;
+    };
+    var expr;
+    var factor = function(signed) {
+      ws();
+      if (!signed && (s[i] === '-' || s[i] === '+')) {
+        var neg = s[i++] === '-', f = factor(true);
+        return f && { v: neg ? -f.v : f.v, d: f.d };
+      }
+      if (s[i] !== '(') return quantity();
+      i++;
+      var e = expr();
+      ws();
+      if (!e || s[i] !== ')') return null;
+      i++;
+      return e;
+    };
+    var term = function() {
+      var a = factor();
+      for (;;) {
+        ws();
+        var op = s[i];
+        if (op !== '*' && op !== '/') return a;
+        i++;
+        var b = factor();
+        if (!a || !b) return null;
+        if (op === '*') { if (a.d + b.d > 1) return null; a = { v: a.v * b.v, d: a.d + b.d }; }
+        else { if (b.d > a.d || b.v === 0) return null; a = { v: a.v / b.v, d: a.d - b.d }; }
+      }
+    };
+    expr = function() {
+      var a = term();
+      for (;;) {
+        ws();
+        var op = s[i];
+        if (op !== '+' && op !== '-') return a;
+        i++;
+        var b = term();
+        if (!a || !b) return null;
+        if (a.d !== b.d) { if (a.d) b = { v: b.v * k, d: 1 }; else a = { v: a.v * k, d: 1 }; }
+        a = { v: op === '+' ? a.v + b.v : a.v - b.v, d: a.d };
+      }
+    };
+    var r = expr();
+    ws();
+    if (!r || i < s.length || !isFinite(r.v)) return null;
+    return parseFloat((r.d ? r.v / k : r.v).toFixed(isImperial ? 4 : 3));
+  }
+  function parseUnitQuantity(text, isImperial, kind) {
     var t = String(text == null ? '' : text).trim().toLowerCase()
       .replace(/[”″]/g, '"').replace(/''/g, '"');
     var m = t.match(/^([+-])?\s*(\d+(?:\.\d*)?|\.\d+)(?:(?:\s+|-)(\d+)\/(\d+)|\/(\d+))?\s*([a-z"/]*)$/);
@@ -2427,22 +2517,7 @@
     }
     if (m[1] === '-') value = -value;
 
-    var MM_PER = { mm: 1, cm: 10, 'in': 25.4, inch: 25.4, inches: 25.4, '"': 25.4 };
-    if (kind === 'feed') {
-      // Per minute (what G94 feeds use); "/m" is read as per minute.
-      MM_PER['mm/min'] = 1;
-      MM_PER['mm/m'] = 1;
-      MM_PER['in/min'] = 25.4;
-      MM_PER['in/m'] = 25.4;
-      MM_PER['inch/min'] = 25.4;
-      MM_PER.ipm = 25.4;
-      // Per second, scaled to per minute.
-      MM_PER['mm/s'] = 60;
-      MM_PER['mm/sec'] = 60;
-      MM_PER['in/s'] = 25.4 * 60;
-      MM_PER['in/sec'] = 25.4 * 60;
-      MM_PER.ips = 25.4 * 60;
-    }
+    var MM_PER = unitMmPer(kind);
     var unit = m[6];
     if (!unit) return value;
     if (!Object.prototype.hasOwnProperty.call(MM_PER, unit)) return null;
@@ -3586,7 +3661,7 @@
   // 1/4" becomes 6.35 on a metric machine.
   function wireUnitFields() {
     ROOT.querySelectorAll('[data-unit]').forEach(function(el) {
-      el.title = (el.title ? el.title + ' ' : '') + 'Type mm or inches (e.g. 6.35mm, 1/4"); it\u2019s converted to ' + (state.imperial ? 'inches' : 'mm') + '.';
+      el.title = (el.title ? el.title + ' ' : '') + 'Type mm or inches (e.g. 6.35mm, 1/4"), or math (8mm*2, 1in+4mm); it\u2019s converted to ' + (state.imperial ? 'inches' : 'mm') + '.';
       el.addEventListener('blur', function() {
         var v = parseUnitValue(el.value, state.imperial, el.getAttribute('data-unit'));
         if (v == null || String(v) === el.value.trim()) return;

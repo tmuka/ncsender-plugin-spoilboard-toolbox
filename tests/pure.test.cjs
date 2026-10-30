@@ -434,7 +434,7 @@ test('feed fields accept /m as per minute and per-second units', () => {
 });
 
 test('unreadable text returns null', () => {
-  for (const bad of ['', 'abc', '1/0', '1.5/2', '1-1/0', '6.35 furlongs', '1..2', '--1', '1/4/2']) {
+  for (const bad of ['', 'abc', '1/0', '1-1/0', '6.35 furlongs', '1..2', '--1', '1/4/']) {
     assert.equal(parseUnitValue(bad, METRIC, 'length'), null, JSON.stringify(bad));
   }
 });
@@ -1677,4 +1677,34 @@ test('tloInEffect: G43.1, or an offset $# still reports after a soft reset (G49)
   assert.equal(tloInEffect(gc('G0 G54 G21 G90 G49 M5'), { TLO: 0 }), false);
   assert.equal(tloInEffect(gc('G0 G54 G21 G90 G49 M5'), {}), false);
   assert.equal(tloInEffect(null, null), false);
+});
+
+test('parseUnitValue: simple math, with or without units', () => {
+  const M = false, I = true;
+  assert.equal(parseUnitValue('8mm*2', M, 'length'), 16);
+  assert.equal(parseUnitValue('8mm * 2', I, 'length'), 0.6299);
+  assert.equal(parseUnitValue('12/6', M, 'length'), 2);
+  assert.equal(parseUnitValue('4+6', M, 'length'), 10);
+  assert.equal(parseUnitValue('4+6', I, 'length'), 10);
+  assert.equal(parseUnitValue('1in+4mm', M, 'length'), 29.4);
+  assert.equal(parseUnitValue('1in+4mm', I, 'length'), 1.1575);
+  assert.equal(parseUnitValue('1in+4', M, 'length'), 29.4, 'a bare number added is in the machine units');
+  assert.equal(parseUnitValue('1in+1', I, 'length'), 2);
+  assert.equal(parseUnitValue('(1/4"+2mm)/2', M, 'length'), 4.175);
+  assert.equal(parseUnitValue('2*(3+4)', M, 'length'), 14);
+  assert.equal(parseUnitValue('-2mm+10', M, 'length'), 8);
+  assert.equal(parseUnitValue('61mm-38.1', M, 'length'), 22.9);
+  assert.equal(parseUnitValue('3/4" - 1/8"', M, 'length'), 15.875);
+  assert.equal(parseUnitValue('100ipm*1.5', M, 'feed'), 3810);
+  assert.equal(parseUnitValue('1500mm/min/2', M, 'feed'), 750);
+  // Single values still read as before.
+  assert.equal(parseUnitValue('1-1/2"', M, 'length'), 38.1);
+  assert.equal(parseUnitValue('1/4in', M, 'length'), 6.35);
+  // Nonsense stays unreadable.
+  assert.equal(parseUnitValue('1.5/2', M, 'length'), 0.75);
+  assert.equal(parseUnitValue('1/4/2', M, 'length'), 0.125);
+  assert.equal(parseUnitValue('2/4mm', I, 'length'), 0.0197);
+  for (const bad of ['8mm*2mm', '2/in', '4/0', '4+', '(4+6', '4)', '2in*3ipm', '4 4', 'abc', '1in/min*2']) {
+    assert.equal(parseUnitValue(bad, M, 'length'), null, bad);
+  }
 });
