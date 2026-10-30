@@ -740,6 +740,7 @@
             <button type="button" class="mw-btn mw-btn-quiet mw-grab-btn" id="mw-hole-here" title="Pick a hole on the map, jog the bit over its real center, and press this: the insets are set so that hole is under the bit (the button names it). With no hole picked: the bit over the first hole, or any hole as long as the first is less than one spacing from machine X0 Y0.">Grab First Hole Center</button>
           </div>
         </div>
+        <svg class="mw-diagram mw-sh-diagram mw-grid-only" id="mw-grid-diagram" viewBox="0 0 700 150" role="img" aria-label="Top view of the grid's first holes: inset from machine X0 Y0, spacing, hole and pin diameter."></svg>
         <div class="mw-holes-tools mw-grid-only">
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-edit" aria-pressed="false" disabled title="For a grid with holes left out (under a clamp rail, say): tap a hole on the map to suppress it, or drag a box around several; a box around only suppressed holes restores them. Pick Nearest Hole, Go to, Set and the nearest-hole macros skip suppressed holes.">Edit Holes</button>
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-restore-all" disabled title="Put back every suppressed hole.">Restore All</button>
@@ -1105,6 +1106,7 @@
       <section class="mw-card" data-sec="holes">
         <h3 class="mw-card-title">Holes</h3>
         <p class="mw-hint" id="mw-cut-holes"></p>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-cut-diagram" viewBox="0 0 700 200" role="img" aria-label="Side view of a hole in the board: thickness, hole depth, passes and the bit."></svg>
         <label class="mw-extra"><input type="checkbox" id="mw-cut-list"><span>Also cut the listed holes (Grid + List or List). Points with a height, such as a vise, are never cut.</span></label>
       </section>
       <section class="mw-card" data-sec="holes">
@@ -5526,7 +5528,7 @@
     svg.textContent = '';
     svg.setAttribute('data-mode', holes.mode);
     svg.classList.toggle('mw-editing', !!holes.mode);
-    if (!live) { showProfile(); renderGridBar(); }
+    if (!live) { showProfile(); renderGridBar(); gridDiagram(); }
     if (!t) {
       note.textContent = 'Couldn\u2019t read the machine\u2019s travel and homing ($130/$131, $22/$23), so the holes can\u2019t be placed.';
       holes.grid = []; updatePicked();
@@ -6445,6 +6447,87 @@
       note.textContent = probs.length ? probs.join('. ') + '.' : '';
     }
     $('mw-cut-generate').disabled = !!probs.length;
+    cutDiagram(o);
+  }
+  // A top view of the grid being edited, its first holes from machine X0
+  // Y0 (not to scale: the insets drawn short): what Inset, Spacing, Hole
+  // Ø and Pin Ø each measure, with this grid's numbers.
+  function gridDiagram() {
+    var r = holes.gridRaw[holes.activeGrid];
+    if (!r) return;
+    var g = parseGrid(r, false), u = ' ' + unitName(), out = [];
+    var num = function(v) { return isFinite(v) ? shown(v) + u : '?'; };
+    var esc = function(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var line = function(cls, x0, y0, x1, y1) { out.push('<line class="' + cls + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'); };
+    var circ = function(cls, x, y, rr) { out.push('<circle class="' + cls + '" cx="' + x + '" cy="' + y + '" r="' + rr + '"/>'); };
+    var text = function(x, y, t, cls, anchor) { out.push('<text x="' + x + '" y="' + y + '"' + (cls ? ' class="' + cls + '"' : '') + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + esc(t) + '</text>'); };
+    var O = { x: 40, y: 132 }, H1 = { x: 175, y: 78 }, S = 110;
+    var rh = g && g.sxMm > 0 ? Math.max(5, Math.min(30, g.diaMm / 2 / g.sxMm * S)) : 10;
+    var rp = g && g.pinMm > 0 ? Math.min(rh, rh * g.pinMm / g.diaMm) : null;
+    // Machine X0 Y0 and the travel's edges.
+    line('mw-d-dim', O.x, O.y, 420, O.y); line('mw-d-dim', O.x, O.y, O.x, 8);
+    circ('mw-d-ok', O.x, O.y, 3);
+    text(O.x + 6, O.y + 14, 'machine X0 Y0', 'mw-d-note');
+    // Insets: from machine X0 Y0 to the first hole's center.
+    line('mw-d-line', O.x, H1.y, H1.x, H1.y); line('mw-d-line', H1.x, O.y, H1.x, H1.y);
+    text((O.x + H1.x) / 2 - 6, H1.y - 6, 'Inset X ' + (g ? num(g.insetXMm) : '?'), 'mw-d-note', 'middle');
+    text(H1.x + 6, O.y - 6, 'Inset Y ' + (g ? num(g.insetYMm) : '?'), 'mw-d-note');
+    // Holes: two columns, two rows, a spacing apart; a pin in the first.
+    [[0, 0], [1, 0], [0, -1], [1, -1]].forEach(function(d) { circ('mw-d-hole', H1.x + d[0] * S, H1.y + d[1] * (S * 0.55), rh); });
+    if (rp) circ('mw-d-pin', H1.x, H1.y, rp);
+    line('mw-d-dim', H1.x, H1.y + rh + 8, H1.x + S, H1.y + rh + 8);
+    text(H1.x + S / 2, H1.y + rh + 20, 'X Spacing ' + (g ? num(g.sxMm) : '?'), 'mw-d-note', 'middle');
+    line('mw-d-dim', H1.x + S + rh + 8, H1.y, H1.x + S + rh + 8, H1.y - S * 0.55);
+    text(H1.x + S + rh + 12, H1.y - S * 0.27, 'Y Spacing ' + (g ? num(g.syMm) : '?'), 'mw-d-note');
+    var X = 446, y = 22;
+    var say = function(t, cls) { text(X, y, t, cls); y += 15; };
+    say('Hole \u00d8 ' + (g ? num(g.diaMm) : '?'), 'mw-d-val');
+    say('Pin \u00d8 ' + (g ? (g.pinMm > 0 ? num(g.pinMm) : 'the hole\u2019s (blank)') : '?'), 'mw-d-note');
+    say('First hole: Inset X, Inset Y from machine X0 Y0', 'mw-d-note');
+    say('Then every X Spacing and Y Spacing' + (g && g.turnDeg ? ', turned ' + g.turnDeg + '\u00b0' : ''), 'mw-d-note');
+    $('mw-grid-diagram').innerHTML = out.join('');
+  }
+  // A side view of one hole in the board (or the plate), not to scale
+  // across but true in its proportions down: the board's thickness, the
+  // hole's depth and what's left under it, a step per Depth per Pass, and
+  // the bit beside the hole.
+  function cutDiagram(o) {
+    var u = ' ' + unitName(), out = [], hh = readHoles();
+    var num = function(v) { return isFinite(v) && v >= 0 ? shown(v) + u : '?'; };
+    var esc = function(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var rect = function(cls, x0, y0, x1, y1) { out.push('<rect class="' + cls + '" x="' + x0 + '" y="' + y0 + '" width="' + Math.max(0, x1 - x0) + '" height="' + Math.max(0, y1 - y0) + '"/>'); };
+    var line = function(cls, x0, y0, x1, y1) { out.push('<line class="' + cls + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'); };
+    var text = function(x, y, t, cls, anchor) { out.push('<text x="' + x + '" y="' + y + '"' + (cls ? ' class="' + cls + '"' : '') + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + esc(t) + '</text>'); };
+    var thick = o.thickMm, depth = o.depthMm, step = o.stepMm, bit = o.bitMm;
+    var dia = o.holes.length ? o.holes[0].diaMm : hh ? hh.diaMm : NaN;
+    var TOP = 40, BOT = 170, good = thick > 0 && depth > 0;
+    var k = good ? (BOT - TOP) / Math.max(thick, depth) : 1, END = good ? TOP + depth * k : TOP + 80;
+    rect(o.plateOn ? 'mw-d-stock' : 'mw-d-spoil', 30, TOP, 420, BOT);
+    text(36, BOT - 8, o.plateOn ? 'Plate' : 'Spoilboard', 'mw-d-note');
+    // The hole, about as wide as it is for its depth, and the bit.
+    var w = dia > 0 && good ? Math.max(14, Math.min(120, dia * k)) : 40, cx = 200;
+    rect('mw-d-cut', cx - w / 2, TOP, cx + w / 2, END);
+    if (good && step > 0 && depth / step < 40) for (var d = step; d < depth - 1e-6; d += step) line('mw-d-line', cx - w / 2, TOP + d * k, cx + w / 2, TOP + d * k);
+    var bw = bit > 0 && dia > 0 ? Math.max(4, w * Math.min(1, bit / dia)) : 10;
+    rect('mw-d-pin', cx + w / 2 + 30, TOP - 22, cx + w / 2 + 30 + bw, TOP + 18);
+    text(cx + w / 2 + 30 + bw / 2, TOP - 26, 'bit ' + num(bit), 'mw-d-note', 'middle');
+    line('mw-d-line', 20, TOP, 430, TOP);
+    text(24, TOP - 8, (o.wcsName || 'G54') + ' Z0: ' + (o.plateOn ? 'the plate\u2019s top' : 'the spoilboard\u2019s top'), 'mw-d-z0');
+    // Depth and what's left, on the right of the hole.
+    line('mw-d-dim', cx - w / 2 - 14, TOP, cx - w / 2 - 14, END);
+    text(cx - w / 2 - 18, (TOP + END) / 2 + 4, 'depth', 'mw-d-note', 'end');
+    var X = 446, y = 26;
+    var say = function(t, cls, gap) { text(X, y, t, cls); y += gap || 15; };
+    say('Hole \u00d8 ' + num(dia) + ', ' + num(depth) + ' deep', 'mw-d-val');
+    if (good) say(depth > thick + 1e-9 ? 'Deeper than the ' + (o.plateOn ? 'plate' : 'board') + ' (' + num(thick) + ')!' : thick - depth < 0.0005 ? 'Right through the ' + (o.plateOn ? 'plate' : 'board') + ' (' + num(thick) + ')' : num(thick - depth) + ' left under it (' + (o.plateOn ? 'plate' : 'board') + ' ' + num(thick) + ')', depth > thick + 1e-9 ? 'mw-d-warn' : 'mw-d-note');
+    if (step > 0 && depth > 0) say(Math.ceil(depth / step - 1e-9) + ' pass' + (Math.ceil(depth / step - 1e-9) === 1 ? '' : 'es') + ' of up to ' + num(step), 'mw-d-note');
+    y += 6;
+    if (bit > 0 && dia > 0) {
+      var m = holeCutMethod(dia, bit);
+      say(m === 'drill' ? 'Drilled: the bit is the hole\u2019s size' : m === 'helix' ? 'Spiralled down: the bit is ' + num(bit) : m === 'clear' ? 'Cleared in rings: more than twice the bit' : 'The bit is bigger than the hole!', m === 'too-small' ? 'mw-d-warn' : 'mw-d-note');
+      if (m === 'drill') say('Pecks: ' + $('mw-cut-peck').selectedOptions[0].textContent.toLowerCase(), 'mw-d-note');
+    }
+    $('mw-cut-diagram').innerHTML = out.join('');
   }
   // The Cut Holes tab's fields, saved by id (less "mw-") in the machine's
   // units then (settings.units).
@@ -7805,6 +7888,7 @@
     // Spoilboard and Stock is showing.
     if (name === 'cut' || name === 'stock') {
       $(name === 'stock' ? 'mw-stock-common-slot' : 'mw-cut-common-slot').appendChild($('mw-cut-common'));
+      renderCutTab();
       readMachineState().then(readNumbers).then(renderCutTab);
     }
   }
