@@ -1742,6 +1742,12 @@
     }
     return null;
   }
+  // Whether a tool length offset is in effect, as TLO_ACTIVE: G43.1 on, or
+  // $# reporting one. A soft reset puts grblHAL in G49 but keeps the
+  // measured offset applied, so $G alone would say there's none.
+  function tloInEffect(gc, hash) {
+    return !!(gc && gc.tloActive) || !!(hash && isFinite(hash.TLO) && Math.abs(hash.TLO) > 0.0005);
+  }
 
   // Spoilboard holes. A grid of holes (dog holes) at X / Y spacing, the
   // first one Inset X / Inset Y from machine X0 Y0 into the machine's
@@ -3467,11 +3473,11 @@
       else if (expr.ok) addCheck(list, 'warn', 'Nearest-hole macros not supported', 'The controller rejected #<_abs_x>, FIX, ROUND, #5211 or #<_imperial>; the Nearest hole extra would stop without doing anything. The rest is unaffected.');
 
       if (!gc) addCheck(list, 'warn', 'No answer to $G', 'Couldn\'t read the modal state, so the tool length offset state is unknown.');
-      else if (gc.tloActive) addCheck(list, 'ok', 'Tool length offset is active', 'Make sure every tool\'s offset is measured against the same reference tool.');
+      else if (tloInEffect(gc, hash)) addCheck(list, 'ok', 'Tool length offset is active' + (gc.tloActive ? '' : ' (kept through a reset, though $G says G49)'), 'Make sure every tool\'s offset is measured against the same reference tool.');
       else addCheck(list, 'warn', 'No tool length offset active (G49)', 'The macros stop until the loaded tool\'s offset is active, e.g. after measuring it with the tool setter.');
 
       if (hash.TLO != null) {
-        var tloOn = !gc || gc.tloActive;
+        var tloOn = !gc || tloInEffect(gc, hash);
         addCheck(list, tloOn ? 'ok' : 'warn', 'Tool length offset: ' + fmt(hash.TLO) + ' mm',
           tloOn ? 'From $#. 0 is right only for the reference tool.' : 'From $#, but not applied while G49 is in effect.');
       }
@@ -4335,7 +4341,8 @@
     try {
       var gc = parseGcState((await ask('$G', 500)).lines), hash = parseHashReport((await ask('$#', 900)).lines);
       // null: an offset is (or may be) active but its size didn't come back.
-      state.tloMm = !gc ? null : !gc.tloActive ? 0 : isFinite(hash.TLO) ? hash.TLO * (state.reportInches ? MM_PER_INCH : 1) : null;
+      // $#'s TLO is the offset applied, even in G49 after a soft reset.
+      state.tloMm = isFinite(hash.TLO) ? hash.TLO * (state.reportInches ? MM_PER_INCH : 1) : gc && !gc.tloActive ? 0 : null;
     } catch (e) {
       state.tloMm = null;
     }
@@ -5736,7 +5743,7 @@
         if (Math.abs(g92[2] || 0) > 0.0005) throw new Error('a G92 Z offset is active, which would shift Z0. Send G92.1 in the terminal to clear it, then try again');
         if (!spoil || !spoil[2]) throw new Error('the spoilboard height isn\u2019t recorded yet: run SBT: Record spoilboard height (Z0 macros tab) once');
         var gc = parseGcState((await ask('$G', 500)).lines);
-        if (!gc || !gc.tloActive) throw new Error('no tool length offset is active, so Z0 wouldn\u2019t follow the tool. Measure the tool first');
+        if (!tloInEffect(gc, hash)) throw new Error('no tool length offset is active, so Z0 wouldn\u2019t follow the tool. Measure the tool first');
         var wcsP = await resolveHoleWcs(gc);
         if ([s.slot, s.backup, s.thick].indexOf(wcsP) >= 0) throw new Error(WCS_NAMES[wcsP] + ' holds the Z0 macros\u2019 stored values; pick another work offset in the menu');
         await sendHoleCommands(zAboveSpoilLines(s, wcsP, z.hMm), gc.imperial);
@@ -6651,7 +6658,7 @@
     var s = readSettings();
     if (!s) throw new Error('the Z0 macros tab has a setting to fix before the spoilboard height can be recorded');
     var gc = parseGcState((await ask('$G', 500)).lines), hash = parseHashReport((await ask('$#', 900)).lines);
-    if (!gc || !gc.tloActive || !isFinite(hash.TLO)) throw new Error('no tool length offset is active for the probe, so the spoilboard height wasn\u2019t recorded');
+    if (!tloInEffect(gc, hash) || !isFinite(hash.TLO)) throw new Error('no tool length offset is active for the probe, so the spoilboard height wasn\u2019t recorded');
     if (hash.G92 && Math.abs(hash.G92[2]) > 0.0005) throw new Error('a G92 Z offset is active (G92.1 clears it), so the spoilboard height wasn\u2019t recorded');
     var others = holes.grid.filter(function(q) { return q !== h && !q.hidden; }).map(function(q) { return { x: q.x, y: q.y, rMm: holeR(q, hh) }; });
     // From the measured center, past a chamfer (as wide as the Chamfers
