@@ -4360,7 +4360,7 @@
     ROOT.querySelectorAll('.mw-stockby .mw-seg').forEach(function(b) {
       b.addEventListener('click', function() { readMachineState().then(function() { setStockBy(b.getAttribute('data-by')); stockSync(); }); });
     });
-    $('mw-stock-anchor').addEventListener('click', function() { readMachineState().then(function() { anchorStock(); $('mw-stock-on').checked = true; stockSync(); }); });
+    $('mw-stock-anchor').addEventListener('click', function() { readMachineState().then(function() { anchorStock(); if (!holes.stockDotSet) setStockZero($('mw-stock-corner').value); $('mw-stock-on').checked = true; stockSync(); }); });
     $('mw-stock-clear').addEventListener('click', function() { clearStock(); stockSync(); });
     $('mw-migrated-ok').addEventListener('click', function() { $('mw-migrated').hidden = true; });
     $('mw-stock-far').addEventListener('click', function() { readMachineState().then(function() { stockFromSpindle(); stockSync(); }); });
@@ -4607,7 +4607,7 @@
     if (Math.abs(dx) < 1 || Math.abs(dy) < 1) return bad('Jog the bit over the stock’s opposite corner first, then press Far Corner Here.');
     var corner = (dy > 0 ? 'front' : 'back') + '-' + (dx > 0 ? 'left' : 'right');
     if (holes.stockBy === 'pins' && corner !== sp.cornerName) return bad('The spindle is on the pins’ side of the stock’s corner: jog over its far corner.');
-    if (holes.stockBy === 'zero') $('mw-stock-corner').value = corner;
+    if (holes.stockBy === 'zero') { $('mw-stock-corner').value = corner; if (!holes.stockDotSet) setStockZero(corner); }
     var k = state.imperial ? MM_PER_INCH : 1, d = state.imperial ? 4 : 3;
     $('mw-stock-w').value = +(Math.abs(dx) / k).toFixed(d);
     $('mw-stock-l').value = +(Math.abs(dy) / k).toFixed(d);
@@ -5342,6 +5342,14 @@
     if (holes.gridRaw.length === 1) holes.gridRaw[0].nearest = true;
     holes.suppressed = rekeyAfterRemoving(holes.suppressed, k);
     holes.favorites = rekeyAfterRemoving(holes.favorites, k);
+    // Pins on the removed grid are dropped, not moved onto the next one.
+    var pins = rekeyAfterRemoving(holes.pins, k);
+    if (pins.length !== holes.pins.length) holes.pinSide = '';
+    holes.pins = pins;
+    ['mw-sh-pingrid', 'mw-sh-boltgrid'].forEach(function(id) {
+      var el = $(id), v = el.value !== '' ? +el.value : NaN;
+      if (+v === k) { el.value = ''; el.removeAttribute('data-want'); } else if (v > k) el.value = String(v - 1);
+    });
     var hidden = {};
     Object.keys(holes.hidden).forEach(function(key) { if (key === 'list' || +key < k) hidden[key] = holes.hidden[key]; else if (+key > k) hidden[+key - 1] = holes.hidden[key]; });
     holes.hidden = hidden;
@@ -5971,7 +5979,7 @@
     $('mw-hole-dist').hidden = !dist && away == null;
     $('mw-hole-dist').textContent = away != null ? 'Jogged since picking: Set uses the picked point, not the spindle (' + shown(away) + ' ' + unitName() + ' away). To zero where the spindle is, use ncSender’s XY0.'
       : dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
-    $('mw-hole-dist').classList.toggle('mw-warn-text', away != null);
+    $('mw-hole-dist').classList.toggle('mw-bad-text', away != null);
     drawZeroInset(aim && !problem ? aim : null);
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
@@ -7014,7 +7022,7 @@
       pinHoles(cutOrder(res.pinsAt), pinSize, slot, depth, thick).forEach(function(h) { o.holes.push(h); });
     } else {
       if (holes.hidden[String(holes.activeGrid)]) { probs.push('The grid picked in Setup is hidden on the map: show it (its eye) to use its holes'); return res; }
-      var cands = stockHoleCandidates(layerHoles(holes.activeGrid), rect, (hasCb ? cb : size) / 2, margin);
+      var cands = stockHoleCandidates(layerHoles(holes.activeGrid), rect, (hasCb ? cb : size) / 2 + (pins && slot > 0 ? slot / 2 : 0), margin);
       if (pins) {
         res.flip = flipPins(cands, rect, $('mw-sh-axis').value);
         res.chosen = res.flip ? cutOrder(res.flip.pins) : [];
