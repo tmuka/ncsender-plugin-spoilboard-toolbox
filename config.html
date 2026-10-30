@@ -2576,7 +2576,10 @@
     else if (o.thickMm > 0 && o.depthMm > o.thickMm + 1e-9) out.push('Hole Depth is more than the ' + (o.plateOn ? 'fixture plate' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
     if (!(o.stepMm > 0)) out.push('Depth per Pass must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) out.push('Feed and Plunge must be more than 0');
-    if (!(o.stepoverPct > 0 && o.stepoverPct <= 90)) out.push('Stepover must be 1 to 90%');
+    // Stepover only sets the rings of holes cleared out; drilling and
+    // spiralling don't use it.
+    var rings = o.bitMm > 0 && o.holes.some(function(h) { return holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm) === 'clear'; });
+    if (rings && !(o.stepoverPct > 0 && o.stepoverPct <= 90)) out.push('Stepover must be 1 to 90% (holes more than twice the bit are cleared in rings)');
     if (!o.holes.length) out.push('There are no holes to cut');
     // The spindle goes round each hole a bit radius in from its edge, so
     // that circle must be inside the travel (a hole whose middle is, near an

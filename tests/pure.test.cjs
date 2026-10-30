@@ -1081,6 +1081,8 @@ test('cut holes: problems stop it', () => {
   assert.match(holeCutProblems(cutBase({ bitMm: 25 })).join(), /bigger than A1/);
   assert.match(holeCutProblems(cutBase({ holes: [] })).join(), /no holes/);
   assert.match(holeCutProblems(cutBase({ stepMm: 0 })).join(), /Depth per Pass/);
+  assert.match(holeCutProblems(cutBase({ stepoverPct: 0 })).join(), /Stepover/);
+  assert.deepEqual(holeCutProblems(cutBase({ stepoverPct: 0, holes: [{ x: 100, y: 100, diaMm: 6.35, label: 'A1' }, { x: 120, y: 100, diaMm: 10, label: 'A2' }] })), []);
 });
 
 test('cut holes: stop lines before anything moves, and the work offset must not have moved', () => {
