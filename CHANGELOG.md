@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased (0.5.0)
+## 0.5.0
 
 **Zero on stock pushed against pins, worked out from the pins. Clearer tabs, live pictures, starting
 feeds by material.**
@@ -25,7 +25,7 @@ feeds by material.**
   the work offset and from where. A move of exactly a hole or pin radius or diameter from somewhere
   unnamed is flagged, the usual wrong-dot mistake. A small zoomed view shows the hole or the pins.
 - **Stock Holes, Locating Pins + Bolts** (was Fixture plate): pins and bolts can share the dog-hole grid
-  (inserts behind the holes); the second pin hole is a slot toward the first (**Slot +**), so the plate
+  (inserts behind the holes); the second pin hole is a slot pointing at the first (**Slot +**), so the plate
   can't bind when MDF moves. Flip Pins slot their second hole too, and **Zero on the Flip Pin** opens
   the XY0 Picker on the round pin. **Bolt** fills M6, M8 or 1/4-20 sizes.
 - **Starting feeds by material** (Bit and depth): MDF / plywood, softwood, hardwood, HDPE, acrylic,
@@ -39,6 +39,11 @@ feeds by material.**
   Cut Board's Fixture plate tick is **Into a plate on top**.
 - The corner stop is gone (pins in the plate's own grid do that better), and so are Lock Position and
   Corner: auto. Your stock moves to Stock mode at the corner it was drawn at, with a one-time note.
+- **Go to** and **Set** name their point (**Go to B4 · back right**, **Set G54 XY · Stock Front Left**),
+  and the move buttons have a move icon.
+- **Jogged since picking** (Set uses the picked point, not the spindle) shows in red.
+- Help reads as paragraphs (bold words no longer break onto lines of their own), its topics
+  breadcrumb is a bigger button, and it names the 0.5 tabs and buttons.
 
 ## 0.4.6
 
