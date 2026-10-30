@@ -1,6 +1,6 @@
 {
   "name": "ncsender-plugin-spoilboard-toolbox",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "license": "GPL-3.0-only",
   "description": "ncSender plugin (formerly Zero Swapper): set XY zero on spoilboard dog holes or a grid, and swap Z zero between spoilboard and stock top with any measured tool, and cut the holes themselves",
   "private": true,

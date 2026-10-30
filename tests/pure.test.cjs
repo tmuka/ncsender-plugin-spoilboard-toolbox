@@ -1694,7 +1694,7 @@ test('parseUnitValue: simple math, with or without units', () => {
   assert.equal(parseUnitValue('1.5/2', M, 'length'), 0.75);
   assert.equal(parseUnitValue('1/4/2', M, 'length'), 0.125);
   assert.equal(parseUnitValue('2/4mm', I, 'length'), 0.0197);
-  for (const bad of ['8mm*2mm', '2/in', '4/0', '4+', '(4+6', '4)', '2in*3ipm', '4 4', 'abc', '1in/min*2']) {
+  for (const bad of ['8mm*2mm', '2/in', '1in/2mm', '4/0', '4+', '(4+6', '4)', '2in*3ipm', '4 4', 'abc', '1in/min*2']) {
     assert.equal(parseUnitValue(bad, M, 'length'), null, bad);
   }
 });

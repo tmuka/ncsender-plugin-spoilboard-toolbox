@@ -2539,7 +2539,7 @@
         var b = factor();
         if (!a || !b) return null;
         if (op === '*') { if (a.d + b.d > 1) return null; a = { v: a.v * b.v, d: a.d + b.d }; }
-        else { if (b.d > a.d || b.v === 0) return null; a = { v: a.v / b.v, d: a.d - b.d }; }
+        else { if (b.d || b.v === 0) return null; a = { v: a.v / b.v, d: a.d }; }
       }
     };
     expr = function() {
@@ -2741,7 +2741,7 @@
     var out = [];
     if (!(o.bitMm > 0)) out.push('Bit Diameter must be more than 0');
     if (!(o.depthMm > 0)) out.push('Hole Depth must be more than 0');
-    else if (o.thickMm > 0 && o.depthMm > o.thickMm + 1e-9) out.push('Hole Depth is more than the ' + (o.plateOn ? 'fixture plate' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
+    else if (o.thickMm > 0 && o.depthMm > o.thickMm + 1e-9) out.push('Hole Depth is more than the ' + (o.plateOn ? 'plate' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
     if (!(o.stepMm > 0)) out.push('Depth per Pass must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) out.push('Feed and Plunge must be more than 0');
     // Stepover only sets the rings of holes cleared out; drilling and
@@ -3082,7 +3082,7 @@
     return { labels: labels, skipped: skipped };
     function problem(p, box) {
       return box.minX < minX || box.maxX > minX + o.travel.xMm || box.minY < minY || box.maxY > minY + o.travel.yMm ? 'outside the travel'
-        : o.within && (box.minX < o.within.minX || box.maxX > o.within.maxX || box.minY < o.within.minY || box.maxY > o.within.maxY) ? 'off the fixture plate'
+        : o.within && (box.minX < o.within.minX || box.maxX > o.within.maxX || box.minY < o.within.minY || box.maxY > o.within.maxY) ? 'off the plate'
         : (o.zones || []).some(function(z) { return z.minX < box.maxX && z.maxX > box.minX && z.minY < box.maxY && z.maxY > box.minY; }) ? 'in a keepout zone or Exclude Picks area'
         : (o.tracks || []).some(function(t) { return boxNearSegment(box, t.a, t.b, t.halfMm + gap / 2); }) ? 'over a T-track'
         : o.all.some(function(q) {
@@ -3886,7 +3886,8 @@
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'),
       stockZMode: $('mw-stock-zmode').value,
-      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.zeroMode, stockBy: holes.stockBy,
+      stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
+      stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
       stockPins: holes.pins.slice(), stockPinSide: holes.pinSide, stockDotSet: !!holes.stockDotSet, stockAnchor: holes.stockAnchor,
       cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed
     }, setupBody());
@@ -4225,7 +4226,7 @@
     holes.pinSide = typeof saved.stockPinSide === 'string' ? saved.stockPinSide : '';
     holes.stockDotSet = !!saved.stockDotSet;
     var an = saved.stockAnchor;
-    holes.stockAnchor = an && isFinite(an.x) && isFinite(an.y) ? { x: +an.x, y: +an.y, wcs: String(an.wcs || 'G54') } : null;
+    holes.stockAnchor = an && isFinite(an.x) && isFinite(an.y) ? { x: +an.x, y: +an.y, wcs: String(an.wcs || 'G54'), zMm: isFinite(an.zMm) && an.zMm !== null ? +an.zMm : null } : null;
     holes.migrate = null;
     if (saved.zeroMode == null && saved.stockOn) { holes.zeroMode = 'stock'; holes.migrate = { stockPoint: saved.stockPoint, stockCorner: saved.stockCorner, holeOrigin: saved.holeOrigin }; }
     holes.profiles = Array.isArray(saved.holeProfiles) ? saved.holeProfiles.filter(function(x) { return x && typeof x.name === 'string' && x.name.trim(); }) : [];
@@ -4528,10 +4529,7 @@
   }
   function setZeroMode(m) {
     holes.zeroMode = m === 'stock' ? 'stock' : 'hole';
-    if (holes.zeroMode === 'stock' && !$('mw-stock-on').checked) {
-      $('mw-stock-on').checked = true;
-      if (holes.stockBy === 'zero' && !holes.stockAnchor) anchorStock();
-    }
+    if (holes.zeroMode === 'stock') $('mw-stock-on').checked = true;
     disarmGoto();
     holes.nearMm = null;
     holes.refXY = spindleXY();
@@ -4539,7 +4537,6 @@
   }
   function setStockBy(b) {
     holes.stockBy = b === 'zero' ? 'zero' : 'pins';
-    if (holes.stockBy === 'zero' && !holes.stockAnchor) anchorStock();
     $('mw-stock-on').checked = true;
   }
   // A tap in Stock mode (Against Pins) puts a pin in that hole or takes it
@@ -4548,11 +4545,14 @@
   function togglePin(i) {
     var p = holes.grid[i], status = $('mw-hole-status');
     status.textContent = '';
-    if (!p || p.blocked || p.hidden) return;
+    if (!p) return;
+    if (p.blocked || p.hidden) { status.setAttribute('data-state', 'bad'); status.textContent = holeName(p) + (p.blocked ? ' is in ' + p.zone + ': it can\u2019t take a pin here.' : ' is on a hidden grid: show it to use it.'); return; }
     if (p.col == null) { status.setAttribute('data-state', 'bad'); status.textContent = 'Listed holes can’t be pins: tap grid holes, or use Corner on X0 Y0.'; return; }
     if (p.suppressed) { status.setAttribute('data-state', 'bad'); status.textContent = holeName(p) + ' is suppressed (it isn’t there): restore it in Setup to put a pin in it.'; return; }
     var key = holeKey(p), at = holes.pins.indexOf(key);
     if (at >= 0) holes.pins.splice(at, 1); else holes.pins.push(key);
+    // A side picked for other pins doesn't carry over.
+    holes.pinSide = '';
     $('mw-stock-on').checked = true;
     var s = stockPlacement();
     if (s && s.fit && !holes.stockDotSet) setStockZero(s.cornerName);
@@ -4605,20 +4605,25 @@
   // aims where it did. A hole that's gone leaves it unplaced, and says so.
   function restoreStock() {
     var m = holes.migrate;
-    holes.migrate = null;
     if (!m) return;
     var sp = m.stockPoint || {}, corner = null, pt = null;
-    if (sp.lock && isFinite(sp.lock.x) && isFinite(sp.lock.y)) { pt = { x: +sp.lock.x, y: +sp.lock.y }; corner = sp.lock.corner; }
+    // A hole needs the grid: without it, try again next time (saving keeps
+    // the old placement meanwhile).
+    if (sp.hole && (!holes.grid.length || !readHoles())) return;
+    holes.migrate = null;
+    var base = null;
+    if (sp.lock && isFinite(sp.lock.x) && isFinite(sp.lock.y)) { pt = { x: +sp.lock.x, y: +sp.lock.y }; corner = sp.lock.corner; base = isFinite(sp.lock.zMm) && sp.lock.zMm !== null ? +sp.lock.zMm : null; }
     else if (sp.hole) {
       var p = pinHole(sp.hole), h = readHoles();
       if (p && h) {
         var origin = HOLE_ORIGINS.indexOf(m.holeOrigin) >= 0 ? m.holeOrigin : 'center', o = holeOriginOffset(origin, holeR(p, h));
         pt = { x: p.x + o.dx, y: p.y + o.dy };
         corner = m.stockCorner === 'auto' || !m.stockCorner ? stockCornerFor(origin) : m.stockCorner;
+        base = p.zMm != null ? p.zMm : null;
       }
     } else if (isFinite(sp.x) && isFinite(sp.y)) { pt = { x: +sp.x, y: +sp.y }; corner = m.stockCorner === 'auto' || !m.stockCorner ? 'front-left' : m.stockCorner; }
     holes.stockBy = 'zero';
-    holes.stockAnchor = pt ? { x: pt.x, y: pt.y, wcs: String(sp.wcs || WCS_NAMES[holeWcs()]) } : null;
+    holes.stockAnchor = pt ? { x: pt.x, y: pt.y, wcs: String(sp.wcs || WCS_NAMES[holeWcs()]), zMm: base } : null;
     if (/^(front|back)-(left|right)$/.test(corner || '')) $('mw-stock-corner').value = corner;
     $('mw-migrated-text').textContent = 'New: the XY0 Picker has Hole and Stock modes. Your stock moved to Stock mode' +
       (pt ? ', its ' + stockPointName($('mw-stock-corner').value) + ' where it was drawn (Corner on X0 Y0). Check the target before you Set; Against Pins now places stock pushed against pins.'
@@ -4821,7 +4826,7 @@
   }
   // Setup is locked on open once a grid has been saved, so a stray tap
   // can't change (and autosave) it; Unlock to edit.
-  var HOLE_FIELDS = ['mw-hole-layout', 'mw-hole-dia', 'mw-hole-sx', 'mw-hole-sy', 'mw-hole-ix', 'mw-hole-iy', 'mw-hole-track', 'mw-hole-pn', 'mw-hole-pp', 'mw-hole-turn', 'mw-hole-list', 'mw-grid-name', 'mw-grid-nearest'];
+  var HOLE_FIELDS = ['mw-hole-layout', 'mw-hole-dia', 'mw-hole-pin', 'mw-hole-sx', 'mw-hole-sy', 'mw-hole-ix', 'mw-hole-iy', 'mw-hole-track', 'mw-hole-pn', 'mw-hole-pp', 'mw-hole-turn', 'mw-hole-list', 'mw-grid-name', 'mw-grid-nearest'];
   function setHoleLock(locked) {
     HOLE_FIELDS.concat(['mw-hole-here', 'mw-hole-add', 'mw-grid-remove', 'mw-cal-open']).forEach(function(id) { $(id).disabled = locked; });
     if (locked) showCal(false);
@@ -6225,6 +6230,9 @@
     var base = p && p.zMm != null ? p.zMm : null;
     var on = p ? (p.name ? '\u201c' + p.name + '\u201d' : holeName(p).replace(/^Column/, 'column')) : '';
     if (stockMode && $('mw-stock-on').checked) {
+      // A stock that sat on a point with a height (a vise) before 0.5.
+      var an = holes.stockBy === 'zero' ? holes.stockAnchor : null;
+      if (an && an.zMm != null) { base = an.zMm; on = 'the point it was placed on (' + shown(an.zMm) + ' ' + unitName() + ' up)'; }
       var top = $('mw-stock-zmode').value === 'top', t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
       if (top && !(t > 0)) return null;
       var under = base != null ? on : 'the spoilboard';
@@ -6315,16 +6323,25 @@
   // Two pin holes: the first round (it locates), the second a slot slotMm
   // longer toward the first, so the stock can't bind if it or the board
   // moves. As holeCutProgram takes them.
-  function pinHoles(qs, diaMm, slotMm, depthMm) {
-    return qs.map(function(q, i) {
+  // The slot goes no deeper than the stock (thickMm): past it, its longer
+  // ends would cut into the dog hole's rim. The pin's own round hole under
+  // it goes on to depthMm (Break Through).
+  function pinHoles(qs, diaMm, slotMm, depthMm, thickMm) {
+    var out = [];
+    qs.forEach(function(q, i) {
       var h = { x: q.x, y: q.y, diaMm: diaMm, depthMm: depthMm, label: holeName(q) + ' pin' };
       var other = qs[1 - i];
       if (i === 1 && slotMm > 0 && other) {
         var d = Math.hypot(other.x - q.x, other.y - q.y);
-        if (d > 0) Object.assign(h, { slotMm: slotMm, ux: (other.x - q.x) / d, uy: (other.y - q.y) / d, label: holeName(q) + ' pin slot' });
+        if (d > 0) {
+          var deep = thickMm > 0 && depthMm > thickMm;
+          out.push({ x: q.x, y: q.y, diaMm: diaMm, depthMm: deep ? thickMm : depthMm, slotMm: slotMm, ux: (other.x - q.x) / d, uy: (other.y - q.y) / d, label: holeName(q) + ' pin slot' });
+          if (!deep) return;
+        }
       }
-      return h;
+      out.push(h);
     });
+    return out;
   }
   // Starting feeds for the material and bit picked, within the machine's
   // max feed ($110/$111) and spindle range ($30/$31).
@@ -6378,7 +6395,7 @@
       tool: state.cutTool && Math.abs(state.cutTool.mm - bit) < 0.002 ? state.cutTool.n : null,
       zWcs: zero && ms[w.toLowerCase()] ? parseFloat(String(ms[w.toLowerCase()]).split(',')[2]) : null,
       bitMm: bit, thickMm: plateOn ? plateT : cutMm('mw-cut-thick'), depthMm: cutMm('mw-cut-depth'), stepMm: cutMm('mw-cut-step'),
-      zWhat: plateOn ? 'the fixture plate\u2019s top' : undefined,
+      zWhat: plateOn ? 'the plate\u2019s top' : undefined,
       // A plate is clamped like stock: Safe Z between holes, and a stop if
       // Z0 has moved since Generate (its depth is from that Z0).
       safeEach: plateOn || undefined, zStop: plateOn && zero && ms[w.toLowerCase()] ? parseFloat(String(ms[w.toLowerCase()]).split(',')[2]) : undefined,
@@ -6436,7 +6453,7 @@
       [g.filter(function(q) { return q.blocked && !q.suppressed && !q.hidden; }).length, 'in keepout zones or Exclude Picks areas'],
       [g.filter(function(q) { return q.col == null && (q.zMm != null || !$('mw-cut-list').checked) && !q.suppressed && !q.hidden && !q.blocked; }).length, 'listed'],
       [o.pastTravel, 'too near the end of the travel to cut'],
-      [o.offPlate, 'off the fixture plate']
+      [o.offPlate, 'off the plate']
     ].filter(function(x) { return x[0]; }).map(function(x) { return x[0] + ' ' + x[1]; });
     $('mw-cut-holes').textContent = (o.holes.length ? o.holes.length + ' hole' + (o.holes.length === 1 ? '' : 's') + ': ' +
       Object.keys(sizes).map(function(k) { return sizes[k] + ' \u00d7 ' + k; }).join(', ') + '.' : 'No holes to cut.') +
@@ -6693,7 +6710,7 @@
     o.holes = o.holes.filter(function(h) { return h.diaMm >= 1; });
     // On a plate, the chamfer's outer edge must stay off its edge too.
     if (o.plateOn && o.plate && o.chamferMm > 0) o.holes = o.holes.filter(function(h) { return stockHoleCandidates([h], o.plate, h.diaMm / 2 + o.chamferMm, 1).length > 0; });
-    if (!o.holes.length) probs.push(o.plateOn ? 'There are no holes on the fixture plate to chamfer, with the chamfer clear of its edge' : 'There are no holes to chamfer (grid lines aren\u2019t)');
+    if (!o.holes.length) probs.push(o.plateOn ? 'There are no holes on the plate to chamfer, with the chamfer clear of its edge' : 'There are no holes to chamfer (grid lines aren\u2019t)');
     if (!(o.vAngleDeg >= 10 && o.vAngleDeg <= 170)) probs.push('V-bit Angle must be 10 to 170\u00b0');
     if (!(o.chamferMm > 0)) probs.push('Chamfer Width must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) probs.push('Feed and Plunge must be more than 0');
@@ -6738,7 +6755,7 @@
     Object.assign(o, { laser: laser, power: parseFloat($('mw-gl-power').value), depthMm: cutMm('mw-gl-depth'), feed: Math.round(cutMm('mw-gl-feed')), segs: segs });
     if (!hh) probs.push('Setup’s grid has a field that can’t be read: fix it in the XY0 Picker');
     else if (hh.layout === 'list') probs.push('Grid lines need a grid: set Setup’s layout to Grid or Grid + List');
-    else if (!segs.length) probs.push(o.plateOn ? 'No grid line crosses the fixture plate' : 'No grid line fits inside the travel, clear of the zones');
+    else if (!segs.length) probs.push(o.plateOn ? 'No grid line crosses the plate' : 'No grid line fits inside the travel, clear of the zones');
     if (!(o.feed > 0)) probs.push('Feed must be more than 0');
     if (laser && !(o.power > 0)) probs.push('Laser Power must be more than 0');
     if (laser && state.laserMode !== true) probs.push('Turn on grblHAL’s laser mode ($32=1) first: without it the laser stays on during rapids');
@@ -6892,7 +6909,7 @@
     if (!(thick > 0)) probs.push('Give the stock a thickness (T) in the XY0 Picker');
     if (!(size > 0)) probs.push((pins ? 'Pin Hole Ø' : 'Hole Size') + ' must be more than 0');
     if (fix && !(pinSize > 0)) probs.push('Pin Hole Ø must be more than 0');
-    if (!(slot >= 0) || slot > 10) probs.push('Slot + must be 0 to 10 ' + unitName() + ' (0: both pin holes round)');
+    if (!(slot >= 0) || slot > 10) probs.push('Slot + must be 0 to ' + shown(10) + ' ' + unitName() + ' (0: both pin holes round)');
     if (!(margin >= 0)) probs.push('Edge Margin must be 0 or more');
     if (blind && !(blindMm > 0)) probs.push('Depth must be more than 0, or blank to drill through');
     else if (blind && thick > 0 && blindMm >= thick) probs.push('Depth must be less than the stock\u2019s thickness (T ' + shown(thick) + ' ' + unitName() + ') for blind holes: leave it blank to drill through');
@@ -6946,13 +6963,13 @@
           }
         }
       }
-      pinHoles(cutOrder(res.pinsAt), pinSize, slot, depth).forEach(function(h) { o.holes.push(h); });
+      pinHoles(cutOrder(res.pinsAt), pinSize, slot, depth, thick).forEach(function(h) { o.holes.push(h); });
     } else {
       if (holes.hidden[String(holes.activeGrid)]) { probs.push('The grid picked in Setup is hidden on the map: show it (its eye) to use its holes'); return res; }
       var cands = stockHoleCandidates(layerHoles(holes.activeGrid), rect, (hasCb ? cb : size) / 2, margin);
       if (pins) {
         res.flip = flipPins(cands, rect, $('mw-sh-axis').value);
-        res.chosen = res.flip ? res.flip.pins : [];
+        res.chosen = res.flip ? cutOrder(res.flip.pins) : [];
         if (!res.flip) probs.push('No grid ' + ($('mw-sh-axis').value === 'x' ? 'row' : 'column') + ' inside the stock has two holes clear of its edge: try a smaller Edge Margin or the other flip');
       } else {
         res.chosen = stockBoltHoles(cands, rect, $('mw-sh-which').value);
@@ -6961,7 +6978,7 @@
     }
     var small = blind ? [] : res.chosen.filter(function(q) { return size > 2 * holeR(q, hh) + 0.05; });
     if (small.length) probs.push((pins ? 'Pin Hole Ø' : 'Hole Size') + ' is bigger than the spoilboard hole under it (' + holeName(small[0]) + '): breaking through would cut the spoilboard');
-    if (pins) pinHoles(res.chosen, size, slot, depth).forEach(function(h) { o.holes.push(h); });
+    if (pins) pinHoles(res.chosen, size, slot, depth, thick).forEach(function(h) { o.holes.push(h); });
     else cutOrder(res.chosen).forEach(function(q) {
       if (hasCb) o.holes.push({ x: q.x, y: q.y, diaMm: cb, depthMm: cbd, label: holeName(q) + ' counterbore' });
       o.holes.push({ x: q.x, y: q.y, diaMm: size, depthMm: depth, label: holeName(q) });
@@ -7081,6 +7098,7 @@
         var lines = holeCutProgram(o);
         var how = o.bitMm > 0 ? holeCutMethod(s.chosen.length && o.holes.filter(function(h) { return !/ counterbore$/.test(h.label); })[0].diaMm, o.bitMm) : null;
         if (how && CUT_METHODS[how]) text += ' The holes are ' + CUT_METHODS[how] + (how === 'drill' ? ($('mw-cut-peck').value === 'none' ? ' in one plunge' : ' (' + $('mw-cut-peck').selectedOptions[0].textContent.toLowerCase() + ' each Depth per Pass)') : '') + '.';
+        if ((s.pins || s.fix) && s.slotMm > 0) text += ' The slot is cut round its outline, down to the stock\u2019s bottom; the pin\u2019s round hole goes on through.';
         text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o);
       }
       if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths.';
@@ -7111,7 +7129,7 @@
     if (!(width > 0)) probs.push('Track Width must be more than 0');
     else if (o.bitMm > 0 && o.bitMm > width + 0.05) probs.push('The bit is wider than the track');
     if (!(depth > 0)) probs.push(typed ? 'Depth must be more than 0' : o.plateOn ? 'Give the stock a thickness (T) in the XY0 Picker, or a Depth' : 'Set the Spoilboard Thickness above (the top layer\u2019s), or a Depth');
-    else if (o.thickMm > 0 && depth > o.thickMm + 1e-9) probs.push(o.plateOn ? 'Depth is more than the fixture plate\u2019s thickness' : 'Depth is more than the Spoilboard Thickness: it would cut the layer below and its inserts');
+    else if (o.thickMm > 0 && depth > o.thickMm + 1e-9) probs.push(o.plateOn ? 'Depth is more than the plate\u2019s thickness' : 'Depth is more than the Spoilboard Thickness: it would cut the layer below and its inserts');
     else if (!(o.thickMm > 0)) probs.push(o.plateOn ? 'Give the stock a thickness (T) in the XY0 Picker' : 'Set the Spoilboard Thickness above (the top layer\u2019s), so the slots can\u2019t go deeper');
     if (!(o.bitMm > 0)) probs.push('Bit Diameter must be more than 0');
     if (!(o.stepMm > 0)) probs.push('Depth per Pass must be more than 0');
@@ -7122,7 +7140,7 @@
     else if (!grids.length) probs.push('No grid shown on the map has T-tracks: set T-tracks in Setup');
     var slots = grids.length && width > 0 && o.bitMm > 0 ? trackSlots(grids, width / 2, o.bitMm / 2, o.zones) : [];
     if (o.plateOn) slots = o.plate ? clipToPlate(slots, o.plate, width / 2 + o.bitMm / 2 + PLATE_EDGE_MM) : [];
-    if (grids.length && width > 0 && !slots.length) probs.push(o.plateOn ? 'No slot crosses the fixture plate' : 'No slot fits inside the travel, clear of the zones');
+    if (grids.length && width > 0 && !slots.length) probs.push(o.plateOn ? 'No slot crosses the plate' : 'No slot fits inside the travel, clear of the zones');
     Object.assign(o, { slots: slots, widthMm: width, depthMm: depth, through: !typed || Math.abs(depth - o.thickMm) < 1e-6 });
     return { o: o, probs: probs };
   }
@@ -7191,6 +7209,7 @@
     });
     // Bolt sizes: clearance hole, and a counterbore for a socket head (and washer).
     var BOLTS = { m6: [6.6, 11], m8: [9, 14], q20: [6.9, 10.5] };
+    ['mw-sh-bolt', 'mw-sh-cb'].forEach(function(id) { $(id).addEventListener('input', function() { $('mw-sh-boltsize').value = ''; }); });
     $('mw-sh-boltsize').addEventListener('change', function() {
       var b = BOLTS[this.value], k = state.imperial ? MM_PER_INCH : 1;
       if (!b) return;
