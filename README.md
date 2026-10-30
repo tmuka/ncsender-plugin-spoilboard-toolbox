@@ -117,9 +117,9 @@ numbers, so they agree from the first hole.
 2. In the XY0 Picker's **Setup**, describe the grid you want: hole size, spacing, and the insets from
    machine X0 Y0 to the first hole; T-tracks between panels if you have them. Or load a preset from the
    Profiles menu. The map shows the result over your machine's travel.
-3. **Spoilboard → Fit test:** cut a row of test holes in scrap and set Hole Diameter to the one your
+3. **Cut Board → Fit test:** cut a row of test holes in scrap and set Hole Diameter to the one your
    dowels fit.
-4. **Spoilboard → Dog holes → Generate**, check it in ncSender's visualizer, and run it. Then
+4. **Cut Board → Dog holes → Generate**, check it in ncSender's visualizer, and run it. Then
    chamfers and labels if you like, and T-tracks for a two-layer board.
 5. Save Setup as a profile (**New profile…**). From now on, zeroing is path B's last step.
 
@@ -302,7 +302,7 @@ spacing or insets; a change that renumbers the holes (a different first hole) mo
 the bed. Give a listed point a fourth value, its reference surface's height above the spoilboard:
 `vise: 400, 250, , 63.5mm` (a blank third value keeps Hole Diameter). Pick it, hold **Set** for X0 Y0,
 and hold **Set Z0**: Z0 lands on the vise jaw for any measured tool, from the spoilboard height the Z0
-macros recorded, with no probing at the fixture. With **Stock** ticked, its thickness fills in from **SBT: Measure stock
+macros recorded, with no probing at the fixture. With a stock placed (the picker's **Stock** mode), its thickness fills in from **SBT: Measure stock
 thickness** (or type it), and **Z0: spoilboard** or **Z0: stock top** puts Z0 on the stock's bottom or top (on the fixture,
 or on the spoilboard when no fixture is picked). Set Z0 needs the spoilboard height recorded
 (**SBT: Record spoilboard height**) and a tool length offset active, stops while a G92 Z offset is
@@ -377,7 +377,7 @@ itself; with a V-bit, lower its tip until the cone touches the rim evenly.
 **A spoilboard that isn't square to the machine:** **Turn** is how far it's turned, in degrees
 (counterclockwise seen from above), about the grid's first hole. Measure Holes fills it in. On a big bed
 it matters: 0.1° over 2.4 m is about 4 mm at the far end. The map, Pick Nearest Hole, Set, the keyboard
-macros and every Spoilboard and Stock program use the turned positions; holes the turn takes outside the travel
+macros and every Cut Board and Stock Holes program use the turned positions; holes the turn takes outside the travel
 are left out. With a turn, pick the hole before grabbing (with none picked, Grab uses the hole Setup puts
 nearest the bit, so Setup must be close already). The Profiles menu can also **load a
 preset** layout (an Onefinity QCW, say): everything but the insets, which you then grab or measure.
@@ -427,7 +427,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused. The first time
   the pins place it, X0 Y0 goes on the pinned corner: the one point that doesn't hang on the size you
   typed.
-- **Stock, Corner at X0 Y0:** zero on a corner by touch or probe, press **From X0 Y0 Now**, and pick
+- **Stock, Corner on X0 Y0:** zero on a corner by touch or probe, press **Use Current X0 Y0**, and pick
   which corner it is. It stays put when X0 Y0 changes.
 - **Stock size:** type its width (X) and length (Y), or jog over the far corner and press **Far Corner
   Here**; its thickness fills in from **SBT: Measure stock thickness** until you type one.
@@ -449,7 +449,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 
 ## Cut Board: the dog holes, T-tracks, chamfers and labels
 
-The **Spoilboard** tab writes the programs that make (or remake) the spoilboard from the XY0 Picker's
+The **Cut Board** tab (Spoilboard before 0.5) writes the programs that make (or remake) the spoilboard from the XY0 Picker's
 holes, so the board and the map come from the same numbers. Pick what to cut with the chips at its top
 (**Dog holes**, **T-tracks**, **Grid lines**, **Fit test**, **Laser test**, **Chamfers**, **Labels**). Load the bit, put Z0 on the
 spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the depth and feeds in the shared

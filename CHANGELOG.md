@@ -15,7 +15,7 @@ feeds by material.**
 - **Stock against pins:** push the stock against pins in dog holes (two along one edge, one along the
   other) and tap those holes. The corner is a pin radius off the pins' row and column, on a turned grid
   too. Two diagonal pins ask which way the stock sits; a pin at the corner is ignored; a pin under the
-  stock is refused. Or place it by its **Corner at X0 Y0**, as before.
+  stock is refused. Or place it by its **Corner on X0 Y0**, as before.
 - **Pin Ø** per grid in Setup: the pins' size where the stock touches them (blank: the hole's).
 - **Before Set:** a sentence says where X0 Y0 goes, with the numbers, and the next how far Set moves
   the work offset and from where. A move of exactly a hole or pin radius or diameter from somewhere
