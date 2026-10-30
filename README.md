@@ -395,7 +395,8 @@ or jog roughly over one and press **Pick Nearest Hole** (it picks the hole close
 to the spindle and says how far off it is, so you get the grid's exact position without centering
 the bit). The dots beside the Set button pick where on the hole X0 Y0 goes: the center, or an edge
 or corner one hole radius out (back is +Y, right is +X), e.g. back right for a stop pin's +X +Y side.
-**Go to Selected** moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0
+**Go to Selected** (its label names the point: **Go to B4**, **Go to B4 · back right**, **Go to Stock Front
+Left**, and Set's does too) moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0
 when none is set; it never moves down, so a spindle already above Safe Z stays there). Like ncSender's
 XY0, hold it for a second, since it moves the machine. A side of a hole that would land in a keepout
 zone or outside the travel can't be used. In **Stock** mode, **Go to Stock Center** beside it moves over
@@ -546,11 +547,12 @@ pattern, use **Cut Board**.) The stock is the one placed in the XY0 Picker's **S
 size and thickness; the holes come from the grid picked in Setup.
 - **Bolts:** a clearance hole over the spoilboard hole nearest each corner of the stock, or every one
   under it (the summary counts them, along X and Y), with an optional counterbore for the head.
-  **Bolt** fills the sizes for M6 (6.6 / 11 mm), M8 (9 / 14) or 1/4-20 (6.9 / 10.5). Bolt the stock to
+  **Bolt** fills the clearance hole for M6 (6.6 mm), M8 (9) or 1/4-20 (6.9), and, when a counterbore
+  is set, room for a socket head (11, 14 or 10.5 mm; no washer). Bolt the stock to
   threaded inserts in the spoilboard; keep the bolts out of the part's toolpaths.
 - **Locating Pins + Bolts:** a plate that comes off and goes back exactly, in one program. Two pin
   holes over dog holes, as far apart as fit (diagonally): the first round, so it locates, and the
-  second a slot toward it (**Slot +**, 0.75 mm by default), so the plate can't bind when MDF moves with
+  second a slot pointing at it (**Slot +** longer, half each way; 0.75 mm by default), so the plate can't bind when MDF moves with
   the seasons. Bolt holes go in the other holes of the same grid (inserts behind the dog holes) or in an
   insert grid of their own (**+ Inserts** in Setup), counterbored if you like.
 - **Flip Pins:** two holes for dowels on the grid row (or column) nearest the stock's middle, the

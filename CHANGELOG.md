@@ -18,6 +18,8 @@ feeds by material.**
   stock is refused. Or place it by its **Corner on X0 Y0**, as before.
 - **Go to Stock Center:** in Stock mode, a hold button beside Go to Selected moves over the stock's
   center at Safe Z, whichever dot X0 Y0 is on.
+- **Map view:** the zoom buttons (−, +, Fit, Follow) sit in a labelled strip under the map, apart
+  from the controls that pick or move.
 - **Pin Ø** per grid in Setup: the pins' size where the stock touches them (blank: the hole's).
 - **Before Set:** a sentence says where X0 Y0 goes, with the numbers, and the next how far Set moves
   the work offset and from where. A move of exactly a hole or pin radius or diameter from somewhere
