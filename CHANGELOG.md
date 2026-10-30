@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.4.6
 
 ### ✨ New
 - **Lock Position** (XY0 Picker, Stock): keeps the stock where it's drawn while you pick other holes to
