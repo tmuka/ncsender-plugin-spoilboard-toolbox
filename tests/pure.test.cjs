@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1609,22 +1609,12 @@ test('fixture plate: lines and slots cut to the plate less a margin, short lefto
   assert.deepEqual(clipToPlate(segs, { minX: 0, maxX: 5, minY: 0, maxY: 5 }, 3), []);
 });
 
-test('fixture plate: two pins far apart, a stop in the nearest square middle, inserts between holes', () => {
+test('fixture plate: two pins far apart', () => {
   const g = holeGrid({ diaMm: 20, sxMm: 100, syMm: 100, insetXMm: 50, insetYMm: 50, travelXMm: 600, travelYMm: 600, dirX: 1, dirY: 1 });
   const rect = { minX: 30, maxX: 380, minY: 30, maxY: 280 };
   const cands = stockHoleCandidates(g, rect, 4, 10);
   const pins = fixturePins(cands, rect);
   assert.deepStrictEqual(pins.map(p => [p.x, p.y]).sort((a, b) => a[0] - b[0]), [[50, 50], [350, 250]], 'opposite corners');
-  const centers = squareCenters(g, 100, 100);
-  assert.ok(centers.every(c => (c.x - 100) % 100 === 0 && (c.y - 100) % 100 === 0), 'middles of squares');
-  const st = stopHole(centers, rect, 'front-left', 4, 10);
-  assert.deepStrictEqual([st.x, st.y, st.from.tag], [100, 100, 'A1']);
-  assert.deepStrictEqual([stopHole(centers, rect, 'back-right', 4, 10).x, stopHole(centers, rect, 'back-right', 4, 10).y], [300, 200]);
-  assert.equal(stopHole(centers, { minX: 0, maxX: 60, minY: 0, maxY: 60 }, 'front-left', 4, 10), null);
-  // T-tracks along X make panels of 3 rows: no square across a track.
-  const t = holeGrid({ diaMm: 20, sxMm: 100, syMm: 100, insetXMm: 50, insetYMm: 50, travelXMm: 300, travelYMm: 900, dirX: 1, dirY: 1, trackAxis: 'x', panelHoles: 3, panelPitchMm: 400 });
-  const tc = squareCenters(t, 100, 100);
-  assert.ok(tc.length > 0 && tc.every(c => [100, 200, 500, 600].includes(c.y)), JSON.stringify(tc.map(c => c.y)));
 });
 
 test('insertGridRaw: half a spacing over, panels one fewer, turned about the first hole', () => {
@@ -1774,4 +1764,26 @@ test('stockOnPins: a turned grid keeps the corner a pin radius off each line', (
   const dCol = Math.abs((f.corner.x - Q.x) * -ax.uy.y + (f.corner.y - Q.y) * ax.uy.x);
   assert.ok(Math.abs(dRow - 4) < 1e-9 && Math.abs(dCol - 4) < 1e-9);
   assert.equal(f.cornerName, 'front-left');
+});
+
+test('cut holes: a slot stays inside its outline, reaches its ends and sides and its depth', () => {
+  const segDist = (px, py, ax, ay, bx, by) => {
+    const dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+  };
+  for (const [dia, bit, ux, uy] of [[8.05, 4, 1, 0], [8.05, 4, 0.6, 0.8], [4, 4, 0, 1], [12, 4, 1, 0]]) {
+    const L = holeCutProgram(cutBase({ bitMm: bit, depthMm: 9, stepMm: 3, holes: [{ x: 100, y: 100, diaMm: dia, depthMm: 9, slotMm: 0.75, ux, uy, label: 'B4 pin slot' }] }));
+    assert.ok(L.some(l => /, slot\)$/.test(l)), 'cut as a slot');
+    const { pts, deepest } = cutTrace(L);
+    const cx = 100 - 10, cy = 100 + 20.5, ax = cx - 0.375 * ux, ay = cy - 0.375 * uy, bx = cx + 0.375 * ux, by = cy + 0.375 * uy;
+    const pr = dia / 2 - bit / 2;
+    const far = Math.max(...pts.map(([x, y]) => segDist(x, y, ax, ay, bx, by)));
+    assert.ok(far <= pr + 1e-3, dia + ': stays inside (' + far + ')');
+    assert.ok(Math.abs(far - pr) < 1e-3, dia + ': reaches the sides');
+    const along = pts.map(([x, y]) => (x - cx) * ux + (y - cy) * uy);
+    assert.ok(Math.abs(Math.max(...along) - (0.375 + pr)) < 2e-3 && Math.abs(Math.min(...along) + 0.375 + pr) < 2e-3, dia + ': reaches both ends');
+    assert.equal(deepest, -9);
+    // Wider than two bits: a ring in between, so no island is left.
+    if (dia === 12) assert.ok(pts.some(([x, y]) => { const d = segDist(x, y, ax, ay, bx, by); return d > 0.5 && d < pr - 0.5; }), 'clears the middle');
+  }
 });

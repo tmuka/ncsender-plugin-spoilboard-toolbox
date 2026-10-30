@@ -640,7 +640,6 @@
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset in the menu on the surface shown above it: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label">Set <span data-hole-wcs>G54</span> Z0</span><span class="mw-hold-hint">Hold</span></button>
           </div>
           <div class="mw-maptools">
-            </div>
             <div class="mw-maptools-row">
               <span class="mw-zoom" role="group" aria-label="Zoom the map">
                 <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-out" aria-label="Zoom out" title="Zoom out (or the mouse wheel, or pinch).">&minus;</button>
@@ -1302,10 +1301,10 @@
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-sh-mode">For</label>
-            <select class="mw-select" id="mw-sh-mode" title="Bolts: clearance holes for bolts into threaded inserts in the spoilboard holes. Flip pins: two holes on one grid line for dowels, so the stock can be flipped over that line and land where it was. Fixture plate: a plate that sits on two pins in the dog holes and bolts to an insert grid between them, with an optional corner stop.">
+            <select class="mw-select" id="mw-sh-mode" title="Bolts: clearance holes for bolts into the threaded inserts under the stock. Locating Pins + Bolts: a plate that drops onto two pins in dog holes, so it goes back exactly where it was, and bolts down. Flip Pins: two pin holes on one grid line, so the stock flipped over for its second side lands where it was.">
               <option value="bolt" selected>Bolts</option>
-              <option value="pins">Flip pins</option>
-              <option value="fixture">Fixture plate</option>
+              <option value="fixture">Locating Pins + Bolts</option>
+              <option value="pins">Flip Pins</option>
             </select>
           </div>
           <div class="mw-field" data-sh="fixture" hidden>
@@ -1314,13 +1313,22 @@
           </div>
           <div class="mw-field" data-sh="fixture" hidden>
             <label for="mw-sh-boltgrid">Bolts On</label>
-            <select class="mw-select" id="mw-sh-boltgrid" title="The grid of threaded inserts the plate bolts to. + Inserts in the XY0 Picker's Setup makes one halfway between the dog holes."></select>
+            <select class="mw-select" id="mw-sh-boltgrid" title="The grid whose holes have the threaded inserts. The same grid as the pins when the inserts are behind the dog holes (bolts then go in the other holes); or an insert grid of its own (+ Inserts in Setup)."></select>
           </div>
           <div class="mw-field" data-sh="bolt fixture">
             <label for="mw-sh-which">Holes</label>
             <select class="mw-select" id="mw-sh-which" title="The spoilboard hole nearest each corner of the stock, or every hole inside it.">
               <option value="corners" selected>Nearest the corners</option>
               <option value="all">Every one inside</option>
+            </select>
+          </div>
+          <div class="mw-field" data-sh="bolt fixture">
+            <label for="mw-sh-boltsize">Bolt</label>
+            <select class="mw-select" id="mw-sh-boltsize" title="Fills Hole Size with the bolt's clearance hole and Counterbore with room for a socket head (and a washer): M6 6.6 / 11, M8 9 / 14, 1/4-20 6.9 / 10.5 mm. Custom: type them.">
+              <option value="" selected>Custom</option>
+              <option value="m6">M6</option>
+              <option value="m8">M8</option>
+              <option value="q20">1/4-20</option>
             </select>
           </div>
           <div class="mw-field" data-sh="bolt fixture">
@@ -1346,23 +1354,9 @@
             <label for="mw-sh-pin">Pin Size (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-pin" value="8" title="The hole for each pin through the stock: the size the dowel fits snugly (the Dowel fit test below finds it). No bigger than the spoilboard holes.">
           </div>
-          <div class="mw-field" data-sh="fixture" hidden>
-            <label for="mw-sh-stop">Corner Stop</label>
-            <select class="mw-select" id="mw-sh-stop" title="A hole for a stop pin that work squares against: in the middle of the grid square nearest this corner of the plate. It stops short of the plate's bottom, since no spoilboard hole is under it.">
-              <option value="" selected>None</option>
-              <option value="front-left">Front left</option>
-              <option value="front-right">Front right</option>
-              <option value="back-left">Back left</option>
-              <option value="back-right">Back right</option>
-            </select>
-          </div>
-          <div class="mw-field" data-sh="fixture" hidden>
-            <label for="mw-sh-stopd">Stop Size (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-stopd" value="8" title="The hole for the stop pin: the size it fits snugly.">
-          </div>
-          <div class="mw-field" data-sh="fixture" hidden>
-            <label for="mw-sh-stopdepth">Stop Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-stopdepth" value="12" title="How deep the stop's hole goes from the plate's top. Less than its thickness: the hole doesn't go through.">
+          <div class="mw-field" data-sh="pins fixture" hidden>
+            <label for="mw-sh-slot">Slot + (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-slot" value="0.75" title="The second pin hole is a slot this much longer, toward the first pin, so the stock can't bind when the board or the stock moves a little (MDF does with the seasons). The first pin hole stays round and locates; 0 makes both round.">
           </div>
           <div class="mw-field">
             <label for="mw-sh-margin">Edge Margin (<span class="mw-unit">mm</span>)</label>
@@ -1379,6 +1373,7 @@
         </div>
         <svg class="mw-diagram mw-sh-diagram" id="mw-sh-diagram" viewBox="0 0 700 214" role="img" aria-label="Side view of the stock on the spoilboard: where Z0 is and how deep each hole goes."></svg>
         <p class="mw-hint" id="mw-sh-summary"></p>
+        <div><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-sh-zeropin" hidden title="For the second side: X0 Y0 on the round flip pin's center, which stays put when the stock turns over. Opens the XY0 Picker on it; hold Set there.">Zero on the Flip Pin</button></div>
         <p class="mw-status" id="mw-sh-note" role="status"></p>
         <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-sh-generate">Generate Stock Holes</button></div>
       </section>
@@ -2839,7 +2834,20 @@
     o.holes.forEach(function(h, i) {
       var levels = levelsTo(h.depthMm || o.depthMm);
       var method = holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm), cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, pr = h.diaMm / 2 - r;
-      var helixR = Math.min(r * 0.6, pr - 0.001), start = method === 'drill' ? { x: cx, y: cy } : { x: cx + (method === 'helix' ? pr : helixR), y: cy };
+      // A slot: h.diaMm wide, h.slotMm longer along (ux, uy), its ends'
+      // centers A and B. Rings around A-B, innermost first (a line when
+      // the bit is the slot's width).
+      var slot = h.slotMm > 0 && method !== 'too-small' ? { ux: h.ux, uy: h.uy, half: h.slotMm / 2 } : null;
+      if (slot) {
+        method = 'slot';
+        slot.ax = cx - slot.half * slot.ux; slot.ay = cy - slot.half * slot.uy; slot.bx = cx + slot.half * slot.ux; slot.by = cy + slot.half * slot.uy;
+        slot.rings = [];
+        for (var rr0 = Math.max(0, pr); ; rr0 -= 1.6 * r) { slot.rings.push(Math.max(0, rr0)); if (rr0 <= r) break; }
+        slot.rings.reverse();
+        // A ring's start: beside A, on the side clockwise of the slot.
+        slot.p1 = function(rr) { return { x: slot.ax + rr * slot.uy, y: slot.ay - rr * slot.ux }; };
+      }
+      var helixR = Math.min(r * 0.6, pr - 0.001), start = method === 'drill' ? { x: cx, y: cy } : slot ? slot.p1(slot.rings[0]) : { x: cx + (method === 'helix' ? pr : helixR), y: cy };
       L.push(c('SBT hole ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40) + ', ' + fmt(h.diaMm) + ' mm, ' + method));
       var to = { x: start.x + o.wcs.x, y: start.y + o.wcs.y };
       // safeEach: to Safe Z between holes (over clamps on the stock), not
@@ -2863,6 +2871,39 @@
           }
         });
         at = { x: cx + o.wcs.x, y: cy + o.wcs.y };
+      } else if (method === 'slot') {
+        // Each ring counterclockwise (climb): along to B, round B, back,
+        // round A. The innermost ramps down a pass, laps once flat, then the
+        // bit steps out ring by ring.
+        var ring = function(rr, z0, z1) {
+          var nx = -slot.uy, ny = slot.ux, len = 4 * slot.half + 2 * Math.PI * rr, done = 0, out = [];
+          var z = function(d) { return z1 == null ? '' : ' Z' + f3(z0 + (z1 - z0) * (done += d) / len); };
+          var F = z1 == null ? o.feed : Math.max(1, Math.round(Math.min(o.feed, o.plunge * len / Math.max(1e-6, z0 - z1))));
+          if (rr < 1e-6) {
+            out.push('G1 X' + f5(slot.bx) + ' Y' + f5(slot.by) + z(2 * slot.half) + ' F' + F);
+            out.push('G1 X' + f5(slot.ax) + ' Y' + f5(slot.ay) + z(2 * slot.half));
+            return out;
+          }
+          out.push('G1 X' + f5(slot.bx - rr * nx) + ' Y' + f5(slot.by - rr * ny) + z(2 * slot.half) + ' F' + F);
+          out.push('G3 X' + f5(slot.bx + rr * nx) + ' Y' + f5(slot.by + rr * ny) + ' I' + f5(rr * nx) + ' J' + f5(rr * ny) + z(Math.PI * rr));
+          out.push('G1 X' + f5(slot.ax + rr * nx) + ' Y' + f5(slot.ay + rr * ny) + z(2 * slot.half));
+          out.push('G3 X' + f5(slot.ax - rr * nx) + ' Y' + f5(slot.ay - rr * ny) + ' I' + f5(-rr * nx) + ' J' + f5(-rr * ny) + z(Math.PI * rr));
+          return out;
+        };
+        var sz = clearZ, inner = slot.rings[0];
+        levels.forEach(function(lv, k) {
+          if (k) { var s1 = slot.p1(inner); L.push('G1 X' + f5(s1.x) + ' Y' + f5(s1.y) + ' F' + o.plunge); }
+          L.push.apply(L, ring(inner, sz, -lv));
+          L.push.apply(L, ring(inner));
+          slot.rings.slice(1).forEach(function(rr) {
+            var s2 = slot.p1(rr);
+            L.push('G1 X' + f5(s2.x) + ' Y' + f5(s2.y) + ' F' + o.feed);
+            L.push.apply(L, ring(rr));
+          });
+          sz = -lv;
+        });
+        var last = slot.p1(slot.rings[slot.rings.length - 1]);
+        at = { x: last.x + o.wcs.x, y: last.y + o.wcs.y };
       } else if (method === 'helix') {
         // QuickCut's emitOneCircle: two half turns a pass, then a lap at depth.
         var prev = clearZ;
@@ -3460,29 +3501,6 @@
       }
     }
     return best ? best.pins : [];
-  }
-  // The middles of a grid's squares: where four neighboring holes meet,
-  // one spacing apart (so never across a T-track).
-  function squareCenters(holes, sxMm, syMm) {
-    var at = {}, out = [];
-    var near = function(a, b, sp) { return Math.abs(Math.hypot(a.x - b.x, a.y - b.y) - sp) < 0.01; };
-    holes.forEach(function(p) { if (p.col != null) at[(p.layer || 0) + ':' + p.col + ',' + p.row] = p; });
-    holes.forEach(function(p) {
-      if (p.col == null) return;
-      var k = (p.layer || 0) + ':', r = at[k + (p.col + 1) + ',' + p.row], u = at[k + p.col + ',' + (p.row + 1)], ru = at[k + (p.col + 1) + ',' + (p.row + 1)];
-      if (!r || !u || !ru || !near(p, r, sxMm) || !near(p, u, syMm) || !near(u, ru, sxMm) || !near(r, ru, syMm)) return;
-      out.push({ x: (p.x + r.x + u.x + ru.x) / 4, y: (p.y + r.y + u.y + ru.y) / 4, from: p });
-    });
-    return out;
-  }
-  // The corner stop: the square middle nearest the plate's corner, its
-  // edge marginMm inside the plate. null when none fits.
-  function stopHole(centers, rect, corner, rMm, marginMm) {
-    var c = rectPoint(rect, corner), best = null;
-    stockHoleCandidates(centers, rect, rMm, marginMm).forEach(function(p) {
-      if (!best || Math.hypot(p.x - c.x, p.y - c.y) < Math.hypot(best.x - c.x, best.y - c.y) - 1e-9) best = p;
-    });
-    return best;
   }
   // An insert grid: grid r's fields (as typed, machine units) moved half a
   // spacing along axis 'x' or 'y', so its holes sit on the grid lines
@@ -6286,6 +6304,20 @@
   var CUT_LENGTHS = ['bit', 'thick', 'depth', 'step', 'feed', 'plunge'], CUT_PLAIN = ['stepover', 'rpm', 'delay'];
   var CUT_METHODS = { drill: 'drilled', helix: 'spiralled down', clear: 'cleared in rings', 'too-small': 'too small for the bit' };
   function cutMm(id) { var v = unitVal($(id)); return isFinite(v) ? v * (state.imperial ? MM_PER_INCH : 1) : NaN; }
+  // Two pin holes: the first round (it locates), the second a slot slotMm
+  // longer toward the first, so the stock can't bind if it or the board
+  // moves. As holeCutProgram takes them.
+  function pinHoles(qs, diaMm, slotMm, depthMm) {
+    return qs.map(function(q, i) {
+      var h = { x: q.x, y: q.y, diaMm: diaMm, depthMm: depthMm, label: holeName(q) + ' pin' };
+      var other = qs[1 - i];
+      if (i === 1 && slotMm > 0 && other) {
+        var d = Math.hypot(other.x - q.x, other.y - q.y);
+        if (d > 0) Object.assign(h, { slotMm: slotMm, ux: (other.x - q.x) / d, uy: (other.y - q.y) / d, label: holeName(q) + ' pin slot' });
+      }
+      return h;
+    });
+  }
   // Starting feeds for the material and bit picked, within the machine's
   // max feed ($110/$111) and spindle range ($30/$31).
   function feedsNow() {
@@ -6417,13 +6449,13 @@
   // units then (settings.units).
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
-      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-stopd', 'sh-stopdepth', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-stop', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
+      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-thick': 0.75, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
     'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
-    'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-stopd': 0.3125, 'sh-stopdepth': 0.5, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
+    'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-slot': 0.03, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
     'gl-depth': 0.012, 'gl-feed': 60, 'lt-fmin': 20, 'lt-fmax': 120 };
   function cutBody() {
     var b = { 'cut-tool': state.cutTool || null };
@@ -6754,18 +6786,20 @@
     var placed = stockPlacement(), rect = stockShown();
     var mode = $('mw-sh-mode').value, pins = mode === 'pins', fix = mode === 'fixture';
     var thick = unitVal($('mw-stock-t')) * k;
+    var slotText = String($('mw-sh-slot').value).trim(), slot = (pins || fix) && slotText !== '' ? cutMm('mw-sh-slot') : 0;
     var size = cutMm(pins ? 'mw-sh-pin' : 'mw-sh-bolt'), pinSize = fix ? cutMm('mw-sh-pin') : NaN, cb = pins ? NaN : cutMm('mw-sh-cb'), cbd = cutMm('mw-sh-cbd');
     // Depth blank: through the stock and Break Through into the spoilboard;
     // a number: blind holes that stop that far below Z0.
     var blind = String($('mw-sh-depth').value).trim() !== '', blindMm = cutMm('mw-sh-depth');
     var margin = cutMm('mw-sh-margin'), brk = cutMm('mw-sh-break'), depth = blind ? blindMm : thick + brk;
-    var res = { o: o, probs: probs, rect: rect, mode: mode, pins: pins, fix: fix, chosen: [], flip: null, warn: '', blind: blind, depthMm: depth };
+    var res = { o: o, probs: probs, rect: rect, mode: mode, pins: pins, fix: fix, chosen: [], flip: null, warn: '', blind: blind, depthMm: depth, slotMm: slot };
     if (!placed || (placed.problem && placed.problem !== 'under')) probs.push('Place the stock in the XY0 Picker\u2019s Stock mode: against its pins, or its corner at X0 Y0');
     else if (placed.problem === 'under') probs.push('A pin is under the stock in the XY0 Picker: check the pins and the size');
     else if (!rect) probs.push('Give the stock\u2019s width and length in the XY0 Picker\u2019s Stock mode');
     if (!(thick > 0)) probs.push('Give the stock a thickness (T) in the XY0 Picker');
     if (!(size > 0)) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' must be more than 0');
     if (fix && !(pinSize > 0)) probs.push('Pin Size must be more than 0');
+    if (!(slot >= 0) || slot > 10) probs.push('Slot + must be 0 to 10 ' + unitName() + ' (0: both pin holes round)');
     if (!(margin >= 0)) probs.push('Edge Margin must be 0 or more');
     if (blind && !(blindMm > 0)) probs.push('Depth must be more than 0, or blank to drill through');
     else if (blind && thick > 0 && blindMm >= thick) probs.push('Depth must be less than the stock\u2019s thickness (T ' + shown(thick) + ' ' + unitName() + ') for blind holes: leave it blank to drill through');
@@ -6798,38 +6832,28 @@
     };
     o.holes = [];
     if (fix) {
-      var pg = +$('mw-sh-pingrid').value, bg = $('mw-sh-boltgrid').value === '' ? -1 : +$('mw-sh-boltgrid').value;
-      if (bg < 0) { probs.push('Add an insert grid to bolt to: + Inserts in the XY0 Picker’s Setup'); return res; }
-      if (bg === pg) { probs.push('Pins On and Bolts On are the same grid: the bolts go in an insert grid between the dog holes'); return res; }
+      // Bolts on the pins' own grid (inserts behind the dog holes) skip the
+      // pin holes; an insert grid of their own is fine too.
+      var pg = +$('mw-sh-pingrid').value, bg = $('mw-sh-boltgrid').value === '' ? pg : +$('mw-sh-boltgrid').value;
       if (holes.hidden[String(pg)] || holes.hidden[String(bg)]) { probs.push('A grid picked here is hidden on the map: show it (its eye) to use its holes'); return res; }
-      var spacing = pg ? (hh.grids[pg - 1] || {}) : hh;
-      res.pinsAt = fixturePins(stockHoleCandidates(layerHoles(pg), rect, pinSize / 2, margin), rect);
+      res.pinsAt = fixturePins(stockHoleCandidates(layerHoles(pg), rect, pinSize / 2 + slot / 2, margin), rect);
       if (res.pinsAt.length < 2) probs.push('Fewer than two ' + gridName(pg) + ' holes are under the plate, clear of its edge: try a smaller Edge Margin or a bigger plate');
-      res.chosen = stockBoltHoles(stockHoleCandidates(layerHoles(bg), rect, (hasCb ? cb : size) / 2, margin), rect, $('mw-sh-which').value);
-      if (!res.chosen.length) probs.push('No ' + gridName(bg) + ' hole is under the plate, clear of its edge: try a smaller Edge Margin');
-      var corner = $('mw-sh-stop').value, stopD = cutMm('mw-sh-stopd'), stopDepth = cutMm('mw-sh-stopdepth');
-      if (corner) {
-        if (!(stopD > 0)) probs.push('Stop Size must be more than 0');
-        else if (!(stopDepth > 0 && stopDepth < thick)) probs.push('Stop Depth must be more than 0 and less than the plate’s thickness: no spoilboard hole is under it');
-        else {
-          res.stop = stopHole(squareCenters(layerHoles(pg), spacing.sxMm, spacing.syMm), rect, corner, stopD / 2, margin);
-          if (!res.stop) probs.push('No grid square’s middle is on the plate, clear of its edge, for the corner stop');
-        }
-      }
-      var smallPin = res.pinsAt.filter(function(q) { return pinSize > 2 * holeR(q, hh) + 0.05; });
+      var pinKeys = res.pinsAt.map(holeKey);
+      res.chosen = stockBoltHoles(stockHoleCandidates(layerHoles(bg), rect, (hasCb ? cb : size) / 2, margin).filter(function(q) { return pinKeys.indexOf(holeKey(q)) < 0; }), rect, $('mw-sh-which').value);
+      if (!res.chosen.length) probs.push('No other ' + gridName(bg) + ' hole is under the plate, clear of its edge, for a bolt: try a smaller Edge Margin');
+      var smallPin = blind ? [] : res.pinsAt.filter(function(q) { return pinSize > 2 * holeR(q, hh) + 0.05; });
       if (smallPin.length) probs.push('Pin Size is bigger than the spoilboard hole under it (' + holeName(smallPin[0]) + '): breaking through would cut the spoilboard');
       // Holes too close to each other run together.
-      var all = res.pinsAt.map(function(q) { return { q: q, r: pinSize / 2 }; })
-        .concat(res.chosen.map(function(q) { return { q: q, r: (hasCb ? cb : size) / 2 }; }))
-        .concat(res.stop ? [{ q: res.stop, r: stopD / 2 }] : []);
+      var all = res.pinsAt.map(function(q) { return { q: q, r: pinSize / 2 + slot / 2 }; })
+        .concat(res.chosen.map(function(q) { return { q: q, r: (hasCb ? cb : size) / 2 }; }));
       for (var a = 0; a < all.length; a++) {
         for (var b = a + 1; b < all.length; b++) {
           if (Math.hypot(all[a].q.x - all[b].q.x, all[a].q.y - all[b].q.y) < all[a].r + all[b].r + 1) {
-            probs.push('Two of the plate’s holes would run together (' + (all[a].q.from ? 'the stop' : holeName(all[a].q)) + ' and ' + (all[b].q.from ? 'the stop' : holeName(all[b].q)) + '): use smaller sizes'); a = all.length; break;
+            probs.push('Two of the plate’s holes would run together (' + holeName(all[a].q) + ' and ' + holeName(all[b].q) + '): use smaller sizes'); a = all.length; break;
           }
         }
       }
-      cutOrder(res.pinsAt).forEach(function(q) { o.holes.push({ x: q.x, y: q.y, diaMm: pinSize, depthMm: depth, label: holeName(q) + ' pin' }); });
+      pinHoles(cutOrder(res.pinsAt), pinSize, slot, depth).forEach(function(h) { o.holes.push(h); });
     } else {
       if (holes.hidden[String(holes.activeGrid)]) { probs.push('The grid picked in Setup is hidden on the map: show it (its eye) to use its holes'); return res; }
       var cands = stockHoleCandidates(layerHoles(holes.activeGrid), rect, (hasCb ? cb : size) / 2, margin);
@@ -6844,21 +6868,21 @@
     }
     var small = blind ? [] : res.chosen.filter(function(q) { return size > 2 * holeR(q, hh) + 0.05; });
     if (small.length) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' is bigger than the spoilboard hole under it (' + holeName(small[0]) + '): breaking through would cut the spoilboard');
-    cutOrder(res.chosen).forEach(function(q) {
+    if (pins) pinHoles(res.chosen, size, slot, depth).forEach(function(h) { o.holes.push(h); });
+    else cutOrder(res.chosen).forEach(function(q) {
       if (hasCb) o.holes.push({ x: q.x, y: q.y, diaMm: cb, depthMm: cbd, label: holeName(q) + ' counterbore' });
       o.holes.push({ x: q.x, y: q.y, diaMm: size, depthMm: depth, label: holeName(q) });
     });
-    if (res.stop) o.holes.push({ x: res.stop.x, y: res.stop.y, diaMm: cutMm('mw-sh-stopd'), depthMm: cutMm('mw-sh-stopdepth'), label: 'corner stop' });
     var n = res.chosen.length;
     Object.assign(o, { depthMm: depth, thickMm: 0, zWhat: fix ? 'the plate’s top' : 'the stock’s top', safeEach: true, zStop: o.zWcs,
-      title: fix ? 'fixture plate: 2 pin holes, ' + n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '') + (res.stop ? ', a corner stop' : '')
+      title: fix ? 'plate: 2 locating pin holes' + (slot > 0 ? ' (one slotted)' : '') + ', ' + n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '')
         : (pins ? 'flip pin holes' : n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '')) + (blind ? ', blind' : ' through the stock') });
     if (!probs.length) res.probs = probs.concat(holeCutProblems(o));
     return res;
   }
-  // The Fixture plate's grid menus: every grid, keeping the pick (or the
-  // saved one, data-want). Bolts default to a grid named Inserts, else the
-  // last grid; none when there's only one.
+  // Locating Pins + Bolts' grid menus: every grid, keeping the pick (or
+  // the saved one, data-want). Bolts default to a grid named Inserts, else
+  // the pins' grid (inserts behind the dog holes).
   function fillShGrids() {
     [['mw-sh-pingrid', 0], ['mw-sh-boltgrid', 1]].forEach(function(d) {
       var el = $(d[0]), want = el.value !== '' ? el.value : el.getAttribute('data-want');
@@ -6870,7 +6894,7 @@
       });
       var n = holes.gridRaw.length, ins = -1;
       holes.gridRaw.forEach(function(r, k) { if (ins < 0 && k && /insert/i.test(r.name || '')) ins = k; });
-      var dflt = d[1] ? (n < 2 ? '' : String(ins > 0 ? ins : n - 1)) : '0';
+      var dflt = d[1] ? (ins > 0 ? String(ins) : '0') : '0';
       el.value = want != null && +want < n && want !== '' ? want : dflt;
       if (el.value !== String(want)) el.removeAttribute('data-want');
     });
@@ -6880,7 +6904,7 @@
   // from it, and Z0's height as checked against the recorded spoilboard.
   function stockDiagram(s) {
     var u = ' ' + unitName(), k = state.imperial ? MM_PER_INCH : 1, thick = unitVal($('mw-stock-t')) * k, brk = cutMm('mw-sh-break');
-    var cbd = cutMm('mw-sh-cbd'), stopd = cutMm('mw-sh-stopdepth'), wcs = s.o.wcsName || 'G54';
+    var cbd = cutMm('mw-sh-cbd'), wcs = s.o.wcsName || 'G54';
     var num = function(v) { return isFinite(v) && v >= 0 ? shown(v) + u : '?'; };
     var esc = function(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
     var TOP = 62, SB = 128, BOT = 186, BRK = 7, out = [];
@@ -6891,18 +6915,14 @@
     rect('mw-d-spoil', 30, SB, 430, BOT);
     rect('mw-d-stock', 60, TOP, 400, SB);
     text(36, BOT - 8, 'Spoilboard', 'mw-d-note');
-    text(66, SB - 8, s.fix ? 'Fixture plate' : 'Stock', 'mw-d-note');
-    var parts = s.fix ? [['pin', 210], ['bolt', 290], ['stop', 365]] : s.pins ? [['pin', 220], ['pin', 330]] : [['bolt', 270]];
+    text(66, SB - 8, s.fix ? 'Plate' : 'Stock', 'mw-d-note');
+    var slot = s.slotMm > 0;
+    var parts = s.fix ? [['pin', 190], ['bolt', 270], [slot ? 'slot' : 'pin', 350]] : s.pins ? [['pin', 220], [slot ? 'slot' : 'pin', 330]] : [['bolt', 270]];
     parts.forEach(function(f) {
       var kind = f[0], x = f[1];
-      if (kind === 'stop') {
-        var d = thick > 0 && stopd > 0 ? Math.min(SB - 10, TOP + (SB - TOP) * stopd / thick) : TOP + 34;
-        rect('mw-d-cut', x - 9, TOP, x + 9, d);
-        text(x, BOT + 16, 'stop', 'mw-d-note', 'middle');
-        return;
-      }
-      var w = kind === 'pin' ? 11 : 9;
-      if (kind === 'pin') {
+      var isPin = kind !== 'bolt';
+      var w = isPin ? 11 : 9;
+      if (isPin) {
         rect('mw-d-hole', x - w, SB, x + w, BOT - 12);
       } else {
         rect('mw-d-hole', x - 13, SB, x + 13, BOT - 12);
@@ -6911,8 +6931,10 @@
       }
       rect('mw-d-cut', x - w, TOP, x + w, END);
       if (kind === 'bolt' && s.hasCb) rect('mw-d-cut', x - 17, TOP, x + 17, TOP + 16);
-      if (kind === 'pin') rect('mw-d-pin', x - w + 3, TOP - 14, x + w - 3, s.blind ? END - 2 : BOT - 16);
-      text(x, BOT + 16, s.blind ? 'blind hole' : kind === 'pin' ? 'pin, dog hole' : 'bolt, insert', 'mw-d-note', 'middle');
+      // A slot is wider here: it's longer along the line to the other pin.
+      if (kind === 'slot') { rect('mw-d-cut', x - w - 8, TOP, x + w + 8, s.blind ? END : SB + BRK); }
+      if (isPin) rect('mw-d-pin', x - w + 3, TOP - 14, x + w - 3, s.blind ? END - 2 : BOT - 16);
+      text(x, BOT + 16, s.blind ? 'blind hole' : kind === 'slot' ? 'pin, slot' : isPin ? 'pin, dog hole' : 'bolt, insert', 'mw-d-note', 'middle');
     });
     // Z0 on the stock's top, the spoilboard's top, and the cut's bottom.
     line('mw-d-line', 20, TOP, 420, TOP);
@@ -6928,7 +6950,7 @@
     say('Holes go ' + num(s.depthMm) + ' down from Z0', 'mw-d-val');
     say(s.blind ? 'Blind: Depth, not through the stock' : 'T ' + num(thick) + ' + Break Through ' + num(brk), 'mw-d-note', 20);
     if (s.hasCb) say('Counterbores ' + num(cbd) + ' deep', 'mw-d-note');
-    if (s.fix && s.stop) say('Stop ' + num(stopd) + ' deep, not through', 'mw-d-note');
+    if (slot && (s.fix || s.pins)) say('2nd pin hole: a slot ' + num(s.slotMm) + ' longer', 'mw-d-note');
     y += 8;
     if (s.above != null) {
       var off = isFinite(thick) && Math.abs(s.above - thick) > 0.5;
@@ -6944,11 +6966,12 @@
     ROOT.querySelectorAll('[data-sh]').forEach(function(el) { el.hidden = el.getAttribute('data-sh').split(' ').indexOf(s.mode) < 0; });
     $('mw-sh-cbd').disabled = !s.hasCb;
     $('mw-sh-break').disabled = s.blind;
-    if (s.fix && s.pinsAt && s.pinsAt.length === 2) text = 'Pins at ' + s.pinsAt.map(holeName).join(' and ') + ', diagonally apart so the plate goes back square. ';
+    var pinPair = function(qs) { var c = cutOrder(qs); return holeName(c[0]) + (s.slotMm > 0 ? ' (round) and ' + holeName(c[1]) + ' (a slot ' + shown(s.slotMm) + u + ' longer, toward the first)' : ' and ' + holeName(c[1])); };
+    if (s.fix && s.pinsAt && s.pinsAt.length === 2) text = 'Locating pins at ' + pinPair(s.pinsAt) + ', diagonally apart so the plate goes back square. ';
     var cbHole = o.holes.filter(function(h) { return / counterbore$/.test(h.label); })[0];
     if (s.chosen.length) {
-      text += (s.pins ? 'Pins at ' : 'Bolts at ') + s.chosen.map(holeName).join(', ') +
-        (s.hasCb ? ', each counterbored ' + shown(cbHole.diaMm) + u + ' wide, ' + shown(cbHole.depthMm) + u + ' deep' : '') + '.';
+      text += (s.pins && s.chosen.length === 2 ? 'Pins at ' + pinPair(s.chosen) : (s.pins ? 'Pins at ' : 'Bolts at ') + s.chosen.map(holeName).join(', ') +
+        (s.hasCb ? ', each counterbored ' + shown(cbHole.diaMm) + u + ' wide, ' + shown(cbHole.depthMm) + u + ' deep' : '')) + '.';
       if (!s.pins && $('mw-sh-which').value === 'all') {
         var span = holeSpan(s.chosen);
         text += ' ' + span.n + ' hole' + (span.n === 1 ? '' : 's') + ': ' + span.cols + ' along X \u00d7 ' + span.rows + ' along Y.';
@@ -6967,12 +6990,12 @@
         if (how && CUT_METHODS[how]) text += ' The holes are ' + CUT_METHODS[how] + (how === 'drill' ? ($('mw-cut-peck').value === 'none' ? ' in one plunge' : ' (' + $('mw-cut-peck').selectedOptions[0].textContent.toLowerCase() + ' each Depth per Pass)') : '') + '.';
         text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o);
       }
-      if (s.stop) text += ' The corner stop is in the middle of the square by ' + holeName(s.stop.from) + ', ' + shown(o.holes[o.holes.length - 1].depthMm) + u + ' deep.';
       if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths.';
       var hn = readHoles() || {}, turnNow = (holes.activeGrid ? (hn.grids || [])[holes.activeGrid - 1] || {} : hn).turnDeg;
       if (s.pins && turnNow) text += ' The grid is turned ' + turnNow + '\u00b0, so the pin line is too: the stock flips about that tilted line, so set the second side\u2019s X0 Y0 from the pins rather than mirroring across a straight line.';
-      text += ' It lifts to Safe Z between holes, to clear the clamps.';
+      text += ' It lifts to Safe Z between holes, to clear the clamps. Take the pins out of the holes under the stock first: the bit goes into them.';
     }
+    $('mw-sh-zeropin').hidden = !(s.pins && s.flip && !s.probs.length);
     if (s.warn) text += (text ? ' ' : '') + s.warn;
     $('mw-sh-summary').textContent = text;
     stockDiagram(s);
@@ -7064,6 +7087,24 @@
     showStartingFeeds();
     $('mw-cut-generate').addEventListener('click', generateCut);
     $('mw-sh-generate').addEventListener('click', generateStockHoles);
+    $('mw-sh-zeropin').addEventListener('click', function() {
+      var s = stockHoleSettings(), q = s.flip && cutOrder(s.chosen)[0];
+      if (!q) return;
+      setZeroMode('hole');
+      holes.picked = holes.grid.indexOf(q);
+      setHoleOrigin('center');
+      showTab('holes');
+      renderHoles(); saveSettings();
+    });
+    // Bolt sizes: clearance hole, and a counterbore for a socket head (and washer).
+    var BOLTS = { m6: [6.6, 11], m8: [9, 14], q20: [6.9, 10.5] };
+    $('mw-sh-boltsize').addEventListener('change', function() {
+      var b = BOLTS[this.value], k = state.imperial ? MM_PER_INCH : 1;
+      if (!b) return;
+      $('mw-sh-bolt').value = +(b[0] / k).toFixed(state.imperial ? 4 : 2);
+      if (unitVal($('mw-sh-cb')) > 0) $('mw-sh-cb').value = +(b[1] / k).toFixed(state.imperial ? 4 : 2);
+      renderStockHoles(); saveSettings();
+    });
     ROOT.querySelectorAll('#mw-cut-secs .mw-sec').forEach(function(b) { b.addEventListener('click', function() { showCutSection(b.getAttribute('data-sec')); }); });
     showCutSection('holes');
     $('mw-trk-generate').addEventListener('click', generateTracks);
