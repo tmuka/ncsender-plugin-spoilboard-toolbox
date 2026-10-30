@@ -5821,7 +5821,7 @@
       rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
       wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial,
-      zMacro: { spoil: offsetZParam(+$('mw-slot').value), thick: offsetZParam(+$('mw-thick').value) }, tloMm: state.tloMm === undefined ? 0 : state.tloMm
+      zMacro: { spoil: offsetZParam(+$('mw-slot').value), thick: offsetZParam(+$('mw-thick').value) }, tloMm: state.tloMm
     };
   }
   // What the programs say about the bit: a tool change when Bit Diameter
@@ -5838,9 +5838,9 @@
     if (state.reportInches) out.push('grblHAL reports positions in inches ($13=1); set $13=0 first');
     // Lifting to Safe Z between holes over a zone mustn't go down: Safe Z
     // (G53, so without the tool length offset) must put the tip above the
-    // 5 mm hop.
+    // 5 mm hop. Not checked till Generate has read the offset (undefined).
     if (o.tloMm === null) out.push('Couldn\u2019t read the tool length offset from the controller ($G, $#), so Safe Z can\u2019t be checked: try Generate again');
-    else if (o.wcs && o.zWcs != null && state.safeZMm != null && state.safeZMm - (o.tloMm || 0) < o.zWcs + 5) out.push('ncSender\u2019s Safe Z puts this tool\u2019s tip less than 5 mm above ' + o.wcsName + ' Z0: raise it, since the programs lift to it to pass over zones');
+    else if (o.tloMm !== undefined && o.wcs && o.zWcs != null && state.safeZMm != null && state.safeZMm - o.tloMm < o.zWcs + 5) out.push('ncSender\u2019s Safe Z puts this tool\u2019s tip less than 5 mm above ' + o.wcsName + ' Z0: raise it, since the programs lift to it to pass over zones');
     if (!o.wcs) out.push(ms.connected ? o.wcsName + ' is active, and ncSender only reports G54\u2013G59\u2019s X0 Y0: switch to one of those' : 'Connect to the controller first');
     if (o.plateOn) {
       if (!o.plate) out.push('Fixture plate: tick Stock in the XY0 Picker, give its width and length, and pick the hole it\u2019s on (or press From X0 Y0 now)');
@@ -6159,7 +6159,7 @@
     $('mw-lt-generate').disabled = !!l.probs.length;
   }
   async function generateLaserTest() {
-    await readMachineState(); await readLaserMode();
+    await readMachineState(); await readLaserMode(); await readTlo();
     var l = laserTestSettings();
     if (l.probs.length) { renderLaserTest(); return; }
     await loadProgram('SBT-LaserTest_' + l.o.pn + 'x' + l.o.fn + '.nc',
