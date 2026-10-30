@@ -237,6 +237,8 @@
   .mw-diagram .mw-d-dim { stroke: var(--color-text-secondary); stroke-width: 1; fill: none; }
   .mw-diagram .mw-d-edge { stroke: var(--color-border); stroke-width: 1; }
   .mw-sh-diagram { max-width: 760px; margin: 4px 0; }
+  .mw-feeds-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 10px; }
+  .mw-feeds-row .mw-select { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; }
   .mw-diagram .mw-d-warn { fill: var(--mw-warn); font-weight: 600; }
   .mw-diagram .mw-d-ok { fill: var(--mw-ok); font-weight: 600; }
   .mw-diagram .mw-d-stock { fill: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface-muted)); stroke: var(--mw-accent-text); stroke-width: 1; }
@@ -670,6 +672,10 @@
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-dia" step="0.01" min="0" value="20" title="A dog hole's diameter. For a grid of lasered or engraved lines, the line's width (the laser line or the V-bit's kerf at the surface); 0 for a hairline.">
           </div>
           <div class="mw-field mw-grid-only">
+            <label for="mw-hole-pin">Pin &Oslash; (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-pin" placeholder="= hole" title="The diameter of the pins (dogs, dowels) you put in these holes, where the stock touches them: Stock on Pins puts the stock's edge one pin radius from the hole's center. Blank: the same as the hole. Measure your dowel: an 8 mm dowel in an 8.1 mm hole is 8.">
+          </div>
+          <div class="mw-field mw-grid-only">
             <label for="mw-hole-sx">X Spacing (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-hole-sx" step="0.1" min="0.1" value="96" title="Center to center between holes along X.">
           </div>
@@ -1034,6 +1040,22 @@
             <label class="mw-extra"><input type="checkbox" id="mw-cut-mist"><span>Mist (M7)</span></label>
             <label class="mw-extra"><input type="checkbox" id="mw-cut-flood"><span>Flood (M8)</span></label>
           </div>
+        </div>
+        <div class="mw-feeds-row">
+          <span class="mw-hint">Starting feeds for</span>
+          <select class="mw-select" id="mw-cut-mat" aria-label="Material" title="What you're cutting. Fill In puts starting numbers for it in RPM, Feed, Plunge, Depth per Pass and Stepover, as ncCAM's: start there and adjust by ear and chip.">
+            <option value="mdf" selected>MDF / Plywood</option>
+            <option value="softwood">Softwood</option>
+            <option value="hardwood">Hardwood</option>
+            <option value="plastic">Plastic (HDPE, acrylic)</option>
+            <option value="aluminum">Aluminum</option>
+            <option value="foam">Foam / tooling board</option>
+          </select>
+          <select class="mw-select" id="mw-cut-flutes" aria-label="Flutes" title="How many cutting edges the bit has.">
+            <option value="1">1 flute</option><option value="2" selected>2 flutes</option><option value="3">3 flutes</option><option value="4">4 flutes</option>
+          </select>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cut-feeds-fill" title="Put the starting numbers for this material and bit in RPM, Feed, Plunge, Depth per Pass and Stepover.">Fill In</button>
+          <span class="mw-hint" id="mw-cut-feeds-note"></span>
         </div>
         <p class="mw-status" id="mw-cut-bit-note" role="status"></p>
       </section>
@@ -1818,10 +1840,10 @@
   // further grid in g.grids, whose holes carry their layer (1, 2...) and
   // their grid's diameter.
   function allHoles(g) {
-    var out = holeGrid(g);
+    var out = holeGrid(g).map(function(p) { if (p.col != null && g.pinMm > 0) p.pinMm = g.pinMm; return p; });
     (g.grids || []).forEach(function(L, k) {
       var o = Object.assign({ travelXMm: g.travelXMm, travelYMm: g.travelYMm, dirX: g.dirX, dirY: g.dirY, suppressed: g.suppressed }, L, { layout: 'grid', layer: k + 1 });
-      out = out.concat(holeGrid(o).map(function(p) { p.diaMm = L.diaMm; return p; }));
+      out = out.concat(holeGrid(o).map(function(p) { p.diaMm = L.diaMm; if (L.pinMm > 0) p.pinMm = L.pinMm; return p; }));
     });
     return out;
   }
@@ -2536,14 +2558,14 @@
     var num = function(v) { var n = parseFloat(v); return v != null && v !== '' && isFinite(n) ? +(n * conv).toFixed(4) : null; };
     var pitch = num(saved.holePanelPitch);
     return {
-      dia: num(saved.holeDia), sx: num(saved.holeSx), sy: num(saved.holeSy), ix: num(saved.holeIx), iy: num(saved.holeIy),
+      dia: num(saved.holeDia), pin: num(saved.holePin), sx: num(saved.holeSx), sy: num(saved.holeSy), ix: num(saved.holeIx), iy: num(saved.holeIy),
       layout: saved.holeLayout === 'list' || saved.holeLayout === 'both' ? saved.holeLayout : 'grid',
       name1: typeof saved.holeGridName === 'string' ? saved.holeGridName : '',
       turn1: turnText(saved.holeTurn),
       nearest1: saved.holeNearest !== false,
       grids: Array.isArray(saved.holeGrids) ? saved.holeGrids.filter(function(r) { return r && typeof r === 'object'; }).map(function(r) {
         var pp = num(r.pp);
-        return { name: typeof r.name === 'string' ? r.name : '', dia: num(r.dia), sx: num(r.sx), sy: num(r.sy), ix: num(r.ix), iy: num(r.iy),
+        return { name: typeof r.name === 'string' ? r.name : '', dia: num(r.dia), pin: num(r.pin), sx: num(r.sx), sy: num(r.sy), ix: num(r.ix), iy: num(r.iy),
                  track: r.track === 'x' || r.track === 'y' ? r.track : '', pn: r.pn ? String(r.pn) : '5', pp: pp > 0 ? pp : '', nearest: r.nearest !== false,
                  turn: turnText(r.turn) };
       }) : [],
@@ -2581,6 +2603,27 @@
     if (Math.abs(holeDiaMm - bitMm) <= (tolMm != null ? tolMm : 0.05)) return 'drill';
     if (bitMm > holeDiaMm) return 'too-small';
     return holeDiaMm <= 2 * bitMm ? 'helix' : 'clear';
+  }
+
+  // Starting speeds and feeds by material, as ncCAM's (src/core/tools.js):
+  // the chip each tooth takes grows with the bit up to a cap; feed = RPM x
+  // flutes x chip; plunge 30% of the feed; depth per pass and stepover a
+  // share of the bit. limits: the machine's max feed and spindle range.
+  var MATERIALS = {
+    softwood: { rpm: 18000, chip: 0.012, maxChip: 0.25, stepdown: 0.5, stepover: 0.45 },
+    hardwood: { rpm: 18000, chip: 0.009, maxChip: 0.2, stepdown: 0.35, stepover: 0.4 },
+    mdf: { rpm: 18000, chip: 0.012, maxChip: 0.25, stepdown: 0.5, stepover: 0.45 },
+    plastic: { rpm: 16000, chip: 0.01, maxChip: 0.2, stepdown: 0.3, stepover: 0.4 },
+    aluminum: { rpm: 18000, chip: 0.003, maxChip: 0.05, stepdown: 0.1, stepover: 0.25 },
+    foam: { rpm: 12000, chip: 0.02, maxChip: 0.4, stepdown: 1, stepover: 0.6 }
+  };
+  function startingFeeds(bitMm, flutes, material, limits) {
+    var m = MATERIALS[material] || MATERIALS.mdf, L = limits || {};
+    var rpm = Math.round(Math.min(L.maxRpm || 24000, Math.max(L.minRpm || 0, m.rpm)));
+    var chip = Math.min(m.maxChip, m.chip * bitMm), maxFeed = Math.min(L.maxFeed || 4000, 4000);
+    var raw = rpm * (flutes || 2) * chip, feed = Math.round(Math.min(maxFeed, Math.max(150, raw)));
+    return { rpm: rpm, chipMm: chip, feedMm: feed, capped: raw > maxFeed, plungeMm: Math.round(Math.max(60, feed * 0.3)),
+             stepMm: Math.max(0.05, bitMm * m.stepdown), stepoverPct: Math.round(Math.min(0.9, m.stepover) * 100) };
   }
 
   // The holes to cut: the XY0 Picker's, less suppressed, hidden and
@@ -3681,10 +3724,10 @@
     var pitch = function(v) { return String(v || '').trim() === '' ? '' : nv(v); };
     var r0 = holes.gridRaw[0];
     return {
-      holeDia: nv(r0.dia), holeSx: nv(r0.sx), holeSy: nv(r0.sy), holeIx: nv(r0.ix), holeIy: nv(r0.iy),
+      holeDia: nv(r0.dia), holePin: pitch(r0.pin), holeSx: nv(r0.sx), holeSy: nv(r0.sy), holeIx: nv(r0.ix), holeIy: nv(r0.iy),
       holeTrack: r0.track, holePanelHoles: r0.pn, holePanelPitch: pitch(r0.pp), holeGridName: r0.name, holeNearest: r0.nearest, holeTurn: String(r0.turn || '').trim(),
       holeGrids: holes.gridRaw.slice(1).map(function(r) {
-        return { name: r.name, dia: nv(r.dia), sx: nv(r.sx), sy: nv(r.sy), ix: nv(r.ix), iy: nv(r.iy), track: r.track, pn: r.pn, pp: pitch(r.pp), nearest: r.nearest, turn: String(r.turn || '').trim() };
+        return { name: r.name, dia: nv(r.dia), pin: pitch(r.pin), sx: nv(r.sx), sy: nv(r.sy), ix: nv(r.ix), iy: nv(r.iy), track: r.track, pn: r.pn, pp: pitch(r.pp), nearest: r.nearest, turn: String(r.turn || '').trim() };
       }),
       holeLayout: $('mw-hole-layout').value, holeList: $('mw-hole-list').value, holeSuppressed: holes.suppressed.slice(), holeFavorites: holes.favorites.slice(),
       units: state.imperial ? 'imperial' : 'metric'
@@ -4403,6 +4446,9 @@
       state.keepouts = keepoutZones(state.ncSettings, set);
       var rx = parseFloat(set['110'] && set['110'].value), ry = parseFloat(set['111'] && set['111'].value);
       state.rapidMmMin = rx > 0 && ry > 0 ? Math.min(rx, ry) : null;
+      var smax = parseFloat(set['30'] && set['30'].value), smin = parseFloat(set['31'] && set['31'].value);
+      state.spindleMax = smax > 0 ? smax : null;
+      state.spindleMin = smin > 0 ? smin : null;
       state.laserMode = set['32'] ? String(set['32'].value).trim() === '1' : null;
       state.reportInches = set['13'] ? String(set['13'].value).trim() === '1' : false;
     } catch (e) { state.travel = null; }
@@ -4712,6 +4758,7 @@
     if (holes.gridRaw.length) gridToDom(holes.gridRaw[0]);
     var r0 = gridFromDom();
     [['dia', f.dia], ['sx', f.sx], ['sy', f.sy], ['ix', f.ix], ['iy', f.iy]].forEach(function(d) { if (d[1] != null) r0[d[0]] = String(d[1]); });
+    r0.pin = f.pin == null ? '' : String(f.pin);
     r0.track = f.track;
     if (f.panelHoles != null) r0.pn = f.panelHoles;
     r0.pp = String(f.pitch);
@@ -4720,7 +4767,7 @@
     r0.nearest = f.nearest1 !== false || !(f.grids || []).length;
     var str = function(v) { return v == null ? '' : String(v); };
     holes.gridRaw = [r0].concat((f.grids || []).map(function(r) {
-      return { name: r.name, dia: str(r.dia), sx: str(r.sx), sy: str(r.sy), ix: str(r.ix), iy: str(r.iy), track: r.track, pn: r.pn, pp: str(r.pp), nearest: r.nearest, turn: r.turn || '' };
+      return { name: r.name, dia: str(r.dia), pin: str(r.pin), sx: str(r.sx), sy: str(r.sy), ix: str(r.ix), iy: str(r.iy), track: r.track, pn: r.pn, pp: str(r.pp), nearest: r.nearest, turn: r.turn || '' };
     }));
     holes.activeGrid = 0;
     gridToDom(r0);
@@ -4732,7 +4779,7 @@
   }
   // Grids: the fields show the one picked in the grid bar (holes.activeGrid);
   // every grid's values, as typed, live in holes.gridRaw.
-  var GRID_FIELDS = { dia: 'mw-hole-dia', sx: 'mw-hole-sx', sy: 'mw-hole-sy', ix: 'mw-hole-ix', iy: 'mw-hole-iy', track: 'mw-hole-track', pn: 'mw-hole-pn', pp: 'mw-hole-pp', turn: 'mw-hole-turn' };
+  var GRID_FIELDS = { dia: 'mw-hole-dia', pin: 'mw-hole-pin', sx: 'mw-hole-sx', sy: 'mw-hole-sy', ix: 'mw-hole-ix', iy: 'mw-hole-iy', track: 'mw-hole-track', pn: 'mw-hole-pn', pp: 'mw-hole-pp', turn: 'mw-hole-turn' };
   function gridFromDom() {
     var r = {};
     Object.keys(GRID_FIELDS).forEach(function(k) { r[k] = $(GRID_FIELDS[k]).value; });
@@ -4765,6 +4812,12 @@
       return v * k;
     }
     var h = { diaMm: num('dia', 0), sxMm: num('sx', 0.001), syMm: num('sy', 0.001), insetXMm: num('ix', 0), insetYMm: num('iy', 0) };
+    // Pin Ø: blank is the hole's.
+    var pinText = String(r.pin == null ? '' : r.pin).trim(), pinV = pinText === '' ? null : parseUnitValue(pinText, state.imperial, 'length');
+    var pinGood = pinText === '' || (pinV != null && pinV > 0);
+    if (mark) $(GRID_FIELDS.pin).classList.toggle('mw-invalid', !pinGood);
+    if (!pinGood) ok = false;
+    h.pinMm = pinText === '' ? null : pinV * k;
     h.trackAxis = r.track || null;
     var n = parseInt(r.pn, 10), pnGood = !h.trackAxis || (n >= 1 && String(n) === String(r.pn).trim());
     if (mark) $('mw-hole-pn').classList.toggle('mw-invalid', !pnGood);
@@ -5872,6 +5925,31 @@
   var CUT_LENGTHS = ['bit', 'thick', 'depth', 'step', 'feed', 'plunge'], CUT_PLAIN = ['stepover', 'rpm', 'delay'];
   var CUT_METHODS = { drill: 'drilled', helix: 'spiralled down', clear: 'cleared in rings', 'too-small': 'too small for the bit' };
   function cutMm(id) { var v = unitVal($(id)); return isFinite(v) ? v * (state.imperial ? MM_PER_INCH : 1) : NaN; }
+  // Starting feeds for the material and bit picked, within the machine's
+  // max feed ($110/$111) and spindle range ($30/$31).
+  function feedsNow() {
+    var bit = cutMm('mw-cut-bit');
+    if (!(bit > 0)) return null;
+    return startingFeeds(bit, +$('mw-cut-flutes').value, $('mw-cut-mat').value, { maxFeed: state.rapidMmMin, maxRpm: state.spindleMax, minRpm: state.spindleMin });
+  }
+  function showStartingFeeds() {
+    var f = feedsNow(), k = state.imperial ? MM_PER_INCH : 1, fu = state.imperial ? ' in/min' : ' mm/min';
+    $('mw-cut-feeds-note').textContent = !f ? '' : f.rpm + ' RPM, ' + shown(f.chipMm) + ' ' + unitName() + ' a tooth: ' +
+      +(f.feedMm / k).toFixed(state.imperial ? 1 : 0) + fu + (f.capped ? ' (the machine\u2019s max)' : '') + ', plunge ' + +(f.plungeMm / k).toFixed(state.imperial ? 1 : 0) +
+      ', ' + shown(f.stepMm) + ' ' + unitName() + ' a pass, stepover ' + f.stepoverPct + '%';
+  }
+  function fillStartingFeeds() {
+    var f = feedsNow(), k = state.imperial ? MM_PER_INCH : 1;
+    if (!f) { $('mw-cut-feeds-note').textContent = 'Give the Bit Diameter first.'; return; }
+    var put = function(id, v) { $(id).value = v; $(id).classList.remove('mw-invalid'); };
+    put('mw-cut-rpm', f.rpm);
+    put('mw-cut-feed', +(f.feedMm / k).toFixed(state.imperial ? 1 : 0));
+    put('mw-cut-plunge', +(f.plungeMm / k).toFixed(state.imperial ? 1 : 0));
+    put('mw-cut-step', +(f.stepMm / k).toFixed(state.imperial ? 4 : 2));
+    put('mw-cut-stepover', f.stepoverPct);
+    renderCutTab(); renderStockHoles(); saveSettings();
+    $('mw-cut-feeds-note').textContent = 'Filled in: ' + $('mw-cut-feeds-note').textContent + '. A start: listen, look at the chips, and adjust.';
+  }
   // A fixture plate: the XY0 Picker's stock, in from its edges by this.
   var PLATE_EDGE_MM = 3;
   // noPlate: for programs on their own scrap or stock (fit and laser tests,
@@ -5978,7 +6056,7 @@
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-stopd', 'sh-stopdepth', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-peck', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-stop', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-stop', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-thick': 0.75, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
@@ -6620,6 +6698,9 @@
     });
     // A typed size: the user loads the bit, so no tool change.
     $('mw-cut-bit').addEventListener('input', function() { state.cutTool = null; $('mw-cut-bit-note').textContent = ''; }, true);
+    $('mw-cut-feeds-fill').addEventListener('click', fillStartingFeeds);
+    ['mw-cut-mat', 'mw-cut-flutes', 'mw-cut-bit'].forEach(function(id) { $(id).addEventListener('input', showStartingFeeds); $(id).addEventListener('change', showStartingFeeds); });
+    showStartingFeeds();
     $('mw-cut-generate').addEventListener('click', generateCut);
     $('mw-sh-generate').addEventListener('click', generateStockHoles);
     ROOT.querySelectorAll('#mw-cut-secs .mw-sec').forEach(function(b) { b.addEventListener('click', function() { showCutSection(b.getAttribute('data-sec')); }); });

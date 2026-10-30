@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, flipPins, flipRect, fixturePins, squareCenters, stopHole, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -801,11 +801,11 @@ test('setupFields reads saved Setup in today\'s units; putProfile replaces by na
     holePanelPitch: '', holeLayout: 'grid', holeList: 'A: 25.4, 0', holeOrigin: 'back-right', holeSuppressed: ['2,2', 'junk'] };
   assert.deepEqual(setupFields({ holeFavorites: ['3,4', '#2', 'x'] }, false).favorites, ['3,4', '#2']);
   const mm = setupFields(saved, false);
-  assert.deepEqual(mm, { dia: 20, sx: 96, sy: 96, ix: 48, iy: 50.8, layout: 'grid', name1: '', turn1: '', nearest1: true, grids: [], list: 'A: 25.4, 0', track: 'x', panelHoles: '5', pitch: '', origin: 'back-right', suppressed: ['2,2'], favorites: [] });
+  assert.deepEqual(mm, { dia: 20, pin: null, sx: 96, sy: 96, ix: 48, iy: 50.8, layout: 'grid', name1: '', turn1: '', nearest1: true, grids: [], list: 'A: 25.4, 0', track: 'x', panelHoles: '5', pitch: '', origin: 'back-right', suppressed: ['2,2'], favorites: [] });
   const two = setupFields({ units: 'metric', holeLayout: 'both', holeGridName: 'Dogs', holeNearest: false, holeSuppressed: ['g2:3,4', 'g2:#1'],
     holeGrids: [{ name: 'Pins', dia: '6.35', sx: '25.4', sy: '25.4', ix: '12.7', iy: '0', track: 'q', pn: '', pp: '0', nearest: false }] }, true);
   assert.deepEqual([two.layout, two.name1, two.nearest1, two.suppressed], ['both', 'Dogs', false, ['g2:3,4', 'g2:#1']]);
-  assert.deepEqual(two.grids, [{ name: 'Pins', dia: 0.25, sx: 1, sy: 1, ix: 0.5, iy: 0, track: '', pn: '5', pp: '', nearest: false, turn: '' }]);
+  assert.deepEqual(two.grids, [{ name: 'Pins', dia: 0.25, pin: null, sx: 1, sy: 1, ix: 0.5, iy: 0, track: '', pn: '5', pp: '', nearest: false, turn: '' }]);
   const inch = setupFields(Object.assign({}, saved, { holePanelPitch: '254' }), true);
   assert.deepEqual([inch.dia, inch.ix, inch.iy, inch.pitch, inch.list], [0.7874, 1.8898, 2, 10, 'A: 1, 0']);
   const empty = setupFields({}, true);
@@ -1707,4 +1707,20 @@ test('parseUnitValue: simple math, with or without units', () => {
   for (const bad of ['8mm*2mm', '2/in', '4/0', '4+', '(4+6', '4)', '2in*3ipm', '4 4', 'abc', '1in/min*2']) {
     assert.equal(parseUnitValue(bad, M, 'length'), null, bad);
   }
+});
+
+test('startingFeeds: ncCAM\'s formula, within the machine\'s limits', () => {
+  const f = startingFeeds(6.35, 2, 'mdf', {});
+  assert.equal(f.rpm, 18000);
+  assert.ok(Math.abs(f.chipMm - 0.0762) < 1e-9);
+  assert.equal(f.feedMm, 2743);
+  assert.equal(f.plungeMm, 823);
+  assert.ok(Math.abs(f.stepMm - 3.175) < 1e-9);
+  assert.equal(f.stepoverPct, 45);
+  const capped = startingFeeds(6.35, 2, 'mdf', { maxFeed: 2000 });
+  assert.equal(capped.feedMm, 2000); assert.equal(capped.capped, true);
+  assert.equal(startingFeeds(6.35, 2, 'mdf', { maxRpm: 12000 }).rpm, 12000);
+  const al = startingFeeds(6.35, 2, 'aluminum', {});
+  assert.ok(al.feedMm < 1000 && al.stepMm < 1, 'aluminum is gentler');
+  assert.equal(startingFeeds(4, 2, 'nope', {}).rpm, 18000, 'unknown is MDF');
 });
