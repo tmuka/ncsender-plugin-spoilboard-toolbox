@@ -527,6 +527,12 @@ size and thickness); the holes come from the grid picked in Setup.
 - Each hole goes **Break Through** (1 mm) below the stock into the spoilboard hole, and can't be bigger
   than that hole, so the spoilboard isn't cut. Threaded inserts must sit at least that far below the
   surface (installed from the back, they do).
+- **Depth** blank drills through like that. Give a depth for **blind holes** instead: they stop that far
+  below Z0 (the stock's top), so it must be less than the stock's thickness, and Break Through doesn't
+  apply. A diagram above the summary shows the depths with your numbers, and Z0's height as measured
+  against the recorded spoilboard.
+- **T** follows the thickness the Z0 macros stored (Measure stock thickness or Store) until you type
+  one; type the stock's real thickness if it differs.
 - It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard
   rather than the stock top (once the Z0 macros have recorded the spoilboard height), and the program
   stops before moving if Z0 changed since it was generated.

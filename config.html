@@ -1300,6 +1300,10 @@
             <label for="mw-sh-break">Break Through (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-break" value="1" title="How far below the stock's bottom the hole goes, into the spoilboard hole under it, so it comes out clean.">
           </div>
+          <div class="mw-field">
+            <label for="mw-sh-depth">Depth (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-depth" value="" placeholder="through" title="Blank: the holes go through the stock and Break Through into the spoilboard. A number: blind holes that stop this far below Z0 (the stock's top), less than its thickness T.">
+          </div>
         </div>
         <svg class="mw-diagram mw-sh-diagram" id="mw-sh-diagram" viewBox="0 0 700 214" role="img" aria-label="Side view of the stock on the spoilboard: where Z0 is and how deep each hole goes."></svg>
         <p class="mw-hint" id="mw-sh-summary"></p>
@@ -5863,7 +5867,7 @@
   // units then (settings.units).
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
-      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-stopd', 'sh-stopdepth', 'sh-margin', 'sh-break', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
+      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-stopd', 'sh-stopdepth', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
     plain: ['cut-stepover', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-stop', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate']
   };
@@ -6202,8 +6206,11 @@
     var mode = $('mw-sh-mode').value, pins = mode === 'pins', fix = mode === 'fixture';
     var thick = unitVal($('mw-stock-t')) * k;
     var size = cutMm(pins ? 'mw-sh-pin' : 'mw-sh-bolt'), pinSize = fix ? cutMm('mw-sh-pin') : NaN, cb = pins ? NaN : cutMm('mw-sh-cb'), cbd = cutMm('mw-sh-cbd');
-    var margin = cutMm('mw-sh-margin'), brk = cutMm('mw-sh-break'), depth = thick + brk;
-    var res = { o: o, probs: probs, rect: rect, mode: mode, pins: pins, fix: fix, chosen: [], flip: null, warn: '' };
+    // Depth blank: through the stock and Break Through into the spoilboard;
+    // a number: blind holes that stop that far below Z0.
+    var blind = String($('mw-sh-depth').value).trim() !== '', blindMm = cutMm('mw-sh-depth');
+    var margin = cutMm('mw-sh-margin'), brk = cutMm('mw-sh-break'), depth = blind ? blindMm : thick + brk;
+    var res = { o: o, probs: probs, rect: rect, mode: mode, pins: pins, fix: fix, chosen: [], flip: null, warn: '', blind: blind, depthMm: depth };
     if (!$('mw-stock-on').checked || !stockAt({ x: 0, y: 0 })) probs.push('Tick Stock in the XY0 Picker and give its width and length');
     else if (!rect) probs.push('Pick the hole the stock is on in the XY0 Picker, or press From X0 Y0 now');
     else if (p && p.zMm != null) probs.push('The stock sits on a fixture point, not over the spoilboard holes');
@@ -6211,7 +6218,10 @@
     if (!(size > 0)) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' must be more than 0');
     if (fix && !(pinSize > 0)) probs.push('Pin Size must be more than 0');
     if (!(margin >= 0)) probs.push('Edge Margin must be 0 or more');
-    if (!(brk >= 0)) probs.push('Break Through must be 0 or more');
+    if (blind && !(blindMm > 0)) probs.push('Depth must be more than 0, or blank to drill through');
+    else if (blind && thick > 0 && blindMm >= thick) probs.push('Depth must be less than the stock\u2019s thickness (T ' + shown(thick) + ' ' + unitName() + ') for blind holes: leave it blank to drill through');
+    if (blind) { /* Break Through doesn't apply */ }
+    else if (!(brk >= 0)) probs.push('Break Through must be 0 or more');
     else if (!(o.depthMm > 0)) probs.push('Set Hole Depth above (how deep the spoilboard holes are): Break Through must be less');
     else if (brk >= o.depthMm || (o.thickMm > 0 && brk >= o.thickMm)) probs.push('Break Through must be less than Hole Depth (how deep the spoilboard holes are)');
     // Z0 must be on the stock's top: the hops between holes and the depth
@@ -6230,6 +6240,7 @@
     res.hasCb = hasCb;
     if (hasCb && !(cb > size)) probs.push('Counterbore must be bigger than Hole Size');
     if (hasCb && !(cbd > 0 && cbd < thick)) probs.push('Counterbore Depth must be more than 0 and less than the stock’s thickness');
+    else if (hasCb && blind && blindMm > 0 && cbd >= blindMm) probs.push('Counterbore Depth must be less than Depth');
     if (!hh) probs.push('Setup’s grid has a field that can’t be read: fix it in the XY0 Picker');
     if (!rect || !hh || !(size > 0) || !(margin >= 0)) return res;
     if (hh.layout === 'list') { probs.push('Stock holes go over a grid’s holes, and Setup has only a list'); return res; }
@@ -6282,7 +6293,7 @@
         if (!res.chosen.length) probs.push('No spoilboard hole is under the stock, clear of its edge: try a smaller Edge Margin');
       }
     }
-    var small = res.chosen.filter(function(q) { return size > 2 * holeR(q, hh) + 0.05; });
+    var small = blind ? [] : res.chosen.filter(function(q) { return size > 2 * holeR(q, hh) + 0.05; });
     if (small.length) probs.push((pins ? 'Pin Size' : 'Hole Size') + ' is bigger than the spoilboard hole under it (' + holeName(small[0]) + '): breaking through would cut the spoilboard');
     cutOrder(res.chosen).forEach(function(q) {
       if (hasCb) o.holes.push({ x: q.x, y: q.y, diaMm: cb, depthMm: cbd, label: holeName(q) + ' counterbore' });
@@ -6292,7 +6303,7 @@
     var n = res.chosen.length;
     Object.assign(o, { depthMm: depth, thickMm: 0, zWhat: fix ? 'the plate’s top' : 'the stock’s top', safeEach: true, zStop: o.zWcs,
       title: fix ? 'fixture plate: 2 pin holes, ' + n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '') + (res.stop ? ', a corner stop' : '')
-        : (pins ? 'flip pin holes' : n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '')) + ' through the stock' });
+        : (pins ? 'flip pin holes' : n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '')) + (blind ? ', blind' : ' through the stock') });
     if (!probs.length) res.probs = probs.concat(holeCutProblems(o));
     return res;
   }
@@ -6324,6 +6335,7 @@
     var num = function(v) { return isFinite(v) && v >= 0 ? shown(v) + u : '?'; };
     var esc = function(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
     var TOP = 62, SB = 128, BOT = 186, BRK = 7, out = [];
+    var END = s.blind ? (thick > 0 && s.depthMm > 0 ? Math.min(SB - 10, Math.max(TOP + 12, TOP + (SB - TOP) * s.depthMm / thick)) : TOP + 40) : SB + BRK;
     var rect = function(cls, x0, y0, x1, y1) { out.push('<rect class="' + cls + '" x="' + x0 + '" y="' + y0 + '" width="' + (x1 - x0) + '" height="' + (y1 - y0) + '"/>'); };
     var line = function(cls, x0, y0, x1, y1) { out.push('<line class="' + cls + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'); };
     var text = function(x, y, t, cls, anchor) { out.push('<text x="' + x + '" y="' + y + '"' + (cls ? ' class="' + cls + '"' : '') + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + esc(t) + '</text>'); };
@@ -6348,24 +6360,24 @@
         rect('mw-d-insert', x - 11, SB + BRK + 3, x + 11, BOT - 22);
         for (var y = SB + BRK + 7; y < BOT - 24; y += 5) line('mw-d-insert', x - 11, y, x + 11, y);
       }
-      rect('mw-d-cut', x - w, TOP, x + w, SB + BRK);
+      rect('mw-d-cut', x - w, TOP, x + w, END);
       if (kind === 'bolt' && s.hasCb) rect('mw-d-cut', x - 17, TOP, x + 17, TOP + 16);
-      if (kind === 'pin') rect('mw-d-pin', x - w + 3, TOP - 14, x + w - 3, BOT - 16);
-      text(x, BOT + 16, kind === 'pin' ? 'pin, dog hole' : 'bolt, insert', 'mw-d-note', 'middle');
+      if (kind === 'pin') rect('mw-d-pin', x - w + 3, TOP - 14, x + w - 3, s.blind ? END - 2 : BOT - 16);
+      text(x, BOT + 16, s.blind ? 'blind hole' : kind === 'pin' ? 'pin, dog hole' : 'bolt, insert', 'mw-d-note', 'middle');
     });
     // Z0 on the stock's top, the spoilboard's top, and the cut's bottom.
     line('mw-d-line', 20, TOP, 420, TOP);
     text(24, TOP - 8, wcs + ' Z0: the stock\u2019s top', 'mw-d-z0');
-    line('mw-d-dim', 404, SB + BRK, 424, SB + BRK);
-    line('mw-d-dim', 412, TOP, 412, SB + BRK);
+    line('mw-d-dim', 404, END, 424, END);
+    line('mw-d-dim', 412, TOP, 412, END);
     line('mw-d-dim', 52, TOP, 52, SB);
     line('mw-d-dim', 46, TOP, 58, TOP); line('mw-d-dim', 46, SB, 58, SB);
     out.push('<text x="0" y="0" text-anchor="middle" class="mw-d-note" transform="translate(42 ' + ((TOP + SB) / 2) + ') rotate(-90)">T ' + esc(num(thick)) + '</text>');
     // The numbers, on the right.
     var X = 446, y = 26;
     var say = function(t, cls, gap) { text(X, y, t, cls); y += gap || 15; };
-    say('Holes go ' + num(thick + brk) + ' down from Z0', 'mw-d-val');
-    say('T ' + num(thick) + ' + Break Through ' + num(brk), 'mw-d-note', 20);
+    say('Holes go ' + num(s.depthMm) + ' down from Z0', 'mw-d-val');
+    say(s.blind ? 'Blind: Depth, not through the stock' : 'T ' + num(thick) + ' + Break Through ' + num(brk), 'mw-d-note', 20);
     if (s.hasCb) say('Counterbores ' + num(cbd) + ' deep', 'mw-d-note');
     if (s.fix && s.stop) say('Stop ' + num(stopd) + ' deep, not through', 'mw-d-note');
     y += 8;
@@ -6382,6 +6394,7 @@
     var s = stockHoleSettings(), o = s.o, u = ' ' + unitName(), text = '';
     ROOT.querySelectorAll('[data-sh]').forEach(function(el) { el.hidden = el.getAttribute('data-sh').split(' ').indexOf(s.mode) < 0; });
     $('mw-sh-cbd').disabled = !s.hasCb;
+    $('mw-sh-break').disabled = s.blind;
     if (s.fix && s.pinsAt && s.pinsAt.length === 2) text = 'Pins at ' + s.pinsAt.map(holeName).join(' and ') + ', diagonally apart so the plate goes back square. ';
     var cbHole = o.holes.filter(function(h) { return / counterbore$/.test(h.label); })[0];
     if (s.chosen.length) {
