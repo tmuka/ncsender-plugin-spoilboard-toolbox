@@ -14,6 +14,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
   height as measured against the recorded spoilboard.
 - **Depth** (Stock tab): leave it blank to drill through as before, or give a depth for blind holes
   that stop that far below Z0 (less than the stock's thickness). Break Through is greyed out then.
+- Stock tab, **Every one inside**: the summary counts the holes, and how many along X and along Y.
 
 ### 🐛 Fixes
 - The "Z0 is ... above the spoilboard" warning now says where the height comes from, what to touch off
