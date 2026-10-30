@@ -444,7 +444,9 @@ the plugin reminds you to re-record the spoilboard height.
 - **Which holes:** every grid, each hole its own size, row by row and back and forth. Suppressed holes,
   hidden grids and holes in a keepout zone or Exclude Picks area are left out. Listed holes are cut when
   ticked; points with a height (a vise, a fixture) never are.
-- **How:** drilled when the bit is the hole's size (pecking), spiralled down when the hole is up to twice
+- **How:** drilled when the bit is the hole's size (within 0.05 mm), pecking a Depth per Pass at a time:
+  **Drill Pecks** picks **Clear chips** (up to 2 mm above the top and back), **Break chips** (back off
+  0.5 mm to snap the chip, as QuickCut's Drill) or **None** (one plunge). Spiralled down when the hole is up to twice
   the bit, else cleared in rings out from a spiral in its middle. Climb milling, as QuickCut does; the
   circle milling is QuickCut's.
 - **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before

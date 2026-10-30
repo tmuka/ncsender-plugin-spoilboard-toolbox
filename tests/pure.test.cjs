@@ -1655,3 +1655,15 @@ test('holeSpan: holes, columns and rows, by grid or by position', () => {
   assert.deepEqual(holeSpan([{ x: 10, y: 5 }, { x: 10, y: 50 }, { x: 10.001, y: 5 }]), { n: 3, cols: 1, rows: 2 });
   assert.deepEqual(holeSpan([]), { n: 0, cols: 0, rows: 0 });
 });
+
+test('cut holes: drill pecks clear chips, break them, or plunge once', () => {
+  const drill = (peck) => {
+    const L = holeCutProgram(cutBase({ holes: [{ x: 100, y: 100, diaMm: 6.35, label: 'A1' }], depthMm: 9, stepMm: 3, peck }));
+    const i = L.findIndex(l => /, drill\)$/.test(l)) + 4;
+    return L.slice(i, L.findIndex((l, k) => k > i && l === 'G0 Z5.000'));
+  };
+  assert.deepEqual(drill(undefined), ['G1 Z-3.000 F500', 'G0 Z2.000', 'G0 Z-2.500', 'G1 Z-6.000 F500', 'G0 Z2.000', 'G0 Z-5.500', 'G1 Z-9.000 F500']);
+  assert.deepEqual(drill('clear'), drill(undefined));
+  assert.deepEqual(drill('break'), ['G1 Z-3.000 F500', 'G0 Z-2.500', 'G1 Z-6.000 F500', 'G0 Z-5.500', 'G1 Z-9.000 F500']);
+  assert.deepEqual(drill('none'), ['G1 Z-9.000 F500']);
+});

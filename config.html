@@ -1003,6 +1003,14 @@
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-step" value="3" title="How much deeper each pass goes: a turn of the spiral, a ring of clearing, or a peck when drilling.">
           </div>
           <div class="mw-field">
+            <label for="mw-cut-peck">Drill Pecks</label>
+            <select class="mw-select" id="mw-cut-peck" title="For holes the bit's size, drilled straight down: after each Depth per Pass, Clear chips rapids up to 2 mm above the top and back; Break chips backs off 0.5 mm to snap the chip; None plunges to depth in one go.">
+              <option value="clear" selected>Clear chips</option>
+              <option value="break">Break chips</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="mw-field">
             <label for="mw-cut-stepover">Stepover (%)</label>
             <input class="mw-input" type="number" id="mw-cut-stepover" min="1" max="90" step="1" value="40" title="For holes cleared in rings: how far apart the rings are, as a % of the bit diameter.">
           </div>
@@ -2671,10 +2679,16 @@
       L.push('G0 Z' + fmt(hop));
       L.push('G0 Z' + fmt(clearZ));
       if (method === 'drill') {
-        // QuickCut's emitOneHole, pecking a pass at a time and clearing chips.
+        // QuickCut's emitOneHole: a peck a pass at a time, then up to clear
+        // the chips and back ('clear'), or 0.5 mm back to snap the chip
+        // ('break'); 'none' plunges to depth in one go.
+        if (o.peck === 'none') levels = levels.slice(-1);
         levels.forEach(function(lv, k) {
           L.push('G1 Z' + f3(-lv) + ' F' + o.plunge);
-          if (k < levels.length - 1) { L.push('G0 Z' + fmt(clearZ)); L.push('G0 Z' + f3(0.5 - lv)); }
+          if (k < levels.length - 1) {
+            if (o.peck !== 'break') L.push('G0 Z' + fmt(clearZ));
+            L.push('G0 Z' + f3(0.5 - lv));
+          }
         });
         at = { x: cx + o.wcs.x, y: cy + o.wcs.y };
       } else if (method === 'helix') {
@@ -5803,7 +5817,7 @@
       // A plate is clamped like stock: Safe Z between holes, and a stop if
       // Z0 has moved since Generate (its depth is from that Z0).
       safeEach: plateOn || undefined, zStop: plateOn && zero && ms[w.toLowerCase()] ? parseFloat(String(ms[w.toLowerCase()]).split(',')[2]) : undefined,
-      stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
+      peck: $('mw-cut-peck').value, stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
       rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
       wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial,
@@ -5879,7 +5893,7 @@
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-stopd', 'sh-stopdepth', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-stop', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-stop', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-thick': 0.75, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
@@ -6425,6 +6439,8 @@
       }
       if (!s.probs.length) {
         var lines = holeCutProgram(o);
+        var how = o.bitMm > 0 ? holeCutMethod(s.chosen.length && o.holes.filter(function(h) { return !/ counterbore$/.test(h.label); })[0].diaMm, o.bitMm) : null;
+        if (how && CUT_METHODS[how]) text += ' The holes are ' + CUT_METHODS[how] + (how === 'drill' ? ($('mw-cut-peck').value === 'none' ? ' in one plunge' : ' (' + $('mw-cut-peck').selectedOptions[0].textContent.toLowerCase() + ' each Depth per Pass)') : '') + '.';
         text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o);
       }
       if (s.stop) text += ' The corner stop is in the middle of the square by ' + holeName(s.stop.from) + ', ' + shown(o.holes[o.holes.length - 1].depthMm) + u + ' deep.';
@@ -7000,7 +7016,7 @@
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
-      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
+      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
       'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say). Z0 must be on the spoilboard&rsquo;s top.',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
       'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. Click <strong>Bit Diameter</strong> to take the loaded tool&rsquo;s diameter from ncSender&rsquo;s tool table: the hole, T-track, stock-hole and fit-test programs then start with a tool change to that tool (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',

@@ -15,6 +15,10 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Depth** (Stock tab): leave it blank to drill through as before, or give a depth for blind holes
   that stop that far below Z0 (less than the stock's thickness). Break Through is greyed out then.
 - Stock tab, **Every one inside**: the summary counts the holes, and how many along X and along Y.
+- **Drill Pecks** (Bit and depth): holes the bit's size are drilled straight down, pecking a Depth per
+  Pass at a time. Pick **Clear chips** (up to 2 mm above the top and back, as before), **Break chips**
+  (back off 0.5 mm, as QuickCut's Drill), or **None** (one plunge). The Stock tab's summary says how the
+  holes will be cut.
 
 ### 🐛 Fixes
 - The "Z0 is ... above the spoilboard" warning now says where the height comes from, what to touch off
