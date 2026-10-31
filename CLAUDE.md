@@ -162,8 +162,9 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 - **Keyboard shortcuts:** every macro is registered as shortcut action `Macro:<id>`; plugins can't register
   shortcuts. So deleting a macro breaks any shortcut on it (recreated macros get new ids). That's why
   **Delete** asks twice and warns, and **Create macros** updates in place instead.
-- **Dev install:** `POST /api/plugins/install` with the zip installs a build, but it **wipes** ncSender's
-  `settings.json`; back it up and restore it around a dev install.
+- **Dev install:** `POST /api/plugins/install` with the zip installs a build. It replaces only the
+  plugin's folder and its `plugins.json` entry; ncSender's `settings.json` and the plugin's saved
+  settings (`plugin-config/<id>/config.json`) are kept.
 
 ## Develop, test, build
 

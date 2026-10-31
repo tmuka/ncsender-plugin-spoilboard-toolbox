@@ -3,7 +3,9 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.5.1
+
+**Polycarbonate in the starting feeds.**
 
 ### ✨ New
 - **Polycarbonate** in the starting feeds: between HDPE and acrylic, since it's tough like HDPE but
