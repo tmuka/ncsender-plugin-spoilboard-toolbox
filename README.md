@@ -28,7 +28,7 @@ and turns every one into a work zero you can hit again tomorrow.**
 - **Pictures where the words get close.** Live diagrams show what Inset, Spacing, Hole Ø and Pin Ø
   measure, how deep each hole goes and what's left under it, and where X0 Y0 lands on a hole or
   against the pins, with your numbers as you type. Starting feeds and speeds by material (MDF,
-  plywood, hardwood, HDPE, acrylic, aluminum) are a click away.
+  plywood, hardwood, HDPE, acrylic, polycarbonate, aluminum) are a click away.
 - **Every bed, any size.** Missing holes, T-track panels, dog holes plus a pin grid, custom pins,
   lasered grid lines, keepout zones, a saved profile for every board, and zoom for an 8 × 5 ft bed.
 
@@ -475,7 +475,7 @@ the plugin reminds you to re-record the spoilboard height.
   the bit, else cleared in rings out from a spiral in its middle. Climb milling, as QuickCut does; the
   circle milling is QuickCut's.
 - **Starting feeds:** under Bit and depth, pick the material (MDF / plywood, softwood, hardwood, HDPE,
-  acrylic, aluminum, foam) and the bit's flutes, and **Fill In** puts starting numbers in RPM, Feed,
+  acrylic, polycarbonate, aluminum, foam) and the bit's flutes, and **Fill In** puts starting numbers in RPM, Feed,
   Plunge, Depth per Pass and Stepover: ncCAM's formula (the chip each tooth takes grows with the bit, up
   to a cap), within your machine's max feed (`$110`/`$111`) and spindle range (`$30`/`$31`). A start:
   listen, look at the chips, and adjust.

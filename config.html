@@ -1115,6 +1115,7 @@
             <option value="hardwood">Hardwood</option>
             <option value="hdpe">HDPE / UHMW</option>
             <option value="acrylic">Acrylic</option>
+            <option value="polycarbonate">Polycarbonate</option>
             <option value="aluminum">Aluminum</option>
             <option value="foam">Foam / tooling board</option>
           </select>
@@ -2670,7 +2671,8 @@
   }
 
   // Starting speeds and feeds by material, as ncCAM's (src/core/tools.js),
-  // with HDPE and acrylic apart (thin chips melt HDPE) and a bigger chip
+  // with HDPE and acrylic apart (thin chips melt HDPE), polycarbonate
+  // between the two (tough, but softens with heat), and a bigger chip
   // for aluminum (a thin one rubs and welds to the edge):
   // the chip each tooth takes grows with the bit up to a cap; feed = RPM x
   // flutes x chip; plunge 30% of the feed; depth per pass and stepover a
@@ -2681,6 +2683,7 @@
     mdf: { rpm: 18000, chip: 0.012, maxChip: 0.25, stepdown: 0.5, stepover: 0.45 },
     hdpe: { rpm: 15000, chip: 0.02, maxChip: 0.25, stepdown: 0.3, stepover: 0.4 },
     acrylic: { rpm: 16000, chip: 0.015, maxChip: 0.2, stepdown: 0.3, stepover: 0.4 },
+    polycarbonate: { rpm: 16000, chip: 0.018, maxChip: 0.22, stepdown: 0.3, stepover: 0.4 },
     aluminum: { rpm: 18000, chip: 0.0045, maxChip: 0.06, stepdown: 0.1, stepover: 0.25 },
     foam: { rpm: 12000, chip: 0.02, maxChip: 0.4, stepdown: 1, stepover: 0.6 }
   };
