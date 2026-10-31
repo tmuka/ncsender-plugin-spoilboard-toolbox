@@ -476,7 +476,7 @@ the plugin reminds you to re-record the spoilboard height.
   circle milling is QuickCut's.
 - **Starting feeds:** under Bit and depth, pick the material (MDF / plywood, softwood, hardwood, HDPE,
   acrylic, polycarbonate, aluminum, foam) and the bit's flutes, and **Fill In** puts starting numbers in RPM, Feed,
-  Plunge, Depth per Pass and Stepover: ncCAM's formula (the chip each tooth takes grows with the bit, up
+  Plunge, Depth per Pass and Stepover: [ncCAM](https://github.com/siganberg/ncsender-plugin-nccam)'s formula (the chip each tooth takes grows with the bit, up
   to a cap), within your machine's max feed (`$110`/`$111`) and spindle range (`$30`/`$31`). A start:
   listen, look at the chips, and adjust.
 - **The picture** under Holes shows one hole in the board (or plate) with your numbers: how deep it

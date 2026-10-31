@@ -255,5 +255,10 @@ Each change came with tests first or alongside, then a browser check of the UI, 
 
 - Commits use the author's GitHub noreply address; check `git config user.email` before committing on a
   new machine.
+- **Starting feeds come from ncCAM.** The tool-aware material selector (`MATERIALS` and `startingFeeds`
+  in `config.html`) uses [ncCAM](https://github.com/siganberg/ncsender-plugin-nccam)'s formula from
+  `src/core/tools.js`: the chip each tooth takes grows with the bit up to a cap per material, and feed =
+  RPM x flutes x chip. QuickCut has the same table (`lib/starting-feeds.cjs`). Change a material in all
+  three rather than inventing a new formula, and credit ncCAM when it's reused elsewhere.
 - Keep `README.md` in step with any change to what the macros do. The comment block above `buildMacros`
   explains the reasoning; keep it current too.
