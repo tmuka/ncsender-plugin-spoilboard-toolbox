@@ -3,6 +3,17 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### ✨ New
+- **The tool table, as in QuickCut:** with a tool changer, Bit Diameter's label opens the tool table, the
+  tool in the spindle first, with a filter on top; the tool picked gets a tool change (M6). Picking a tool,
+  or taking the loaded one, sets **Flutes** when its name or notes say (O flute, 2 flute, 3FL...).
+
+### 🔧 Changed
+- Without a tool changer, clicking Bit Diameter takes the loaded tool's diameter but no longer adds a tool
+  change (M6) to the programs, as in QuickCut.
+
 ## 0.5.5
 
 ### 🔧 Changed

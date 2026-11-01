@@ -103,7 +103,7 @@ Put Z0 on the spoilboard (or the stock) any way you like for these: paper, a tou
 | --- | --- |
 | **Measured tool lengths:** a tool setter (tool length sensor) or an ATC, so each tool's length offset is active | The **Z0 macros**: Z0 on spoilboard, Z0 on stock top and Z0 back to saved, for any tool without re-probing, and **Set Z0** on a vise or fixture |
 | **A touch plate** (ncSender's Standard Block, on the probe input), with measured tool lengths | **Record spoilboard height** and **Measure stock thickness**, which the Z0 macros need once |
-| **Tools in ncSender's tool table** | Click **Bit Diameter** to take the loaded tool's size, and the programs start with a tool change (`M6`) to it |
+| **Tools in ncSender's tool table** | With a tool changer, pick the tool from **Bit Diameter**'s menu, and the programs start with a tool change (`M6`) to it; without one, click **Bit Diameter** for the loaded tool's size |
 | **A 3D touch probe** | **Probe This Hole** and **Probe Suggested Holes** in Measure Holes; with its tool length offset measured, **Also record the spoilboard height**. *Feedback wanted: not yet tried on a real probe.* |
 | **A laser** with grblHAL's laser mode on (`$32=1`) | **Grid lines** and the hole labels lasered instead of cut with a V-bit, and the **Laser test** to find its power and speed |
 | **Keepout zones** (ncSender's, or the ATCi tool rack's `$684`–`$687`) | The map shows them, picks avoid them, and the programs lift over them |
@@ -491,10 +491,13 @@ the plugin reminds you to re-record the spoilboard height.
 - **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before
   moving if the machine isn't homed, a G92 offset is active, X0 Y0 has moved since it was generated, or Z0 is one the
   Z0 macros set and no tool length offset is active (after a controller restart, say).
-- **The bit:** click **Bit Diameter** to take the loaded tool's diameter from ncSender's tool table, and
-  the program starts with a tool change to that tool (`M6 T3`, say), which ncSender runs like any other
-  tool change. Type a diameter instead and there's no tool change: load that bit yourself before running
-  it. The T-track, stock-hole and fit-test programs work the same way; chamfers and labels never change tools.
+- **The bit**, as in QuickCut: with a tool changer, **Bit Diameter**'s label opens ncSender's tool table,
+  the tool in the spindle first, with a filter on top (T number, name, notes or size); pick the tool and
+  the program starts with a tool change to it (`M6 T3`, say), which ncSender runs like any other. Without
+  a tool changer, click **Bit Diameter** for the loaded tool's diameter; there's no tool change. Either
+  way **Flutes** is set when the tool's name or notes say (O flute, single flute, 2 flute, 3FL...). Type a
+  diameter instead and there's no tool change: load that bit yourself before running it. The T-track,
+  stock-hole and fit-test programs work the same way; chamfers and labels never change tools.
 - **Safety:** Hole Depth can't be more than the Spoilboard Thickness (0.75" to start). Between holes it hops
   5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. There's
   no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck), so
