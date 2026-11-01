@@ -3,6 +3,13 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### 🔧 Changed
+- Cut Board's **Into a plate on top** is now **Into the stock on top**: the board's grid cut into stock
+  on top of the spoilboard (an MDF sheet, say), worded as stock throughout. Stock Holes' Locating Pins
+  + Bolts still calls the piece it drills a fixture plate.
+
 ## 0.5.4
 
 **Checks against the program you'll run.**

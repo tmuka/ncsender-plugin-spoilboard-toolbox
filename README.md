@@ -37,7 +37,7 @@ grblHAL CNC routers. Its **XY0 Picker** shows your machine's bed with every hole
 and sets the work offset (G54–G59.3) without moving the machine. Its **Z0 macros** tab checks your
 grblHAL controller, then writes ncSender macros you run from the Macros tab or, best of all, a
 keyboard shortcut. Its **Cut Board** tab writes the programs that cut the board's own pattern (or
-copy it onto a plate), and **Stock Holes** the ones that drill a workpiece so it bolts down, locates
+copy it into stock on top of the spoilboard), and **Stock Holes** the ones that drill a workpiece so it bolts down, locates
 or flips, from the same grid.
 
 ![Spoilboard Toolbox's XY0 Picker in ncSender, in Stock mode: a map of the CNC bed's dog hole grid
@@ -486,7 +486,7 @@ the plugin reminds you to re-record the spoilboard height.
   Plunge, Depth per Pass and Stepover: [ncCAM](https://github.com/siganberg/ncsender-plugin-nccam)'s formula (the chip each tooth takes grows with the bit, up
   to a cap), within your machine's max feed (`$110`/`$111`) and spindle range (`$30`/`$31`). A start:
   listen, look at the chips, and adjust.
-- **The picture** under Holes shows one hole in the board (or plate) with your numbers: how deep it
+- **The picture** under Holes shows one hole in the board (or the stock on top) with your numbers: how deep it
   goes, what's left under it, a step for every Depth per Pass, and how it'll be cut.
 - **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before
   moving if the machine isn't homed, a G92 offset is active, X0 Y0 has moved since it was generated, or Z0 is one the
@@ -500,13 +500,13 @@ the plugin reminds you to re-record the spoilboard height.
   no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck), so
   check the bit and Z0 before pressing Start.
 
-**Removable fixtures:** tick **Into a plate on top** and every Cut Board program is confined to the XY0
-Picker's **Stock**, so you can make a plate (MDF, say) whose holes, slots or lines copy the spoilboard's
+**Removable fixtures:** tick **Into the stock on top** and every Cut Board program is confined to the XY0
+Picker's **Stock** on top of the spoilboard, so you can make a sheet (MDF, say) whose holes, slots or lines copy the spoilboard's
 and lift it off when you're done. Dog holes, chamfers and labels use only the holes wholly on it, 3 mm in
 from its edges; slots, grid lines, chamfers and labels stay at least 3 mm in too; nothing cuts deeper than
 its thickness (T), and Z0 goes on its top. Once the spoilboard height is recorded, Generate refuses unless
 Z0 is T above it (so a stale T is caught), and the program stops if Z0 moves after Generate; it lifts to
-Safe Z between holes, over the clamps. Lay the plate over a sacrificial sheet for through holes, or keep them no bigger
+Safe Z between holes, over the clamps. Lay the stock over a sacrificial sheet for through holes, or keep them no bigger
 than the spoilboard holes they line up over.
 
 **No holes, just lines:** **Grid lines** lasers (grblHAL's laser mode, `$32=1`) or V-bit engraves a line
