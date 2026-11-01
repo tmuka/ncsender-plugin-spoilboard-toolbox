@@ -5255,7 +5255,7 @@
     // Where X0 Y0 will be: the picked point, when Set would set this program's work offset.
     var aim = pickTarget(), off = pl.off, where = pl.wcs + ' X0 Y0 where it is now';
     if (aim && aim.tg && WCS_NAMES[holeWcs()] === pl.wcs && (!off || Math.hypot(aim.tg.x - off.x, aim.tg.y - off.y) > 0.005)) {
-      off = aim.tg; where = pl.wcs + ' X0 Y0 on ' + targetText(aim) + ' (hold Set to put it there)';
+      off = aim.tg; where = pl.wcs + ' X0 Y0 on ' + targetText(aim).replace(/ \(.*\)$/, '') + ', where Set puts it';
     }
     var text, bad = false;
     if (pl.why && !(off && pl.bitMm > 0 && p.cuts.segs.length)) text = name + ' can\u2019t be checked against the stock: ' + pl.why + '.';
