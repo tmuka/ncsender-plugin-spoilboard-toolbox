@@ -1858,4 +1858,7 @@ test('cutsNear matches checking every move, and only counts moves below each thi
     if (want === null) assert.equal(got[k], null);
     else assert.ok(Math.abs(got[k] - want) < 1e-9, `${k}: ${got[k]} vs ${want}`);
   });
+  // firstHit: the same yes/no for "within reach".
+  const quick = cutsNear(p, off, 6.35, things, 3, true);
+  got.forEach((g, k) => assert.equal(g != null && g < 3, quick[k] != null && quick[k] < 3, 'firstHit differs at ' + k));
 });

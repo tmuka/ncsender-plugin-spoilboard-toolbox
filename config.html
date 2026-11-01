@@ -3828,23 +3828,29 @@
     };
   }
   // The program's moves in cells, so "what passes near here" doesn't look
-  // at every move: each move in the cells of points along it, half a cell
-  // apart, so every point of it is in or next to one of its cells. Kept
-  // per program.
+  // at every move: each move in every cell it crosses (stepping from one
+  // cell edge to the next along it). Kept per program.
   var cutCellsKept = new WeakMap();
   function cutCells(cuts) {
     var c = cutCellsKept.get(cuts);
     if (c) return c;
     var size = 5, cells = new Map(), s = cuts.segs;
+    var put = function(cx, cy, i) {
+      var key = cx + ',' + cy, l = cells.get(key);
+      if (!l) cells.set(key, l = []);
+      l.push(i);
+    };
     for (var i = 0; i < s.length; i += 5) {
-      var n = Math.ceil(Math.hypot(s[i + 2] - s[i], s[i + 3] - s[i + 1]) / (size / 2)), last = '';
-      for (var k = 0; k <= n; k++) {
-        var key = Math.floor((s[i] + (s[i + 2] - s[i]) * (n ? k / n : 0)) / size) + ',' + Math.floor((s[i + 1] + (s[i + 3] - s[i + 1]) * (n ? k / n : 0)) / size);
-        if (key === last) continue;
-        last = key;
-        var l = cells.get(key);
-        if (!l) cells.set(key, l = []);
-        if (l[l.length - 1] !== i) l.push(i);
+      var x0 = s[i], y0 = s[i + 1], dx = s[i + 2] - x0, dy = s[i + 3] - y0;
+      var cx = Math.floor(x0 / size), cy = Math.floor(y0 / size), sx = dx > 0 ? 1 : -1, sy = dy > 0 ? 1 : -1;
+      // How far along the move (0 to 1) the next X and Y cell edges are.
+      var tx = dx ? ((dx > 0 ? (cx + 1) * size - x0 : x0 - cx * size) / Math.abs(dx)) : Infinity, stepX = dx ? size / Math.abs(dx) : Infinity;
+      var ty = dy ? ((dy > 0 ? (cy + 1) * size - y0 : y0 - cy * size) / Math.abs(dy)) : Infinity, stepY = dy ? size / Math.abs(dy) : Infinity;
+      put(cx, cy, i);
+      for (;;) {
+        if (tx < ty) { if (tx > 1) break; tx += stepX; cx += sx; }
+        else { if (ty > 1) break; ty += stepY; cy += sy; }
+        put(cx, cy, i);
       }
     }
     c = { size: size, cells: cells };
@@ -3854,22 +3860,30 @@
   // How close the bit's edge comes to each thing (a bolt, a pin: { x, y in
   // machine mm, r, topZ }), counting only moves below topZ: the gap, from
   // the bit's edge to the thing's (negative: it cuts into it), or null when
-  // no move below topZ comes within reachMm.
-  function cutsNear(cuts, off, bitMm, things, reachMm) {
+  // no move below topZ comes within reachMm. With firstHit, the first gap
+  // found under reachMm is enough (for "is anything that close").
+  function cutsNear(cuts, off, bitMm, things, reachMm, firstHit) {
     var idx = cutCells(cuts), s = cuts.segs, br = bitMm / 2;
     return things.map(function(t) {
       var x = t.x - off.x, y = t.y - off.y, lim = t.r + br + reachMm, best = Infinity, seen = new Set();
-      var cx0 = Math.floor((x - lim) / idx.size) - 1, cx1 = Math.floor((x + lim) / idx.size) + 1;
-      var cy0 = Math.floor((y - lim) / idx.size) - 1, cy1 = Math.floor((y + lim) / idx.size) + 1;
-      var look = function(i) {
-        if (seen.has(i) || !(s[i + 4] < t.topZ)) return;
-        seen.add(i);
-        var ax = s[i], ay = s[i + 1], dx = s[i + 2] - ax, dy = s[i + 3] - ay, l2 = dx * dx + dy * dy;
-        var u = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2)) : 0;
-        var d = Math.hypot(x - ax - u * dx, y - ay - u * dy);
-        if (d < best) best = d;
-      };
-      for (var cx = cx0; cx <= cx1; cx++) for (var cy = cy0; cy <= cy1; cy++) (idx.cells.get(cx + ',' + cy) || []).forEach(look);
+      var cx0 = Math.floor((x - lim) / idx.size), cx1 = Math.floor((x + lim) / idx.size);
+      var cy0 = Math.floor((y - lim) / idx.size), cy1 = Math.floor((y + lim) / idx.size);
+      for (var cx = cx0; cx <= cx1; cx++) {
+        for (var cy = cy0; cy <= cy1; cy++) {
+          var l = idx.cells.get(cx + ',' + cy);
+          if (!l) continue;
+          for (var k = 0; k < l.length; k++) {
+            var i = l[k];
+            if (!(s[i + 4] < t.topZ) || seen.has(i)) continue;
+            seen.add(i);
+            var ax = s[i], ay = s[i + 1], dx = s[i + 2] - ax, dy = s[i + 3] - ay, l2 = dx * dx + dy * dy;
+            var u = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2)) : 0;
+            var d = Math.hypot(x - ax - u * dx, y - ay - u * dy);
+            if (d < best) best = d;
+            if (firstHit && best < lim) return best - t.r - br;
+          }
+        }
+      }
       return best <= lim ? best - t.r - br : null;
     });
   }
@@ -5097,14 +5111,32 @@
       try {
         var text = await (await fetch(BASE_URL + '/api/gcode-files/current/download')).text();
         if (prog.key !== key) return;
-        p = { name: job.filename, cuts: programCuts(text), ours: /^SBT-/.test(job.filename || '') };
+        var cuts = await programCutsOffThread(text);
+        if (prog.key !== key) return;
+        p = { name: job.filename, cuts: cuts, ours: /^SBT-/.test(job.filename || '') };
       } catch (e) { p = null; }
     }
     prog.now = p;
     if (p && !p.ours) prog.part = p;
     if (!rootAlive()) return;
     renderHoles();
-    renderStockHoles();
+    if (!ROOT.querySelector('.mw-tab[data-tab="stock"]').hidden) renderStockHoles();
+  }
+  // programCuts in a worker, so a long program doesn't freeze the screen
+  // (ncSender is busy drawing it too); here when a worker can't start.
+  function programCutsOffThread(text) {
+    return new Promise(function(resolve) {
+      var w = null, url = null;
+      try {
+        url = URL.createObjectURL(new Blob(['var PROGRAM_KEEP_Z = ' + PROGRAM_KEEP_Z + ';\n' + programCuts.toString() +
+          '\nonmessage = function(e) { var c = programCuts(e.data), f = new Float64Array(c.segs); c.segs = f; postMessage(c, [f.buffer]); };'], { type: 'text/javascript' }));
+        w = new Worker(url);
+      } catch (e) { if (url) URL.revokeObjectURL(url); resolve(programCuts(text)); return; }
+      var done = function(c) { w.terminate(); URL.revokeObjectURL(url); resolve(c); };
+      w.onmessage = function(e) { done(e.data); };
+      w.onerror = function() { done(programCuts(text)); };
+      w.postMessage(text);
+    });
   }
   function checkedProgram() { return prog.now && !prog.now.ours ? prog.now : prog.part; }
   // Where the program sits: its work offset's X0 Y0 now (machine mm; null
@@ -7288,7 +7320,7 @@
     if (inCutsKept.key !== key || inCutsKept.cuts !== p.cuts) inCutsKept = { key: key, cuts: p.cuts, map: new Map() };
     var kept = inCutsKept.map, id = function(q) { return q.x + ',' + q.y + ',' + rMm + ',' + topZ; };
     var ask = list.filter(function(q) { return !kept.has(id(q)); });
-    if (ask.length) cutsNear(p.cuts, pl.off, pl.bitMm, ask.map(function(q) { return { x: q.x, y: q.y, r: rMm, topZ: topZ }; }), 1)
+    if (ask.length) cutsNear(p.cuts, pl.off, pl.bitMm, ask.map(function(q) { return { x: q.x, y: q.y, r: rMm, topZ: topZ }; }), 1, true)
       .forEach(function(g, i) { kept.set(id(ask[i]), g != null && g < 1); });
     return list.map(function(q) { return kept.get(id(q)); });
   }
