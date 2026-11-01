@@ -5,6 +5,10 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ## Unreleased
 
+- **Size to Program** on the XY0 Picker's Stock mode: the stock size the loaded program needs (its cuts, the bit, the clamp
+  margin), and its center picked for X0 Y0 when the program is centered (QuickCut and Gears parts).
+- The tool menu no longer shows its closed filter at the dialog's top left.
+
 ### ✨ New
 - **The tool table, as in QuickCut:** with a tool changer, Bit Diameter's label opens the tool table, the
   tool in the spindle first, with a filter on top; the tool picked gets a tool change (M6). Picking a tool,

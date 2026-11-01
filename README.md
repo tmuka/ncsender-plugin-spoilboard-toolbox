@@ -564,6 +564,10 @@ size and thickness; the holes come from the grid picked in Setup.
   **Bolt** fills the clearance hole for M6 (6.6 mm), M8 (9) or 1/4-20 (6.9), and, when a counterbore
   is set, room for a socket head (11, 14 or 10.5 mm; no washer). Bolt the stock to
   threaded inserts in the spoilboard.
+- **Size to Program** (Stock mode, beside the line saying whether the loaded program fits): the stock's width and
+  length become what the program needs, its cuts as wide as the bit plus the Clamp margin on every side, rounded up
+  (whole mm, or eighths of an inch). For a part from QuickCut or Gears, centered on X0 Y0, it also picks the stock's
+  center for X0 Y0, so Set puts it there. Handy when you don't know what size of stock a part needs.
 - **Clear of the loaded program** (on by default): load the part's program in ncSender first, and
   any spoilboard hole where its bit (its edge) would pass within 1 mm of the bolt head or pin is
   left out, the nearest clear hole used instead. Rapids count too: a bolt head is taken to stand

@@ -686,7 +686,7 @@
             </select>
             <span class="mw-dots-wrap"><span class="mw-dots-cap">New X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
             <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><span class="mw-stock-which" id="mw-stock-which"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear</button></span>
-            <span class="mw-stock-prog" id="mw-stock-prog" hidden><span class="mw-hint" id="mw-stock-prog-text" role="status"></span></span>
+            <span class="mw-stock-prog" id="mw-stock-prog" hidden><span class="mw-hint" id="mw-stock-prog-text" role="status"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fit" hidden title="Make the stock's width and length the loaded program's cuts, the bit's width and the clamp margin on every side, rounded up: the stock to cut a QuickCut or Gears part from.">Size to Program</button></span>
           </div>
           <div class="mw-dots-wrap mw-only-hole"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
           <div class="mw-holebar-info">
@@ -4694,6 +4694,7 @@
     $('mw-stock-clear').addEventListener('click', function() { clearStock(); stockSync(); });
     $('mw-migrated-ok').addEventListener('click', function() { $('mw-migrated').hidden = true; });
     $('mw-stock-far').addEventListener('click', function() { readMachineState().then(function() { stockFromSpindle(); stockSync(); }); });
+    $('mw-stock-fit').addEventListener('click', function() { stockFromProgram(); stockSync(); });
     $('mw-stock-t').addEventListener('input', function() { holes.thickFrom = 'typed'; });
     ['mw-stock-corner', 'mw-stock-zmode'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
     ['mw-stock-w', 'mw-stock-l', 'mw-stock-t', 'mw-stock-m'].forEach(function(id) {
@@ -4945,6 +4946,32 @@
     status.setAttribute('data-state', 'ok');
     status.textContent = 'Stock size from the spindle: ' + shown(Math.abs(dx)) + ' × ' + shown(Math.abs(dy)) + ' ' + unitName() + ', from its ' + stockPointName(corner) + '.';
   }
+  // Size to Program: the stock the loaded program needs, its cuts (as wide
+  // as the bit) and the clamp margin on every side, rounded up (to a whole
+  // mm, or an eighth of an inch), and where the program's X0 Y0 is on it.
+  function stockFromProgram() {
+    var status = $('mw-hole-status'), p = checkedProgram();
+    var pl = p && programPlace(p), b = p && p.cuts.box;
+    if (!b || !(pl.bitMm > 0)) return;
+    var k = state.imperial ? MM_PER_INCH : 1, mt = String($('mw-stock-m').value).trim();
+    var margin = mt === '' ? 0 : Math.max(0, unitVal($('mw-stock-m')) * k || 0), r = pl.bitMm / 2;
+    var step = state.imperial ? MM_PER_INCH / 8 : 1, up = function(mm) { return Math.ceil(mm / step - 1e-9) * step; };
+    var w = up(b.maxX - b.minX + 2 * r + 2 * margin), l = up(b.maxY - b.minY + 2 * r + 2 * margin);
+    var d = state.imperial ? 4 : 3;
+    $('mw-stock-w').value = +(w / k).toFixed(d);
+    $('mw-stock-l').value = +(l / k).toFixed(d);
+    ['mw-stock-w', 'mw-stock-l'].forEach(function(id) { $(id).classList.remove('mw-invalid'); });
+    // Its X0 Y0 from the stock's front left corner, the cuts centered on it.
+    var x0 = (w - (b.maxX - b.minX)) / 2 - b.minX, y0 = (l - (b.maxY - b.minY)) / 2 - b.minY, u = ' ' + unitName();
+    var mid = Math.abs(x0 - w / 2) < 0.05 * w && Math.abs(y0 - l / 2) < 0.05 * l;
+    if (mid) { setStockZero('center'); holes.stockDotSet = true; }
+    status.setAttribute('data-state', 'ok');
+    status.textContent = 'Stock for ' + programName(p) + ': ' + shown(w) + ' \u00d7 ' + shown(l) + u + ', its cuts ' + shown(b.maxX - b.minX + 2 * r) + ' \u00d7 ' + shown(b.maxY - b.minY + 2 * r) + u +
+      ' with the ' + shown(pl.bitMm) + u + ' bit, ' + (margin > 0 ? 'and the ' + shown(margin) + u + ' clamp margin all round' : 'with no clamp margin') + ', rounded up. ' +
+      (mid ? 'Its X0 Y0 is in the middle, so the stock\u2019s center is picked for X0 Y0 (press Set).' : 'Its X0 Y0 is ' + shown(x0) + u + ' from the stock\u2019s left edge and ' + shown(y0) + u + ' from its front, the cuts centered.') +
+      (p.cuts.minZ < 0 ? ' It cuts down to Z' + shown(p.cuts.minZ) + ': as deep as the stock is thick, or a little deeper for a cut right through.' : '');
+  }
+
   // The work offset's X0 Y0 as it is now, as the stock's corner (Corner at
   // X0 Y0): machine mm, so setting X0 Y0 elsewhere on the stock afterwards
   // doesn't move the stock.
@@ -5269,11 +5296,13 @@
     txt.classList.remove('mw-warn-text');
     var k = state.imperial ? MM_PER_INCH : 1, mt = String($('mw-stock-m').value).trim(), mv = mt === '' ? 0 : unitVal($('mw-stock-m')) * k;
     $('mw-stock-m').classList.toggle('mw-invalid', !(mv >= 0));
+    $('mw-stock-fit').hidden = true;
     if (!p) {
       if (prog.partLost) txt.textContent = 'The loaded program is Spoilboard Toolbox\u2019s own: load ' + programName(prog.partSaved) + ' again to check it against the stock.';
       return null;
     }
     var pl = programPlace(p), rect = stockShown(), u = ' ' + unitName(), margin = mv >= 0 ? mv : 0;
+    $('mw-stock-fit').hidden = !(p.cuts.box && pl.bitMm > 0);
     var name = programName(p) + (p === prog.now ? '' : ' (loaded before Spoilboard Toolbox\u2019s own program)');
     // Where X0 Y0 will be: the picked point, when Set would set this program's work offset.
     var aim = pickTarget(), off = pl.off, where = pl.wcs + ' X0 Y0 where it is now';
@@ -8430,7 +8459,7 @@
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines. No grid on the board yet? <strong>Cut Board &rsaquo; Grid lines</strong> lasers or engraves it from Setup.',
       HELP_NEEDS, HELP_UNITS,
-      '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again.' ] },
+      '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all round, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
     cut: { name: 'Cut Board', notes: [
       'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
