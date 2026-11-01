@@ -1055,13 +1055,13 @@
     </div>
     <div class="mw-tab" data-tab="cut" hidden>
       <p class="mw-intro"><strong>Cut the board&rsquo;s own pattern</strong>: its dog holes, T-tracks, grid lines and labels, into the
-        spoilboard or into stock on top of it that copies it. To drill holes in a workpiece so it bolts down, locates or flips, use
-        <strong>Stock Holes</strong>. The pattern is the XY0 Picker&rsquo;s Setup, so the board and the map come from the same numbers. Put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it), pick
+        spoilboard, or copy it into stock laid on top. To drill holes in a workpiece so it bolts down, locates or flips, use
+        <strong>Stock Holes</strong>. The pattern is the XY0 Picker&rsquo;s Setup, so the board and the map come from the same numbers. Put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it), or on the stock&rsquo;s with Into the stock on top ticked, pick
         what to cut, and <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run. It uses the active
         work offset&rsquo;s X0 Y0. Surfacing is QuickCut&rsquo;s.</p>
       <div class="mw-plate">
-        <label class="mw-extra"><input type="checkbox" id="mw-cut-plate"><span><strong>Into the stock on top:</strong> a copy of the board&rsquo;s grid, only inside the
-          stock on top of the spoilboard: a removable sheet (MDF, say) whose holes, slots or lines match the spoilboard&rsquo;s. Its size, place and thickness are the XY0 Picker&rsquo;s Stock; Z0 on its top.</span></label>
+        <label class="mw-extra"><input type="checkbox" id="mw-cut-plate"><span><strong>Into the stock on top:</strong> the board&rsquo;s grid copied into stock laid on the
+          spoilboard (a removable MDF sheet, say), only inside it, so its holes, slots or lines match the spoilboard&rsquo;s. Its size, place and thickness are the XY0 Picker&rsquo;s Stock; Z0 on its top.</span></label>
         <p class="mw-hint" id="mw-cut-plate-note" role="status" hidden></p>
       </div>
       <div class="mw-secs" id="mw-cut-secs" role="tablist" aria-label="What to cut">
@@ -1087,7 +1087,7 @@
           </div>
           <div class="mw-field mw-cut-only">
             <label for="mw-cut-depth">Hole Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-depth" value="18.05" title="How deep each hole goes below Z0 (the spoilboard's top). Leave a little under it unless there's a sacrificial layer below.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-depth" value="18.05" title="How deep each hole goes below Z0 (the spoilboard's top, or the stock's with Into the stock on top ticked). Leave a little under it unless there's a sacrificial layer below.">
           </div>
           <div class="mw-field">
             <label for="mw-cut-step">Depth per Pass (<span class="mw-unit">mm</span>)</label>
@@ -1211,7 +1211,7 @@
       </section>
       <section class="mw-card" data-sec="chamfer">
         <h3 class="mw-card-title">Chamfer the holes</h3>
-        <p class="mw-hint">With a V-bit, after cutting: a small bevel round each hole&rsquo;s top edge, so dowels start easily and the edge doesn&rsquo;t crumble. The same holes as above; Z0 on the spoilboard&rsquo;s top.</p>
+        <p class="mw-hint">With a V-bit, after cutting: a small bevel round each hole&rsquo;s top edge, so dowels start easily and the edge doesn&rsquo;t crumble. The same holes as above; Z0 on the spoilboard&rsquo;s top (or the stock&rsquo;s, ticked).</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-chm-angle">V-bit Angle (&deg;)</label>
@@ -1229,7 +1229,7 @@
         <h3 class="mw-card-title">Grid lines</h3>
         <p class="mw-hint">No holes, just lines: a line along every row and column of Setup&rsquo;s grids, crossing where the holes would be, with a laser or a V-bit.
           They stop short of keepout zones and break at T-tracks (Track Width from the T-tracks section).
-          Then set Hole Diameter to the line&rsquo;s width and zero on the crossings. Z0 on the spoilboard&rsquo;s top (for a laser: focused on it).
+          Then set Hole Diameter to the line&rsquo;s width and zero on the crossings. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).
           Not sure of the laser&rsquo;s power and speed? Run the <strong>Laser test</strong> first.</p>
         <div class="mw-row">
           <div class="mw-field">
@@ -1293,7 +1293,7 @@
       </section>
       <section class="mw-card" data-sec="labels">
         <h3 class="mw-card-title">Engrave the labels</h3>
-        <p class="mw-hint">The fixture table&rsquo;s names beside the holes, with a V-bit or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top (for a laser: focused on it).</p>
+        <p class="mw-hint">The fixture table&rsquo;s names beside the holes, with a V-bit or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-lab-mode">Labels</label>
@@ -8245,7 +8245,7 @@
         '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is.</li>' +
         '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Here</strong>. The pinned corner needs no size; every other point does, and the line beside Set says so.</li>' +
         '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one.</li></ul>' +
-        '<p>It stays where it is when you close and reopen the plugin, and the Stock Holes tab and Cut Board&rsquo;s Into the stock on top use it. The keyboard macros always use a hole.</p>',
+        '<p>It stays where it is when you close and reopen the plugin, and Stock Holes and Cut Board&rsquo;s Into the stock on top option use it. The keyboard macros always use a hole.</p>',
       '<strong>Zoom</strong> for a big bed, with <strong>Map view</strong> under the map: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
@@ -8285,7 +8285,7 @@
         '<li>Dog holes, Chamfers and Labels use only the holes wholly on it, 3 mm in from its edges.</li>' +
         '<li>T-track slots, Grid lines, chamfers and labels stay at least 3 mm in from its edges (more for a slot&rsquo;s width or a V-bit).</li>' +
         '<li>Nothing cuts deeper than its thickness; Z0 on its top. With the spoilboard height recorded, Generate refuses unless Z0 is the stock&rsquo;s thickness above it; the program stops if Z0 moves afterwards, and lifts to Safe Z between holes, over the clamps.</li></ul>' +
-        '<p>Through holes go into whatever&rsquo;s under the stock: lay it over a sacrificial sheet, or line its holes up over the spoilboard&rsquo;s and keep them no bigger. The Fit test, Laser test and Stock Holes ignore the tick.</p>' ] },
+        '<p>Through holes go into whatever&rsquo;s under the stock: put a sacrificial sheet under it, or line its holes up over the spoilboard&rsquo;s and keep them no bigger. The Fit test, Laser test and Stock Holes ignore the tick.</p>' ] },
     stock: { name: 'Stock Holes', notes: [
       '<p><strong>Stock that bolts down, locates and flips true.</strong> Clamp the stock some other way, put Z0 on its top, and drill it right over spoilboard holes:</p><ul>' +
         '<li><strong>Bolts:</strong> a clearance hole over the hole nearest each corner, or every hole under it, with an optional counterbore, to bolt into the threaded inserts. <strong>Bolt</strong> fills the sizes for M6, M8 or 1/4-20.</li>' +
@@ -8375,7 +8375,7 @@
         { id: 'lines', icon: 'map', title: 'Grid lines', short: 'Laser or engrave the grid instead of drilling it.', notes: [12] },
         { id: 'lasertest', icon: 'laser', title: 'Laser test', short: 'Find the power and speed for crisp lines.', notes: [13] } ] },
       { title: 'Removable fixtures', pages: [
-        { id: 'plate', icon: 'box', title: 'Into the stock on top', short: 'The board’s grid copied onto stock on top that lifts off.', notes: [14] } ] } ] },
+        { id: 'plate', icon: 'box', title: 'Into the stock on top', short: 'The board’s grid copied into a sheet of stock that lifts off.', notes: [14] } ] } ] },
     stock: { intro: 'Drill the stock right over spoilboard holes: bolt it down, or flip it true.', groups: [
       { title: 'Stock holes', pages: [
         { id: 'holes', icon: 'box', title: 'Bolts, locating pins and flip pins', short: 'What each does, and what keeps the board safe.', notes: [0] },

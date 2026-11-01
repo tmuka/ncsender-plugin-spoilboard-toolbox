@@ -6,9 +6,9 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### 🔧 Changed
-- Cut Board's **Into a plate on top** is now **Into the stock on top**: the board's grid cut into stock
-  on top of the spoilboard (an MDF sheet, say), worded as stock throughout. Stock Holes' Locating Pins
-  + Bolts still calls the piece it drills a fixture plate.
+- Cut Board's **Into a plate on top** is now **Into the stock on top**: the same option, named for the
+  stock (an MDF sheet, say) you lay on the spoilboard. Where Cut Board says to put Z0 on the
+  spoilboard, it now adds "or the stock's" for when it's ticked.
 
 ## 0.5.4
 

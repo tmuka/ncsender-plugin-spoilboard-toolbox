@@ -500,14 +500,15 @@ the plugin reminds you to re-record the spoilboard height.
   no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck), so
   check the bit and Z0 before pressing Start.
 
-**Removable fixtures:** tick **Into the stock on top** and every Cut Board program is confined to the XY0
-Picker's **Stock** on top of the spoilboard, so you can make a sheet (MDF, say) whose holes, slots or lines copy the spoilboard's
-and lift it off when you're done. Dog holes, chamfers and labels use only the holes wholly on it, 3 mm in
-from its edges; slots, grid lines, chamfers and labels stay at least 3 mm in too; nothing cuts deeper than
-its thickness (T), and Z0 goes on its top. Once the spoilboard height is recorded, Generate refuses unless
-Z0 is T above it (so a stale T is caught), and the program stops if Z0 moves after Generate; it lifts to
-Safe Z between holes, over the clamps. Lay the stock over a sacrificial sheet for through holes, or keep them no bigger
-than the spoilboard holes they line up over.
+**Removable fixtures:** tick **Into the stock on top** and every Cut Board program (the Fit and Laser
+tests aside) is confined to the XY0 Picker's **Stock** laid on the spoilboard, so you can make a sheet
+(MDF, say) whose holes, slots or lines copy the spoilboard's and lift it off when you're done. Dog
+holes, chamfers and labels use only the holes wholly on it, 3 mm in from its edges; slots, grid lines,
+chamfers and labels stay at least 3 mm in too; nothing cuts deeper than its thickness (T), and Z0 goes
+on its top. Once the spoilboard height is recorded, Generate refuses unless Z0 is T above it (so a
+stale T is caught), and the program stops if Z0 moves after Generate; it lifts to Safe Z between
+holes, over the clamps. For through holes, put a sacrificial sheet under the stock, or line its holes
+up over the spoilboard's and keep them no bigger.
 
 **No holes, just lines:** **Grid lines** lasers (grblHAL's laser mode, `$32=1`) or V-bit engraves a line
 along every row and column of Setup's grids, crossing exactly where the holes would be, half a spacing past
