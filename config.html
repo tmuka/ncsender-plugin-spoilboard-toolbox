@@ -2999,7 +2999,18 @@
     while ((m = WORD_RE.exec(line))) if (!(m[1] in w)) w[m[1]] = +m[2];
     return w;
   }
+  // The last few answers are kept: a tab shows the same program's time
+  // again each time it's opened.
+  var minutesKept = [];
   function programMinutes(lines, rapidMmMin) {
+    var key = rapidMmMin + '\n' + lines.join('\n');
+    for (var i = 0; i < minutesKept.length; i++) if (minutesKept[i].key === key) return minutesKept[i].min;
+    var min = programMinutesOf(lines, rapidMmMin);
+    minutesKept.unshift({ key: key, min: min });
+    minutesKept.length = Math.min(minutesKept.length, 4);
+    return min;
+  }
+  function programMinutesOf(lines, rapidMmMin) {
     var p = { x: 0, y: 0, z: 0 }, f = 1000, min = 0;
     lines.forEach(function(line) {
       var g = /^G([0-4])\b/.exec(line);
