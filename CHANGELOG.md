@@ -3,6 +3,18 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+**Checks against the program you'll run.**
+
+### ✨ New
+- **Does it fit the stock?** With a program loaded in ncSender, the XY0 Picker's Stock mode draws its
+  cuts on the map (the bit's width, where X0 Y0 is now) and says whether they stay inside the stock
+  and clear of a new **Clamp margin**, or how far past which edge they go.
+- **Stock Holes keeps the bolts out of the cuts:** with **Clear of the loaded program's cuts** (on by
+  default), any hole where the part's program would cut within 1 mm of a bolt head or pin is left
+  out and the nearest clear hole used; unticked, the summary names the holes the bit would hit.
+
 ## 0.5.3
 
 **Quicker with big grids.**

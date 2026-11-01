@@ -62,6 +62,12 @@ holes next time and you get the same zero back.
 machine: with X0 Y0 on one corner, jog roughly to the opposite corner and run **Set XY0 to Midpoint**
 for the exact center (**Midpoint XY** moves the spindle there first, at Safe Z).
 
+**Check the program fits the stock.** With a program loaded in ncSender, Stock mode draws its cuts
+on the map, as wide as the bit, where X0 Y0 is now, and says whether they stay inside the stock and
+clear of the **Clamp margin** (10 mm by default, room for clamps or screws), or how far past which
+edge they go. The bit comes from the program's header when it says (QuickCut, Gears, or a CAM's
+`D=`), else Cut Board's Bit Diameter.
+
 **Zero on a hole.** In **Hole** mode, jog roughly near a hole and press **Pick Nearest Hole**, or tap
 it, and hold **Set**: X0 Y0 lands on its center, or a side or corner of the hole (one hole radius
 out), for a part on a pin, a jig's home hole, or a flip pin.
@@ -551,7 +557,13 @@ size and thickness; the holes come from the grid picked in Setup.
   under it (the summary counts them, along X and Y), with an optional counterbore for the head.
   **Bolt** fills the clearance hole for M6 (6.6 mm), M8 (9) or 1/4-20 (6.9), and, when a counterbore
   is set, room for a socket head (11, 14 or 10.5 mm; no washer). Bolt the stock to
-  threaded inserts in the spoilboard; keep the bolts out of the part's toolpaths.
+  threaded inserts in the spoilboard.
+- **Clear of the loaded program's cuts** (on by default): load the part's program in ncSender first,
+  and any spoilboard hole where it would cut within 1 mm of the bolt head (in its counterbore, or
+  on top of the stock), the bit's width included, is left out; the nearest clear hole is used
+  instead, and the summary says how many were. Unticked, the summary names the holes the bit would
+  hit. It goes by the work offset's X0 Y0 as it is now, and ignores programs Spoilboard Toolbox
+  made, keeping the part loaded before them.
 - **Locating Pins + Bolts:** a plate that comes off and goes back exactly, in one program. Two pin
   holes over dog holes, as far apart as fit (diagonally): the first round, so it locates, and the
   second a slot pointing at it (**Slot +** longer, half each way; 0.75 mm by default), so the plate can't bind when MDF moves with

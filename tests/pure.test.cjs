@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, cutsPastStock, cutsNear, STROKE_FONT } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, cutsPastStock, cutsNear, STROKE_FONT };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1806,4 +1806,56 @@ test('crowdedPair finds the same first pair as checking every pair', () => {
   const grid = [];
   for (let i = 0; i < 40; i++) for (let j = 0; j < 40; j++) grid.push({ q: { x: i * 32, y: j * 32 }, r: 4 });
   assert.equal(crowdedPair(grid), null);
+});
+
+test('programCuts follows moves, arcs, units and increments, and skips what isn\'t a move', () => {
+  const p = programCuts([
+    '(Bit Diameter: 0.25 in)', 'G21 G90 G54', 'G53 G0 Z0', 'G0 X10 Y10', 'G0 Z5', 'G1 Z-3 F300',
+    'G2 X10 Y10 I10 J0', // a full circle round (20, 10), radius 10
+    'G1 X40', 'G91 G1 X5 Y-2', 'G90', 'G10 L20 P1 X0 Y0', 'G4 P1', 'G0 Z5', 'G0 X500 Y500', 'M30'].join('\n'));
+  assert.equal(p.bitMm, 6.35);
+  assert.equal(p.wcs, 54);
+  assert.ok(Math.abs(p.box.minX - 10) < 1e-6 && Math.abs(p.box.maxX - 45) < 1e-6, JSON.stringify(p.box));
+  assert.ok(Math.abs(p.box.minY - 0) < 0.06 && Math.abs(p.box.maxY - 20) < 0.06, JSON.stringify(p.box));
+  assert.equal(p.minZ, -3);
+  // G20: inches to mm; R arcs; a CAM's D= in the program's units.
+  const q = programCuts('(T1 D=0.125 CR=0)\nG20\nG0 X0 Y0\nG1 Z-0.1 F20\nG3 X2 Y0 R1\n');
+  assert.equal(q.bitMm, 3.175);
+  // Counterclockwise from (0, 0) to (2, 0) about (1, 0): under the X axis.
+  assert.ok(Math.abs(q.box.minY + 25.4) < 0.06 && Math.abs(q.box.maxY) < 1e-6 && Math.abs(q.box.maxX - 50.8) < 1e-6, JSON.stringify(q.box));
+  assert.equal(programCuts('(Bit 3.175 mm, feed 1000)\nG21\nG1 X1 Z-1').bitMm, 3.175);
+  assert.equal(programCuts('G21\nG1 X1 Z-1').bitMm, null);
+  // Never below Z0: no cut box. Probing loses the position until a move gives it.
+  assert.equal(programCuts('G21\nG0 X1 Y1 Z5\nG1 X50\n').box, null);
+  const pr = programCuts('G21\nG0 X0 Y0 Z1\nG38.2 Z-20 F100\nG1 X10 Y10\nG1 Z-1\nG1 X20\n');
+  assert.deepEqual(pr.box, { minX: 10, minY: 10, maxX: 20, maxY: 10 });
+});
+
+test('cutsPastStock: how far the cuts reach past each edge, less the margin', () => {
+  const p = programCuts('G21\nG0 X0 Y0\nG1 Z-1\nG1 X100\nG1 Y50\n');
+  const past = cutsPastStock(p, { x: 10, y: 20 }, 6, { minX: 0, minY: 0, maxX: 120, maxY: 80 }, 5);
+  assert.deepEqual(Object.fromEntries(Object.entries(past).map(([k, v]) => [k, +v.toFixed(6)])), { left: -2, right: -2, front: -12, back: -2 });
+  assert.equal(cutsPastStock(programCuts('G0 X1 Z5'), { x: 0, y: 0 }, 6, { minX: 0, minY: 0, maxX: 1, maxY: 1 }, 0), null);
+});
+
+test('cutsNear matches checking every move, and only counts moves below each thing\'s top', () => {
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const lines = ['G21', 'G0 X0 Y0 Z5'];
+  for (let i = 0; i < 400; i++) lines.push(`G1 X${(rnd() * 600).toFixed(3)} Y${(rnd() * 400).toFixed(3)} Z${(rnd() * 12 - 8).toFixed(3)}`);
+  const p = programCuts(lines.join('\n')), off = { x: 100, y: 50 };
+  const things = Array.from({ length: 60 }, () => ({ x: 100 + rnd() * 600, y: 50 + rnd() * 400, r: 2 + rnd() * 6, topZ: rnd() * 10 - 5 }));
+  const got = cutsNear(p, off, 6.35, things, 3);
+  things.forEach((t, k) => {
+    let best = Infinity;
+    for (let i = 0; i < p.segs.length; i += 5) {
+      if (!(p.segs[i + 4] < t.topZ)) continue;
+      const ax = p.segs[i], ay = p.segs[i + 1], dx = p.segs[i + 2] - ax, dy = p.segs[i + 3] - ay, l2 = dx * dx + dy * dy;
+      const u = l2 > 0 ? Math.max(0, Math.min(1, ((t.x - off.x - ax) * dx + (t.y - off.y - ay) * dy) / l2)) : 0;
+      best = Math.min(best, Math.hypot(t.x - off.x - ax - u * dx, t.y - off.y - ay - u * dy));
+    }
+    const want = best <= t.r + 3.175 + 3 ? best - t.r - 3.175 : null;
+    if (want === null) assert.equal(got[k], null);
+    else assert.ok(Math.abs(got[k] - want) < 1e-9, `${k}: ${got[k]} vs ${want}`);
+  });
 });
