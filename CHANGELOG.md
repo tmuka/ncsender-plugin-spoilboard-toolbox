@@ -3,6 +3,17 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## 0.5.3
+
+**Quicker with big grids.**
+
+### ⚡ Faster
+- Measured on a Raspberry Pi with a 15,708-hole grid: opening Spoilboard Toolbox and the XY0 Picker
+  tab now take about a third of the time, Stock Holes less than half, and Cut Board about 40% less.
+  The grid's direction is worked out once, a program's run time is kept rather than worked out again
+  each time a tab opens, and holes that would run together are found by checking each against its
+  neighbours rather than every other hole.
+
 ## 0.5.2
 
 **Tidier on the Pi's screen.**
