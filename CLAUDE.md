@@ -187,7 +187,11 @@ npm test         # node --test tests/*.cjs: the pure block plus the expression s
 npm run build    # dist/com.tmuka.spoilboard-toolbox_v<version>.zip from the last commit (commit first)
 ```
 
-- Bump `version` in both `manifest.json` and `package.json` for a release build.
+- **Releasing:** bump `version` in both `manifest.json` and `package.json`, turn CHANGELOG's "Unreleased"
+  into `## <version>` (optionally `## <version>: <a few words>`, which become the release title), commit, then
+  tag `v<version>` and push the tag. `.github/workflows/release.yml` runs the tests, checks the tag matches
+  the manifest, builds the zip with `.scripts/build.sh`, publishes the release with that CHANGELOG section,
+  and announces it on Discord when the repo has a `DISCORD_WEBHOOK_URL` secret.
 - The UI is tested with the local test kit at `~/Documents/projects/ncsender-plugin-testkit` (not in this
   repo; its README is the method). In short:
   - **Local harness:** `openLocal({ config: 'config.html', pluginId: 'com.tmuka.spoilboard-toolbox' })` renders

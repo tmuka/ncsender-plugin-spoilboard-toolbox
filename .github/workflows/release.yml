@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Run tests
+        run: npm test
+
+      - name: Plugin info
+        id: info
+        run: |
+          NAME=$(jq -r '.name' manifest.json)
+          VERSION=$(jq -r '.version' manifest.json)
+          TAG="${GITHUB_REF_NAME}"
+          if [ "v$VERSION" != "$TAG" ]; then
+            echo "::error::Tag $TAG doesn't match manifest.json's version $VERSION"
+            exit 1
+          fi
+          echo "NAME=$NAME" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes from CHANGELOG.md
+        id: notes
+        run: |
+          VERSION="${{ steps.info.outputs.VERSION }}"
+          HEADING=$(grep -m1 -E "^## ${VERSION//./\\.}(:|$)" CHANGELOG.md || true)
+          if [ -z "$HEADING" ]; then
+            echo "::error::CHANGELOG.md has no '## $VERSION' section"
+            exit 1
+          fi
+          awk -v h="$HEADING" '$0 == h { on = 1; next } on && /^## / { exit } on' CHANGELOG.md > release-notes.md
+          SUBTITLE=$(echo "$HEADING" | sed -E 's/^## [^:]+:? *//')
+          TITLE="v$VERSION"
+          [ -n "$SUBTITLE" ] && TITLE="v$VERSION: $SUBTITLE"
+          echo "TITLE=$TITLE" >> "$GITHUB_OUTPUT"
+          echo "SUBTITLE=$SUBTITLE" >> "$GITHUB_OUTPUT"
+          cat release-notes.md
+
+      - name: Build the zip
+        run: bash .scripts/build.sh
+
+      - name: Create the release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.info.outputs.TAG }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "${{ steps.info.outputs.TITLE }}" \
+            --notes-file release-notes.md \
+            dist/*.zip
+
+      - name: Announce on Discord
+        if: success() && env.DISCORD_WEBHOOK_URL != ''
+        env:
+          NAME: ${{ steps.info.outputs.NAME }}
+          TAG: ${{ steps.info.outputs.TAG }}
+          SUBTITLE: ${{ steps.info.outputs.SUBTITLE }}
+        run: |
+          URL="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+          DESC="A new version of the $NAME plugin is now available."
+          [ -n "$SUBTITLE" ] && DESC="$SUBTITLE. $DESC"
+          jq -n --arg title "🔌 $NAME $TAG Released!" --arg desc "$DESC" --arg url "$URL" \
+            '{embeds: [{title: $title, description: $desc, url: $url, color: 1941124,
+              fields: [{name: "Download", value: "[View Release](\($url))"}]}]}' |
+            curl -fsS -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK_URL"
