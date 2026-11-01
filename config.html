@@ -2991,12 +2991,20 @@
   // Roughly how long a program takes, in minutes: its moves at their feed
   // (rapids at rapidMmMin) and its dwells. Machine-coordinate lifts count
   // as nothing.
+  // A line's words (X, Y, F...), each its first value, in one pass.
+  var WORD_RE = /(?:^|\s)([A-Z])(-?[\d.]+)/g;
+  function lineWords(line) {
+    var w = {}, m;
+    WORD_RE.lastIndex = 0;
+    while ((m = WORD_RE.exec(line))) if (!(m[1] in w)) w[m[1]] = +m[2];
+    return w;
+  }
   function programMinutes(lines, rapidMmMin) {
     var p = { x: 0, y: 0, z: 0 }, f = 1000, min = 0;
     lines.forEach(function(line) {
       var g = /^G([0-4])\b/.exec(line);
       if (!g) return;
-      var v = function(k, d) { var m = new RegExp('(?:^|\\s)' + k + '(-?[\\d.]+)').exec(line); return m ? +m[1] : d; };
+      var w = lineWords(line), v = function(k, d) { return k in w ? w[k] : d; };
       if (g[1] === '4') { min += v('P', 0) / 60; return; }
       var F = v('F', null);
       if (F) f = F;
@@ -3429,7 +3437,16 @@
   // going up), uy along a column (row going up), from its holes, so a
   // turned grid or a machine running -X / -Y is right. Square to the
   // machine when the grid has no two holes to tell.
+  // Kept per hole list and layer: a grid can have thousands of holes, and
+  // the stock's place asks for its axes many times a change.
+  var gridAxesCache = new WeakMap();
   function gridAxes(hs, layer) {
+    var memo = gridAxesCache.get(hs) || {}, key = (layer || 0) + ':' + hs.length;
+    if (memo[key]) return memo[key];
+    gridAxesCache.set(hs, memo);
+    return (memo[key] = gridAxesOf(hs, layer));
+  }
+  function gridAxesOf(hs, layer) {
     var ux = null, uy = null, by = {};
     hs.forEach(function(p) { if (p.col != null && (p.layer || 0) === (layer || 0)) by[p.col + ',' + p.row] = p; });
     Object.keys(by).some(function(k) {
