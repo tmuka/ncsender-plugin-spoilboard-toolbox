@@ -407,6 +407,8 @@
     background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38); }
   .mw-tool-pop .mw-tool-filter { width: 100% !important; text-align: left; font-family: inherit; }
   .mw-tool-list { display: flex; flex-direction: column; max-height: 300px; overflow-y: auto; }
+  /* Rows keep their height in the scrolling list: a long name wraps, it doesn't overlap the next. */
+  .mw-tool-list > * { flex-shrink: 0; }
   .mw-tool-head { padding: 4px 10px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-secondary); }
   .mw-tool-item { -webkit-appearance: none; appearance: none; display: block; width: 100%; min-height: 40px !important; margin: 0; padding: 8px 10px !important; text-align: left;
     background: transparent !important; border: none !important; border-radius: 6px !important; color: var(--color-text-primary) !important; box-shadow: none !important;
