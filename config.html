@@ -3689,6 +3689,28 @@
     });
     return cutEnd(o, L);
   }
+  // The first two of `all` ({ q: {x, y}, r }) closer than their radii and
+  // 1 mm, in list order; null when none are. Each is checked only against
+  // the ones in its own and the next cells of a grid the size of the
+  // widest gap that counts, so thousands of holes stay quick.
+  function crowdedPair(all) {
+    var maxR = 0;
+    all.forEach(function(e) { maxR = Math.max(maxR, e.r); });
+    var cell = 2 * maxR + 1, cells = {}, best = null;
+    all.forEach(function(e, i) {
+      var cx = Math.floor(e.q.x / cell), cy = Math.floor(e.q.y / cell);
+      for (var dx = -1; dx <= 1; dx++) {
+        for (var dy = -1; dy <= 1; dy++) {
+          (cells[(cx + dx) + ',' + (cy + dy)] || []).forEach(function(j) {
+            var f = all[j];
+            if (Math.hypot(e.q.x - f.q.x, e.q.y - f.q.y) < e.r + f.r + 1 && (!best || j < best[0] || (j === best[0] && i < best[1]))) best = [j, i];
+          });
+        }
+      }
+      (cells[cx + ',' + cy] = cells[cx + ',' + cy] || []).push(i);
+    });
+    return best ? [all[best[0]], all[best[1]]] : null;
+  }
   // END pure
 
   var state = { imperial: false, capturing: null, safeZMm: null };
@@ -7054,13 +7076,8 @@
       // Holes too close to each other run together.
       var all = res.pinsAt.map(function(q) { return { q: q, r: pinSize / 2 + slot / 2 }; })
         .concat(res.chosen.map(function(q) { return { q: q, r: (hasCb ? cb : size) / 2 }; }));
-      for (var a = 0; a < all.length; a++) {
-        for (var b = a + 1; b < all.length; b++) {
-          if (Math.hypot(all[a].q.x - all[b].q.x, all[a].q.y - all[b].q.y) < all[a].r + all[b].r + 1) {
-            probs.push('Two of the plate’s holes would run together (' + holeName(all[a].q) + ' and ' + holeName(all[b].q) + '): use smaller sizes'); a = all.length; break;
-          }
-        }
-      }
+      var crowded = crowdedPair(all);
+      if (crowded) probs.push('Two of the plate’s holes would run together (' + holeName(crowded[0].q) + ' and ' + holeName(crowded[1].q) + '): use smaller sizes');
       pinHoles(cutOrder(res.pinsAt), pinSize, slot, depth, thick).forEach(function(h) { o.holes.push(h); });
     } else {
       if (holes.hidden[String(holes.activeGrid)]) { probs.push('The grid picked in Setup is hidden on the map: show it (its eye) to use its holes'); return res; }
