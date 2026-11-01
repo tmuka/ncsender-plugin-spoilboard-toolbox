@@ -174,8 +174,25 @@ npm run build    # dist/com.tmuka.spoilboard-toolbox_v<version>.zip from the las
 ```
 
 - Bump `version` in both `manifest.json` and `package.json` for a release build.
-- The UI was checked in headless Chrome against a stand-in for the ncSender API that stubs `fetch` and
-  posts `cnc-data` replies. The harness isn't in the repo; a fresh one only needs to stub the APIs above.
+- The UI is tested with the local test kit at `~/Documents/projects/ncsender-plugin-testkit` (not in this
+  repo; its README is the method). In short:
+  - **Local harness:** `openLocal({ config: 'config.html', pluginId: 'com.tmuka.spoilboard-toolbox' })` renders
+    the page as ncSender does (its Inter font, theme and the `PluginDialog.vue` rules on buttons, `p` and
+    `pre`), at the Pi's 1920 × 1174, reading the Pi's settings by GET only. Plain headless Chrome hid
+    real problems: the system's grey scrollbars, ncSender's 16 px button padding, Inter's wrapping.
+  - **Every view:** the four tabs, each Cut Board section and Help, top and scrolled to the bottom;
+    `audit(page, '.mw-panel', '.mw-field')` for clipped menus, squeezed or overlapping fields and SVG text
+    outside its box. (The profile menu's long option names are expected: only the chosen one shows.)
+  - **On the Pi** (`pi.sh debug` + `pi.sh tunnel` + `connectPi`, with the user's OK): the same views in
+    ncSender's own window, compared with the local shots (`compare.mjs`; ~3 % differ from font smoothing).
+    Opening Cut Board or Stock Holes asks the controller for `$#` (read-only); the scripts block every
+    `/api/send-command` anyway and print how many.
+  - **Speed on the Pi:** long tasks for opening (3 times) and each tab, then a CPU profile of the slow
+    ones. With the author's 15,708-hole grid (0.5.3): opening ~100 ms, XY0 Picker ~100 ms, Stock Holes
+    ~200 ms, Cut Board ~330 ms (mostly generating the program). Keep anything that runs per change linear
+    in the holes: `crowdedPair` replaced an all-pairs check that was 680,000 pairs.
+  - **Reviews** before a release: read-only agents as UI designer / beginner, machinist (simulate the
+    G-code) and code reviewer, in parallel.
 - Install a build from ncSender's Plugin Manager. The wizard opens from **Spoilboard Toolbox** in the plugin tool menu.
 
 ## How it was built
