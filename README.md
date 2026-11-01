@@ -495,7 +495,8 @@ the plugin reminds you to re-record the spoilboard height.
   the tool in the spindle first, with a filter on top (T number, name, notes or size); pick the tool and
   the program starts with a tool change to it (`M6 T3`, say), which ncSender runs like any other. Without
   a tool changer, click **Bit Diameter** for the loaded tool's diameter; there's no tool change. Either
-  way **Flutes** is set when the tool's name or notes say (O flute, single flute, 2 flute, 3FL...). Type a
+  way **Flutes** is set from the tool's name or notes (O flute, 0flute, single flute, 2 flute, 3FL...), or to 2 when
+  they don't say. Type a
   diameter instead and there's no tool change: load that bit yourself before running it. The T-track,
   stock-hole and fit-test programs work the same way; chamfers and labels never change tools.
 - **Safety:** Hole Depth can't be more than the Spoilboard Thickness (0.75" to start). Between holes it hops

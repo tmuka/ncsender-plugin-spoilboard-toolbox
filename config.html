@@ -7160,27 +7160,27 @@
       note.textContent = /fetch|JSON/i.test(e.message) ? 'Couldn\u2019t read the tool table from ncSender.' : e.message + '.';
     }
   }
-  // How many flutes a tool's name or notes say it has: "O flute" or
+  // How many flutes a tool's name or notes say it has: "O flute", "0flute" or
   // "single flute" 1, "2 flute", "two-flute", "3FL", "2F"... else null
   // (ncSender's tool table has no field for it). As QuickCut's.
   function flutesFromText(text) {
     var t = String(text || '').toLowerCase();
-    if (/\b(o|single|one)[\s-]*flutes?\b/.test(t)) return 1;
+    if (/\b(o|0|zero|single|one)[\s-]*flutes?\b/.test(t)) return 1;
     var m = /\b([1-4])[\s-]*(?:flutes?|fl)\b/.exec(t) || /\b([1-4])f\b/.exec(t);
     if (m) return +m[1];
     var w = /\b(two|double|three|four)[\s-]*flutes?\b/.exec(t);
     return w ? { two: 2, double: 2, three: 3, four: 4 }[w[1]] : null;
   }
-  // Flutes set from a tool, when its name says. Returns the count, or null.
+  // Flutes set from a tool: what its name says, else 2, the usual. Returns the count.
   function flutesFromTool(t) {
-    var n = flutesFromText((t.name || '') + ' ' + (t.notes || ''));
-    if (n) $('mw-cut-flutes').value = String(n);
+    var n = flutesFromText((t.name || '') + ' ' + (t.notes || '')) || 2;
+    $('mw-cut-flutes').value = String(n);
     return n;
   }
 
   // With a tool changer, Bit Diameter's label opens ncSender's tool table,
   // a filter on top, the tool in the spindle first: picking a tool sets the
-  // diameter (and the flutes, when its name says) and the programs start
+  // diameter and the flutes (from its name, else 2) and the programs start
   // with a tool change to it (M6). Typing another diameter drops it.
   var toolPop = { open: false, active: 0, items: [] };
   async function readTools() {
@@ -7215,10 +7215,8 @@
     pop.innerHTML = '<input class="mw-input mw-tool-filter" id="mw-tool-filter" type="text" autocomplete="off" spellcheck="false" placeholder="Filter: T number, name or size" aria-label="Filter the tools">' +
       '<div class="mw-tool-list" id="mw-tool-list" role="listbox" aria-label="Tool table"></div>';
     ROOT.appendChild(pop);
-    var how = 'mouse';
-    btn.addEventListener('pointerdown', function(e) { how = e.pointerType || 'mouse'; });
-    btn.addEventListener('keydown', function(e) { how = 'keyboard'; if (e.key === 'ArrowDown') { e.preventDefault(); openToolPop(true); } });
-    btn.addEventListener('click', function() { if (toolPop.open) closeToolPop(); else openToolPop(how !== 'touch'); });
+    btn.addEventListener('keydown', function(e) { if (e.key === 'ArrowDown') { e.preventDefault(); openToolPop(); } });
+    btn.addEventListener('click', function() { if (toolPop.open) closeToolPop(); else openToolPop(); });
     var filter = $('mw-tool-filter');
     filter.addEventListener('input', function(e) { e.stopPropagation(); toolPop.active = 0; renderToolList(); });
     filter.addEventListener('keydown', function(e) {
@@ -7234,7 +7232,7 @@
     try { await readTools(); } catch (e) { state.tools = []; }
     showBitTool();
   }
-  function openToolPop(focusFilter) {
+  function openToolPop() {
     var btn = $('mw-cut-bit-tool'), pop = $('mw-tool-pop');
     toolPop.open = true; toolPop.active = 0;
     $('mw-tool-filter').value = '';
@@ -7245,8 +7243,7 @@
     var below = r.bottom - w.top + 4, room = w.height - below - 8;
     pop.style.top = (room >= Math.min(pop.offsetHeight, 240) ? below : Math.max(8, r.top - w.top - pop.offsetHeight - 4)) + 'px';
     renderToolList();
-    // Not on a touch: the on-screen keyboard shouldn't pop up unasked.
-    if (focusFilter) $('mw-tool-filter').focus();
+    $('mw-tool-filter').focus();
   }
   function closeToolPop() { toolPop.open = false; $('mw-tool-pop').hidden = true; $('mw-cut-bit-tool').setAttribute('aria-expanded', 'false'); }
   function moveToolActive(step) {
@@ -8438,7 +8435,7 @@
       'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
       'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say). Z0 must be on the spoilboard&rsquo;s top.',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
-      'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. With a tool changer, <strong>Bit Diameter</strong>&rsquo;s label opens ncSender&rsquo;s tool table (the tool in the spindle first, a filter on top): pick the tool, and the hole, T-track, stock-hole and fit-test programs start with a tool change to it (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Without one, click <strong>Bit Diameter</strong> for the loaded tool&rsquo;s diameter, with no tool change. Flutes is set when the tool&rsquo;s name or notes say. Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
+      'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. With a tool changer, <strong>Bit Diameter</strong>&rsquo;s label opens ncSender&rsquo;s tool table (the tool in the spindle first, a filter on top): pick the tool, and the hole, T-track, stock-hole and fit-test programs start with a tool change to it (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Without one, click <strong>Bit Diameter</strong> for the loaded tool&rsquo;s diameter, with no tool change. Flutes is set from the tool&rsquo;s name or notes, or to 2 when they don&rsquo;t say. Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, Edge Distance in from its edges, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
@@ -8464,7 +8461,7 @@
         '<p><strong>Take the pins out</strong> of the holes under the stock first: the bit goes into them.</p>' +
         '<p><strong>The spoilboard is safe:</strong> each hole goes only Break Through into the spoilboard hole and is never bigger than it (inserts must sit that far down). It lifts to Safe Z over the clamps between holes, refuses when Z0 is on the spoilboard, and stops if Z0 changed since you generated it.</p>' +
         '<p>The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.</p>',
-      'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. With a tool changer, <strong>Bit Diameter</strong>&rsquo;s label opens ncSender&rsquo;s tool table (the tool in the spindle first, a filter on top): pick the tool, and the hole, T-track, stock-hole and fit-test programs start with a tool change to it (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Without one, click <strong>Bit Diameter</strong> for the loaded tool&rsquo;s diameter, with no tool change. Flutes is set when the tool&rsquo;s name or notes say. Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.' ] },
+      'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. With a tool changer, <strong>Bit Diameter</strong>&rsquo;s label opens ncSender&rsquo;s tool table (the tool in the spindle first, a filter on top): pick the tool, and the hole, T-track, stock-hole and fit-test programs start with a tool change to it (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Without one, click <strong>Bit Diameter</strong> for the loaded tool&rsquo;s diameter, with no tool change. Flutes is set from the tool&rsquo;s name or notes, or to 2 when they don&rsquo;t say. Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.' ] },
     macros: { name: 'Z0 macros', notes: [
       '<strong>Probe the spoilboard once, and stop re-probing Z on every tool change.</strong> With measured tools (a tool setter or an ATC), one macro puts Z0 on the spoilboard and another on the stock top, for whichever tool is loaded, and a third puts your own Z0 back. Put them on keys and switching Z0 is a single press.',
       'Record the spoilboard height once with a probe block and a measured tool; then the <strong>SBT:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
