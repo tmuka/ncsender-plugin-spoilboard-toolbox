@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.5.5
 
 ### 🔧 Changed
 - Cut Board's **Into a plate on top** is now **Into the stock on top**: the same option, named for the
