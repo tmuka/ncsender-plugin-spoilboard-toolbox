@@ -3,6 +3,22 @@
 **Your spoilboard's holes are already a precision fixture. Spoilboard Toolbox cuts them, measures them,
 and turns every one into a work zero you can hit again tomorrow.**
 
+- **Cut your spoilboard:** dog holes, T-tracks, threaded insert grids, chamfers and labels. Or laser / V-bit
+  engrave the grid lines.
+- **Measure Holes:** a pin by eye or a 3D probe finds where your holes really are, even on a turned board.
+- **XY0 Picker:** zero on a hole's center, side or corner, or on **stock pushed against pins** in the dog holes.
+- **Stock Holes:** drill bolt holes through the stock right over your spoilboard holes, keeping the bolts clear
+  of the loaded program.
+- **Fits the program:** see whether the loaded program fits your stock, or let **Size to Program** set the stock
+  size it needs.
+- **Fixture plates** that match your spoilboard and go back square.
+- **Starting feeds by material** (MDF, plywood, woods, HDPE, polycarbonate, acrylic...), plus drill pecks and
+  blind holes.
+- **Tool table menu:** M6 with a tool changer, and flutes from the tool table.
+- Nearly full-screen layout, live pictures, short help pages, and math in the boxes (`8mm*2`, `1in+4mm`).
+
+## In more detail
+
 - **X0 Y0 in two taps, no probe.** Jog roughly near any dog hole, tap **Pick Nearest Hole**, hold
   **Set**: work zero lands on the hole's exact center or edge, from the grid's numbers, not your eye.
   Same hole, same zero, every job. Put it on a key and it's one press.
