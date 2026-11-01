@@ -62,7 +62,7 @@ jobs:
         run: |
           gh release create "${{ steps.info.outputs.TAG }}" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "${{ steps.info.outputs.TITLE }}" \
+            --title "${{ steps.notes.outputs.TITLE }}" \
             --notes-file release-notes.md \
             dist/*.zip
 
@@ -71,7 +71,7 @@ jobs:
         env:
           NAME: ${{ steps.info.outputs.NAME }}
           TAG: ${{ steps.info.outputs.TAG }}
-          SUBTITLE: ${{ steps.info.outputs.SUBTITLE }}
+          SUBTITLE: ${{ steps.notes.outputs.SUBTITLE }}
         run: |
           URL="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
           DESC="A new version of the $NAME plugin is now available."
