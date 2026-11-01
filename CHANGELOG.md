@@ -3,6 +3,21 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## 0.5.2
+
+**Tidier on the Pi's screen.**
+
+### 🎨 Look
+- A **slim scrollbar** like ncSender's own, in place of the wide grey one with arrows on a Raspberry
+  Pi; the page no longer shifts when a tab starts or stops scrolling.
+- **Checkboxes** in ncSender's accent color.
+
+### 🐛 Fixed
+- **Setup's grid picture:** the Inset Y label no longer lands on X Spacing's when the holes are drawn
+  large.
+- **Stock Holes:** a long list of bolt holes names the first and last few (the count and the grid
+  follow) instead of every one.
+
 ## 0.5.1
 
 **Polycarbonate in the starting feeds.**
