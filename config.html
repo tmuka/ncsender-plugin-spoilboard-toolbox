@@ -33,6 +33,15 @@
   .plugin-dialog-container:has(.mw-wrapper) { max-height: none !important; max-width: none !important; }
   .mw-wrapper { width: calc(100vw - 48px) !important; max-width: none !important; height: calc(100vh - 48px) !important; max-height: none !important; }
   .mw-container { display: flex; flex: 1; min-height: 0; }
+  /* A slim scrollbar like ncSender's own, instead of the system's (a wide
+     grey one with arrows on the Pi, none at all on a Mac). */
+  .mw-wrapper ::-webkit-scrollbar { width: 8px; height: 8px; }
+  .mw-wrapper ::-webkit-scrollbar-track { background: transparent; }
+  .mw-wrapper ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+  .mw-wrapper ::-webkit-scrollbar-thumb:hover { background: var(--color-text-secondary); }
+  .mw-wrapper ::-webkit-scrollbar-corner { background: transparent; }
+  /* Checkboxes in ncSender's accent, not the system's. */
+  .mw-wrapper input[type="checkbox"] { accent-color: var(--color-accent); }
   .mw-sidebar {
     display: flex; flex-direction: column; flex-shrink: 0; width: 220px;
     border-right: 1px solid var(--color-border);
@@ -91,6 +100,8 @@
     min-width: 0;
     min-height: 0;
     overflow-y: auto;
+    /* The same width whether a tab scrolls or not. */
+    scrollbar-gutter: stable;
     padding: 20px;
   }
   .mw-tab { display: flex; flex-direction: column; gap: var(--mw-gap); max-width: 1200px; }
@@ -6552,7 +6563,7 @@
     // Insets: from machine X0 Y0 to the first hole's center.
     line('mw-d-line', O.x, H1.y, H1.x, H1.y); line('mw-d-line', H1.x, O.y, H1.x, H1.y);
     text((O.x + H1.x) / 2 - 6, H1.y - 6, 'Inset X ' + (g ? num(g.insetXMm) : '?'), 'mw-d-note', 'middle');
-    text(H1.x + 6, O.y - 6, 'Inset Y ' + (g ? num(g.insetYMm) : '?'), 'mw-d-note');
+    text(H1.x - 6, O.y - 6, 'Inset Y ' + (g ? num(g.insetYMm) : '?'), 'mw-d-note', 'end');
     // Holes: two columns, two rows, a spacing apart; a pin in the first.
     [[0, 0], [1, 0], [0, -1], [1, -1]].forEach(function(d) { circ('mw-d-hole', H1.x + d[0] * S, H1.y + d[1] * (S * 0.55), rh); });
     if (rp) circ('mw-d-pin', H1.x, H1.y, rp);
@@ -7139,7 +7150,10 @@
     if (s.fix && s.pinsAt && s.pinsAt.length === 2) text = 'Locating pins at ' + pinPair(s.pinsAt) + ', diagonally apart so the plate goes back square. ';
     var cbHole = o.holes.filter(function(h) { return / counterbore$/.test(h.label); })[0];
     if (s.chosen.length) {
-      text += (s.pins && s.chosen.length === 2 ? 'Pins at ' + pinPair(s.chosen) : (s.pins ? 'Pins at ' : 'Bolts at ') + s.chosen.map(holeName).join(', ') +
+      // A long list names its first and last few; the count follows.
+      var names = s.chosen.map(holeName);
+      if (names.length > 12) names = names.slice(0, 8).concat('\u2026', names.slice(-2));
+      text += (s.pins && s.chosen.length === 2 ? 'Pins at ' + pinPair(s.chosen) : (s.pins ? 'Pins at ' : 'Bolts at ') + names.join(', ') +
         (s.hasCb ? ', each counterbored ' + shown(cbHole.diaMm) + u + ' wide, ' + shown(cbHole.depthMm) + u + ' deep' : '')) + '.';
       if (!s.pins && $('mw-sh-which').value === 'all') {
         var span = holeSpan(s.chosen);
