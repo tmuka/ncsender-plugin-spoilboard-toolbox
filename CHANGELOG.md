@@ -3,21 +3,21 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
-
-- **Size to Program** on the XY0 Picker's Stock mode: the stock size the loaded program needs (its cuts, the bit, the clamp
-  margin), and its center picked for X0 Y0 when the program is centered (QuickCut and Gears parts).
-- The tool menu no longer shows its closed filter at the dialog's top left.
+## 0.5.6: Size to Program
 
 ### ✨ New
+- **Size to Program** on the XY0 Picker's Stock mode: the stock size the loaded program needs (its cuts, the bit,
+  the clamp margin), and its center picked for X0 Y0 when the program is centered, as QuickCut and Gears parts are.
+  Handy when you've made a part in another plugin and don't know what stock it takes.
 - **The tool table, as in QuickCut:** with a tool changer, Bit Diameter's label opens the tool table, the
   tool in the spindle first, with a filter on top; the tool picked gets a tool change (M6). Picking a tool,
-  or taking the loaded one, sets **Flutes** from its name or notes (O flute, 0flute, 2 flute, 3FL...), or to 2
-  when they don't say.
+  or taking the loaded one, sets **Flutes** from the tool table's flute count (the Fusion 360 importer fills
+  it), else from its name or notes (O flute, 0flute, 2 flute, 3FL...), or to 2 when they don't say.
 
 ### 🔧 Changed
 - Without a tool changer, clicking Bit Diameter takes the loaded tool's diameter but no longer adds a tool
   change (M6) to the programs, as in QuickCut.
+- Long tool names in the tool menu wrap instead of overlapping the next row.
 
 ## 0.5.5
 
