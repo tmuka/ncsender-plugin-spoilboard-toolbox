@@ -68,13 +68,20 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
     or 'list') is map-only; `nearest: false` leaves a grid out of Pick Nearest Hole and the macros.
     Macros: one grid (+ extras) keeps the single-grid math; several grids, a list alone, or grid 1 left
     out go to `severalGridLines` (best so far in #19-#21, side offset and radius in #14-#16).
-  - The loaded program: `programCuts(text)` (every move as a flat segment with its lowest Z, in the
-    program's work offset's mm; arcs as chords; G53/G28/G30/G38/G92 lose the position; the bit from
-    a header comment), `cutsPastStock` (how far the cuts, plus the bit's radius, reach past each
-    edge less a margin), `cutsNear` (gap from the bit's edge to each bolt or pin, counting moves
-    below its top, through a 5 mm cell index sampled along each move). The UI reads the program on
-    `jobLoaded` changes (`readProgram`); programs named `SBT-` don't count (`checkedProgram` keeps
-    the part loaded before them).
+  - The loaded program: `programCuts(text)` (every move as `[x0, y0, z0, x1, y1, z1]` in the
+    program's work offset's mm; arcs in G17/G18/G19 as chords, G90.1 centers, drilling cycles as their
+    plunges; G53/G28/G30/G38/G92 lose the position; moves over 10 m dropped; the bit is the largest a
+    header gives, as "Bit Diameter: …", "Bit … mm" at a comment's start, or `D=`), `belowZ` (the part
+    of a move below a height), `cutsPastStock` (how far the cuts, plus the bit's radius, reach past
+    each edge less a margin), `cutsNear` (gap from the bit's edge to each bolt or pin, counting only
+    the parts of moves below its top, rapids too, through a 5 mm cell index of every cell a move
+    crosses; `firstHit` for yes/no). `programCutsSource()` is what the worker runs; a test runs it
+    on its own, so a helper `programCuts` gains must be added there.
+    The UI reads the program on `jobLoaded` changes (`readProgram`). Programs named `SBT-` don't count
+    (`checkedProgram` keeps the part); Generate closes the dialog, so the part's name and ncSender
+    file are saved (`partProgram`) and read again on reopen, else `prog.partLost` makes Stock Holes
+    refuse while its box is ticked. Stock mode checks at `pickTarget()` (where Set will put X0 Y0)
+    when Set would set the program's work offset.
   - Profiles (`holeProfiles`, `holeProfile`): `setupBody` is what one holds (not the origin dot);
     `sameSetup` ignores favorites; `showProfile` draws the menu and the changes bar.
 - **Layout** follows QuickCut's: the dialog header is hidden, and a sidebar has the tabs (**XY0 Picker**, first;

@@ -62,11 +62,12 @@ holes next time and you get the same zero back.
 machine: with X0 Y0 on one corner, jog roughly to the opposite corner and run **Set XY0 to Midpoint**
 for the exact center (**Midpoint XY** moves the spindle there first, at Safe Z).
 
-**Check the program fits the stock.** With a program loaded in ncSender, Stock mode draws its cuts
-on the map, as wide as the bit, where X0 Y0 is now, and says whether they stay inside the stock and
-clear of the **Clamp margin** (10 mm by default, room for clamps or screws), or how far past which
-edge they go. The bit comes from the program's header when it says (QuickCut, Gears, or a CAM's
-`D=`), else Cut Board's Bit Diameter.
+**Check the program fits the stock.** With a program loaded in ncSender, Stock mode shades its cuts
+(its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and
+clear of the **Clamp margin** (10 mm or 0.4 in by default, room for clamps or screws), or how far
+past which edge they go. It places them with X0 Y0 where **Set** would put it, or where it is now.
+The bit comes from the program's header when it says (QuickCut, Gears, or a CAM's `D=`; the largest
+when there are several), else Cut Board's Bit Diameter.
 
 **Zero on a hole.** In **Hole** mode, jog roughly near a hole and press **Pick Nearest Hole**, or tap
 it, and hold **Set**: X0 Y0 lands on its center, or a side or corner of the hole (one hole radius
@@ -558,12 +559,13 @@ size and thickness; the holes come from the grid picked in Setup.
   **Bolt** fills the clearance hole for M6 (6.6 mm), M8 (9) or 1/4-20 (6.9), and, when a counterbore
   is set, room for a socket head (11, 14 or 10.5 mm; no washer). Bolt the stock to
   threaded inserts in the spoilboard.
-- **Clear of the loaded program's cuts** (on by default): load the part's program in ncSender first,
-  and any spoilboard hole where it would cut within 1 mm of the bolt head (in its counterbore, or
-  on top of the stock), the bit's width included, is left out; the nearest clear hole is used
-  instead, and the summary says how many were. Unticked, the summary names the holes the bit would
-  hit. It goes by the work offset's X0 Y0 as it is now, and ignores programs Spoilboard Toolbox
-  made, keeping the part loaded before them.
+- **Clear of the loaded program** (on by default): load the part's program in ncSender first, and
+  any spoilboard hole where its bit (its edge) would pass within 1 mm of the bolt head or pin is
+  left out, the nearest clear hole used instead. Rapids count too: a bolt head is taken to stand
+  about the bolt's width high, on the stock or in its counterbore. Unticked, the summary names the
+  holes the bit would hit. It goes by the work offset's X0 Y0 as it is now. Programs Spoilboard
+  Toolbox made don't count: the part loaded before them is checked, read again from ncSender's
+  files when it was one; otherwise the summary asks you to load the part again.
 - **Locating Pins + Bolts:** a plate that comes off and goes back exactly, in one program. Two pin
   holes over dog holes, as far apart as fit (diagonally): the first round, so it locates, and the
   second a slot pointing at it (**Slot +** longer, half each way; 0.75 mm by default), so the plate can't bind when MDF moves with

@@ -345,7 +345,7 @@
   .mw-warn-text { color: var(--mw-warn) !important; }
   .mw-stock-prog { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
   .mw-stock-prog[hidden] { display: none; }
-  .mw-hole-map .mw-h-prog { fill: none; stroke: var(--mw-accent-text); stroke-opacity: 0.45; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+  .mw-hole-map .mw-h-prog { fill: none; stroke: #8fa8ff; stroke-opacity: 0.5; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
   .mw-hole-map .mw-h-prog.mw-h-prog-bad { stroke: var(--mw-warn); stroke-opacity: 0.6; }
   .mw-input:disabled { opacity: 0.65; cursor: not-allowed; }
   .mw-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -651,6 +651,9 @@
             <span class="mw-stock-wl"><span class="mw-hint">T</span>
             <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
             <span class="mw-hint mw-unit">mm</span></span>
+            <span class="mw-stock-wl"><span class="mw-hint">Clamp margin</span>
+            <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-m" aria-label="Clamp margin" title="Room to leave along every edge of the stock for clamps or screws: the loaded program's cuts, the bit's width included, should stay this far inside the stock. 0 or blank: right up to the edge.">
+            <span class="mw-hint mw-unit">mm</span></span>
             <select class="mw-select mw-stock-corner" id="mw-stock-zmode" aria-label="Where Set Z0 puts Z0" title="Where Set Z0 puts Z0: on the spoilboard the stock sits on, or on the stock's top (that plus its thickness).">
               <option value="bottom">Z0: spoilboard</option>
               <option value="top">Z0: stock top</option>
@@ -661,10 +664,7 @@
             </select>
             <span class="mw-dots-wrap"><span class="mw-dots-cap">New X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
             <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><span class="mw-stock-which" id="mw-stock-which"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear</button></span>
-            <span class="mw-stock-prog" id="mw-stock-prog" hidden><span class="mw-hint" id="mw-stock-prog-text" role="status"></span>
-              <span class="mw-stock-wl"><span class="mw-hint">Clamp margin</span>
-              <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-m" aria-label="Clamp margin" title="Room to leave along every edge of the stock for clamps or screws: the loaded program's cuts, the bit's width included, should stay this far inside the stock. 0: right up to the edge.">
-              <span class="mw-hint mw-unit">mm</span></span></span>
+            <span class="mw-stock-prog" id="mw-stock-prog" hidden><span class="mw-hint" id="mw-stock-prog-text" role="status"></span></span>
           </div>
           <div class="mw-dots-wrap mw-only-hole"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
           <div class="mw-holebar-info">
@@ -1418,7 +1418,7 @@
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-depth" value="" placeholder="through" title="Blank: the holes go through the stock and Break Through into the spoilboard. A number: blind holes that stop this far below Z0 (the stock's top), less than its thickness T.">
           </div>
         </div>
-        <label class="mw-check" title="Leave out any spoilboard hole where the loaded program (the part, not this one) cuts within 1 mm of its bolt head or pin, the bit's width included, with X0 Y0 where it is now. The nearest clear hole is used instead."><input type="checkbox" id="mw-sh-avoid" checked> Clear of the loaded program&rsquo;s cuts</label>
+        <label class="mw-check" title="Load the part's program first. Any spoilboard hole where its bit (its edge, rapids too) would pass within 1 mm of the bolt head or pin is left out, and the nearest clear hole used instead, with X0 Y0 where it is now. A bolt head is taken to stand about the bolt's width high, on the stock or in its counterbore."><input type="checkbox" id="mw-sh-avoid" checked> Clear of the loaded program</label>
         <svg class="mw-diagram mw-sh-diagram" id="mw-sh-diagram" viewBox="0 0 700 214" role="img" aria-label="Side view of the stock on the spoilboard: where Z0 is and how deep each hole goes."></svg>
         <p class="mw-hint" id="mw-sh-summary"></p>
         <div><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-sh-zeropin" hidden title="For the second side: X0 Y0 on the round flip pin's center, which stays put when the stock turns over. Opens the XY0 Picker on it; hold Set there.">Zero on the Flip Pin</button></div>
@@ -3724,96 +3724,156 @@
   // ---------- The loaded program ----------
   //
   // Where a program's moves go, in its work offset's mm: every move as a
-  // flat segment with its lowest Z, arcs as short chords. Lines with G53
-  // (machine coordinates), G28 and G30 leave the position unknown until the
-  // next move gives it; Z is then taken as high above the stock. The bit's
-  // diameter, when a header comment says it: "Bit 6.35 mm", "Bit Diameter:
-  // 0.25 in" (QuickCut, Gears) or a CAM's "D=6.35" (in the program's units).
-  var PROGRAM_KEEP_Z = 50;
+  // straight piece [x0, y0, z0, x1, y1, z1] (arcs in any plane as short
+  // chords; drilling cycles as their plunges). Lines with G53, G28, G30,
+  // G92 or probing (G38.x) leave the position unknown until a later move
+  // gives it, with Z taken as high above the stock; a move longer than any
+  // machine's travel is left out. The bit: the largest a header comment
+  // gives, as "Bit Diameter: 6.35 mm" (QuickCut), "Bit 1/4 in" at a
+  // comment's start (Gears) or a CAM's "D=6.35" (in the program's units).
+  var PROGRAM_KEEP_Z = 50, PROGRAM_LONGEST = 10000;
+  var BIT_NUM = '(\\d+\\s*\\/\\s*\\d+|\\d*\\.?\\d+)', BIT_UNIT = '\\s*(mm|in(?:ch(?:es)?)?\\b|")';
+  var BIT_DIA_RE = new RegExp('\\bbit\\s+dia(?:meter|\\.)?\\s*[:=]?\\s*' + BIT_NUM + '(?:' + BIT_UNIT + ')?', 'i');
+  var BIT_START_RE = new RegExp('^\\s*bit\\s*[:=]?\\s*' + BIT_NUM + BIT_UNIT, 'i');
+  // The part of piece i below z (0 to 1 along it), or null.
+  function belowZ(s, i, z) {
+    var z0 = s[i + 2], z1 = s[i + 5];
+    // From or to a height we lost track of: taken as level.
+    if (!isFinite(z0)) z0 = z1;
+    if (!isFinite(z1)) z1 = z0;
+    if (z0 < z && z1 < z) return [0, 1];
+    if (!(z0 < z) && !(z1 < z)) return null;
+    var t = (z - z0) / (z1 - z0);
+    return z0 < z ? [0, t] : [t, 1];
+  }
+  // programCuts and what it uses, as source for a worker.
+  function programCutsSource() {
+    return 'var PROGRAM_KEEP_Z = ' + PROGRAM_KEEP_Z + ', PROGRAM_LONGEST = ' + PROGRAM_LONGEST + ';\n' +
+      'var BIT_DIA_RE = ' + BIT_DIA_RE + ', BIT_START_RE = ' + BIT_START_RE + ';\n' + belowZ + '\n' + programCuts + '\n';
+  }
   function programCuts(text) {
-    var segs = [], scale = 1, rel = false, motion = -1, plane = 17, wcs = null, units = null;
-    var p = { x: NaN, y: NaN, z: Infinity }, box = null, minZ = Infinity, bit = null, bitUnit = null, bitD = null, n = 0;
+    var segs = [], scale = 1, rel = false, arcAbs = false, motion = -1, plane = 17, wcs = null, units = null;
+    var drill = { z: null, r: null, init: null, back: 98 };
+    var p = { x: NaN, y: NaN, z: Infinity }, box = null, minZ = Infinity, bits = [], n = 0;
     var lines = String(text).split(/\r?\n/);
+    var num = function(t) { var f = /^(\d+)\s*\/\s*(\d+)$/.exec(t); return f ? +f[1] / +f[2] : +t; };
     var add = function(x0, y0, z0, x1, y1, z1) {
       if (!(isFinite(x0) && isFinite(y0) && isFinite(x1) && isFinite(y1))) return;
-      var z = Math.min(z0, z1);
-      if (!(z < PROGRAM_KEEP_Z)) return;
-      segs.push(x0, y0, x1, y1, z);
-      if (z < minZ) minZ = z;
-      if (z < 0) {
-        if (!box) box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-        box.minX = Math.min(box.minX, x0, x1); box.maxX = Math.max(box.maxX, x0, x1);
-        box.minY = Math.min(box.minY, y0, y1); box.maxY = Math.max(box.maxY, y0, y1);
+      if (Math.hypot(x1 - x0, y1 - y0) > PROGRAM_LONGEST) return;
+      if (!(Math.min(z0, z1) < PROGRAM_KEEP_Z)) return;
+      var i = segs.length;
+      segs.push(x0, y0, z0, x1, y1, z1);
+      minZ = Math.min(minZ, z0, z1);
+      var t = belowZ(segs, i, 0);
+      if (!t) return;
+      if (!box) box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+      t.forEach(function(u) {
+        var x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u;
+        box.minX = Math.min(box.minX, x); box.maxX = Math.max(box.maxX, x);
+        box.minY = Math.min(box.minY, y); box.maxY = Math.max(box.maxY, y);
+      });
+    };
+    // An arc from p to q in the plane picked (G17 XY, G18 ZX, G19 YZ).
+    var arc = function(q, w, ccw) {
+      var A = plane === 17 ? ['x', 'y', 'z', 'I', 'J'] : plane === 18 ? ['z', 'x', 'y', 'K', 'I'] : ['y', 'z', 'x', 'J', 'K'];
+      var pa = p[A[0]], pb = p[A[1]], qa = q[A[0]], qb = q[A[1]], ca, cb;
+      if (!(isFinite(pa) && isFinite(pb))) { add(p.x, p.y, p.z, q.x, q.y, q.z); return; }
+      if ('R' in w) {
+        var r0 = Math.abs(w.R * scale), da = qa - pa, db = qb - pb, dd = Math.hypot(da, db);
+        var h = Math.sqrt(Math.max(0, r0 * r0 - dd * dd / 4)) * (!ccw === (w.R > 0) ? -1 : 1);
+        ca = pa + da / 2 - h * db / (dd || 1); cb = pb + db / 2 + h * da / (dd || 1);
+      } else if (arcAbs) { ca = (w[A[3]] || 0) * scale; cb = (w[A[4]] || 0) * scale; }
+      else { ca = pa + (w[A[3]] || 0) * scale; cb = pb + (w[A[4]] || 0) * scale; }
+      var rr = Math.hypot(pa - ca, pb - cb), a0 = Math.atan2(pb - cb, pa - ca);
+      if (rr > PROGRAM_LONGEST) return;
+      // Back where it started: a whole circle (whatever the signs of zero say).
+      var sw = Math.hypot(qa - pa, qb - pb) < 1e-9 ? (ccw ? 2 : -2) * Math.PI : Math.atan2(qb - cb, qa - ca) - a0;
+      if (ccw && sw <= 1e-9) sw += 2 * Math.PI;
+      if (!ccw && sw >= -1e-9) sw -= 2 * Math.PI;
+      var step = rr > 0.05 ? 2 * Math.acos(1 - 0.05 / rr) : Math.PI, k = Math.min(360, Math.max(1, Math.ceil(Math.abs(sw) / step)));
+      var pl = p[A[2]], l0 = isFinite(pl) ? pl : q[A[2]], prev = { x: p.x, y: p.y, z: p.z };
+      for (var i = 1; i <= k; i++) {
+        var ang = a0 + sw * i / k, pt = {};
+        pt[A[0]] = i === k ? qa : ca + rr * Math.cos(ang);
+        pt[A[1]] = i === k ? qb : cb + rr * Math.sin(ang);
+        pt[A[2]] = l0 + (q[A[2]] - l0) * i / k;
+        add(prev.x, prev.y, prev.z, pt.x, pt.y, pt.z);
+        prev = pt;
       }
     };
     for (var li = 0; li < lines.length; li++) {
       var raw = lines[li];
       if (raw.indexOf('(') >= 0 || raw.indexOf(';') >= 0) {
-        var note = (raw.match(/\(([^)]*)\)|;(.*)$/g) || []).join(' ');
-        if (bit == null) {
-          var b = /\bbit(?:\s+dia(?:meter|\.)?)?\s*[:=]?\s*(\d*\.?\d+)\s*(mm|in(?:ch(?:es)?)?\b|")?/i.exec(note);
-          if (b) { bit = +b[1]; bitUnit = b[2] ? (b[2] === 'mm' ? 'mm' : 'in') : null; }
-        }
-        if (bitD == null) { var d = /\bD\s*=\s*(\d*\.?\d+)/.exec(note); if (d) bitD = +d[1]; }
+        (raw.match(/\([^)]*\)|;.*$/g) || []).forEach(function(c) {
+          var t = c.replace(/^[(;]|\)$/g, ''), b = BIT_DIA_RE.exec(t) || BIT_START_RE.exec(t), d = /\bD\s*=\s*(\d*\.?\d+)/.exec(t);
+          if (b) bits.push({ v: num(b[1]), unit: b[2] ? (b[2].toLowerCase() === 'mm' ? 'mm' : 'in') : null });
+          if (d) bits.push({ v: +d[1], unit: null });
+        });
         raw = raw.replace(/\([^)]*\)/g, ' ').replace(/;.*$/, '');
       }
       var line = raw.toUpperCase().replace(/\s+/g, '');
       if (!line || line.charAt(0) === '%' || line.charAt(0) === '$') continue;
-      var w = {}, gs = [], m, re = /([A-Z])([-+]?\d*\.?\d+)/g;
+      var w = {}, gs = [], hasM = false, m, re = /([A-Z])([-+]?\d*\.?\d+)/g;
       while ((m = re.exec(line))) {
         if (m[1] === 'G') gs.push(+m[2]);
-        else if (m[1] !== 'N' && !(m[1] in w)) w[m[1]] = +m[2];
+        else if (m[1] === 'M') hasM = true;
+        else if (m[1] !== 'N' && !(m[1] in w)) w[m[1]] = +m[2] + 0;
       }
-      // Words that aren't a move (G4, G10, G43.1), and moves we can't follow
-      // (G28, G30, G38.x probing, G53, G92).
-      var skip = false, lost = false;
+      // An M-code's words aren't a move.
+      if (hasM && !gs.length) continue;
+      // Words that aren't a move (G4, G10, G43.1), and moves we can't follow.
+      var skip = false, lost = false, home = false;
       gs.forEach(function(g) {
         if (g === 20) { scale = 25.4; if (!units) units = 'in'; }
         else if (g === 21) { scale = 1; if (!units) units = 'mm'; }
         else if (g === 90) rel = false;
         else if (g === 91) rel = true;
+        else if (g === 90.1) arcAbs = true;
+        else if (g === 91.1) arcAbs = false;
         else if (g === 17 || g === 18 || g === 19) plane = g;
-        else if (g === 53 || g === 28 || g === 30 || g === 92 || (g >= 38 && g < 39)) lost = true;
+        else if (g === 98 || g === 99) drill.back = g;
+        else if (g === 28 || g === 30 || g === 92) home = true;
+        else if (g === 53) lost = true;
+        else if (g >= 38 && g < 39) motion = 38;
         else if (g === 4 || g === 10 || g === 43.1) skip = true;
         else if (g >= 54 && g <= 59.3 && wcs == null) wcs = g;
         else if (g === 0 || g === 1 || g === 2 || g === 3) motion = g;
+        else if (g === 73 || (g >= 81 && g <= 89)) { if (motion !== 'drill') drill.init = p.z; motion = 'drill'; }
         else if (g === 80) motion = -1;
       });
       if (skip) continue;
-      if (lost) {
+      if (home) { p = { x: NaN, y: NaN, z: Infinity }; continue; }
+      if (lost || motion === 38) {
         // Somewhere we can't follow: up out of the stock, X Y unknown if moved.
         if ('X' in w) p.x = NaN;
         if ('Y' in w) p.y = NaN;
         p.z = Infinity;
         continue;
       }
-      if (!('X' in w || 'Y' in w || 'Z' in w) || motion < 0) continue;
+      if (!('X' in w || 'Y' in w || 'Z' in w || (motion === 'drill' && 'R' in w)) || motion === -1) continue;
       var at = function(k, cur) { return k in w ? (rel ? cur + w[k] * scale : w[k] * scale) : cur; };
-      var q = { x: at('X', p.x), y: at('Y', p.y), z: at('Z', p.z) };
       n++;
-      if ((motion === 2 || motion === 3) && plane === 17 && isFinite(p.x) && isFinite(p.y)) {
-        var cx, cy;
-        if ('R' in w) {
-          var r0 = Math.abs(w.R * scale), dx = q.x - p.x, dy = q.y - p.y, dd = Math.hypot(dx, dy);
-          var hgt = Math.sqrt(Math.max(0, r0 * r0 - dd * dd / 4)) * ((motion === 2) === (w.R > 0) ? -1 : 1);
-          cx = p.x + dx / 2 - hgt * dy / (dd || 1); cy = p.y + dy / 2 + hgt * dx / (dd || 1);
-        } else { cx = p.x + (w.I || 0) * scale; cy = p.y + (w.J || 0) * scale; }
-        var rr = Math.hypot(p.x - cx, p.y - cy), a0 = Math.atan2(p.y - cy, p.x - cx);
-        var sw = Math.atan2(q.y - cy, q.x - cx) - a0;
-        if (motion === 3 && sw <= 1e-9) sw += 2 * Math.PI;
-        if (motion === 2 && sw >= -1e-9) sw -= 2 * Math.PI;
-        var step = rr > 0.05 ? 2 * Math.acos(1 - 0.05 / rr) : Math.PI, k = Math.min(360, Math.max(1, Math.ceil(Math.abs(sw) / step)));
-        var px = p.x, py = p.y, pz = p.z, z0 = isFinite(p.z) ? p.z : q.z;
-        for (var i = 1; i <= k; i++) {
-          var a = a0 + sw * i / k, nx = i === k ? q.x : cx + rr * Math.cos(a), ny = i === k ? q.y : cy + rr * Math.sin(a), nz = z0 + (q.z - z0) * i / k;
-          add(px, py, pz, nx, ny, nz);
-          px = nx; py = ny; pz = nz;
-        }
-      } else add(p.x, p.y, p.z, q.x, q.y, q.z);
+      if (motion === 'drill') {
+        // To the hole at Safe or R height, down to Z, back up to R (G99) or
+        // where it started (G98).
+        if ('R' in w) drill.r = rel ? p.z + w.R * scale : w.R * scale;
+        if ('Z' in w) drill.z = rel ? (drill.r != null ? drill.r : p.z) + w.Z * scale : w.Z * scale;
+        var hx = at('X', p.x), hy = at('Y', p.y), top = Math.max(isFinite(p.z) ? p.z : -Infinity, drill.r != null ? drill.r : -Infinity);
+        if (!isFinite(top)) top = drill.r != null ? drill.r : p.z;
+        if (drill.z == null) continue;
+        add(p.x, p.y, top, hx, hy, top);
+        add(hx, hy, top, hx, hy, drill.z);
+        var back = drill.back === 99 && drill.r != null ? drill.r : Math.max(drill.init != null && isFinite(drill.init) ? drill.init : -Infinity, drill.r != null ? drill.r : -Infinity);
+        p = { x: hx, y: hy, z: isFinite(back) ? back : top };
+        continue;
+      }
+      var q = { x: at('X', p.x), y: at('Y', p.y), z: at('Z', p.z) };
+      if (motion === 2 || motion === 3) arc(q, w, motion === 3);
+      else add(p.x, p.y, p.z, q.x, q.y, q.z);
       p = q;
     }
-    if (bit != null) bit *= (bitUnit || units) === 'in' ? 25.4 : 1;
-    else if (bitD != null) bit = bitD * (units === 'in' ? 25.4 : 1);
+    var bit = null;
+    bits.forEach(function(b) { var mm = b.v * ((b.unit || units) === 'in' ? 25.4 : 1); if (mm > 0 && (bit == null || mm > bit)) bit = mm; });
     return { segs: segs, box: box, minZ: minZ, bitMm: bit, wcs: wcs, moves: n, lines: lines.length };
   }
   // How far the cuts (moves below Z0), widened by the bit's radius, reach
@@ -3840,8 +3900,8 @@
       if (!l) cells.set(key, l = []);
       l.push(i);
     };
-    for (var i = 0; i < s.length; i += 5) {
-      var x0 = s[i], y0 = s[i + 1], dx = s[i + 2] - x0, dy = s[i + 3] - y0;
+    for (var i = 0; i < s.length; i += 6) {
+      var x0 = s[i], y0 = s[i + 1], dx = s[i + 3] - x0, dy = s[i + 4] - y0;
       var cx = Math.floor(x0 / size), cy = Math.floor(y0 / size), sx = dx > 0 ? 1 : -1, sy = dy > 0 ? 1 : -1;
       // How far along the move (0 to 1) the next X and Y cell edges are.
       var tx = dx ? ((dx > 0 ? (cx + 1) * size - x0 : x0 - cx * size) / Math.abs(dx)) : Infinity, stepX = dx ? size / Math.abs(dx) : Infinity;
@@ -3858,7 +3918,8 @@
     return c;
   }
   // How close the bit's edge comes to each thing (a bolt, a pin: { x, y in
-  // machine mm, r, topZ }), counting only moves below topZ: the gap, from
+  // machine mm, r, topZ }), counting only the parts of moves below topZ
+  // (rapids too: a bolt head stands above the stock): the gap, from
   // the bit's edge to the thing's (negative: it cuts into it), or null when
   // no move below topZ comes within reachMm. With firstHit, the first gap
   // found under reachMm is enough (for "is anything that close").
@@ -3874,10 +3935,12 @@
           if (!l) continue;
           for (var k = 0; k < l.length; k++) {
             var i = l[k];
-            if (!(s[i + 4] < t.topZ) || seen.has(i)) continue;
+            if (seen.has(i)) continue;
             seen.add(i);
-            var ax = s[i], ay = s[i + 1], dx = s[i + 2] - ax, dy = s[i + 3] - ay, l2 = dx * dx + dy * dy;
-            var u = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2)) : 0;
+            var part = belowZ(s, i, t.topZ);
+            if (!part) continue;
+            var ax = s[i], ay = s[i + 1], dx = s[i + 3] - ax, dy = s[i + 4] - ay, l2 = dx * dx + dy * dy;
+            var u = l2 > 0 ? Math.max(part[0], Math.min(part[1], ((x - ax) * dx + (y - ay) * dy) / l2)) : 0;
             var d = Math.hypot(x - ax - u * dx, y - ay - u * dy);
             if (d < best) best = d;
             if (firstHit && best < lim) return best - t.r - br;
@@ -4152,7 +4215,7 @@
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
       stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
       stockPins: holes.pins.slice(), stockPinSide: holes.pinSide, stockDotSet: !!holes.stockDotSet, stockAnchor: holes.stockAnchor,
-      cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed
+      cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed, partProgram: prog.partSaved || null
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
@@ -4475,12 +4538,14 @@
       var v = parseFloat(saved['stock' + k]);
       if (isFinite(v) && v > 0) $('mw-stock-' + k.toLowerCase()).value = +(v * conv).toFixed(4);
     });
+    // Blank stays blank (no margin); never saved: the default.
     var sm = parseFloat(saved.stockM);
-    $('mw-stock-m').value = isFinite(sm) && sm >= 0 ? +(sm * conv).toFixed(4) : state.imperial ? 0.4 : 10;
+    $('mw-stock-m').value = saved.stockM === '' ? '' : isFinite(sm) && sm >= 0 ? +(sm * conv).toFixed(4) : state.imperial ? 0.4 : 10;
     if (/^(front|back)-(left|right)$/.test(saved.stockCorner || '')) $('mw-stock-corner').value = saved.stockCorner;
     setStockZero(saved.stockZero);
     loadCut(saved.cut, conv);
     holes.surfaceAck = saved.surfaceAck || '';
+    prog.partSaved = saved.partProgram && saved.partProgram.name ? saved.partProgram : null;
     // Where the stock was drawn from comes back once the grid is placed
     // (restoreStock), so a reopen draws it where it was.
     // 0.5 keeps the mode and how the stock is placed; older settings are
@@ -5101,7 +5166,7 @@
   // The program loaded in ncSender, read again when another is loaded. One
   // Spoilboard Toolbox wrote (SBT-...) isn't the part: the checks keep the
   // part loaded before it, while the dialog is open.
-  var prog = { key: '', now: null, part: null };
+  var prog = { key: '', now: null, part: null, partSaved: null, partLost: false };
   async function readProgram(job) {
     var key = job ? [job.filename, job.loadedAt, job.totalLines].join('|') : '';
     if (key === prog.key) return;
@@ -5109,17 +5174,37 @@
     var p = null;
     if (job) {
       try {
-        var text = await (await fetch(BASE_URL + '/api/gcode-files/current/download')).text();
+        var res = await fetch(BASE_URL + '/api/gcode-files/current/download');
+        if (!res.ok) throw new Error('no program');
+        var text = await res.text();
         if (prog.key !== key) return;
         var cuts = await programCutsOffThread(text);
         if (prog.key !== key) return;
         p = { name: job.filename, cuts: cuts, ours: /^SBT-/.test(job.filename || '') };
-      } catch (e) { p = null; }
+      } catch (e) { if (prog.key === key) prog.key = ''; p = null; }
     }
     prog.now = p;
-    if (p && !p.ours) prog.part = p;
+    if (!job) { prog.part = null; prog.partSaved = null; }
+    if (p && !p.ours) {
+      prog.part = p;
+      prog.partSaved = { name: job.filename, sourceFile: job.isTemporary ? null : job.sourceFile || null };
+    }
+    // One of ours loaded after the dialog was reopened (Generate closes it):
+    // read the part again from ncSender's files when it was one, else say so.
+    prog.partLost = false;
+    if (p && p.ours && !prog.part && prog.partSaved) {
+      try {
+        var f = prog.partSaved.sourceFile;
+        if (!f) throw new Error('not a file');
+        var body = await (await fetch(BASE_URL + '/api/gcode-files/file?path=' + encodeURIComponent(f))).json();
+        if (prog.key !== key) return;
+        prog.part = { name: prog.partSaved.name, cuts: await programCutsOffThread(String(body.content || '')), ours: false };
+      } catch (e) { prog.partLost = true; }
+    }
     if (!rootAlive()) return;
-    renderHoles();
+    saveSettings();
+    holes.liveKey = '';
+    liveRender();
     if (!ROOT.querySelector('.mw-tab[data-tab="stock"]').hidden) renderStockHoles();
   }
   // programCuts in a worker, so a long program doesn't freeze the screen
@@ -5128,8 +5213,8 @@
     return new Promise(function(resolve) {
       var w = null, url = null;
       try {
-        url = URL.createObjectURL(new Blob(['var PROGRAM_KEEP_Z = ' + PROGRAM_KEEP_Z + ';\n' + programCuts.toString() +
-          '\nonmessage = function(e) { var c = programCuts(e.data), f = new Float64Array(c.segs); c.segs = f; postMessage(c, [f.buffer]); };'], { type: 'text/javascript' }));
+        url = URL.createObjectURL(new Blob([programCutsSource() +
+          'onmessage = function(e) { var c = programCuts(e.data), f = new Float64Array(c.segs); c.segs = f; postMessage(c, [f.buffer]); };'], { type: 'text/javascript' }));
         w = new Worker(url);
       } catch (e) { if (url) URL.revokeObjectURL(url); resolve(programCuts(text)); return; }
       var done = function(c) { w.terminate(); URL.revokeObjectURL(url); resolve(c); };
@@ -5139,46 +5224,67 @@
     });
   }
   function checkedProgram() { return prog.now && !prog.now.ours ? prog.now : prog.part; }
-  // Where the program sits: its work offset's X0 Y0 now (machine mm; null
-  // for one ncSender doesn't report), and its bit.
+  // Where the program sits: its work offset's X0 Y0 now (machine mm), its
+  // bit, and why it can't be checked when it can't (why).
   function programPlace(p) {
     var ms = state.machine || {}, w = p.cuts.wcs ? 'G' + p.cuts.wcs : String(ms.workspace || 'G54').toUpperCase();
-    var bit = p.cuts.bitMm, from = 'its header';
+    var bit = p.cuts.bitMm, from = 'from its header';
     if (!(bit > 0)) { bit = cutMm('mw-cut-bit'); from = 'Cut Board\u2019s Bit Diameter, as the program doesn\u2019t say'; }
-    return { wcs: w, off: /^G5[4-9]$/.test(w) ? xyOf(ms[w.toLowerCase()]) : null, bitMm: bit, bitFrom: from };
+    var off = /^G5[4-9]$/.test(w) ? xyOf(ms[w.toLowerCase()]) : null, why = null;
+    if (!off) why = /^G5[4-9]$/.test(w) ? 'ncSender hasn\u2019t reported ' + w + '\u2019s X0 Y0 yet (connect to the controller)' : 'it runs in ' + w + ', whose X0 Y0 ncSender doesn\u2019t report';
+    else if (!(bit > 0)) why = 'it doesn\u2019t say its bit: give Cut Board a Bit Diameter';
+    else if (!p.cuts.segs.length) why = 'it has no moves to check';
+    return { wcs: w, off: off, bitMm: bit, bitFrom: from, why: why };
   }
+  function programName(p) { return '\u201c' + p.name + '\u201d'; }
   // The stock panel's line: whether the program's cuts fit the stock, clear
-  // of the clamp margin. Returns what the map draws.
+  // of the clamp margin, with X0 Y0 where Set will put it (when that's the
+  // program's work offset) or where it is now. Returns what the map draws.
   function renderProgramFit() {
-    var line = $('mw-stock-prog'), p = checkedProgram();
-    line.hidden = !p || holes.zeroMode !== 'stock';
-    if (!p) return null;
-    var pl = programPlace(p), rect = stockShown(), u = ' ' + unitName(), k = state.imperial ? MM_PER_INCH : 1;
-    var margin = Math.max(0, unitVal($('mw-stock-m')) * k || 0);
-    var name = '\u201c' + p.name + '\u201d' + (p === prog.now ? '' : ' (the part loaded before Spoilboard Toolbox\u2019s own program)');
-    var about = ' (' + pl.wcs + ' X0 Y0 where it is now; bit ' + shown(pl.bitMm) + u + ', from ' + pl.bitFrom + ')';
-    var text, bad = false, past = null;
-    if (!p.cuts.box) text = name + ' never cuts below Z0, so there\u2019s nothing to check against the stock.';
-    else if (!pl.off) text = name + ' runs in ' + pl.wcs + ', whose X0 Y0 ncSender doesn\u2019t report: it can\u2019t be checked against the stock.';
-    else if (!(pl.bitMm > 0)) text = name + ' doesn\u2019t say its bit: give Cut Board a Bit Diameter to check it against the stock.';
+    var line = $('mw-stock-prog'), p = checkedProgram(), txt = $('mw-stock-prog-text');
+    line.hidden = holes.zeroMode !== 'stock' || !(p || prog.partLost);
+    txt.classList.remove('mw-warn-text');
+    var k = state.imperial ? MM_PER_INCH : 1, mt = String($('mw-stock-m').value).trim(), mv = mt === '' ? 0 : unitVal($('mw-stock-m')) * k;
+    $('mw-stock-m').classList.toggle('mw-invalid', !(mv >= 0));
+    if (!p) {
+      if (prog.partLost) txt.textContent = 'The loaded program is Spoilboard Toolbox\u2019s own: load ' + programName(prog.partSaved) + ' again to check it against the stock.';
+      return null;
+    }
+    var pl = programPlace(p), rect = stockShown(), u = ' ' + unitName(), margin = mv >= 0 ? mv : 0;
+    var name = programName(p) + (p === prog.now ? '' : ' (loaded before Spoilboard Toolbox\u2019s own program)');
+    // Where X0 Y0 will be: the picked point, when Set would set this program's work offset.
+    var aim = pickTarget(), off = pl.off, where = pl.wcs + ' X0 Y0 where it is now';
+    if (aim && aim.tg && WCS_NAMES[holeWcs()] === pl.wcs && (!off || Math.hypot(aim.tg.x - off.x, aim.tg.y - off.y) > 0.005)) {
+      off = aim.tg; where = pl.wcs + ' X0 Y0 on ' + targetText(aim) + ' (hold Set to put it there)';
+    }
+    var text, bad = false;
+    if (pl.why && !(off && pl.bitMm > 0 && p.cuts.segs.length)) text = name + ' can\u2019t be checked against the stock: ' + pl.why + '.';
+    else if (!p.cuts.box) text = name + ' never cuts below Z0, so there\u2019s nothing to check against the stock.';
     else if (!rect) text = name + ': give the stock\u2019s width and length to check that it fits.';
     else {
-      past = cutsPastStock(p.cuts, pl.off, pl.bitMm, rect, margin);
-      var SIDES = ['left', 'right', 'front', 'back'];
-      var off = SIDES.filter(function(sd) { return past[sd] - margin > 0.005; });
+      var past = cutsPastStock(p.cuts, off, pl.bitMm, rect, margin), SIDES = ['left', 'right', 'front', 'back'];
+      var off2 = SIDES.filter(function(sd) { return past[sd] - margin > 0.005; });
       var close = SIDES.filter(function(sd) { return past[sd] > 0.005 && past[sd] - margin <= 0.005; });
-      bad = off.length > 0 || close.length > 0;
-      if (off.length) text = name + ' cuts ' + off.map(function(sd) { return shown(past[sd] - margin) + u + ' past the stock\u2019s ' + sd + ' edge'; }).join(' and ') + about + '. Move X0 Y0, or use bigger stock.';
-      else if (close.length) text = name + ' cuts within ' + close.map(function(sd) { return shown(Math.max(0, margin - past[sd])) + u + ' of the stock\u2019s ' + sd + ' edge'; }).join(' and ') +
-        ', inside the ' + shown(margin) + u + ' clamp margin' + about + '.';
+      // Equal distances said once: "1 mm past the left and right edges".
+      var edges = function(list, val, word) {
+        var groups = [];
+        list.forEach(function(sd) { var v = shown(val(sd)), g = groups.filter(function(x) { return x.v === v; })[0]; if (g) g.sides.push(sd); else groups.push({ v: v, sides: [sd] }); });
+        return groups.map(function(g) {
+          return g.v + u + ' ' + word + ' ' + (g.sides.length === 4 ? 'every edge' : 'the stock\u2019s ' + g.sides.join(' and ') + (g.sides.length > 1 ? ' edges' : ' edge'));
+        }).join(', ');
+      };
+      bad = off2.length > 0 || close.length > 0;
+      if (off2.length) text = name + ' cuts ' + edges(off2, function(sd) { return past[sd] - margin; }, 'past') + '. Move X0 Y0, or use bigger stock.';
+      else if (close.length) text = name + ' cuts within ' + edges(close, function(sd) { return Math.max(0, margin - past[sd]); }, 'of') + ', inside the ' + shown(margin) + u + ' clamp margin.';
       else {
         var near = SIDES.reduce(function(a, sd) { return past[sd] > past[a] ? sd : a; }, 'left');
-        text = name + ' fits: its cuts stay ' + shown(margin - past[near]) + u + ' inside the stock at the closest (the ' + near + ' edge)' + (margin > 0 ? ', clear of the clamp margin' : '') + about + '.';
+        text = name + ' fits: its cuts come no closer than ' + shown(margin - past[near]) + u + ' to the stock\u2019s ' + near + ' edge' + (margin > 0 ? ', outside the clamp margin' : '') + '.';
       }
+      text += ' With ' + where + '; ' + shown(pl.bitMm) + u + ' bit, ' + pl.bitFrom + '. Shaded on the map.';
     }
-    $('mw-stock-prog-text').textContent = text;
-    $('mw-stock-prog-text').classList.toggle('mw-warn-text', bad);
-    return pl.off && p.cuts.box && pl.bitMm > 0 ? { p: p, pl: pl, bad: bad } : null;
+    txt.textContent = text;
+    txt.classList.toggle('mw-warn-text', bad);
+    return off && p.cuts.box && pl.bitMm > 0 ? { p: p, pl: pl, off: off, bad: bad } : null;
   }
   // The program's cuts (moves below Z0) as one path in its work offset's
   // mm, points closer than tol dropped. Kept per program.
@@ -5186,18 +5292,23 @@
   function cutPath(cuts) {
     var d = cutPathKept.get(cuts);
     if (d != null) return d;
-    var s = cuts.segs, b = cuts.box, tol = Math.max(0.2, Math.max(b.maxX - b.minX, b.maxY - b.minY) / 3000), out = [], lx = NaN, ly = NaN, ex = NaN, ey = NaN;
-    for (var i = 0; i < s.length; i += 5) {
-      if (!(s[i + 4] < 0)) continue;
-      if (!(Math.abs(s[i] - ex) <= 1e-6 && Math.abs(s[i + 1] - ey) <= 1e-6)) { out.push('M' + s[i].toFixed(2) + ' ' + s[i + 1].toFixed(2)); lx = s[i]; ly = s[i + 1]; }
-      ex = s[i + 2]; ey = s[i + 3];
-      if (Math.hypot(ex - lx, ey - ly) >= tol) { out.push('L' + ex.toFixed(2) + ' ' + ey.toFixed(2)); lx = ex; ly = ey; }
-      else if (i + 5 >= s.length || Math.abs(s[i + 5] - ex) > 1e-6 || Math.abs(s[i + 6] - ey) > 1e-6) out.push('L' + ex.toFixed(2) + ' ' + ey.toFixed(2));
+    var s = cuts.segs, b = cuts.box, tol = Math.max(0.2, Math.max(b.maxX - b.minX, b.maxY - b.minY) / 3000), out = [], lx = NaN, ly = NaN, ex = NaN, ey = NaN, pend = false;
+    var flush = function() { if (pend) out.push('L' + ex.toFixed(2) + ' ' + ey.toFixed(2)); pend = false; };
+    for (var i = 0; i < s.length; i += 6) {
+      var part = belowZ(s, i, 0);
+      if (!part) continue;
+      var dx = s[i + 3] - s[i], dy = s[i + 4] - s[i + 1];
+      var x0 = s[i] + dx * part[0], y0 = s[i + 1] + dy * part[0], x1 = s[i] + dx * part[1], y1 = s[i + 1] + dy * part[1];
+      if (!(Math.abs(x0 - ex) <= 1e-6 && Math.abs(y0 - ey) <= 1e-6)) { flush(); out.push('M' + x0.toFixed(2) + ' ' + y0.toFixed(2)); lx = x0; ly = y0; }
+      ex = x1; ey = y1; pend = true;
+      if (Math.hypot(ex - lx, ey - ly) >= tol) { flush(); lx = ex; ly = ey; }
     }
+    flush();
     d = out.join('');
     cutPathKept.set(cuts, d);
     return d;
   }
+
   function xyOf(str) {
     var v = String(str || '').split(',').map(Number);
     return v.length >= 2 && isFinite(v[0]) && isFinite(v[1]) ? { x: v[0], y: v[1] } : null;
@@ -6167,7 +6278,7 @@
       // In a group clipped to the bed: the path's own transform would scale the clip.
       var pg = add('g', { 'clip-path': 'url(#' + clipId + ')' }), pp = document.createElementNS(ns, 'path');
       [['class', 'mw-h-prog' + (fit.bad ? ' mw-h-prog-bad' : '')], ['d', cutPath(fit.p.cuts)], ['stroke-width', fit.pl.bitMm],
-       ['transform', 'matrix(' + sc + ' 0 0 ' + (-sc) + ' ' + X(fit.pl.off.x) + ' ' + Y(fit.pl.off.y) + ')']].forEach(function(a) { pp.setAttribute(a[0], a[1]); });
+       ['transform', 'matrix(' + sc + ' 0 0 ' + (-sc) + ' ' + X(fit.off.x) + ' ' + Y(fit.off.y) + ')']].forEach(function(a) { pp.setAttribute(a[0], a[1]); });
       pg.appendChild(pp);
     }
     // The pins, drawn at their size in every mode, and the two ways two
@@ -7313,9 +7424,9 @@
   var inCutsKept = { key: null, map: new Map() };
   function holesInCuts(list, rMm, topZ) {
     var p = checkedProgram();
-    if (!p || !p.cuts.box || !list.length) return null;
+    if (!p || !list.length) return null;
     var pl = programPlace(p);
-    if (!pl.off || !(pl.bitMm > 0)) return null;
+    if (pl.why) return null;
     var key = [p.name, pl.off.x, pl.off.y, pl.bitMm].join('|');
     if (inCutsKept.key !== key || inCutsKept.cuts !== p.cuts) inCutsKept = { key: key, cuts: p.cuts, map: new Map() };
     var kept = inCutsKept.map, id = function(q) { return q.x + ',' + q.y + ',' + rMm + ',' + topZ; };
@@ -7376,6 +7487,10 @@
     var pinR = (pins ? size : pinSize) / 2 + slot / 2, pinTop = 0;
     var avoid = $('mw-sh-avoid').checked;
     res.skipped = 0;
+    // When the check leaves too few holes, it's the cause, not the Edge Margin.
+    var noneLeft = function(msg) {
+      return res.skipped ? msg.replace(/: try a smaller Edge Margin.*$/, '') + ': ' + res.skipped + ' were left out as the loaded program passes near them. Move X0 Y0, or untick Clear of the loaded program' : msg;
+    };
     var clearOf = function(list, r, top) {
       var hit = avoid && holesInCuts(list, r, top);
       if (!hit) return list;
@@ -7394,10 +7509,10 @@
       var pg = +$('mw-sh-pingrid').value, bg = $('mw-sh-boltgrid').value === '' ? pg : +$('mw-sh-boltgrid').value;
       if (holes.hidden[String(pg)] || holes.hidden[String(bg)]) { probs.push('A grid picked here is hidden on the map: show it (its eye) to use its holes'); return res; }
       res.pinsAt = fixturePins(clearOf(stockHoleCandidates(layerHoles(pg), rect, pinSize / 2 + slot / 2, margin), pinR, pinTop), rect);
-      if (res.pinsAt.length < 2) probs.push('Fewer than two ' + gridName(pg) + ' holes are under the plate, clear of its edge: try a smaller Edge Margin or a bigger plate');
+      if (res.pinsAt.length < 2) probs.push(noneLeft('Fewer than two ' + gridName(pg) + ' holes are under the plate, clear of its edge: try a smaller Edge Margin or a bigger plate'));
       var pinKeys = res.pinsAt.map(holeKey);
       res.chosen = stockBoltHoles(clearOf(stockHoleCandidates(layerHoles(bg), rect, (hasCb ? cb : size) / 2, margin), boltR, boltTop).filter(function(q) { return pinKeys.indexOf(holeKey(q)) < 0; }), rect, $('mw-sh-which').value);
-      if (!res.chosen.length) probs.push('No other ' + gridName(bg) + ' hole is under the plate, clear of its edge, for a bolt: try a smaller Edge Margin');
+      if (!res.chosen.length) probs.push(noneLeft('No other ' + gridName(bg) + ' hole is under the plate, clear of its edge, for a bolt: try a smaller Edge Margin'));
       var smallPin = blind ? [] : res.pinsAt.filter(function(q) { return pinSize > 2 * holeR(q, hh) + 0.05; });
       if (smallPin.length) probs.push('Pin Hole Ø is bigger than the spoilboard hole under it (' + holeName(smallPin[0]) + '): breaking through would cut the spoilboard');
       // Holes too close to each other run together.
@@ -7412,16 +7527,17 @@
       if (pins) {
         res.flip = flipPins(cands, rect, $('mw-sh-axis').value);
         res.chosen = res.flip ? cutOrder(res.flip.pins) : [];
-        if (!res.flip) probs.push('No grid ' + ($('mw-sh-axis').value === 'x' ? 'row' : 'column') + ' inside the stock has two holes clear of its edge: try a smaller Edge Margin or the other flip');
+        if (!res.flip) probs.push(noneLeft('No grid ' + ($('mw-sh-axis').value === 'x' ? 'row' : 'column') + ' inside the stock has two holes clear of its edge: try a smaller Edge Margin or the other flip'));
       } else {
         res.chosen = stockBoltHoles(cands, rect, $('mw-sh-which').value);
-        if (!res.chosen.length) probs.push('No spoilboard hole is under the stock, clear of its edge: try a smaller Edge Margin');
+        if (!res.chosen.length) probs.push(noneLeft('No spoilboard hole is under the stock, clear of its edge: try a smaller Edge Margin'));
       }
     }
     // Unticked: the holes picked anyway that the part's cuts would hit.
     var hitList = function(list, r, top) { var hit = holesInCuts(list, r, top) || []; return list.filter(function(q, i) { return hit[i]; }); };
     res.inCuts = avoid ? [] : hitList(res.pinsAt || [], pinR, pinTop).concat(hitList(res.chosen, pins ? pinR : boltR, pins ? pinTop : boltTop));
     res.prog = checkedProgram();
+    if (avoid && !res.prog && prog.partLost) probs.push('The loaded program is Spoilboard Toolbox\u2019s own, so the holes can\u2019t be kept clear of the part: load ' + programName(prog.partSaved) + ' again, or untick Clear of the loaded program');
     var small = blind ? [] : res.chosen.filter(function(q) { return size > 2 * holeR(q, hh) + 0.05; });
     if (small.length) probs.push((pins ? 'Pin Hole Ø' : 'Hole Size') + ' is bigger than the spoilboard hole under it (' + holeName(small[0]) + '): breaking through would cut the spoilboard');
     if (pins) pinHoles(res.chosen, size, slot, depth, thick).forEach(function(h) { o.holes.push(h); });
@@ -7550,14 +7666,16 @@
         if ((s.pins || s.fix) && s.slotMm > 0) text += ' The slot is cut round its outline, down to the stock\u2019s bottom; the pin\u2019s round hole goes on through.';
         text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o);
       }
-      var pg = s.prog && s.prog.cuts.box ? programPlace(s.prog) : null;
-      if (pg && pg.off && pg.bitMm > 0) {
-        var pname = '\u201c' + s.prog.name + '\u201d';
+      var pg = s.prog ? programPlace(s.prog) : null, pname = s.prog ? programName(s.prog) : '';
+      var what = s.fix ? 'pins or bolts' : s.pins ? 'pins' : 'bolts';
+      if (pg && pg.why) text += ' ' + pname + ' can\u2019t be checked against the ' + what + ': ' + pg.why + '.';
+      else if (pg) {
         var hit = s.inCuts.map(holeName);
         if (hit.length > 12) hit = hit.slice(0, 8).concat('\u2026', hit.slice(-2));
-        if (s.inCuts.length) text += ' ' + (s.inCuts.length > 1 ? s.inCuts.length + ' holes (' + hit.join(', ') + ') are' : hit[0] + ' is') + ' in ' + pname + '\u2019s cuts (' + pg.wcs + ' X0 Y0 where it is now): the bit would hit ' + (s.inCuts.length > 1 ? 'their ' : 'its ') + (s.pins ? 'pin' : 'bolt') + (s.inCuts.length > 1 ? 's' : '') + '. Tick Clear of the loaded program\u2019s cuts, or move X0 Y0.';
-        else text += ' Clear of ' + pname + '\u2019s cuts, with ' + pg.wcs + ' X0 Y0 where it is now' + (s.skipped ? ': ' + s.skipped + ' hole' + (s.skipped === 1 ? '' : 's') + ' in its way left out' : '') + '.';
-      } else if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths (load the part\u2019s program to have it checked).';
+        if (s.inCuts.length) text += ' ' + pname + '\u2019s bit passes within 1 mm of the ' + what + ' in ' + (s.inCuts.length > 1 ? s.inCuts.length + ' holes (' + hit.join(', ') + ')' : hit[0]) +
+          ', rapids too (with ' + pg.wcs + ' X0 Y0 where it is now). Tick Clear of the loaded program, or move X0 Y0.';
+        else text += ' Clear of ' + pname + '\u2019s path, with ' + pg.wcs + ' X0 Y0 where it is now' + (s.skipped ? ' (' + s.skipped + ' of the holes under the stock are in its way and weren\u2019t used)' : '') + '.';
+      } else if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths (load the part\u2019s program first to have it checked).';
       var hn = readHoles() || {}, turnNow = (holes.activeGrid ? (hn.grids || [])[holes.activeGrid - 1] || {} : hn).turnDeg;
       if (s.pins && turnNow) text += ' The grid is turned ' + turnNow + '\u00b0, so the pin line is too: the stock flips about that tilted line, so set the second side\u2019s X0 Y0 from the pins rather than mirroring across a straight line.';
       text += ' It lifts to Safe Z between holes, to clear the clamps. Take the pins out of the holes under the stock first: the bit goes into them.';
@@ -8092,7 +8210,6 @@
       '<strong>Two ways to start.</strong> <strong>No holes yet:</strong> surface the board, put Z0 on its top, describe the grid you want in Setup (or load a preset), cut a fit test in scrap to choose the hole size, then Cut Board &rsaquo; Dog holes &rsaquo; Generate; the board and the map come from the same numbers, so they agree. <strong>Holes already there:</strong> type the grid&rsquo;s size and spacing in Setup, pick a hole, jog over its real center and press <strong>Grab First Hole Center</strong> (it names the hole you picked, e.g. Grab B3 Center); then Measure Holes on the three it suggests and <strong>Apply to Setup</strong>, suppress missing holes with Edit Holes, and check with Go to Selected over a far hole. Save Setup as a profile either way.',
       '<strong>Your spoilboard&rsquo;s holes are a precision fixture; this turns them into work zero.</strong> Jog roughly near a hole, tap <strong>Pick Nearest Hole</strong>, hold <strong>Set</strong>, and X0 Y0 is exactly on its center or edge: no edge finder, no XY probe, nothing typed, and the same zero next time. Or switch to <strong>Stock</strong>, tap the holes your pins are in, and zero on the stock pushed against them: its corner, an edge or its center, worked out from the pins. <strong>Measure Holes</strong> fits the grid to your real board, with a 3D probe or a pin centered by eye. Missing holes, T-tracks, several grids, custom pins and a profile per board each have a Help page of their own.',
       '<strong>For example:</strong> push the stock against pins in B4, B6 (its front edge) and C3 (its left edge). In <strong>Stock</strong>, tap those three holes: the stock\u2019s front left corner is a pin radius right of column 3 and behind row B, and the line beside Set says so with the numbers. Hold <strong>Set</strong>: no edge finder, no XY probe, nothing typed. Pick its center (or any other dot) and it also needs the stock&rsquo;s size: type it, or jog over the far corner and press <strong>Far Corner Here</strong>.',
-      '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode draws the program&rsquo;s cuts on the map, the bit&rsquo;s width, where its work offset&rsquo;s X0 Y0 is now, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm by default), or how far past which edge they go. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. Moves below Z0 count as cuts. A program Spoilboard Toolbox made doesn&rsquo;t count: the check keeps the part loaded before it.',
       'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       '<p><strong>Measure Holes</strong> (Setup unlocked) fits Setup&rsquo;s spacing, insets and Turn to your real holes. Measure two or more far apart, then <strong>Apply to Setup</strong>.</p>' +
@@ -8142,7 +8259,8 @@
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. Start a line with <kbd>#</kbd> or <kbd>;</kbd> to skip that hole without deleting it. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines. No grid on the board yet? <strong>Cut Board &rsaquo; Grid lines</strong> lasers or engraves it from Setup.',
-      HELP_NEEDS, HELP_UNITS ] },
+      HELP_NEEDS, HELP_UNITS,
+      '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again.' ] },
     cut: { name: 'Cut Board', notes: [
       'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
@@ -8173,7 +8291,7 @@
         '<li><strong>Bolts:</strong> a clearance hole over the hole nearest each corner, or every hole under it, with an optional counterbore, to bolt into the threaded inserts. <strong>Bolt</strong> fills the sizes for M6, M8 or 1/4-20.</li>' +
         '<li><strong>Locating Pins + Bolts:</strong> a plate that comes off and goes back exactly. Two pin holes over dog holes, as far apart as fit (diagonally); the first round, the second a slot pointing at it (<strong>Slot +</strong> longer, half each way), so it can&rsquo;t bind when MDF moves. Bolt holes go in the other holes of the same grid (inserts behind the dog holes) or in an insert grid of their own.</li>' +
         '<li><strong>Flip Pins:</strong> two dowel holes on the row (or column) nearest its middle, the second slotted too; flipped over that line, it drops back exactly where it was. The summary gives the line to mirror side 2 across in your CAM, and <strong>Zero on the Flip Pin</strong> opens the XY0 Picker on the round pin (it stays put when the stock turns over): hold <strong>Set</strong> there.</li></ul>' +
-        '<p><strong>Clear of the loaded program&rsquo;s cuts</strong> (on by default): load the part&rsquo;s program first and any hole where it would cut within 1 mm of the bolt head (in its counterbore, or on top of the stock) or the pin is left out; the nearest clear hole is used instead. Unticked, the summary names the holes the bit would hit. It goes by the work offset&rsquo;s X0 Y0 as it is now.</p>' +
+        '<p><strong>Clear of the loaded program</strong> (on by default): load the part&rsquo;s program first, and any hole where its bit would pass within 1 mm of the bolt head or pin is left out, the nearest clear hole used instead. Rapids count too: a bolt head is taken to stand about the bolt&rsquo;s width high, on the stock or in its counterbore. Unticked, the summary names the holes the bit would hit. It goes by the work offset&rsquo;s X0 Y0 as it is now.</p>' +
         '<p><strong>Take the pins out</strong> of the holes under the stock first: the bit goes into them.</p>' +
         '<p><strong>The spoilboard is safe:</strong> each hole goes only Break Through into the spoilboard hole and is never bigger than it (inserts must sit that far down). It lifts to Safe Z over the clamps between holes, refuses when Z0 is on the spoilboard, and stops if Z0 changed since you generated it.</p>' +
         '<p>The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.</p>',
@@ -8234,7 +8352,7 @@
       { title: 'Using the map', pages: [
         { id: 'map', icon: 'map', title: 'Reading the map', short: 'Hole names, the spindle, X0 Y0, keepout zones.', notes: [9, 12, 19, 13] },
         { id: 'goto', icon: 'move', title: 'Go to Selected', short: 'Move over the picked point at Safe Z.', notes: [11] },
-        { id: 'stock', icon: 'box', title: 'Hole or stock, and stock against pins', short: 'Place the stock against pins; zero on its corner, an edge or its center.', notes: [10, 20] },
+        { id: 'stock', icon: 'box', title: 'Hole or stock, and stock against pins', short: 'Place the stock against pins; zero on its corner, an edge or its center; check the program fits.', notes: [10, 20, 32] },
         { id: 'zoom', icon: 'zoom', title: 'Zoom, exclusions, favorites', short: 'Big beds, clamps in the way, your usual holes.', notes: [21, 22, 23] } ] },
       { title: 'More', pages: [
         { id: 'keys', icon: 'keys', title: 'From the keyboard', short: 'Nearest hole in one keypress at the machine.', notes: [17] },
