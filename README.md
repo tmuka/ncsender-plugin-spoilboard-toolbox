@@ -756,6 +756,16 @@ See [What you need](#what-you-need) for the rest of the plugin.
   run either macro. A `G43.1` offset is cleared by a reset.
 - Three spare work offsets for storage.
 
+## The fine print
+
+- **You're the machinist.** Spoilboard Toolbox writes programs, sets work offsets and writes macros, and its Go to buttons move the machine. Check what it will do before you run a program or press Set or Go to: look at the program in ncSender's visualizer, air-cut a new setup, and make sure the spindle has a clear path at Safe Z.
+- **Safety is yours.** Clamp the work well, wear eye and hearing protection, keep a hand near the E-stop, and stay with a running machine.
+- **No warranty.** Spoilboard Toolbox is free software under the GPL-3.0, provided as is, without any warranty that it works or suits your purpose. It surely still has bugs.
+- **No liability.** The author and contributors aren't responsible for any damage, loss or injury from using it: to your machine, bits, stock, shop or you.
+- **Not official.** It's an independent plugin, not made, endorsed or supported by ncSender's developer or your machine's maker.
+
+Using Spoilboard Toolbox means you accept all of the above. Now go make something, carefully.
+
 ## Install
 
 1. Download the latest `com.tmuka.spoilboard-toolbox_v….zip` from this repository's

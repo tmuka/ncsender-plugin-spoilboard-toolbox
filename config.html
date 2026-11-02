@@ -8534,6 +8534,7 @@
     gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>'
   };
+  var FINE_PRINT = '<div class="mw-help-note"><ul><li><b>You&rsquo;re the machinist.</b> Spoilboard Toolbox writes programs, sets work offsets and writes macros, and its Go to buttons move the machine. Check what it will do before you run a program or press Set or Go to: look at the program in ncSender&rsquo;s visualizer, air-cut a new setup, and make sure the spindle has a clear path at Safe Z.</li><li><b>Safety is yours.</b> Clamp the work well, wear eye and hearing protection, keep a hand near the E-stop, and stay with a running machine.</li><li><b>No warranty.</b> Spoilboard Toolbox is free software under the GPL-3.0, provided as is, without any warranty that it works or suits your purpose. It surely still has bugs.</li><li><b>No liability.</b> The author and contributors aren&rsquo;t responsible for any damage, loss or injury from using it: to your machine, bits, stock, shop or you.</li><li><b>Not official.</b> It&rsquo;s an independent plugin, not made, endorsed or supported by ncSender&rsquo;s developer or your machine&rsquo;s maker.</li></ul><p>Using Spoilboard Toolbox means you accept all of the above. Now go make something, carefully.</p></div>';
   var HELP_INDEX = {
     holes: { intro: 'Zero on any spoilboard hole in two taps, and teach it the board you have.', groups: [
       { title: 'Start here', pages: [
@@ -8596,7 +8597,8 @@
   function helpPages(from) {
     var pages = [];
     HELP_INDEX[from].groups.forEach(function(g) { pages = pages.concat(g.pages); });
-    return pages.concat([{ id: 'tips', icon: 'info', title: 'Field tips', short: 'What each box and button on this tab does.' }]);
+    return pages.concat([{ id: 'tips', icon: 'info', title: 'Field tips', short: 'What each box and button on this tab does.' },
+      { id: 'fineprint', icon: 'shield', title: 'The fine print', short: 'You run the machine; no warranty or liability.' }]);
   }
   function helpTile(p) {
     return '<button type="button" class="mw-help-tile" data-help-page="' + p.id + '">' + helpIcon(p.icon) +
@@ -8640,10 +8642,10 @@
       help.page = null;
       body.innerHTML = '<p class="mw-help-lead">' + helpEscape(ix.intro) + '</p>' +
         ix.groups.map(function(g) { return '<h3 class="mw-help-group">' + helpEscape(g.title) + '</h3><div class="mw-help-tiles">' + g.pages.map(helpTile).join('') + '</div>'; }).join('') +
-        '<h3 class="mw-help-group">This tab</h3><div class="mw-help-tiles">' + helpTile(pages[pages.length - 1]) + '</div>';
+        '<h3 class="mw-help-group">This tab</h3><div class="mw-help-tiles">' + helpTile(pages[pages.length - 2]) + helpTile(pages[pages.length - 1]) + '</div>';
       return;
     }
-    var content = page.id === 'tips'
+    var content = page.id === 'fineprint' ? FINE_PRINT : page.id === 'tips'
       ? '<dl class="mw-help-tips">' + helpTips(ROOT.querySelector('.mw-tab[data-tab="' + from + '"]')) + '</dl>'
       : page.notes.map(function(i) { var n = t.notes[i]; return '<div class="mw-help-note">' + (/^<p>/.test(n) ? n : '<p>' + n + '</p>') + '</div>'; }).join('');
     var step = function(p, dir) {

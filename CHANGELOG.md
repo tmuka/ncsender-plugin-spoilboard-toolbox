@@ -3,6 +3,11 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+- **The fine print** in Help and the README: you run the machine, check each program first, no warranty or
+  liability (GPL-3.0), not an official ncSender plugin.
+
 ## 0.5.6: Size to Program
 
 ### ✨ New
