@@ -5,6 +5,31 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ## Unreleased
 
+### 🐛 Fixed
+- **Grid lines** showed the V-bit's Depth with a laser picked, and Laser Power with a V-bit.
+- **Stock mode** in the XY0 Picker no longer pushes Set and Go to below the screen.
+- A Bit Diameter that isn't a number no longer adds a false "holes reach outside the machine's travel".
+- The welcome page sent you to a "Spoilboard" tab: it's **Cut Board**.
+
+### 🛡️ Safer
+- **Spoilboard Thickness** starts blank and Dog holes asks for it, instead of assuming 19.05 mm (3/4"): a thinner
+  board left at the default could be cut through.
+- **Bit and depth** shows only the fields the picked section uses: no Hole Depth on T-tracks, Chamfers, Grid lines or
+  Labels, no bit or feeds on the Laser test, and no Spoilboard Thickness with Into the stock on top.
+- **Stock Holes:** when Z0 can't be checked (no spoilboard height recorded yet), the warning sits beside Generate.
+
+### ✨ Better
+- **Getting started** in the welcome page, Help and README: home first, the fit test zeroed on the scrap, then Z0
+  back on the board before the dog holes.
+- **Where to zero** for each program, in Help and the README, and a README **Troubleshooting** list; Install moved
+  near the top.
+- Messages say how to fix things: where ncSender's Safe Z Height is, connect and home for the travel, why there are
+  no holes to cut, a smaller bit or a bigger hole.
+- **Stock Holes:** a button to place the stock in the XY0 Picker.
+- Bigger touch targets: the origin dots, Hole / Stock, the map view buttons. The line beside Set is easier to read.
+- The stock's Width and Length have labels; every Generate button looks like the main action; the Z0 macros diagram
+  is no wider than 760 px.
+- US spellings throughout.
 - **The fine print** in Help and the README: you run the machine, check each program first, no warranty or
   liability (GPL-3.0), not an official ncSender plugin.
 

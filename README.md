@@ -27,8 +27,8 @@ and turns every one into a work zero you can hit again tomorrow.**
 - **Zero on stock pushed against pins, worked out, not guessed.** Push the stock against pins in two
   or three dog holes and tap those holes: the stock's corner is a pin radius off the pins, exact, and
   X0 Y0 goes on that corner, an edge or its center. A line beside **Set** says where, with the numbers,
-  and flags a move that's exactly a hole or pin radius: the classic wrong-dot mistake.
-- **A whole spoilboard from one Generate.** Every dog hole drilled, spiralled or cleared at its own
+  and flags a move that's exactly a hole or pin radius: the usual sign of the wrong dot.
+- **A whole spoilboard from one Generate.** Every dog hole drilled, spiraled or cleared at its own
   size, in one program you check in ncSender's 3D visualizer before it cuts. Then chamfer every hole and
   engrave fixture-table labels (A1, B3…) with a V-bit or a laser. The board and the map come from the
   same numbers, so they agree.
@@ -51,8 +51,8 @@ and turns every one into a work zero you can hit again tomorrow.**
 Spoilboard Toolbox is a plugin for [ncSender](https://github.com/siganberg/ncSender), the G-code sender for
 grblHAL CNC routers. Its **XY0 Picker** shows your machine's bed with every hole on it, live as you jog,
 and sets the work offset (G54–G59.3) without moving the machine. Its **Z0 macros** tab checks your
-grblHAL controller, then writes ncSender macros you run from the Macros tab or, best of all, a
-keyboard shortcut. Its **Cut Board** tab writes the programs that cut the board's own pattern (or
+grblHAL controller, then writes ncSender macros you run from the Macros tab or a keyboard
+shortcut. Its **Cut Board** tab writes the programs that cut the board's own pattern (or
 copy it into stock on top of the spoilboard), and **Stock Holes** the ones that drill a workpiece so it bolts down, locates
 or flips, from the same grid.
 
@@ -60,6 +60,17 @@ or flips, from the same grid.
 between T-tracks, a stock pushed against pins in M8, M10 and N7, X0 Y0 on its front left corner with
 the numbers beside Set and a zoomed view of the pins, and the Go to Stock Center, Go to Stock Front
 Left and Set G54 XY buttons](docs/xy0-picker.png)
+
+## Install
+
+1. Download the latest `com.tmuka.spoilboard-toolbox_v….zip` from this repository's
+   [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
+2. In ncSender: **Settings → Plugins → Install Plugin → ZIP**, pick the file and press **Install from
+   File**, or paste the zip's link and press **Install from URL**.
+3. Open **Spoilboard Toolbox** from the plugin tool menu.
+
+Later versions show up under ncSender's plugin **Update** button. To build the zip yourself, see
+Development below.
 
 ## What a job looks like
 
@@ -134,14 +145,14 @@ The plugin asks this itself the first time it opens (and Help's **Getting starte
 
 **A. No holes yet: lay out a new spoilboard and cut it.** The board and the map come from the same
 numbers, so they agree from the first hole.
-1. Surface the board (QuickCut's Wasteboard Surfacing) and put Z0 on its top: touch off, or
-   **SBT: Z0 on spoilboard**.
+1. Home the machine and surface the board (QuickCut's Wasteboard Surfacing).
 2. In the XY0 Picker's **Setup**, describe the grid you want: hole size, spacing, and the insets from
    machine X0 Y0 to the first hole; T-tracks between panels if you have them. Or load a preset from the
    Profiles menu. The map shows the result over your machine's travel.
-3. **Cut Board → Fit test:** cut a row of test holes in scrap and set Hole Diameter to the one your
-   dowels fit.
-4. **Cut Board → Dog holes → Generate**, check it in ncSender's visualizer, and run it. Then
+3. **Cut Board → Fit test:** cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its
+   top) and set Hole Diameter to the one your dowels fit.
+4. Put Z0 back on the board's top (touch off; **SBT: Z0 on spoilboard** needs the Z0 macros' recorded
+   height). Then **Cut Board → Dog holes → Generate**, check it in ncSender's visualizer, and run it. Then
    chamfers and labels if you like, and T-tracks for a two-layer board.
 5. Save Setup as a profile (**New profile…**). From now on, zeroing is path B's last step.
 
@@ -159,6 +170,22 @@ numbers, so they agree from the first hole.
 
 Either way, the Z0 macros are a separate, optional step for machines with measured tool lengths: see
 [First time with the Z0 macros](#first-time-with-the-z0-macros).
+
+**Before the first program**, whichever path:
+- Connect and home the machine. The holes are machine positions, so most buttons wait for it.
+- Set ncSender's **Safe Z Height** (Settings → General). The programs lift to it over keepout zones and
+  clamps, and Generate refuses when it's less than 5 mm above Z0.
+- grblHAL must report positions in mm (`$13=0`), whatever units you work in.
+
+## Where to zero
+
+| Job | X0 Y0 | Z0 |
+| --- | --- | --- |
+| Dog holes, T-tracks, Grid lines, Chamfers, Labels | Anywhere: the holes go at their machine positions. Don't move it after Generate. | The spoilboard's top |
+| The same, with **Into the stock on top** ticked | Anywhere | The stock's top |
+| Fit test, Laser test | The scrap's front left corner | The scrap's top (a laser: focused on it) |
+| Stock Holes | Anywhere | The stock's top |
+| XY0 Picker's **Set** | Where you pick: a hole's dot, or a point on the stock | Not changed (Set Z0 sets it) |
 
 ## What you get
 
@@ -296,7 +323,7 @@ you're on. Each grid has its own name, hole diameter, spacing, insets, T-tracks 
 it for a pin grid you only ever pick on the map), and **Remove Grid** deletes it. The eye on each chip
 shows or hides that grid's holes on the map, handy for picking or suppressing holes where two grids
 overlap. **+ Inserts** is for a board whose threaded inserts are a grid of their own, halfway between
-the dog holes (along X or Y): it adds that grid at the insert's hole size. Cut Holes drills it, Stock
+the dog holes (along X or Y): it adds that grid at the insert's hole size. Cut Board's Dog holes drills it, Stock
 Holes can bolt to it, and Pick Nearest Hole leaves it out. Inserts behind the dog holes themselves need
 no extra grid. Hidden holes can't be
 picked on the map or by Pick Nearest Hole, but the keyboard macros still
@@ -347,19 +374,19 @@ Set, keepout zones and the nearest-hole macros all work the same.
 **T-tracks between panels?** Pick **T-tracks: Along X** (tracks between rows) or **Along Y** (between
 columns) and set **Holes per Panel**. Leave **Panel Pitch** blank when the hole spacing carries straight
 on across a track; if a track pushes the next panel over, measure from the first hole of one panel to
-the first hole of the next. The tracks show as grey bands on the map.
+the first hole of the next. The tracks show as gray bands on the map.
 
 **Example: Onefinity QCW (Journeyman X-50).** One layout that comes out even over every panel and T-track
 on its quick-change wasteboard: 8 mm holes (for 8 mm dowel dogs) **48.6004 mm** (1.9134") apart both
 ways, **T-tracks: Along X**, **Holes per Panel 5**, and **Panel Pitch** blank, since that spacing carries
 straight on across each track. The insets depend on where your bed sits, so jog over your first hole and
 press **Grab First Hole Center** rather than copying someone else's (6.858 and 21.846 mm on the machine
-this was worked out on).
+this was worked out on). It's also in the Profiles menu as a preset.
 
 **Share your layout.** If your spoilboard has a layout that works well, open an issue with its hole size,
-spacing, T-track direction, holes per panel and panel pitch. The plan, once there are a few, is to ship
-them as presets to load from the Profiles menu: everything but the insets, which you'd still grab on your
-own machine.
+spacing, T-track direction, holes per panel and panel pitch, and it can join the presets in the Profiles
+menu (one ships today, the Onefinity QCW): everything but the insets, which you'd still grab on your own
+machine.
 
 **Measure Holes** fits the grid to the real thing with a probe: put a touch probe in the spindle (wood
 doesn't conduct, so a plain probe pin can't trigger), jog its tip into a hole below the top, and press
@@ -392,7 +419,7 @@ holes](docs/measure-holes.png)
 
 No probe? Measure **by eye** instead (the panel's **Measure with** menu starts there, and only shows the
 chosen way's button, so a pin is never sent probing into a hole's wall): put a pin, a dowel or a V-bit in the spindle, jog it with the
-keyboard, a gamepad or the pendant down into the hole's mouth until the gap is even all round, and press
+keyboard, a gamepad or the pendant down into the hole's mouth until the gap is even all around, and press
 **Centered by Eye**. It records where the bit is, without moving. A pin that just fits the hole centers
 itself; with a V-bit, lower its tip until the cone touches the rim evenly.
 
@@ -515,7 +542,7 @@ the plugin reminds you to re-record the spoilboard height.
   they don't say. Type a
   diameter instead and there's no tool change: load that bit yourself before running it. The T-track,
   stock-hole and fit-test programs work the same way; chamfers and labels never change tools.
-- **Safety:** Hole Depth can't be more than the Spoilboard Thickness (0.75" to start). Between holes it hops
+- **Safety:** Hole Depth can't be more than the Spoilboard Thickness, which starts blank: measure the board and type it. Between holes it hops
   5 mm, and lifts to Safe Z to pass over a keepout zone or an Exclude Picks area such as a clamp. There's
   no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck), so
   check the bit and Z0 before pressing Start.
@@ -536,12 +563,12 @@ the end ones. They stop short of the travel's edges and keepout zones, break at 
 forth (every other line runs back) so most moves between them are short. A laser moves between lines at
 its focus height, over zones too, so keep tall clamps off the bed. Then set Hole Diameter to the line's width and zero on the
 crossings. Not sure of the power and speed? The **Laser test** marks a small cross for every power
-(columns) and feed (rows) on scrap, labelled, so you can pick the crispest before doing the whole bed.
+(columns) and feed (rows) on scrap, labeled, so you can pick the crispest before doing the whole bed.
 
 **Before and after:**
 - **Dowel fit test:** cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top),
   **Edge Distance** (10 mm) in from its edges so none breaks out of the side, smallest on the left, find the one your dowels fit, and set Hole Diameter to it.
-- **Chamfer the holes:** after cutting, a V-bit puts a small bevel round each hole's top edge, so dowels
+- **Chamfer the holes:** after cutting, a V-bit puts a small bevel around each hole's top edge, so dowels
   start easily and the edge doesn't crumble.
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
   V-bit or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
@@ -724,7 +751,7 @@ probe point relative to the work offset only.)
 grblHAL macros have no if/else here, so a stop is a deliberate division by zero, for example
 `#1=[1 / #<_homed_state>] (SBT stop: home the machine first)`: grblHAL rejects the line with
 `error:72`, and ncSender (2.0.161 and later) sends nothing after a rejected line of a macro. As a
-second line of defence, every line that sets an offset or moves is divided by the same checks too
+second line of defense, every line that sets an offset or moves is divided by the same checks too
 (homed, tool length offset, stored values, no G92 offset, and for the nearest-hole macros the keepout
 and travel checks), so even if a stop line were skipped, nothing is set or moved. The wizard's check
 confirms your grblHAL reads `#<_homed_state>` and `#<_tool_offset>`.
@@ -756,6 +783,19 @@ See [What you need](#what-you-need) for the rest of the plugin.
   run either macro. A `G43.1` offset is cleared by a reset.
 - Three spare work offsets for storage.
 
+## Troubleshooting
+
+- **`error:72` in ncSender's terminal** after a macro or program: a safety stop, on purpose. The line
+  before it has a comment, `(SBT stop: …)`, saying why: home the machine, measure the tool, record the
+  spoilboard height, or send `G92.1` when it says a G92 offset is active. Nothing was changed.
+- **"Couldn't read the machine's travel"**: connect to the controller and home it.
+- **Set or Go to is grayed out**: home the machine, or the point is in a keepout zone, an Exclude Picks
+  area or outside the travel. The line beside Set says which.
+- **"Safe Z puts this tool's tip less than 5 mm above Z0"**: raise **Safe Z Height** in ncSender's
+  Settings → General.
+- **Z0 is off after surfacing the spoilboard**: run **SBT: Record spoilboard height** again; every Z0
+  from the recorded height is off by what was surfaced.
+
 ## The fine print
 
 - **You're the machinist.** Spoilboard Toolbox writes programs, sets work offsets and writes macros, and its Go to buttons move the machine. Check what it will do before you run a program or press Set or Go to: look at the program in ncSender's visualizer, air-cut a new setup, and make sure the spindle has a clear path at Safe Z.
@@ -765,17 +805,6 @@ See [What you need](#what-you-need) for the rest of the plugin.
 - **Not official.** It's an independent plugin, not made, endorsed or supported by ncSender's developer or your machine's maker.
 
 Using Spoilboard Toolbox means you accept all of the above. Now go make something, carefully.
-
-## Install
-
-1. Download the latest `com.tmuka.spoilboard-toolbox_v….zip` from this repository's
-   [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
-2. In ncSender: **Settings → Plugins → Install Plugin → ZIP**, pick the file and press **Install from
-   File**, or paste the zip's link and press **Install from URL**.
-3. Open **Spoilboard Toolbox** from the plugin tool menu.
-
-Later versions show up under ncSender's plugin **Update** button. To build the zip yourself, see
-Development below.
 
 ## Development
 
@@ -795,6 +824,6 @@ ncSender's open-source edition. Copyright (c) 2026 tmuka.
 
 ## Status
 
-In use on the author's grblHAL machine. The grblHAL behaviour above comes from its source
+In use on the author's grblHAL machine. The grblHAL behavior above comes from its source
 (`ngc_params.c`), and the ncSender API from ncSender's source; the wizard is also tested in a
 browser against a stand-in ncSender.

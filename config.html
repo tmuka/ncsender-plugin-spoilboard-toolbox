@@ -149,8 +149,8 @@
   .mw-holebar-info { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .mw-holebar-title { font-weight: 600; }
   .mw-holebar-info .mw-hint { font-variant-numeric: tabular-nums; }
-  .mw-holebar-info .mw-hint.mw-coords { font-size: 0.72rem; white-space: nowrap; }
-  .mw-holebar-info .mw-hole-dist { font-size: 0.72rem; }
+  .mw-holebar-info .mw-hint.mw-coords { font-size: 0.85rem; white-space: nowrap; }
+  .mw-holebar-info .mw-hole-dist { font-size: 0.85rem; }
   .mw-holebar-info .mw-hole-dist[hidden], .mw-btn.mw-hold-btn[hidden] { display: none !important; }
   .mw-holebar-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; max-width: 100%; }
   .mw-holebar-info { flex-basis: 150px; }
@@ -159,7 +159,7 @@
      a dot on each corner, edge middle and the center. Spans, not buttons,
      so ncSender's button styles don't reach them. */
   .mw-hole-origin {
-    position: relative; flex: none; width: 52px; height: 52px; margin: 8px;
+    position: relative; flex: none; width: 64px; height: 64px; margin: 8px;
     border: 1px dashed var(--color-text-secondary); border-radius: 6px;
   }
   .mw-hole-origin::before {
@@ -171,10 +171,10 @@
     background: var(--color-text-secondary); transform: translate(-50%, -50%);
     transition: background 0.15s ease, transform 0.15s ease;
   }
-  .mw-dot.mw-corner { width: 13px; height: 13px; }
-  .mw-dot.mw-edge { width: 9px; height: 9px; }
+  .mw-dot.mw-corner { width: 15px; height: 15px; }
+  .mw-dot.mw-edge { width: 11px; height: 11px; }
   .mw-dot::before {
-    content: ''; position: absolute; left: 50%; top: 50%; width: 24px; height: 24px;
+    content: ''; position: absolute; left: 50%; top: 50%; width: 30px; height: 30px;
     border-radius: 50%; transform: translate(-50%, -50%);
   }
   .mw-dot:hover, .mw-dot:focus-visible { background: var(--color-accent); }
@@ -192,7 +192,7 @@
   .mw-btn.mw-nudge { animation: mw-nudge 0.8s ease-in-out 3; }
   @media (prefers-reduced-motion: reduce) { .mw-btn.mw-nudge { animation: none; } }
   .mw-dots-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
-  .mw-dots-cap { font-size: 0.7rem; color: var(--color-text-secondary); white-space: nowrap; }
+  .mw-dots-cap { font-size: 0.78rem; color: var(--color-text-secondary); white-space: nowrap; }
   .mw-dots-wrap .mw-hole-origin { margin: 8px 10px; }
   #mw-hole-dots.mw-has-hole::before { border: 2px solid var(--mw-accent-text); background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
   .mw-stock { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); }
@@ -205,18 +205,19 @@
   .mw-stock-on input { margin-top: 0; }
   .mw-stock .mw-input.mw-stock-size { width: 72px !important; min-width: 0 !important; min-height: 0 !important; padding: 4px 6px !important; }
   .mw-stock .mw-select.mw-stock-corner { width: auto !important; min-height: 0 !important; padding: 4px 6px !important; }
-  .mw-stock .mw-stock-dots { width: 34px; height: 26px; margin: 6px 8px; border-style: solid; border-radius: 2px; }
+  .mw-stock .mw-stock-dots { width: 64px; height: 48px; margin: 10px 12px; border-style: solid; border-radius: 2px; }
   .mw-stock .mw-stock-dots::before { display: none; }
+  .mw-stock .mw-stock-dots .mw-dot::before { width: 24px; height: 24px; }
   /* Hole or Stock: the controls of the other mode are hidden. */
   .mw-pick-card[data-zmode="hole"] .mw-only-stock, .mw-pick-card[data-zmode="stock"] .mw-only-hole { display: none !important; }
   .mw-stock[data-by="pins"] .mw-by-zero { display: none !important; }
   .mw-seg-group { flex: 1 1 100%; display: flex; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
-  .mw-seg { flex: 1 1 0; margin: 0 !important; padding: 7px 10px !important; min-height: 0 !important; border: 0 !important; border-radius: 0 !important;
+  .mw-seg { flex: 1 1 0; margin: 0 !important; padding: 7px 10px !important; min-height: 40px !important; border: 0 !important; border-radius: 0 !important;
     background: transparent !important; color: var(--color-text-secondary) !important; font: inherit !important; font-weight: 600 !important; cursor: pointer; }
   .mw-seg + .mw-seg { border-left: 1px solid var(--color-border) !important; }
   .mw-seg[aria-pressed="true"] { background: color-mix(in srgb, var(--color-accent) 22%, transparent) !important; color: var(--color-text-primary) !important; }
   .mw-seg:focus-visible { outline: 2px solid var(--mw-accent-text) !important; outline-offset: -2px; }
-  .mw-stockby .mw-seg { padding: 5px 8px !important; font-size: 0.8rem !important; }
+  .mw-stockby .mw-seg { padding: 5px 8px !important; min-height: 36px !important; font-size: 0.85rem !important; }
   .mw-stock-which { display: flex; flex: 1 1 100%; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
   .mw-stock-which:empty { display: none; }
   .mw-stock-which .mw-btn { min-height: 0 !important; padding: 3px 10px !important; }
@@ -252,8 +253,8 @@
   /* Under the map: what only changes the view, never the machine or the pick. */
   .mw-mapview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
   .mw-mapview-cap { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-secondary); }
-  .mw-mapview .mw-btn { min-height: 0 !important; padding: 4px 10px !important; }
-  .mw-zoom .mw-btn { min-width: 34px; }
+  .mw-mapview .mw-btn { min-height: 36px !important; padding: 4px 12px !important; }
+  .mw-zoom .mw-btn { min-width: 44px; }
   .mw-zoom-level { min-width: 2.6em; text-align: center; }
   .mw-hole-map.mw-editing .mw-h-spot { cursor: crosshair; }
   .mw-hole-map .mw-h-block {
@@ -279,6 +280,7 @@
   .mw-diagram .mw-d-dim { stroke: var(--color-text-secondary); stroke-width: 1; fill: none; }
   .mw-diagram .mw-d-edge { stroke: var(--color-border); stroke-width: 1; }
   .mw-sh-diagram { max-width: 760px; margin: 4px 0; }
+  .mw-tab[data-tab="macros"] .mw-diagram { max-width: 760px; }
   #mw-stock-common-slot .mw-cut-only { display: none !important; }
   .mw-feeds-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 10px; }
   .mw-feeds-row .mw-select { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; }
@@ -386,7 +388,7 @@
   .mw-banner { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 8px; line-height: 1.4;
     border: 1px solid color-mix(in srgb, var(--mw-warn) 60%, transparent);
     background: color-mix(in srgb, var(--mw-warn) 14%, transparent); }
-  .mw-banner[hidden], .mw-cal[hidden], .mw-lab-vbit[hidden], .mw-lab-laser[hidden], [data-sh][hidden] { display: none !important; }
+  .mw-banner[hidden], .mw-cal[hidden], .mw-field[hidden], .mw-feeds-row[hidden], .mw-status[hidden], [data-sh][hidden] { display: none !important; }
   .mw-banner span { flex: 1; }
   .mw-plate { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--mw-line); border-radius: 8px; margin-bottom: var(--mw-gap); }
   .mw-cal { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; }
@@ -582,6 +584,7 @@
   .mw-hole-map text { font-family: inherit; font-size: 11px; fill: var(--color-text-secondary); }
   .mw-status[data-state="ok"] { color: var(--mw-ok); }
   .mw-status[data-state="bad"] { color: var(--mw-danger); }
+  .mw-status[data-state="warn"] { color: var(--mw-warn); }
   .mw-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.45; }
   code.mw-inline { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
   /* A visible keyboard focus on every control (WCAG 2.4.7, 1.4.11). */
@@ -666,8 +669,9 @@
               <button type="button" class="mw-seg" data-by="pins" aria-pressed="true" title="The stock is pushed against pins in dog holes: tap the holes the pins are in (two along one edge, one along the other). Its corner is worked out from them, a pin radius off each line.">Against Pins</button>
               <button type="button" class="mw-seg" data-by="zero" aria-pressed="false" title="A corner of the stock is on the work offset's X0 Y0 as it is when you press Use Current X0 Y0 (zero on the corner first, by touch or probe). It stays put when X0 Y0 changes.">Corner on X0 Y0</button>
             </div>
-            <span class="mw-stock-wl"><input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" placeholder="Width" aria-label="Stock width, along X" title="The stock's size along X. Needed for any X0 Y0 other than the pinned corner, and for the Stock Holes tab.">
-            <span class="mw-hint">&times;</span>
+            <span class="mw-stock-wl"><span class="mw-hint">W</span>
+            <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" placeholder="Width" aria-label="Stock width, along X" title="The stock's size along X. Needed for any X0 Y0 other than the pinned corner, and for the Stock Holes tab.">
+            <span class="mw-hint">&times; L</span>
             <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" placeholder="Length" aria-label="Stock length, along Y" title="The stock's size along Y.">
             <span class="mw-hint mw-unit">mm</span></span>
             <span class="mw-stock-wl"><span class="mw-hint">T</span>
@@ -826,7 +830,7 @@
             It goes to each at Safe Z, 6 mm down into it (stopping if it touches the spoilboard&rsquo;s top instead), and centers itself.
             <strong>Not yet tried with a real 3D probe:</strong> stay by the stop button the first time, and please tell us how it went on <a href="https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/issues" target="_blank" rel="noopener">GitHub</a>.</p>
           <p class="mw-hint" data-cal-mode="eye"><strong>By eye</strong>, with no probe: put a pin, a dowel or a V-bit in the spindle, jog it (keyboard, gamepad or pendant) down into
-            the hole&rsquo;s mouth until it&rsquo;s centered, with an even gap all round, and press <strong>Centered by Eye</strong>. It records where the bit is,
+            the hole&rsquo;s mouth until it&rsquo;s centered, with an even gap all around, and press <strong>Centered by Eye</strong>. It records where the bit is,
             without moving; a pin that just fits the hole centers itself.</p>
           <p class="mw-hint">Measure two or more holes far apart (along a row and up a column) to fit the spacing and insets, and how far the
             spoilboard is turned (Turn); Apply waits for the second.</p>
@@ -1078,7 +1082,7 @@
     <div class="mw-tab" data-tab="cut" hidden>
       <p class="mw-intro"><strong>Cut the board&rsquo;s own pattern</strong>: its dog holes, T-tracks, grid lines and labels, into the
         spoilboard, or copy it into stock laid on top. To drill holes in a workpiece so it bolts down, locates or flips, use
-        <strong>Stock Holes</strong>. The pattern is the XY0 Picker&rsquo;s Setup, so the board and the map come from the same numbers. Put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it), or on the stock&rsquo;s with Into the stock on top ticked, pick
+        <strong>Stock Holes</strong>. The pattern is the XY0 Picker&rsquo;s Setup, so the board and the map come from the same numbers. Put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once its height is recorded), or on the stock&rsquo;s with Into the stock on top ticked, pick
         what to cut, and <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run. It uses the active
         work offset&rsquo;s X0 Y0. Surfacing is QuickCut&rsquo;s.</p>
       <div class="mw-plate">
@@ -1099,23 +1103,23 @@
       <section class="mw-card" id="mw-cut-common">
         <h3 class="mw-card-title">Bit and depth</h3>
         <div class="mw-row mw-row-5">
-          <div class="mw-field">
+          <div class="mw-field" data-for="holes tracks fit stock">
             <label for="mw-cut-bit" id="mw-cut-bit-label" class="mw-label-link" tabindex="0" role="button" title="Click to use the loaded tool's diameter from ncSender's tool table">Bit Diameter (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-bit" value="6.35" title="The bit that's loaded. Each hole is drilled when the bit is its size, spiralled down when it's up to twice the bit, else cleared in rings.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-bit" value="6.35" title="The bit that's loaded. Each hole is drilled when the bit is its size, spiraled down when it's up to twice the bit, else cleared in rings.">
           </div>
-          <div class="mw-field mw-cut-only">
+          <div class="mw-field mw-cut-only" data-for="holes tracks">
             <label for="mw-cut-thick">Spoilboard Thickness (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-thick" value="19.05" title="How thick the spoilboard is. Hole Depth can't be more, so the bit never cuts into what's under it.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-thick" value="" placeholder="measure it" title="How thick the spoilboard is: measure it. Hole Depth can't be more, so the bit never cuts into what's under it.">
           </div>
-          <div class="mw-field mw-cut-only">
+          <div class="mw-field mw-cut-only" data-for="holes">
             <label for="mw-cut-depth">Hole Depth (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-depth" value="18.05" title="How deep each hole goes below Z0 (the spoilboard's top, or the stock's with Into the stock on top ticked). Leave a little under it unless there's a sacrificial layer below.">
           </div>
-          <div class="mw-field">
+          <div class="mw-field" data-for="holes tracks fit stock">
             <label for="mw-cut-step">Depth per Pass (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-step" value="3" title="How much deeper each pass goes: a turn of the spiral, a ring of clearing, or a peck when drilling.">
           </div>
-          <div class="mw-field">
+          <div class="mw-field" data-for="holes fit stock">
             <label for="mw-cut-peck">Drill Pecks</label>
             <select class="mw-select" id="mw-cut-peck" title="For holes the bit's size, drilled straight down: after each Depth per Pass, Clear chips rapids up to 2 mm above the top and back; Break chips backs off 0.5 mm to snap the chip; None plunges to depth in one go.">
               <option value="clear" selected>Clear chips</option>
@@ -1123,23 +1127,23 @@
               <option value="none">None</option>
             </select>
           </div>
-          <div class="mw-field">
+          <div class="mw-field" data-for="holes tracks fit stock">
             <label for="mw-cut-stepover">Stepover (%)</label>
             <input class="mw-input" type="number" id="mw-cut-stepover" min="1" max="90" step="1" value="40" title="For holes cleared in rings: how far apart the rings are, as a % of the bit diameter.">
           </div>
-          <div class="mw-field">
+          <div class="mw-field" data-for="holes tracks fit chamfer stock">
             <label for="mw-cut-feed">Feed (<span class="mw-unit">mm</span>/min)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-feed" value="1500" title="How fast the bit moves while cutting, spiral included.">
           </div>
-          <div class="mw-field">
+          <div class="mw-field" data-for="holes tracks fit chamfer stock lines-vbit labels-vbit">
             <label for="mw-cut-plunge">Plunge (<span class="mw-unit">mm</span>/min)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-plunge" value="500" title="How fast the bit goes down when drilling or ramping into a cleared hole.">
           </div>
-          <div class="mw-field">
+          <div class="mw-field" data-for="holes tracks fit chamfer stock lines-vbit labels-vbit">
             <label for="mw-cut-rpm">Spindle RPM</label>
             <input class="mw-input" type="number" id="mw-cut-rpm" min="0" step="100" value="18000" title="Spindle speed (M3). 0 leaves the spindle alone.">
           </div>
-          <div class="mw-field">
+          <div class="mw-field" data-for="holes tracks fit chamfer stock lines-vbit labels-vbit">
             <label for="mw-cut-delay">Spindle Delay (s)</label>
             <input class="mw-input" type="number" id="mw-cut-delay" min="0" step="1" value="3" title="Seconds to wait after starting the spindle, so it's up to speed.">
           </div>
@@ -1148,7 +1152,7 @@
             <label class="mw-extra"><input type="checkbox" id="mw-cut-flood"><span>Flood (M8)</span></label>
           </div>
         </div>
-        <div class="mw-feeds-row">
+        <div class="mw-feeds-row" data-for="holes tracks fit stock">
           <span class="mw-hint">Starting feeds for</span>
           <select class="mw-select" id="mw-cut-mat" aria-label="Material" title="What you're cutting. Fill In puts starting numbers for it in RPM, Feed, Plunge, Depth per Pass and Stepover, as ncCAM's: start there and adjust by ear and chip.">
             <option value="mdf" selected>MDF / Plywood</option>
@@ -1166,7 +1170,7 @@
           <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cut-feeds-fill" title="Put the starting numbers for this material and bit in RPM, Feed, Plunge, Depth per Pass and Stepover.">Fill In</button>
           <span class="mw-hint" id="mw-cut-feeds-note"></span>
         </div>
-        <p class="mw-status" id="mw-cut-bit-note" role="status"></p>
+        <p class="mw-status" id="mw-cut-bit-note" role="status" data-for="holes tracks fit stock"></p>
       </section>
       </div>
       <section class="mw-card" data-sec="holes">
@@ -1199,7 +1203,7 @@
         </div>
         <p class="mw-hint" id="mw-trk-summary"></p>
         <p class="mw-status" id="mw-trk-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-trk-generate">Generate T-tracks</button></div>
+        <div><button type="button" class="mw-btn" id="mw-trk-generate">Generate T-tracks</button></div>
       </section>
       <section class="mw-card" data-sec="fit">
         <h3 class="mw-card-title">Dowel fit test</h3>
@@ -1229,11 +1233,11 @@
         </div>
         <p class="mw-hint" id="mw-fit-sizes"></p>
         <p class="mw-status" id="mw-fit-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-fit-generate">Generate Fit Test</button></div>
+        <div><button type="button" class="mw-btn" id="mw-fit-generate">Generate Fit Test</button></div>
       </section>
       <section class="mw-card" data-sec="chamfer">
         <h3 class="mw-card-title">Chamfer the holes</h3>
-        <p class="mw-hint">With a V-bit, after cutting: a small bevel round each hole&rsquo;s top edge, so dowels start easily and the edge doesn&rsquo;t crumble. The same holes as above; Z0 on the spoilboard&rsquo;s top (or the stock&rsquo;s, ticked).</p>
+        <p class="mw-hint">With a V-bit, after cutting: a small bevel around each hole&rsquo;s top edge, so dowels start easily and the edge doesn&rsquo;t crumble. The same holes as above; Z0 on the spoilboard&rsquo;s top (or the stock&rsquo;s, ticked).</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-chm-angle">V-bit Angle (&deg;)</label>
@@ -1245,7 +1249,7 @@
           </div>
         </div>
         <p class="mw-status" id="mw-chm-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-chm-generate">Generate Chamfers</button></div>
+        <div><button type="button" class="mw-btn" id="mw-chm-generate">Generate Chamfers</button></div>
       </section>
       <section class="mw-card" data-sec="lines">
         <h3 class="mw-card-title">Grid lines</h3>
@@ -1276,12 +1280,12 @@
         </div>
         <p class="mw-hint" id="mw-gl-summary"></p>
         <p class="mw-status" id="mw-gl-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-gl-generate">Generate Grid Lines</button></div>
+        <div><button type="button" class="mw-btn" id="mw-gl-generate">Generate Grid Lines</button></div>
       </section>
       <section class="mw-card" data-sec="lasertest">
         <h3 class="mw-card-title">Laser test</h3>
         <p class="mw-hint">Find the laser&rsquo;s power and speed for crisp lines: a small cross for every power and feed, on scrap of the same material.
-          X0 Y0 on the scrap&rsquo;s front left corner, the laser focused on its top. Each row is labelled with its feed, each column with its power;
+          X0 Y0 on the scrap&rsquo;s front left corner, the laser focused on its top. Each row is labeled with its feed, each column with its power;
           use the best for Grid lines and Labels.</p>
         <div class="mw-row">
           <div class="mw-field">
@@ -1311,7 +1315,7 @@
         </div>
         <p class="mw-hint" id="mw-lt-summary"></p>
         <p class="mw-status" id="mw-lt-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-lt-generate">Generate Laser Test</button></div>
+        <div><button type="button" class="mw-btn" id="mw-lt-generate">Generate Laser Test</button></div>
       </section>
       <section class="mw-card" data-sec="labels">
         <h3 class="mw-card-title">Engrave the labels</h3>
@@ -1350,7 +1354,7 @@
         </div>
         <p class="mw-hint" id="mw-lab-summary"></p>
         <p class="mw-status" id="mw-lab-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-lab-generate">Generate Labels</button></div>
+        <div><button type="button" class="mw-btn" id="mw-lab-generate">Generate Labels</button></div>
       </section>
     </div>
     <div class="mw-tab" data-tab="stock" hidden>
@@ -1443,9 +1447,10 @@
         <label class="mw-check" title="Load the part's program first. Any spoilboard hole where its bit (its edge, rapids too) would pass within 1 mm of the bolt head or pin is left out, and the nearest clear hole used instead, with X0 Y0 where it is now. A bolt head is taken to stand about the bolt's width high, on the stock or in its counterbore."><input type="checkbox" id="mw-sh-avoid" checked> Clear of the loaded program</label>
         <svg class="mw-diagram mw-sh-diagram" id="mw-sh-diagram" viewBox="0 0 700 214" role="img" aria-label="Side view of the stock on the spoilboard: where Z0 is and how deep each hole goes."></svg>
         <p class="mw-hint" id="mw-sh-summary"></p>
-        <div><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-sh-zeropin" hidden title="For the second side: X0 Y0 on the round flip pin's center, which stays put when the stock turns over. Opens the XY0 Picker on it; hold Set there.">Zero on the Flip Pin</button></div>
+        <div><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-sh-place" hidden title="Opens the XY0 Picker in Stock mode: tap the holes your pins are in, or use Current X0 Y0 on a corner, and give the stock's size and thickness.">Place the Stock in the XY0 Picker</button>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-sh-zeropin" hidden title="For the second side: X0 Y0 on the round flip pin's center, which stays put when the stock turns over. Opens the XY0 Picker on it; hold Set there.">Zero on the Flip Pin</button></div>
         <p class="mw-status" id="mw-sh-note" role="status"></p>
-        <div><button type="button" class="mw-btn mw-btn-quiet" id="mw-sh-generate">Generate Stock Holes</button></div>
+        <div><button type="button" class="mw-btn" id="mw-sh-generate">Generate Stock Holes</button></div>
       </section>
     </div>
     <div class="mw-tab mw-welcome" data-tab="welcome" hidden>
@@ -1520,10 +1525,10 @@
 </svg></div>
           <p class="mw-hint">Lay out a new board and cut it. The board and the map come from the same numbers, so they agree from the first hole.</p>
           <ol class="mw-welcome-steps">
-            <li>Surface the board (QuickCut) and put Z0 on its top.</li>
+            <li>Home the machine and surface the board (QuickCut&rsquo;s Wasteboard Surfacing).</li>
             <li>Describe the grid you want in <strong>Setup</strong>, or load a preset.</li>
-            <li><strong>Spoilboard &rsaquo; Fit test</strong> in scrap, to choose the hole size.</li>
-            <li><strong>Spoilboard &rsaquo; Dog holes &rsaquo; Generate</strong>, check it in the visualizer and run it.</li>
+            <li><strong>Cut Board &rsaquo; Fit test</strong> in scrap (X0 Y0 on its front left corner, Z0 on its top), to choose the hole size.</li>
+            <li>Put Z0 on the board&rsquo;s top, then <strong>Cut Board &rsaquo; Dog holes &rsaquo; Generate</strong>, check it in the visualizer and run it.</li>
           </ol>
           <div><button type="button" class="mw-btn" id="mw-welcome-new">Lay out a new board</button></div>
         </section>
@@ -2813,19 +2818,19 @@
     if (!(o.stepMm > 0)) out.push('Depth per Pass must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) out.push('Feed and Plunge must be more than 0');
     // Stepover only sets the rings of holes cleared out; drilling and
-    // spiralling don't use it.
+    // spiraling don't use it.
     var rings = o.bitMm > 0 && o.holes.some(function(h) { return holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm) === 'clear'; });
     if (rings && !(o.stepoverPct > 0 && o.stepoverPct <= 90)) out.push('Stepover must be 1 to 90% (holes more than twice the bit are cleared in rings)');
-    if (!o.holes.length) out.push('There are no holes to cut');
-    // The spindle goes round each hole a bit radius in from its edge, so
+    if (!o.holes.length) out.push('There are no holes to cut: every hole is suppressed, on a hidden grid, in a keepout zone or Exclude Picks area, or off the stock');
+    // The spindle goes around each hole a bit radius in from its edge, so
     // that circle must be inside the travel (a hole whose middle is, near an
     // end, may not be).
-    if (o.travel) {
+    if (o.travel && o.bitMm > 0) {
       var off = o.holes.filter(function(h) { return !holeInTravel(h, Math.max(0, h.diaMm / 2 - o.bitMm / 2), o.travel); });
       if (off.length) out.push((off.length === 1 ? off[0].label + ' reaches' : off.length + ' holes (' + off[0].label + '\u2026) reach') + ' outside the machine\u2019s travel');
     }
     var small = o.holes.filter(function(h) { return o.bitMm > 0 && holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm) === 'too-small'; });
-    if (small.length) out.push('The bit is bigger than ' + (small.length === 1 ? small[0].label : small.length + ' holes (' + small[0].label + '…)'));
+    if (small.length) out.push('The bit is bigger than ' + (small.length === 1 ? small[0].label : small.length + ' holes (' + small[0].label + '…)') + ': use a smaller bit or a bigger Hole Diameter');
     return out;
   }
 
@@ -3345,7 +3350,7 @@
     return cutEnd(o, L);
   }
 
-  // A V-bit chamfer round each hole's top edge, chamferMm wide: one lap
+  // A V-bit chamfer around each hole's top edge, chamferMm wide: one lap
   // with the cone's flank on the edge, its tip 0.5 mm lower than the
   // chamfer's foot, inside the hole. A hole smaller than that is
   // countersunk with a plunge at its middle.
@@ -4717,6 +4722,18 @@
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() { if (!$('mw-pick-card').closest('[hidden]')) renderHoles(); }, 150);
     });
+    // The bar under the map grows when Stock mode's controls show, after the
+    // map was sized for it: size the map again, or Set ends up off screen.
+    if (window.ResizeObserver) {
+      var barH = 0;
+      new ResizeObserver(function() {
+        var was = barH;
+        barH = $('mw-holebar').offsetHeight;
+        if (!rootAlive() || !was || !barH || was === barH) return;
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() { if (!$('mw-pick-card').closest('[hidden]')) renderHoles(); }, 50);
+      }).observe($('mw-holebar'));
+    }
     $('mw-profile').addEventListener('change', profileMenu);
     $('mw-profile-ok').addEventListener('click', profileOk);
     $('mw-profile-cancel').addEventListener('click', profileCancel);
@@ -6261,7 +6278,7 @@
     if (inViewCount > 2500) {
       add('text', { x: (w / 2).toFixed(1), y: (ht / 2).toFixed(1), 'text-anchor': 'middle' }, inViewCount + ' holes: too many to draw, zoom in');
     } else if (h) {
-      // Each hole sits in a hit area most of the way to its neighbours, so
+      // Each hole sits in a hit area most of the way to its neighbors, so
       // small holes are easy to tap.
       // Listed points (pins, a vise) are drawn after the grids, so where
       // they overlap a grid hole they're on top and take the click, with a
@@ -6893,7 +6910,7 @@
   // its suppressed, hidden and blocked marks) cut by holeCutProgram and
   // loaded into ncSender's visualizer to check and run.
   var CUT_LENGTHS = ['bit', 'thick', 'depth', 'step', 'feed', 'plunge'], CUT_PLAIN = ['stepover', 'rpm', 'delay'];
-  var CUT_METHODS = { drill: 'drilled', helix: 'spiralled down', clear: 'cleared in rings', 'too-small': 'too small for the bit' };
+  var CUT_METHODS = { drill: 'drilled', helix: 'spiraled down', clear: 'cleared in rings', 'too-small': 'too small for the bit' };
   function cutMm(id) { var v = unitVal($(id)); return isFinite(v) ? v * (state.imperial ? MM_PER_INCH : 1) : NaN; }
   // Two pin holes: the first round (it locates), the second a slot slotMm
   // longer toward the first, so the stock can't bind if it or the board
@@ -6991,13 +7008,13 @@
   // ncSender reports.
   function placeProblems(o) {
     var out = [], ms = state.machine || {};
-    if (!state.travel) out.push('Couldn\u2019t read the machine\u2019s travel, so the holes can\u2019t be placed');
+    if (!state.travel) out.push('Couldn\u2019t read the machine\u2019s travel, so the holes can\u2019t be placed: connect to the controller and home it');
     if (state.reportInches) out.push('grblHAL reports positions in inches ($13=1); set $13=0 first');
     // Lifting to Safe Z between holes over a zone mustn't go down: Safe Z
     // (G53, so without the tool length offset) must put the tip above the
     // 5 mm hop. Not checked till Generate has read the offset (undefined).
     if (o.tloMm === null) out.push('Couldn\u2019t read the tool length offset from the controller ($G, $#), so Safe Z can\u2019t be checked: try Generate again');
-    else if (o.tloMm !== undefined && o.wcs && o.zWcs != null && state.safeZMm != null && state.safeZMm - o.tloMm < o.zWcs + 5) out.push('ncSender\u2019s Safe Z puts this tool\u2019s tip less than 5 mm above ' + o.wcsName + ' Z0: raise it, since the programs lift to it to pass over zones');
+    else if (o.tloMm !== undefined && o.wcs && o.zWcs != null && state.safeZMm != null && state.safeZMm - o.tloMm < o.zWcs + 5) out.push('ncSender\u2019s Safe Z puts this tool\u2019s tip less than 5 mm above ' + o.wcsName + ' Z0: raise Safe Z Height in ncSender\u2019s Settings \u203a General, since the programs lift to it to pass over zones');
     if (!o.wcs) out.push(ms.connected ? o.wcsName + ' is active, and ncSender only reports G54\u2013G59\u2019s X0 Y0: switch to one of those' : 'Connect to the controller first');
     if (o.plateOn) {
       if (!o.plate) out.push('Stock on top: place the stock in the XY0 Picker\u2019s Stock mode (Against Pins, or Corner on X0 Y0) and give its width and length');
@@ -7014,9 +7031,16 @@
     return out;
   }
   function cutProblems(o) { return placeProblems(o).concat(holeCutProblems(o)); }
+  // Dog holes also need the board's thickness, so Hole Depth can't go
+  // through it (it has no default: boards differ).
+  function dogHoleProblems(o) {
+    var out = cutProblems(o);
+    if (!o.plateOn && !(o.thickMm > 0)) out.push('Give the Spoilboard Thickness (measure the board), so Hole Depth can\u2019t go through it');
+    return out;
+  }
   // What's cut (how many of each size, and how) and what's left out.
   function renderCut() {
-    var o = cutSettings(), probs = cutProblems(o), g = holes.grid;
+    var o = cutSettings(), probs = dogHoleProblems(o), g = holes.grid;
     var sizes = {};
     o.holes.forEach(function(q) {
       var key = shown(q.diaMm) + ' ' + unitName() + ' (' + (o.bitMm > 0 ? CUT_METHODS[holeCutMethod(q.diaMm, o.bitMm)] : '?') + ')';
@@ -7138,7 +7162,7 @@
     plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
-  var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-thick': 0.75, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
+  var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
     'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
     'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-slot': 0.03, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
     'gl-depth': 0.012, 'gl-feed': 60, 'lt-fmin': 20, 'lt-fmax': 120 };
@@ -7383,7 +7407,7 @@
   async function generateCut() {
     await readMachineState(); await readTlo();
     if (!(await cutToolStillMatches($('mw-cut-note')))) return;
-    var o = cutSettings(), probs = cutProblems(o);
+    var o = cutSettings(), probs = dogHoleProblems(o);
     if (probs.length) { renderCut(); return; }
     await loadProgram('SBT-DogHoles_' + o.holes.length + 'x_Bit-' + shown(o.bitMm) + '_D-' + shown(o.depthMm) + '_' + unitName() + '.nc',
       holeCutProgram(o), $('mw-cut-note'), $('mw-cut-generate'));
@@ -7669,7 +7693,7 @@
       else if (Math.abs(above - thick) > 0.5) res.warn = o.wcsName + ' Z0 is ' + shown(above) + ' ' + unitName() + ' above the spoilboard height recorded in ' + slotName + ' Z, but T is ' + shown(thick) + ' ' + unitName() +
         '. The holes are cut down from Z0, so check it\u2019s on this stock\u2019s top: touch the bit to the top and ncSender\u2019s Z should read 0. If it does, something ' + shown(above - thick) + ' ' + unitName() +
         ' thick is under the stock, or the recorded spoilboard height is out of date (record it again in Z0 macros before using SBT: Z0 on spoilboard).';
-    } else if (thick > 0) res.warn = 'Couldn’t check that Z0 is on the stock’s top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.';
+    } else if (thick > 0) res.warn = 'Z0 can’t be checked: no spoilboard height is recorded yet (Z0 macros). Make sure ' + o.wcsName + ' Z0 is on the stock’s top: on the spoilboard, the holes would go a stock’s thickness too deep.';
     // Blank or 0: no counterbore, and its depth doesn't matter.
     var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '' && cb !== 0;
     res.hasCb = hasCb;
@@ -7861,7 +7885,7 @@
         var lines = holeCutProgram(o);
         var how = o.bitMm > 0 ? holeCutMethod(s.chosen.length && o.holes.filter(function(h) { return !/ counterbore$/.test(h.label); })[0].diaMm, o.bitMm) : null;
         if (how && CUT_METHODS[how]) text += ' The holes are ' + CUT_METHODS[how] + (how === 'drill' ? ($('mw-cut-peck').value === 'none' ? ' in one plunge' : ' (' + $('mw-cut-peck').selectedOptions[0].textContent.toLowerCase() + ' each Depth per Pass)') : '') + '.';
-        if ((s.pins || s.fix) && s.slotMm > 0) text += ' The slot is cut round its outline, down to the stock\u2019s bottom; the pin\u2019s round hole goes on through.';
+        if ((s.pins || s.fix) && s.slotMm > 0) text += ' The slot is cut around its outline, down to the stock\u2019s bottom; the pin\u2019s round hole goes on through.';
         text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o);
       }
       var pg = s.prog ? programPlace(s.prog) : null, pname = s.prog ? programName(s.prog) : '';
@@ -7879,10 +7903,12 @@
       text += ' It lifts to Safe Z between holes, to clear the clamps. Take the pins out of the holes under the stock first: the bit goes into them.';
     }
     $('mw-sh-zeropin').hidden = !(s.pins && s.flip && !s.probs.length);
-    if (s.warn) text += (text ? ' ' : '') + s.warn;
+    $('mw-sh-place').hidden = !!s.rect && $('mw-stock-t').value.trim() !== '';
     $('mw-sh-summary').textContent = text;
     stockDiagram(s);
     showProblems($('mw-sh-note'), s.probs);
+    // A Z0 that can't be checked or looks off shows by Generate, not in the summary.
+    if (!s.probs.length && s.warn) { $('mw-sh-note').setAttribute('data-state', 'warn'); $('mw-sh-note').textContent = s.warn; }
     $('mw-sh-generate').disabled = !!s.probs.length;
   }
   async function generateStockHoles() {
@@ -7950,7 +7976,7 @@
         ' wholly on it, ' + shown(PLATE_EDGE_MM) + u + ' from its edges; depth never past its thickness; Z0 on its top.' +
         (state.spoilZ ? '' : ' Couldn\u2019t check that Z0 is on its top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.');
   }
-  function renderCutTab() { renderPlate(); renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderLabels(); renderGridLines(); renderLaserTest(); }
+  function renderCutTab() { commonFields(); renderPlate(); renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderLabels(); renderGridLines(); renderLaserTest(); }
   function wireCut() {
     CUT_SAVED.lengths.concat(CUT_SAVED.plain).forEach(function(k) {
       $('mw-' + k).addEventListener('input', renderCutTab);
@@ -7971,6 +7997,11 @@
     showStartingFeeds();
     $('mw-cut-generate').addEventListener('click', generateCut);
     $('mw-sh-generate').addEventListener('click', generateStockHoles);
+    $('mw-sh-place').addEventListener('click', function() {
+      setZeroMode('stock');
+      showTab('holes');
+      renderHoles(); saveSettings();
+    });
     $('mw-sh-zeropin').addEventListener('click', function() {
       var s = stockHoleSettings(), q = s.flip && cutOrder(s.chosen)[0];
       if (!q) return;
@@ -8406,21 +8437,21 @@
   var HELP_NEEDS = '<strong>What you need:</strong> a spoilboard (a plain one is fine: Cut Board cuts the holes), and a homed grblHAL machine and ncSender are enough for the XY0 Picker, measuring holes by eye, the nearest-hole keyboard macros, and the Cut Board and Stock Holes programs (Z0 touched off any way you like). The Z0 macros and Set Z0 also need measured tool lengths (a tool setter or an ATC) and, once, a touch plate. Bit Diameter&rsquo;s tool change needs the tool in ncSender&rsquo;s tool table; probing holes needs a 3D touch probe (not yet tried on a real one: feedback welcome); laser labels need grblHAL&rsquo;s laser mode ($32=1). The README has the full list.';
   var HELP_TOPICS = {
     holes: { name: 'XY0 Picker', notes: [
-      '<strong>Two ways to start.</strong> <strong>No holes yet:</strong> surface the board, put Z0 on its top, describe the grid you want in Setup (or load a preset), cut a fit test in scrap to choose the hole size, then Cut Board &rsaquo; Dog holes &rsaquo; Generate; the board and the map come from the same numbers, so they agree. <strong>Holes already there:</strong> type the grid&rsquo;s size and spacing in Setup, pick a hole, jog over its real center and press <strong>Grab First Hole Center</strong> (it names the hole you picked, e.g. Grab B3 Center); then Measure Holes on the three it suggests and <strong>Apply to Setup</strong>, suppress missing holes with Edit Holes, and check with Go to Selected over a far hole. Save Setup as a profile either way.',
+      '<strong>Two ways to start.</strong> <strong>No holes yet:</strong> home the machine, surface the board, describe the grid you want in Setup (or load a preset), cut a fit test in scrap to choose the hole size (X0 Y0 and Z0 on the scrap), put Z0 on the board&rsquo;s top, then Cut Board &rsaquo; Dog holes &rsaquo; Generate; the board and the map come from the same numbers, so they agree. <strong>Holes already there:</strong> type the grid&rsquo;s size and spacing in Setup, pick a hole, jog over its real center and press <strong>Grab First Hole Center</strong> (it names the hole you picked, e.g. Grab B3 Center); then Measure Holes on the three it suggests and <strong>Apply to Setup</strong>, suppress missing holes with Edit Holes, and check with Go to Selected over a far hole. Save Setup as a profile either way.',
       '<strong>Your spoilboard&rsquo;s holes are a precision fixture; this turns them into work zero.</strong> Jog roughly near a hole, tap <strong>Pick Nearest Hole</strong>, hold <strong>Set</strong>, and X0 Y0 is exactly on its center or edge: no edge finder, no XY probe, nothing typed, and the same zero next time. Or switch to <strong>Stock</strong>, tap the holes your pins are in, and zero on the stock pushed against them: its corner, an edge or its center, worked out from the pins. <strong>Measure Holes</strong> fits the grid to your real board, with a 3D probe or a pin centered by eye. Missing holes, T-tracks, several grids, custom pins and a profile per board each have a Help page of their own.',
       '<strong>For example:</strong> push the stock against pins in B4, B6 (its front edge) and C3 (its left edge). In <strong>Stock</strong>, tap those three holes: the stock\u2019s front left corner is a pin radius right of column 3 and behind row B, and the line beside Set says so with the numbers. Hold <strong>Set</strong>: no edge finder, no XY probe, nothing typed. Pick its center (or any other dot) and it also needs the stock&rsquo;s size: type it, or jog over the far corner and press <strong>Far Corner Here</strong>.',
-      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sends G10 L2 with the hole&rsquo;s machine position. The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
+      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sets the work offset there, without moving (G10 L2). The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       '<p><strong>Measure Holes</strong> (Setup unlocked) fits Setup&rsquo;s spacing, insets and Turn to your real holes. Measure two or more far apart, then <strong>Apply to Setup</strong>.</p>' +
         '<p><strong>Measure with</strong> picks how; only that way&rsquo;s buttons show, and it opens on by eye, so a pin is never sent probing.</p><ul>' +
-        '<li><strong>By eye:</strong> a pin, dowel or V-bit in the spindle. Jog it into the hole&rsquo;s mouth until the gap is even all round, press <strong>Centered by Eye</strong>. Nothing moves.</li>' +
+        '<li><strong>By eye:</strong> a pin, dowel or V-bit in the spindle. Jog it into the hole&rsquo;s mouth until the gap is even all around, press <strong>Centered by Eye</strong>. Nothing moves.</li>' +
         '<li><strong>3D probe:</strong> tip in a hole, below the top, press <strong>Probe This Hole</strong>: it touches the walls in X and Y. Or start the tip 1 to 4 mm above the spoilboard and hold <strong>Probe Suggested Holes</strong> to do them all: Safe Z between holes, 6 mm down into each (it stops if it touches the top instead: Setup is off there), centering itself twice.</li></ul>' +
         '<p><strong>Which holes:</strong> it suggests three, the one nearest A1, the far end of its row and the top of its column, clear of zones and the stock; hold <strong>Go to</strong> to move over the next. Any hole works. A row and a column give both spacings and the Turn.</p>' +
         '<p><strong>Also record the spoilboard height</strong> (probe only, off to start): touches the top beside the first hole and stores it for the Z0 macros. Only with the probe&rsquo;s tool length offset measured; it refuses without one, and won&rsquo;t store a height over 2 mm from the recorded one.</p>' +
         '<p><em>The 3D probe steps haven&rsquo;t been tried on a real probe yet: stay by the stop button, and feedback is welcome on GitHub.</em></p>',
       '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and the Cut Board and Stock Holes programs all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
-      'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Planer) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
+      'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Wasteboard Surfacing) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
       'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>, counted from machine zero&rsquo;s corner, so <strong>A1</strong> is the hole nearest machine X0 Y0 (front left on a machine that homes there). The column numbers run along the top of the map and the row letters down its left side.',
       '<p><strong>Hole or Stock</strong> at the top of the controls picks what X0 Y0 goes on.</p><ul>' +
         '<li><strong>Hole:</strong> the dots pick where on the hole: its center, or an edge or corner of the hole one hole radius out in machine X and Y (back is +Y, right is +X). For a part on a pin, a flip pin, a jig&rsquo;s home hole, or moving around the bed.</li>' +
@@ -8456,17 +8487,21 @@
         '<li>On the Z0 macros&rsquo; work offset it keeps a probed Z0 for <strong>SBT: Z0 back to saved</strong>.</li>' +
         '<li>A height below the spoilboard or past the Z travel (a unit typo, say) is flagged and refused.</li></ul>',
       '<strong>Holes that aren&rsquo;t a regular grid</strong> (locating holes, fixture pins, a custom layout): set Setup&rsquo;s layout menu to <strong>List</strong> and give one hole per line, <kbd>x, y</kbd> or <kbd>name: x, y</kbd>, measured from a <strong>reference point</strong> into the machine&rsquo;s travel, the way the insets are. Start a line with <kbd>#</kbd> or <kbd>;</kbd> to skip that hole without deleting it. The easy way: set the reference first, then jog over each hole and press <strong>Add Current Position</strong>. If the board or the machine&rsquo;s homing ever shifts, jog to the first listed hole and press <strong>Grab First Hole Center</strong>: the reference moves and the whole list follows. Everything else (the map, Pick Nearest Hole, the dots, Go to, Set, keepout zones, the nearest-hole macros) works the same.',
-      '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as grey bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
+      '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as gray bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines. No grid on the board yet? <strong>Cut Board &rsaquo; Grid lines</strong> lasers or engraves it from Setup.',
       HELP_NEEDS, HELP_UNITS,
       '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all round, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
     cut: { name: 'Cut Board', notes: [
       'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
-      '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (<strong>SBT: Z0 on spoilboard</strong> does it, or touch off), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
+      '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
-      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge), <strong>spiralled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
-      'It runs in the active work offset (G54&ndash;G59), with that offset&rsquo;s X0 Y0 written into the program: it stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say). Z0 must be on the spoilboard&rsquo;s top.',
+      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge), <strong>spiraled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
+      '<p><strong>Where to zero:</strong></p><ul>' +
+        '<li><strong>Dog holes, T-tracks, Grid lines, Chamfers, Labels:</strong> Z0 on the spoilboard&rsquo;s top (the stock&rsquo;s, with Into the stock on top). X0 Y0 can be anywhere: the holes go at their machine positions. Don&rsquo;t move it after Generate.</li>' +
+        '<li><strong>Fit test, Laser test:</strong> X0 Y0 on the scrap&rsquo;s front left corner, Z0 on its top (the laser focused on it).</li>' +
+        '<li><strong>Stock Holes:</strong> Z0 on the stock&rsquo;s top; X0 Y0 anywhere.</li></ul>' +
+        '<p>Each program runs in the active work offset (G54&ndash;G59). It stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say).</p>',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
       'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. With a tool changer, <strong>Bit Diameter</strong>&rsquo;s label opens ncSender&rsquo;s tool table (the tool in the spindle first, a filter on top): pick the tool, and the hole, T-track, stock-hole and fit-test programs start with a tool change to it (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Without one, click <strong>Bit Diameter</strong> for the loaded tool&rsquo;s diameter, with no tool change. Flutes is set from the tool&rsquo;s name or notes, or to 2 when they don&rsquo;t say. Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',
@@ -8478,7 +8513,7 @@
         '<li>Every other line runs back the other way, so most moves between them are short.</li>' +
         '<li>A laser moves between lines at its focus height, Z untouched, over zones too: keep tall clamps off the bed.</li>' +
         '<li>Then set Hole Diameter to the line&rsquo;s width and zero on the crossings, as for any lasered grid.</li></ul>',
-      '<p><strong>Laser test:</strong> a small cross, a grid crossing&rsquo;s shape, for every pair of powers (columns) and feeds (rows), labelled, on scrap of the same material with X0 Y0 on its front left corner and the laser focused on its top.</p>' +
+      '<p><strong>Laser test:</strong> a small cross, a grid crossing&rsquo;s shape, for every pair of powers (columns) and feeds (rows), labeled, on scrap of the same material with X0 Y0 on its front left corner and the laser focused on its top.</p>' +
         '<p>Pick the crispest cross and use its power and feed for Grid lines and Labels. The summary gives the scrap size it needs.</p>',
       '<p><strong>Into the stock on top:</strong> tick it to cut stock on top of the spoilboard (a removable MDF sheet, say) with a copy of the spoilboard&rsquo;s grid, instead of cutting the spoilboard itself. It&rsquo;s the XY0 Picker&rsquo;s <strong>Stock</strong>: where it&rsquo;s placed (<strong>Against Pins</strong> or <strong>Corner on X0 Y0</strong>), its size and its thickness (T).</p><ul>' +
         '<li>Dog holes, Chamfers and Labels use only the holes wholly on it, 3 mm in from its edges.</li>' +
@@ -8563,13 +8598,13 @@
         { id: 'what', icon: 'start', title: 'What it makes', short: 'Every hole from the map, in one program.', notes: [0, 1] },
         { id: 'surface', icon: 'refresh', title: 'Surfacing is QuickCut’s', short: 'Flatten first with QuickCut, then cut.', notes: [2] } ] },
       { title: 'Dog holes', pages: [
-        { id: 'how', icon: 'drill', title: 'Which holes, and how', short: 'Drilled, spiralled or cleared, by size.', notes: [3, 4] },
+        { id: 'how', icon: 'drill', title: 'Which holes, and how', short: 'Drilled, spiraled or cleared, by size.', notes: [3, 4] },
         { id: 'safe', icon: 'shield', title: 'Where, and the safety stops', short: 'Work offset checks, depth limit, Safe Z hops.', notes: [5, 6] },
         { id: 'bit', icon: 'gear', title: 'The bit and tool change', short: 'Take the loaded tool and it starts with M6.', notes: [7] } ] },
       { title: 'Before and after', pages: [
         { id: 'tracks', icon: 'slot', title: 'T-tracks', short: 'A two-layer board whose top you can replace.', notes: [8] },
         { id: 'fit', icon: 'ruler', title: 'Dowel fit test', short: 'Find the size your dowels fit, in scrap.', notes: [9] },
-        { id: 'chamfer', icon: 'vbit', title: 'Chamfers', short: 'A bevel round each hole with a V-bit.', notes: [10] },
+        { id: 'chamfer', icon: 'vbit', title: 'Chamfers', short: 'A bevel around each hole with a V-bit.', notes: [10] },
         { id: 'labels', icon: 'text', title: 'Labels', short: 'Engrave the hole names, V-bit or laser.', notes: [11] } ] },
       { title: 'No holes: lines', pages: [
         { id: 'lines', icon: 'map', title: 'Grid lines', short: 'Laser or engrave the grid instead of drilling it.', notes: [12] },
@@ -8664,7 +8699,7 @@
   // Leaving the welcome: to Setup, unlocked, with the chosen path's next
   // steps above it; or straight to the XY0 Picker.
   var WELCOME_GUIDE = {
-    'new': 'New board: describe the grid you want here (hole size, spacing, and the insets from machine X0 Y0 to the first hole), or load a preset from Profiles. Then Spoilboard \u203a Fit test in scrap, and Spoilboard \u203a Dog holes \u203a Generate.',
+    'new': 'New board: describe the grid you want here (hole size, spacing, and the insets from machine X0 Y0 to the first hole), or load a preset from Profiles. Then Cut Board \u203a Fit test in scrap, and with Z0 back on the board\u2019s top, Cut Board \u203a Dog holes \u203a Generate.',
     map: 'Mapping your holes: type their size and spacing here (or load a preset). Then pick a hole on the map, jog the bit over its real center and press Grab \u2026 Center, and open Measure Holes to fit the rest.'
   };
   function welcomeGo(path) {
@@ -8696,9 +8731,23 @@
       readMachineState().then(readNumbers).then(renderCutTab);
     }
   }
+  // The shared card shows only the fields the showing section uses (Grid
+  // lines and Labels by their tool; Spoilboard Thickness not with the stock
+  // on top, whose T is used).
+  function commonFields() {
+    var sec = help.tab === 'stock' ? 'stock' : holes.cutSec || 'holes';
+    if (sec === 'lines') sec += $('mw-gl-tool').value === 'laser' ? '-laser' : '-vbit';
+    if (sec === 'labels') sec += $('mw-lab-tool').value === 'laser' ? '-laser' : '-vbit';
+    $('mw-cut-common').querySelectorAll('[data-for]').forEach(function(el) {
+      el.hidden = el.getAttribute('data-for').split(' ').indexOf(sec) < 0 || (el.contains($('mw-cut-thick')) && $('mw-cut-plate').checked);
+    });
+    var shown = $('mw-cut-common').querySelectorAll('.mw-field[data-for]:not([hidden])').length;
+    $('mw-cut-common').querySelector('.mw-card-title').textContent = shown ? 'Bit and depth' : 'Coolant';
+  }
   // Spoilboard's sections: one at a time, picked with the chips.
   function showCutSection(name) {
     holes.cutSec = name;
+    commonFields();
     ROOT.querySelectorAll('#mw-cut-secs .mw-sec').forEach(function(b) { b.setAttribute('aria-selected', b.getAttribute('data-sec') === name ? 'true' : 'false'); });
     ROOT.querySelectorAll('.mw-tab[data-tab="cut"] .mw-card[data-sec]').forEach(function(c) { c.hidden = c.getAttribute('data-sec') !== name; });
   }
