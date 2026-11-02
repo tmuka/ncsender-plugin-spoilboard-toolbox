@@ -521,7 +521,7 @@ the plugin reminds you to re-record the spoilboard height.
   ticked; points with a height (a vise, a fixture) never are.
 - **How:** drilled when the bit is the hole's size (within 0.05 mm), pecking a Depth per Pass at a time:
   **Drill Pecks** picks **Clear chips** (up to 2 mm above the top and back), **Break chips** (back off
-  0.5 mm to snap the chip, as QuickCut's Drill) or **None** (one plunge). Spiralled down when the hole is up to twice
+  0.5 mm to snap the chip, as QuickCut's Drill) or **None** (one plunge). Spiraled down when the hole is up to twice
   the bit, else cleared in rings out from a spiral in its middle. Climb milling, as QuickCut does; the
   circle milling is QuickCut's.
 - **Starting feeds:** under Bit and depth, pick the material (MDF / plywood, softwood, hardwood, HDPE,
@@ -791,8 +791,8 @@ See [What you need](#what-you-need) for the rest of the plugin.
   before it has a comment, `(SBT stop: …)`, saying why: home the machine, measure the tool, record the
   spoilboard height, or send `G92.1` when it says a G92 offset is active. Nothing was changed.
 - **"Couldn't read the machine's travel"**: connect to the controller and home it.
-- **Set or Go to is grayed out**: home the machine, or the point is in a keepout zone, an Exclude Picks
-  area or outside the travel. The line beside Set says which.
+- **Set or Go to is grayed out**: nothing is picked, the hole is suppressed, or the point is outside the
+  travel or in a keepout zone or Exclude Picks area. The line beside Set says which.
 - **"Safe Z puts this tool's tip less than 5 mm above Z0"**: raise **Safe Z Height** in ncSender's
   Settings → General.
 - **Z0 is off after surfacing the spoilboard**: run **SBT: Record spoilboard height** again; every Z0

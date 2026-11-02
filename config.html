@@ -2813,7 +2813,7 @@
   function holeCutProblems(o) {
     var out = [];
     if (!(o.bitMm > 0)) out.push('Bit Diameter must be more than 0');
-    if (!(o.depthMm > 0)) out.push('Hole Depth must be more than 0');
+    if (!(o.depthMm > 0)) out.push((o.depthName || 'Hole Depth') + ' must be more than 0');
     else if (o.thickMm > 0 && o.depthMm > o.thickMm + 1e-9) out.push('Hole Depth is more than the ' + (o.plateOn ? 'stock' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
     if (!(o.stepMm > 0)) out.push('Depth per Pass must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) out.push('Feed and Plunge must be more than 0');
@@ -4746,7 +4746,7 @@
       new ResizeObserver(function() {
         var was = barH;
         barH = $('mw-holebar').offsetHeight;
-        if (!rootAlive() || !was || !barH || was === barH) return;
+        if (!rootAlive() || !was || !barH || was === barH || holes.drag || holes.pressing) return;
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() { if (!$('mw-pick-card').closest('[hidden]')) renderHoles(); }, 50);
       }).observe($('mw-holebar'));
@@ -5001,7 +5001,7 @@
     if (mid) { setStockZero('center'); holes.stockDotSet = true; }
     status.setAttribute('data-state', 'ok');
     status.textContent = 'Stock for ' + programName(p) + ': ' + shown(w) + ' \u00d7 ' + shown(l) + u + ', its cuts ' + shown(b.maxX - b.minX + 2 * r) + ' \u00d7 ' + shown(b.maxY - b.minY + 2 * r) + u +
-      ' with the ' + shown(pl.bitMm) + u + ' bit, ' + (margin > 0 ? 'and the ' + shown(margin) + u + ' clamp margin all round' : 'with no clamp margin') + ', rounded up. ' +
+      ' with the ' + shown(pl.bitMm) + u + ' bit, ' + (margin > 0 ? 'and the ' + shown(margin) + u + ' clamp margin all around' : 'with no clamp margin') + ', rounded up. ' +
       (mid ? 'Its X0 Y0 is in the middle, so the stock\u2019s center is picked for X0 Y0 (press Set).' : 'Its X0 Y0 is ' + shown(x0) + u + ' from the stock\u2019s left edge and ' + shown(y0) + u + ' from its front, the cuts centered.') +
       (p.cuts.minZ < 0 ? ' It cuts down to Z' + shown(p.cuts.minZ) + ': as deep as the stock is thick, or a little deeper for a cut right through.' : '');
   }
@@ -7169,7 +7169,7 @@
     y += 6;
     if (bit > 0 && dia > 0) {
       var m = holeCutMethod(dia, bit);
-      say(m === 'drill' ? 'Drilled: the bit is the hole\u2019s size' : m === 'helix' ? 'Spiralled down: the bit is ' + num(bit) : m === 'clear' ? 'Cleared in rings: more than twice the bit' : 'The bit is bigger than the hole!', m === 'too-small' ? 'mw-d-warn' : 'mw-d-note');
+      say(m === 'drill' ? 'Drilled: the bit is the hole\u2019s size' : m === 'helix' ? 'Spiraled down: the bit is ' + num(bit) : m === 'clear' ? 'Cleared in rings: more than twice the bit' : 'The bit is bigger than the hole!', m === 'too-small' ? 'mw-d-warn' : 'mw-d-note');
       if (m === 'drill') say('Pecks: ' + $('mw-cut-peck').selectedOptions[0].textContent.toLowerCase(), 'mw-d-note');
     }
     $('mw-cut-diagram').innerHTML = out.join('');
@@ -7444,7 +7444,7 @@
     var local = probs.length ? [] : fitTestHoles(size, step, count, edge);
     if (local.length && !(local[0].diaMm > 0)) { probs.push('The smallest hole would be 0 or less'); local = []; }
     // Drilled only at the bit's own size, so each test size is cut as itself.
-    var fo = Object.assign({}, o, { depthMm: cutMm('mw-fit-depth'), thickMm: 0, zWhat: 'the scrap', drillTolMm: 0.005,
+    var fo = Object.assign({}, o, { depthMm: cutMm('mw-fit-depth'), depthName: 'Depth', thickMm: 0, zWhat: 'the scrap', drillTolMm: 0.005,
       title: 'dowel fit test, ' + local.map(function(h) { return fmt(h.diaMm); }).join(', ') + ' mm, left to right',
       holes: o.wcs ? local.map(function(h) { return Object.assign({}, h, { x: h.x + o.wcs.x, y: h.y + o.wcs.y }); }) : [] });
     var zoned = fo.holes.filter(function(h) { return holeKeepout(h.x, h.y, h.diaMm / 2, o.zones); });
@@ -7704,8 +7704,8 @@
     else if (blind && thick > 0 && blindMm >= thick) probs.push('Depth must be less than the stock\u2019s thickness (T ' + shown(thick) + ' ' + unitName() + ') for blind holes: leave it blank to drill through');
     if (blind) { /* Break Through doesn't apply */ }
     else if (!(brk >= 0)) probs.push('Break Through must be 0 or more');
-    else if (!(o.depthMm > 0)) probs.push('Set Hole Depth above (how deep the spoilboard holes are): Break Through must be less');
-    else if (brk >= o.depthMm || (o.thickMm > 0 && brk >= o.thickMm)) probs.push('Break Through must be less than Hole Depth (how deep the spoilboard holes are)');
+    else if (!(o.depthMm > 0)) probs.push('Set Hole Depth on Cut Board \u203a Dog holes (how deep the spoilboard holes are): Break Through must be less');
+    else if (brk >= o.depthMm || (o.thickMm > 0 && brk >= o.thickMm)) probs.push('Break Through must be less than Hole Depth and Spoilboard Thickness on Cut Board \u203a Dog holes (how deep the spoilboard holes are)');
     // Z0 must be on the stock's top: the hops between holes and the depth
     // are from it. Checked against the spoilboard height the Z0 macros
     // recorded, when it's known.
@@ -8513,7 +8513,7 @@
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as gray bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines. No grid on the board yet? <strong>Cut Board &rsaquo; Grid lines</strong> lasers or engraves it from Setup.',
       HELP_NEEDS, HELP_UNITS,
-      '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all round, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
+      '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all around, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
     cut: { name: 'Cut Board', notes: [
       'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',

@@ -15,8 +15,8 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - The welcome page sent you to a "Spoilboard" tab: it's **Cut Board**.
 
 ### 🛡️ Safer
-- **Spoilboard Thickness** starts blank and Dog holes asks for it, instead of assuming 19.05 mm (3/4"): a thinner
-  board left at the default could be cut through.
+- **Spoilboard Thickness** starts blank on a new install and Dog holes asks for it, instead of assuming 19.05 mm
+  (3/4"): a thinner board left at the default could be cut through. A saved thickness is kept.
 - **Bit and depth** shows only the fields the picked section uses: no Hole Depth on T-tracks, Chamfers, Grid lines or
   Labels, no bit or feeds on the Laser test, and no Spoilboard Thickness with Into the stock on top.
 - **Stock Holes:** when Z0 can't be checked (no spoilboard height recorded yet), the warning sits beside Generate.
