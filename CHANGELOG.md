@@ -5,6 +5,9 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ## Unreleased
 
+### ✨ New
+- **Laser offset:** with grblHAL's laser offset set (`$770`/`$771`, e.g. by the Laser Toolbox plugin) and `$772=1`, a laser program (grid lines, laser test, labels) needs the laser selected: grblHAL shows it as a G92 offset equal to the laser's, and the program stops before moving otherwise (with the spindle selected, its `M4` would run the spindle). With `$772=0` it refuses to make one, since the laser would land off by its offset.
+
 ### 🐛 Fixed
 - **Grid lines** showed the V-bit's Depth with a laser picked, and Laser Power with a V-bit.
 - **Stock mode** in the XY0 Picker no longer pushes Set and Go to below the screen.

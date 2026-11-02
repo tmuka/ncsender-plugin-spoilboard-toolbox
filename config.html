@@ -2861,7 +2861,7 @@
       gComment('SBT: ' + title),
       gComment('SBT: ' + name + ' Z0 must be on ' + (o.zWhat || 'the spoilboard') + '; X Y are ' + name + ', X0 Y0 at machine X' + fmt(o.wcs.x) + ' Y' + fmt(o.wcs.y)),
       '#1=[1 / #<_homed_state>] (SBT stop: home the machine first)',
-      '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (SBT stop: a G92 offset is active; G92.1 clears it)',
+      g92Stop(o, less),
       '#1=[1 / [[ABS[#' + xp + less(o.wcs.x) + '] LT 0.001] AND [ABS[#' + yp + less(o.wcs.y) + '] LT 0.001]]] (SBT stop: ' + name + ' X0 Y0 moved; make the program again)',
     ];
     if (o.zStop != null) L.push('#1=[1 / [ABS[#' + (yp + 1) + less(o.zStop) + '] LT 0.001]] (SBT stop: ' + name + ' Z0 moved; make the program again)');
@@ -2887,6 +2887,23 @@
       if (o.delayS > 0) L.push('G4 P' + o.delayS);
     }
     return L;
+  }
+  // No G92 offset, except a laser's: with a laser offset in grblHAL
+  // ($770/$771, e.g. stored by Laser Toolbox) and $772=1, selecting the laser
+  // (M104 Q1) moves the head by it and adds it to G92, so X0 Y0 stays put for
+  // the laser. A laser program then needs exactly that G92: it's how grblHAL
+  // shows the laser is selected (with the spindle selected, M4 S would run the
+  // spindle instead).
+  function g92Stop(o, less) {
+    var lo = o.laser && o.laserOffset && o.laserOffset.updateG92 && (o.laserOffset.x || o.laserOffset.y) ? o.laserOffset : null;
+    if (!lo) return '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (SBT stop: a G92 offset is active; G92.1 clears it)';
+    return '#1=[1 / [[ABS[#5211' + less(lo.x) + '] LT 0.0005] AND [ABS[#5212' + less(lo.y) + '] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (SBT stop: select the laser first; its offset X' +
+      fmt(lo.x) + ' Y' + fmt(lo.y) + ' should be the G92 offset)';
+  }
+  // A laser offset in grblHAL with $772=0 moves work coordinates when the
+  // laser is selected, so the laser would land off by the offset.
+  function laserOffsetProblem(lo) {
+    return lo && (lo.x || lo.y) && !lo.updateG92 ? 'Set grblHAL\u2019s $772=1 (Update G92 on spindle change) first: with 0, the laser lands off by its offset ($770/$771)' : null;
   }
   function cutSafe(o) { return 'G53 G0 Z' + fmt(o.safeZMm != null ? o.safeZMm : 0); }
   function cutEnd(o, L) {
@@ -5202,6 +5219,9 @@
       state.spindleMax = smax >= 5000 ? smax : null;
       state.spindleMin = smin > 0 ? smin : null;
       state.laserMode = set['32'] ? String(set['32'].value).trim() === '1' : null;
+      // grblHAL's laser offset from the spindle (its spindle offset plugin).
+      state.laserOffset = set['770'] ? { x: parseFloat(set['770'].value) || 0, y: parseFloat(set['771'] && set['771'].value) || 0,
+        updateG92: !!set['772'] && String(set['772'].value).trim() === '1' } : null;
       state.reportInches = set['13'] ? String(set['13'].value).trim() === '1' : false;
     } catch (e) { state.travel = null; }
     await readMachineState();
@@ -6994,7 +7014,7 @@
       peck: $('mw-cut-peck').value, stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
       rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
-      wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial,
+      wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial, laserOffset: state.laserOffset || null,
       zMacro: { spoil: offsetZParam(+$('mw-slot').value), thick: offsetZParam(+$('mw-thick').value) }, tloMm: state.tloMm
     };
   }
@@ -7504,6 +7524,7 @@
     if (!(o.feed > 0)) probs.push('Feed must be more than 0');
     if (laser && !(o.power > 0)) probs.push('Laser Power must be more than 0');
     if (laser && state.laserMode !== true) probs.push('Turn on grblHAL’s laser mode ($32=1) first: without it the laser stays on during rapids');
+    if (laser && laserOffsetProblem(state.laserOffset)) probs.push(laserOffsetProblem(state.laserOffset));
     if (!laser && !(o.depthMm > 0)) probs.push('Depth must be more than 0');
     if (!laser && !(o.plunge > 0)) probs.push('Plunge (above) must be more than 0');
     return { o: o, probs: probs };
@@ -7548,6 +7569,7 @@
     if (!(fmin > 0 && fmax > 0)) probs.push('Feed From and To must be more than 0');
     if (!(pn >= 2 && pn <= 10) || !(fn >= 2 && fn <= 10)) probs.push('Columns and Rows must be 2 to 10');
     if (state.laserMode !== true) probs.push('Turn on grblHAL’s laser mode ($32=1) first: without it the laser stays on during rapids');
+    if (laserOffsetProblem(state.laserOffset)) probs.push(laserOffsetProblem(state.laserOffset));
     // Feeds are mm/min in the program; the labels say them as typed (in/min
     // on an inch setup), to copy into Grid lines and Labels.
     var feedText = function(f) { return String(Math.round(state.imperial ? f / MM_PER_INCH : f)); };
@@ -7599,6 +7621,7 @@
     if (!(o.feed > 0)) probs.push('Feed must be more than 0');
     if (laser && !(o.power > 0)) probs.push('Laser Power must be more than 0');
     if (laser && state.laserMode !== true) probs.push('Turn on grblHAL\u2019s laser mode ($32=1) first: without it the laser stays on during rapids');
+    if (laser && laserOffsetProblem(state.laserOffset)) probs.push(laserOffsetProblem(state.laserOffset));
     if (!laser && !(o.depthMm > 0)) probs.push('Depth must be more than 0');
     if (!laser && !(o.plunge > 0)) probs.push('Plunge (above) must be more than 0');
     return { o: o, skipped: pl.skipped, probs: probs };
@@ -8501,7 +8524,7 @@
         '<li><strong>Dog holes, T-tracks, Grid lines, Chamfers, Labels:</strong> Z0 on the spoilboard&rsquo;s top (the stock&rsquo;s, with Into the stock on top). X0 Y0 can be anywhere: the holes go at their machine positions. Don&rsquo;t move it after Generate.</li>' +
         '<li><strong>Fit test, Laser test:</strong> X0 Y0 on the scrap&rsquo;s front left corner, Z0 on its top (the laser focused on it).</li>' +
         '<li><strong>Stock Holes:</strong> Z0 on the stock&rsquo;s top; X0 Y0 anywhere.</li></ul>' +
-        '<p>Each program runs in the active work offset (G54&ndash;G59). It stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say).</p>',
+        '<p>Each program runs in the active work offset (G54&ndash;G59). It stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say). A laser program with grblHAL&rsquo;s laser offset set ($770/$771, $772=1) instead needs the laser selected, which grblHAL shows as a G92 offset equal to the laser&rsquo;s.</p>',
       'Hole Depth can&rsquo;t be more than the Spoilboard Thickness, so the bit never cuts into what&rsquo;s under it. Between holes it hops 5 mm above Z0, and lifts to Safe Z (machine Z0 when none is set) to pass over a keepout zone or an Exclude Picks area, such as a clamp.',
       'There&rsquo;s no pause to check the bit (ncSender shows no prompt for one, so the job would just look stuck): check the bit and Z0 before you press Start. With a tool changer, <strong>Bit Diameter</strong>&rsquo;s label opens ncSender&rsquo;s tool table (the tool in the spindle first, a filter on top): pick the tool, and the hole, T-track, stock-hole and fit-test programs start with a tool change to it (<code>M6 T</code><em>n</em>, which ncSender runs as its tool change). Without one, click <strong>Bit Diameter</strong> for the loaded tool&rsquo;s diameter, with no tool change. Flutes is set from the tool&rsquo;s name or notes, or to 2 when they don&rsquo;t say. Type a diameter instead and there&rsquo;s no tool change: load that bit yourself. Chamfers and labels never change tools; load the V-bit (or laser) for them.',
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',

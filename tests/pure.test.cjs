@@ -1903,3 +1903,23 @@ test('programCutsSource runs on its own, as the worker does, and reads the same'
   const alone = new Function(programCutsSource() + 'return programCuts;')();
   assert.deepEqual(alone(g), programCuts(g));
 });
+
+test('laser offset: a laser program needs G92 = the laser offset ($772=1); others none', () => {
+  const base = { labels: [{ text: 'A1', x: 20, y: 30 }], textMm: 6, feed: 800, wcs: { p: 1, x: 10, y: 10 }, safeZMm: -5, zones: [], imperial: false, laser: true, power: 600 };
+  const stopOf = (lines) => lines.find((l) => /SBT stop: (a G92|select the laser)/.test(l));
+  const runs = (line, g92) => {
+    const expr = line.replace(/\s*\(.*\)\s*$/, '').replace(/^#1=\[1 \/ /, '').replace(/\]$/, '');
+    return !!evalExpr(expr, { 5211: g92[0], 5212: g92[1], 5213: g92[2] });
+  };
+  const lo = { x: -40.5, y: 27.75, updateG92: true };
+  const withOff = engraveProgram(Object.assign({}, base, { laserOffset: lo }));
+  assert.ok(runs(stopOf(withOff), [-40.5, 27.75, 0]), 'runs with the laser selected');
+  assert.ok(!runs(stopOf(withOff), [0, 0, 0]), 'stops with the spindle selected');
+  assert.match(stopOf(withOff), /select the laser first/);
+  // No offset, or $772=0, or a V-bit: G92 must be zero, as before.
+  for (const o of [{}, { laserOffset: { x: 0, y: 0, updateG92: true } }, { laserOffset: Object.assign({}, lo, { updateG92: false }) }, { laser: false, depthMm: 0.4, plunge: 300, rpm: 18000, laserOffset: lo }]) {
+    const p = engraveProgram(Object.assign({}, base, o));
+    assert.ok(runs(stopOf(p), [0, 0, 0]));
+    assert.ok(!runs(stopOf(p), [-40.5, 27.75, 0]));
+  }
+});

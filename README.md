@@ -533,7 +533,9 @@ the plugin reminds you to re-record the spoilboard height.
   goes, what's left under it, a step for every Depth per Pass, and how it'll be cut.
 - **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before
   moving if the machine isn't homed, a G92 offset is active, X0 Y0 has moved since it was generated, or Z0 is one the
-  Z0 macros set and no tool length offset is active (after a controller restart, say).
+  Z0 macros set and no tool length offset is active (after a controller restart, say). A laser program with grblHAL's
+  laser offset set (`$770`/`$771`, `$772=1`) instead needs the laser selected, which grblHAL shows as a G92 offset
+  equal to the laser's.
 - **The bit**, as in QuickCut: with a tool changer, **Bit Diameter**'s label opens ncSender's tool table,
   the tool in the spindle first, with a filter on top (T number, name, notes or size); pick the tool and
   the program starts with a tool change to it (`M6 T3`, say), which ncSender runs like any other. Without
