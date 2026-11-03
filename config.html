@@ -326,7 +326,7 @@
   .mw-secs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
   .mw-sec { cursor: pointer; font: inherit !important; font-size: 0.9rem !important; min-height: 34px !important; padding: 4px 14px !important; border-radius: 999px !important; border: 1px solid var(--mw-line) !important; background: transparent !important; color: var(--color-text-secondary) !important; font-weight: 500 !important; }
   .mw-sec[aria-selected="true"] { border-color: var(--mw-accent-text) !important; background: var(--mw-btn-bg) !important; color: #fff !important; font-weight: 700 !important; }
-  .mw-tab[data-tab="cut"] .mw-card[data-sec][hidden] { display: none; }
+  .mw-tab[data-tab="cut"] .mw-card[data-sec][hidden], .mw-sec[hidden] { display: none !important; }
   .mw-grid-chip.mw-chip-bad { border-color: var(--mw-danger); }
   .mw-grid-chip.mw-chip-add { padding: 3px 12px; font-weight: 600; background: color-mix(in srgb, var(--color-accent) 14%, transparent); border-color: color-mix(in srgb, var(--color-accent) 35%, transparent); }
   .mw-grid-chip.mw-chip-add:hover:not([aria-disabled="true"]) { background: color-mix(in srgb, var(--color-accent) 24%, transparent); }
@@ -1097,7 +1097,7 @@
         <button type="button" class="mw-sec" role="tab" data-sec="fit" aria-selected="false">Fit test</button>
         <button type="button" class="mw-sec" role="tab" data-sec="lasertest" aria-selected="false">Laser test</button>
         <button type="button" class="mw-sec" role="tab" data-sec="chamfer" aria-selected="false">Chamfers</button>
-        <button type="button" class="mw-sec" role="tab" data-sec="threads" aria-selected="false">Threads</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="threads" aria-selected="false" hidden>Threads</button>
         <button type="button" class="mw-sec" role="tab" data-sec="labels" aria-selected="false">Labels</button>
       </div>
       <div id="mw-cut-common-slot">
@@ -8687,13 +8687,13 @@
       HELP_NEEDS, HELP_UNITS,
       '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all around, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
     cut: { name: 'Cut Board', notes: [
-      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong>, <strong>Threads</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
+      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
       'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge), <strong>spiraled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
       '<p><strong>Where to zero:</strong></p><ul>' +
-        '<li><strong>Dog holes, T-tracks, Grid lines, Chamfers, Threads, Labels:</strong> Z0 on the spoilboard&rsquo;s top (the stock&rsquo;s, with Into the stock on top). X0 Y0 can be anywhere: the holes go at their machine positions. Don&rsquo;t move it after Generate.</li>' +
+        '<li><strong>Dog holes, T-tracks, Grid lines, Chamfers, Labels:</strong> Z0 on the spoilboard&rsquo;s top (the stock&rsquo;s, with Into the stock on top). X0 Y0 can be anywhere: the holes go at their machine positions. Don&rsquo;t move it after Generate.</li>' +
         '<li><strong>Fit test, Laser test:</strong> X0 Y0 on the scrap&rsquo;s front left corner, Z0 on its top (the laser focused on it).</li>' +
         '<li><strong>Stock Holes:</strong> Z0 on the stock&rsquo;s top; X0 Y0 anywhere.</li></ul>' +
         '<p>Each program runs in the active work offset (G54&ndash;G59). It stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say). A laser program with grblHAL&rsquo;s laser offset set ($770/$771, $772=1) instead needs the laser selected, which grblHAL shows as a G92 offset equal to the laser&rsquo;s.</p>',
@@ -8806,7 +8806,6 @@
         { id: 'tracks', icon: 'slot', title: 'T-tracks', short: 'A two-layer board whose top you can replace.', notes: [8] },
         { id: 'fit', icon: 'ruler', title: 'Dowel fit test', short: 'Find the size your dowels fit, in scrap.', notes: [9] },
         { id: 'chamfer', icon: 'vbit', title: 'Chamfers', short: 'A bevel around each hole with a V-bit.', notes: [10] },
-        { id: 'threads', icon: 'drill', title: 'Threads', short: 'Thread the holes with a single-point thread mill.', notes: [15] },
         { id: 'labels', icon: 'text', title: 'Labels', short: 'Engrave the hole names, V-bit or laser.', notes: [11] } ] },
       { title: 'No holes: lines', pages: [
         { id: 'lines', icon: 'map', title: 'Grid lines', short: 'Laser or engrave the grid instead of drilling it.', notes: [12] },

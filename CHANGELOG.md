@@ -6,7 +6,6 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### ✨ New
-- **Threads:** a new Cut Board section threads the holes with a single-point thread mill, after they're cut at the tap size: standard metric and UNC sizes or any size typed, right- or left-hand, 2, 4 or 5 passes with a spring pass, the feed taken at the tooth. It says the tap size to cut first and checks the thread mill fits down the middle and the thread stays above the hole's bottom.
 - **Laser offset:** with grblHAL's laser offset set (`$770`/`$771`, e.g. by the Laser Toolbox plugin) and `$772=1`, a laser program (grid lines, laser test, labels) needs the laser selected: grblHAL shows it as a G92 offset equal to the laser's, and the program stops before moving otherwise (with the spindle selected, its `M4` would run the spindle). With `$772=0` it refuses to make one, since the laser would land off by its offset.
 
 ### 🐛 Fixed
