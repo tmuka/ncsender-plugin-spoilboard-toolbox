@@ -181,7 +181,7 @@ Either way, the Z0 macros are a separate, optional step for machines with measur
 
 | Job | X0 Y0 | Z0 |
 | --- | --- | --- |
-| Dog holes, T-tracks, Grid lines, Chamfers, Labels | Anywhere: the holes go at their machine positions. Don't move it after Generate. | The spoilboard's top |
+| Dog holes, T-tracks, Grid lines, Chamfers, Threads, Labels | Anywhere: the holes go at their machine positions. Don't move it after Generate. | The spoilboard's top |
 | The same, with **Into the stock on top** ticked | Anywhere | The stock's top |
 | Fit test, Laser test | The scrap's front left corner | The scrap's top (a laser: focused on it) |
 | Stock Holes | Anywhere | The stock's top |
@@ -502,7 +502,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 
 The **Cut Board** tab (Spoilboard before 0.5) writes the programs that make (or remake) the spoilboard from the XY0 Picker's
 holes, so the board and the map come from the same numbers. Pick what to cut with the chips at its top
-(**Dog holes**, **T-tracks**, **Grid lines**, **Fit test**, **Laser test**, **Chamfers**, **Labels**). Load the bit, put Z0 on the
+(**Dog holes**, **T-tracks**, **Grid lines**, **Fit test**, **Laser test**, **Chamfers**, **Threads**, **Labels**). Load the bit, put Z0 on the
 spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the depth and feeds in the shared
 **Bit and depth** card, and press **Generate**: the program opens in ncSender's visualizer to check and
 run.
@@ -572,6 +572,11 @@ crossings. Not sure of the power and speed? The **Laser test** marks a small cro
   **Edge Distance** (10 mm) in from its edges so none breaks out of the side, smallest on the left, find the one your dowels fit, and set Hole Diameter to it.
 - **Chamfer the holes:** after cutting, a V-bit puts a small bevel around each hole's top edge, so dowels
   start easily and the edge doesn't crumble.
+- **Thread the holes:** after cutting the holes at the thread's tap size, a single-point thread mill cuts a
+  thread inside each one (M5 to M20, 1/4"-20 to 3/4"-10, or any size you type), for bolts and threaded clamps.
+  Down the middle, out onto the thread, one pitch a turn up to the top (counterclockwise for a right-hand
+  thread, climb milling), back to the middle, in 2, 4 or 5 passes. Threads hold well in aluminum and
+  plastics; in MDF or plywood, threaded inserts last longer.
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
   V-bit or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
 

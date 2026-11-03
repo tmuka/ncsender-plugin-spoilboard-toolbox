@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1921,5 +1921,81 @@ test('laser offset: a laser program needs G92 = the laser offset ($772=1); other
     const p = engraveProgram(Object.assign({}, base, o));
     assert.ok(runs(stopOf(p), [0, 0, 0]));
     assert.ok(!runs(stopOf(p), [-40.5, 27.75, 0]));
+  }
+});
+
+// ---------- Thread milling ----------
+// Follows G0/G1/G2/G3 (I J relative, helical Z) and records every point the
+// cutter's center passes, sampled along arcs.
+function traceMoves(lines) {
+  let p = { x: 0, y: 0, z: 10 }; const pts = [], arcs = [];
+  for (const raw of lines) {
+    const l = raw.replace(/\([^)]*\)/g, '').trim();
+    if (!/^G[0-3]\b/.test(l) || /G53/.test(l)) continue;
+    const w = {}; for (const m of l.matchAll(/([A-Z])(-?[\d.]+)/g)) w[m[1]] = Number(m[2]);
+    const to = { x: w.X ?? p.x, y: w.Y ?? p.y, z: w.Z ?? p.z };
+    if (w.G === 2 || w.G === 3) {
+      const cx = p.x + (w.I || 0), cy = p.y + (w.J || 0), r0 = Math.hypot(p.x - cx, p.y - cy), r1 = Math.hypot(to.x - cx, to.y - cy);
+      let a0 = Math.atan2(p.y - cy, p.x - cx), a1 = Math.atan2(to.y - cy, to.x - cx), sweep = a1 - a0;
+      if (w.G === 3) { while (sweep <= 1e-9) sweep += 2 * Math.PI; } else { while (sweep >= -1e-9) sweep -= 2 * Math.PI; }
+      arcs.push({ g: w.G, cx, cy, r: r0, r1, sweep, z0: p.z, z1: to.z });
+      for (let k = 1; k <= 36; k++) { const a = a0 + sweep * k / 36; pts.push({ x: cx + r0 * Math.cos(a), y: cy + r0 * Math.sin(a), z: p.z + (to.z - p.z) * k / 36 }); }
+    } else pts.push(to);
+    p = to;
+  }
+  return { pts, arcs, end: p };
+}
+const TH_BASE = { feed: 300, plunge: 200, rpm: 18000, delayS: 0, wcs: { p: 1, x: 0, y: 0 }, safeZMm: null, zones: [], imperial: false };
+
+test('thread milling: down the middle, out on a half circle, up one pitch a turn, back to the middle', () => {
+  const M8 = THREADS.find((t) => t.id === 'M8');
+  const o = Object.assign({ holes: [{ x: 50, y: 40, diaMm: 6.8, label: 'A1' }], thread: Object.assign({ hand: 'right' }, M8), millMm: 4, depthMm: 10, passes: '4' }, TH_BASE);
+  const L = threadMillProgram(o), t = traceMoves(L);
+  assert.match(L[0], /thread 1 hole, M8 x 1.25, 10\.000 mm deep with a 4\.000 mm single-point thread mill/);
+  // Right-hand: counterclockwise only.
+  assert.ok(t.arcs.length && t.arcs.every((a) => a.g === 3));
+  const full = t.arcs.filter((a) => Math.abs(Math.abs(a.sweep) - 2 * Math.PI) < 1e-6);
+  const Rfull = (8 - 4) / 2;
+  // Each full turn climbs exactly one pitch, at the pass's radius; the last two passes are full depth of thread.
+  full.forEach((a) => assert.ok(Math.abs(a.z1 - a.z0 - 1.25) < 1e-3));
+  const radii = [...new Set(full.map((a) => a.r.toFixed(3)))];
+  assert.deepEqual(radii, [Rfull * 0.5, Rfull * 0.8, Rfull].map((r) => r.toFixed(3)));
+  // Never below Thread Depth; the cutter's edge never past the major diameter; the threads reach the top.
+  assert.ok(Math.min(...t.pts.map((q) => q.z)) >= -10 - 1e-9);
+  assert.ok(Math.max(...t.pts.filter((q) => q.z < 5).map((q) => Math.hypot(q.x - 50, q.y - 40) + 2)) <= 4 + 1e-6);
+  const lastTurnEnd = Math.max(...full.map((a) => a.z1));
+  assert.ok(lastTurnEnd >= 0 && lastTurnEnd < 1.25);
+  // Half circles in and out are half the radius, tangent to the helix.
+  const halves = t.arcs.filter((a) => Math.abs(Math.abs(a.sweep) - Math.PI) < 1e-6);
+  assert.equal(halves.length, 2 * 4);
+  halves.forEach((a) => assert.ok(Math.abs(a.r - Math.abs(a.r1)) < 1e-3));
+  // Feed is at the edge: the center's is slower, by 2R / (2R + cutter).
+  assert.ok(L.some((l) => / F200$/.test(l)));
+  assert.ok(L.some((l) => /^G3 .* F150$/.test(l)), 'full depth: 300 × 4 / 8');
+  assert.ok(t.end.z >= 5);
+});
+
+test('thread milling: left-hand threads go clockwise', () => {
+  const o = Object.assign({ holes: [{ x: 50, y: 40, diaMm: 8.5, label: 'A1' }], thread: { major: 10, pitch: 1.5, hand: 'left' }, millMm: 4, depthMm: 12, passes: '2' }, TH_BASE);
+  const t = traceMoves(threadMillProgram(o));
+  assert.ok(t.arcs.every((a) => a.g === 2));
+  t.arcs.filter((a) => Math.abs(Math.abs(a.sweep) - 2 * Math.PI) < 1e-6).forEach((a) => assert.ok(Math.abs(a.z1 - a.z0 - 1.5) < 1e-3));
+});
+
+test('thread milling: what stops it', () => {
+  const M8 = Object.assign({ hand: 'right' }, THREADS.find((t) => t.id === 'M8'));
+  const ok = { holes: [{ diaMm: 6.8 }], thread: M8, millMm: 4, depthMm: 10, holeDepthMm: 12, feed: 300, plunge: 200 };
+  assert.deepEqual(threadProblems(ok), []);
+  assert.match(threadProblems(Object.assign({}, ok, { millMm: 8 })).join(), /smaller than the thread/);
+  assert.match(threadProblems(Object.assign({}, ok, { holes: [{ diaMm: 4.1 }] })).join(), /too small for the thread mill/);
+  assert.match(threadProblems(Object.assign({}, ok, { holes: [{ diaMm: 8 }] })).join(), /nothing to thread/);
+  assert.match(threadProblems(Object.assign({}, ok, { depthMm: 11.6 })).join(), /half a pitch less than Hole Depth/);
+  assert.match(threadProblems(Object.assign({}, ok, { millMm: NaN })).join(), /Thread Mill Diameter/);
+});
+
+test('thread sizes: tap drills between the minor and major diameters', () => {
+  for (const t of THREADS) {
+    const minor = t.major - 1.0825 * t.pitch;
+    assert.ok(t.drill > minor - 0.1 && t.drill < t.major - 0.4 * t.pitch, t.id);
   }
 });

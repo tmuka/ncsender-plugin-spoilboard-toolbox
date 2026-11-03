@@ -1097,6 +1097,7 @@
         <button type="button" class="mw-sec" role="tab" data-sec="fit" aria-selected="false">Fit test</button>
         <button type="button" class="mw-sec" role="tab" data-sec="lasertest" aria-selected="false">Laser test</button>
         <button type="button" class="mw-sec" role="tab" data-sec="chamfer" aria-selected="false">Chamfers</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="threads" aria-selected="false">Threads</button>
         <button type="button" class="mw-sec" role="tab" data-sec="labels" aria-selected="false">Labels</button>
       </div>
       <div id="mw-cut-common-slot">
@@ -1135,15 +1136,15 @@
             <label for="mw-cut-feed">Feed (<span class="mw-unit">mm</span>/min)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-feed" value="1500" title="How fast the bit moves while cutting, spiral included.">
           </div>
-          <div class="mw-field" data-for="holes tracks fit chamfer stock lines-vbit labels-vbit">
+          <div class="mw-field" data-for="holes tracks fit chamfer threads stock lines-vbit labels-vbit">
             <label for="mw-cut-plunge">Plunge (<span class="mw-unit">mm</span>/min)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-plunge" value="500" title="How fast the bit goes down when drilling or ramping into a cleared hole.">
           </div>
-          <div class="mw-field" data-for="holes tracks fit chamfer stock lines-vbit labels-vbit">
+          <div class="mw-field" data-for="holes tracks fit chamfer threads stock lines-vbit labels-vbit">
             <label for="mw-cut-rpm">Spindle RPM</label>
             <input class="mw-input" type="number" id="mw-cut-rpm" min="0" step="100" value="18000" title="Spindle speed (M3). 0 leaves the spindle alone.">
           </div>
-          <div class="mw-field" data-for="holes tracks fit chamfer stock lines-vbit labels-vbit">
+          <div class="mw-field" data-for="holes tracks fit chamfer threads stock lines-vbit labels-vbit">
             <label for="mw-cut-delay">Spindle Delay (s)</label>
             <input class="mw-input" type="number" id="mw-cut-delay" min="0" step="1" value="3" title="Seconds to wait after starting the spindle, so it's up to speed.">
           </div>
@@ -1250,6 +1251,54 @@
         </div>
         <p class="mw-status" id="mw-chm-note" role="status"></p>
         <div><button type="button" class="mw-btn" id="mw-chm-generate">Generate Chamfers</button></div>
+      </section>
+      <section class="mw-card" data-sec="threads">
+        <h3 class="mw-card-title">Thread the holes</h3>
+        <p class="mw-hint">With a single-point thread mill, after cutting: a thread inside each hole, for bolts and threaded clamps.
+          Cut the holes at the thread&rsquo;s tap size first (Setup&rsquo;s Hole Diameter), then load the thread mill and run this on the same holes.
+          Z0 on the spoilboard&rsquo;s top (or the stock&rsquo;s, ticked). Threads hold well in aluminum and plastics; in MDF or plywood they wear
+          quickly, so threaded inserts usually last longer there.</p>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-thr-size">Thread</label>
+            <select class="mw-select" id="mw-thr-size" title="A standard thread fills in Major Diameter and Pitch; Other lets you type them."><option value="M5">M5 &times; 0.8</option><option value="M6">M6 &times; 1</option><option value="M8" selected>M8 &times; 1.25</option><option value="M10">M10 &times; 1.5</option><option value="M12">M12 &times; 1.75</option><option value="M16">M16 &times; 2</option><option value="M20">M20 &times; 2.5</option><option value="1/4-20">1/4&quot;-20 UNC</option><option value="5/16-18">5/16&quot;-18 UNC</option><option value="3/8-16">3/8&quot;-16 UNC</option><option value="1/2-13">1/2&quot;-13 UNC</option><option value="3/4-10">3/4&quot;-10 UNC</option><option value="custom">Other: type it</option></select>
+          </div>
+          <div class="mw-field">
+            <label for="mw-thr-major">Major Diameter (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-thr-major" value="8" title="The thread's outside diameter: 8 for M8, 3/8&quot; for 3/8&quot;-16.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-thr-pitch">Pitch (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-thr-pitch" value="1.25" title="The distance from one thread to the next: 1.25 for M8; 1/16&quot; for 16 threads per inch.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-thr-hand">Hand</label>
+            <select class="mw-select" id="mw-thr-hand" title="Right-hand is the usual thread. A left-hand one is cut clockwise, which is conventional milling.">
+              <option value="right" selected>Right-hand</option><option value="left">Left-hand</option>
+            </select>
+          </div>
+          <div class="mw-field">
+            <label for="mw-thr-depth">Thread Depth (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-thr-depth" value="10" title="How deep the thread goes below Z0. At least half a pitch less than Hole Depth, so the thread mill stays off the bottom, and no more than it reaches.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-thr-mill">Thread Mill Diameter (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-thr-mill" value="4" title="The thread mill's cutting diameter, across its tooth. It must fit down the middle of the hole.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-thr-feed">Thread Feed (<span class="mw-unit">mm</span>/min)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-thr-feed" value="300" title="How fast the thread mill's tooth moves along the thread. The program slows the center to match. Thread mills are fragile: start slow.">
+          </div>
+          <div class="mw-field">
+            <label for="mw-thr-passes">Passes</label>
+            <select class="mw-select" id="mw-thr-passes" title="How many times round, each a little deeper into the wall. The last repeats at full depth (a spring pass) for a clean thread.">
+              <option value="2">2 (fast)</option><option value="4" selected>4</option><option value="5">5 (gentle)</option>
+            </select>
+          </div>
+        </div>
+        <p class="mw-hint" id="mw-thr-summary"></p>
+        <p class="mw-status" id="mw-thr-note" role="status"></p>
+        <div><button type="button" class="mw-btn" id="mw-thr-generate">Generate Threads</button></div>
       </section>
       <section class="mw-card" data-sec="lines">
         <h3 class="mw-card-title">Grid lines</h3>
@@ -3396,6 +3445,78 @@
       at = to;
     });
     return cutEnd(o, L);
+  }
+
+  // Threads for threaded holes: the major diameter and pitch in mm, and the
+  // hole to cut first (the tap drill, about 75 % thread).
+  var THREADS = [
+    { id: 'M5', name: 'M5 × 0.8', major: 5, pitch: 0.8, drill: 4.2 },
+    { id: 'M6', name: 'M6 × 1', major: 6, pitch: 1, drill: 5 },
+    { id: 'M8', name: 'M8 × 1.25', major: 8, pitch: 1.25, drill: 6.8 },
+    { id: 'M10', name: 'M10 × 1.5', major: 10, pitch: 1.5, drill: 8.5 },
+    { id: 'M12', name: 'M12 × 1.75', major: 12, pitch: 1.75, drill: 10.2 },
+    { id: 'M16', name: 'M16 × 2', major: 16, pitch: 2, drill: 14 },
+    { id: 'M20', name: 'M20 × 2.5', major: 20, pitch: 2.5, drill: 17.5 },
+    { id: '1/4-20', name: '1/4"-20 UNC', major: 6.35, pitch: 25.4 / 20, drill: 5.1 },
+    { id: '5/16-18', name: '5/16"-18 UNC', major: 7.9375, pitch: 25.4 / 18, drill: 6.5 },
+    { id: '3/8-16', name: '3/8"-16 UNC', major: 9.525, pitch: 25.4 / 16, drill: 7.9 },
+    { id: '1/2-13', name: '1/2"-13 UNC', major: 12.7, pitch: 25.4 / 13, drill: 10.7 },
+    { id: '3/4-10', name: '3/4"-10 UNC', major: 19.05, pitch: 2.54, drill: 16.7 }
+  ];
+  // Radial passes, as shares of the full depth of thread; the last repeated
+  // is a spring pass.
+  var THREAD_PASSES = { '2': [0.6, 1], '4': [0.5, 0.8, 1, 1], '5': [0.4, 0.65, 0.85, 1, 1] };
+
+  // Single-point thread milling, after the holes are cut: in each hole the
+  // thread mill goes down the middle to Thread Depth, along a half circle out
+  // onto the helix, up one pitch a turn past the top (a right-hand thread
+  // counterclockwise, G3, which is climb milling with M3; a left-hand one
+  // clockwise, G2), and along a half circle back to the middle. Passes go a
+  // little further out each time. Feed is at the cutter's edge: the center
+  // moves slower, by (major - cutter) / major.
+  function threadMillProgram(o) {
+    var n = o.holes.length, c = gComment, f3 = function(v) { return gf(v, 3); }, f4 = function(v) { return gf(v, 4); };
+    var th = o.thread, P = th.pitch, rh = th.hand !== 'left', G = rh ? 'G3' : 'G2';
+    var Rfull = (th.major - o.millMm) / 2, zLow = -o.depthMm, passes = THREAD_PASSES[o.passes] || THREAD_PASSES['4'];
+    var z0 = zLow + P / 4, turns = Math.max(1, Math.ceil((0 - z0) / P - 1e-9));
+    var L = cutStart(o, 'thread ' + n + ' hole' + (n === 1 ? '' : 's') + ', ' + String(th.name || fmt(th.major) + ' x ' + fmt(P)).replace(/\u00d7/g, 'x') + (rh ? '' : ' left-hand') + ', ' +
+      fmt(o.depthMm) + ' mm deep with a ' + fmt(o.millMm) + ' mm single-point thread mill');
+    var at = null;
+    o.holes.forEach(function(h, i) {
+      var cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, to = { x: h.x, y: h.y };
+      L.push(c('SBT thread ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40)));
+      if (at && (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, o.millMm / 2); })) L.push(cutSafe(o));
+      L.push('G0 X' + f3(cx) + ' Y' + f3(cy));
+      L.push('G0 Z5.000');
+      L.push('G0 Z1.000');
+      passes.forEach(function(f) {
+        var R = Rfull * f, feed = Math.max(1, Math.round(o.feed * (2 * R) / (2 * R + o.millMm)));
+        L.push('G1 Z' + f3(zLow) + ' F' + o.plunge);
+        var z = z0;
+        L.push(G + ' X' + f4(cx + R) + ' Y' + f4(cy) + ' Z' + f4(z) + ' I' + f4(R / 2) + ' J0 F' + feed);
+        for (var k = 0; k < turns; k++) { z += P; L.push(G + ' X' + f4(cx + R) + ' Y' + f4(cy) + ' Z' + f4(z) + ' I' + f4(-R) + ' J0'); }
+        L.push(G + ' X' + f4(cx) + ' Y' + f4(cy) + ' Z' + f4(z + P / 4) + ' I' + f4(-R / 2) + ' J0');
+      });
+      L.push('G0 Z5.000');
+      at = to;
+    });
+    return cutEnd(o, L);
+  }
+  // What stops a thread program, given the holes it would thread.
+  function threadProblems(o) {
+    var out = [], th = o.thread || {};
+    if (!(th.major > 0) || !(th.pitch > 0)) out.push('Give the thread’s Major Diameter and Pitch');
+    if (!(o.millMm > 0)) out.push('Give the Thread Mill Diameter: its cutting diameter');
+    if (!(o.depthMm > 0)) out.push('Thread Depth must be more than 0');
+    if (!(o.feed > 0) || !(o.plunge > 0)) out.push('Thread Feed and Plunge must be more than 0');
+    if (out.length) return out;
+    if (o.millMm >= th.major) out.push('The thread mill (' + fmt(o.millMm) + ' mm) must be smaller than the thread (' + fmt(th.major) + ' mm)');
+    var tight = o.holes.filter(function(h) { return h.diaMm <= o.millMm + 0.2; }), big = o.holes.filter(function(h) { return h.diaMm >= th.major - th.pitch * 0.2; });
+    if (tight.length) out.push(tight.length + ' hole' + (tight.length === 1 ? ' is' : 's are') + ' too small for the thread mill to go down the middle: cut them bigger first');
+    if (big.length) out.push(big.length + ' hole' + (big.length === 1 ? ' is' : 's are') + ' as big as the thread or bigger, so there’s nothing to thread');
+    var shallow = o.holes.filter(function(h) { return (h.depthMm != null ? h.depthMm : o.holeDepthMm) < o.depthMm + th.pitch / 2; });
+    if (o.holeDepthMm > 0 && shallow.length) out.push('Thread Depth must be at least half a pitch less than Hole Depth (' + fmt(o.holeDepthMm) + ' mm), so the thread mill’s tip stays off the bottom');
+    return out;
   }
 
   // A dowel fit test: count holes in a row along +X from X0 Y0 (a scrap's
@@ -7177,13 +7298,13 @@
   // The Cut Board tab's fields, saved by id (less "mw-") in the machine's
   // units then (settings.units).
   var CUT_SAVED = {
-    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'lab-height', 'lab-depth', 'lab-feed',
+    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
-    'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
+    'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'thr-major': 0.375, 'thr-pitch': 0.0625, 'thr-depth': 0.4, 'thr-mill': 0.157, 'thr-feed': 12, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
     'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-slot': 0.03, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
     'gl-depth': 0.012, 'gl-feed': 60, 'lt-fmin': 20, 'lt-fmax': 120 };
   function cutBody() {
@@ -7492,6 +7613,53 @@
     if (c.probs.length) { renderChamfer(); return; }
     await loadProgram('SBT-Chamfer_' + c.o.holes.length + 'x_V' + c.o.vAngleDeg + '_W-' + shown(c.o.chamferMm) + '_' + unitName() + '.nc',
       chamferProgram(c.o), $('mw-chm-note'), $('mw-chm-generate'));
+  }
+
+  // Threads in the holes Cut Board cuts, with a single-point thread mill.
+  function threadById(id) { for (var i = 0; i < THREADS.length; i++) if (THREADS[i].id === id) return THREADS[i]; return null; }
+  function fillThreadSize() {
+    var t = threadById($('mw-thr-size').value);
+    if (!t) return;
+    $('mw-thr-major').value = shown(t.major); $('mw-thr-pitch').value = shown(t.pitch);
+  }
+  // The menu follows typed sizes: a standard thread's name, else Other.
+  function syncThreadSize() {
+    var major = cutMm('mw-thr-major'), pitch = cutMm('mw-thr-pitch'), id = 'custom';
+    THREADS.forEach(function(t) { if (Math.abs(t.major - major) < 0.02 && Math.abs(t.pitch - pitch) < 0.005) id = t.id; });
+    if ($('mw-thr-size').value !== id) $('mw-thr-size').value = id;
+    return threadById(id);
+  }
+  function threadSettings() {
+    var o = cutSettings(), probs = placeProblems(o), t = syncThreadSize();
+    o.tool = null;
+    o.holeDepthMm = o.depthMm;
+    o.thread = { major: cutMm('mw-thr-major'), pitch: cutMm('mw-thr-pitch'), hand: $('mw-thr-hand').value, name: t ? t.name : null };
+    o.depthMm = cutMm('mw-thr-depth'); o.millMm = cutMm('mw-thr-mill'); o.feed = Math.round(cutMm('mw-thr-feed')); o.passes = $('mw-thr-passes').value;
+    o.holes = o.holes.filter(function(h) { return h.diaMm >= 1; });
+    if (!o.holes.length) probs.push(o.plateOn ? 'There are no holes on the stock to thread' : 'There are no holes to thread (grid lines aren’t)');
+    return { o: o, std: t, probs: probs.concat(o.holes.length ? threadProblems(o) : []) };
+  }
+  function renderThreads() {
+    var c = threadSettings(), o = c.o, bits = [];
+    if (o.holes.length && o.thread.major > 0 && o.thread.pitch > 0) {
+      bits.push(o.holes.length + ' hole' + (o.holes.length === 1 ? '' : 's') + ', ' + (c.std ? c.std.name : shown(o.thread.major) + ' × ' + shown(o.thread.pitch) + ' ' + unitName()) +
+        (o.thread.hand === 'left' ? ' left-hand' : '') + ', ' + o.passes + ' passes.');
+      if (!c.probs.length) bits.push('About ' + Math.max(1, Math.round(programMinutes(threadMillProgram(o), state.rapidMmMin || 3000))) + ' min.');
+      var dias = o.holes.map(function(h) { return h.diaMm; }), dmin = Math.min.apply(null, dias);
+      if (c.std && Math.abs(dmin - c.std.drill) > 0.15) bits.push('Cut the holes at ' + shown(c.std.drill) + ' ' + unitName() + ' first, the tap size for ' + c.std.name + '; Setup’s holes are ' + shown(dmin) + ' ' + unitName() + '.');
+      if (o.depthMm > 0) bits.push('Check the thread mill reaches ' + shown(o.depthMm) + ' ' + unitName() + ' below its holder.');
+      if (['mdf', 'softwood', 'hardwood', 'foam'].indexOf($('mw-cut-mat').value) >= 0) bits.push('Threads in ' + $('mw-cut-mat').selectedOptions[0].textContent + ' won’t hold a bolt for long; threaded inserts last longer.');
+    }
+    $('mw-thr-summary').textContent = bits.join(' ');
+    showProblems($('mw-thr-note'), c.probs);
+    $('mw-thr-generate').disabled = !!c.probs.length;
+  }
+  async function generateThreads() {
+    await readMachineState(); await readTlo();
+    var c = threadSettings();
+    if (c.probs.length) { renderThreads(); return; }
+    await loadProgram('SBT-Threads_' + c.o.holes.length + 'x_' + String(c.std ? c.std.id : shown(c.o.thread.major) + 'x' + shown(c.o.thread.pitch)).replace(/[^A-Za-z0-9.\-]/g, '') + '_D-' + shown(c.o.depthMm) + '_' + unitName() + '.nc',
+      threadMillProgram(c.o), $('mw-thr-note'), $('mw-thr-generate'));
   }
 
   // The T-tracks' centerlines and half widths (Track Width on the T-tracks
@@ -7999,7 +8167,7 @@
         ' wholly on it, ' + shown(PLATE_EDGE_MM) + u + ' from its edges; depth never past its thickness; Z0 on its top.' +
         (state.spoilZ ? '' : ' Couldn\u2019t check that Z0 is on its top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.');
   }
-  function renderCutTab() { commonFields(); renderPlate(); renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderLabels(); renderGridLines(); renderLaserTest(); }
+  function renderCutTab() { commonFields(); renderPlate(); renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderThreads(); renderLabels(); renderGridLines(); renderLaserTest(); }
   function wireCut() {
     CUT_SAVED.lengths.concat(CUT_SAVED.plain).forEach(function(k) {
       $('mw-' + k).addEventListener('input', renderCutTab);
@@ -8019,6 +8187,10 @@
     ['mw-cut-mat', 'mw-cut-flutes', 'mw-cut-bit'].forEach(function(id) { $(id).addEventListener('input', showStartingFeeds); $(id).addEventListener('change', showStartingFeeds); });
     showStartingFeeds();
     $('mw-cut-generate').addEventListener('click', generateCut);
+    // A standard thread fills in its size (before the render the change makes).
+    $('mw-thr-size').addEventListener('input', fillThreadSize, true);
+    $('mw-thr-size').addEventListener('change', fillThreadSize, true);
+    $('mw-thr-generate').addEventListener('click', generateThreads);
     $('mw-sh-generate').addEventListener('click', generateStockHoles);
     $('mw-sh-place').addEventListener('click', function() {
       setZeroMode('stock');
@@ -8515,13 +8687,13 @@
       HELP_NEEDS, HELP_UNITS,
       '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all around, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
     cut: { name: 'Cut Board', notes: [
-      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
+      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong>, <strong>Threads</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
       'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge), <strong>spiraled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
       '<p><strong>Where to zero:</strong></p><ul>' +
-        '<li><strong>Dog holes, T-tracks, Grid lines, Chamfers, Labels:</strong> Z0 on the spoilboard&rsquo;s top (the stock&rsquo;s, with Into the stock on top). X0 Y0 can be anywhere: the holes go at their machine positions. Don&rsquo;t move it after Generate.</li>' +
+        '<li><strong>Dog holes, T-tracks, Grid lines, Chamfers, Threads, Labels:</strong> Z0 on the spoilboard&rsquo;s top (the stock&rsquo;s, with Into the stock on top). X0 Y0 can be anywhere: the holes go at their machine positions. Don&rsquo;t move it after Generate.</li>' +
         '<li><strong>Fit test, Laser test:</strong> X0 Y0 on the scrap&rsquo;s front left corner, Z0 on its top (the laser focused on it).</li>' +
         '<li><strong>Stock Holes:</strong> Z0 on the stock&rsquo;s top; X0 Y0 anywhere.</li></ul>' +
         '<p>Each program runs in the active work offset (G54&ndash;G59). It stops before moving if the machine isn&rsquo;t homed, a G92 offset is active, X0 Y0 has moved since you generated it, or Z0 is one the Z0 macros set and no tool length offset is active (after a controller restart, say). A laser program with grblHAL&rsquo;s laser offset set ($770/$771, $772=1) instead needs the laser selected, which grblHAL shows as a G92 offset equal to the laser&rsquo;s.</p>',
@@ -8542,7 +8714,13 @@
         '<li>Dog holes, Chamfers and Labels use only the holes wholly on it, 3 mm in from its edges.</li>' +
         '<li>T-track slots, Grid lines, chamfers and labels stay at least 3 mm in from its edges (more for a slot&rsquo;s width or a V-bit).</li>' +
         '<li>Nothing cuts deeper than its thickness; Z0 on its top. With the spoilboard height recorded, Generate refuses unless Z0 is the stock&rsquo;s thickness above it; the program stops if Z0 moves afterwards, and lifts to Safe Z between holes, over the clamps.</li></ul>' +
-        '<p>Through holes go into whatever&rsquo;s under the stock: put a sacrificial sheet under it, or line its holes up over the spoilboard&rsquo;s and keep them no bigger. The Fit test, Laser test and Stock Holes ignore the tick.</p>' ] },
+        '<p>Through holes go into whatever&rsquo;s under the stock: put a sacrificial sheet under it, or line its holes up over the spoilboard&rsquo;s and keep them no bigger. The Fit test, Laser test and Stock Holes ignore the tick.</p>',
+      '<p><strong>Thread the holes:</strong> after cutting, with a single-point thread mill: a thread inside each hole, for bolts and threaded clamps.</p><ul>' +
+        '<li>Cut the holes at the thread&rsquo;s tap size first: the summary says the size for a standard thread.</li>' +
+        '<li>In each hole the thread mill goes down the middle to Thread Depth, curves out onto the thread, climbs one pitch a turn to the top, and curves back to the middle. Passes go a little deeper into the wall each time; the last is repeated (a spring pass).</li>' +
+        '<li>Right-hand threads are cut counterclockwise (climb milling); left-hand ones clockwise.</li>' +
+        '<li>Thread Feed is at the tooth; the program slows the center to match. Thread mills are fragile: start slow, and check it reaches Thread Depth below its holder.</li>' +
+        '<li>Threads hold well in aluminum and plastics; in MDF or plywood they wear quickly, so threaded inserts usually last longer.</li></ul>' ] },
     stock: { name: 'Stock Holes', notes: [
       '<p><strong>Stock that bolts down, locates and flips true.</strong> Clamp the stock some other way, put Z0 on its top, and drill it right over spoilboard holes:</p><ul>' +
         '<li><strong>Bolts:</strong> a clearance hole over the hole nearest each corner, or every hole under it, with an optional counterbore, to bolt into the threaded inserts. <strong>Bolt</strong> fills the sizes for M6, M8 or 1/4-20.</li>' +
@@ -8628,6 +8806,7 @@
         { id: 'tracks', icon: 'slot', title: 'T-tracks', short: 'A two-layer board whose top you can replace.', notes: [8] },
         { id: 'fit', icon: 'ruler', title: 'Dowel fit test', short: 'Find the size your dowels fit, in scrap.', notes: [9] },
         { id: 'chamfer', icon: 'vbit', title: 'Chamfers', short: 'A bevel around each hole with a V-bit.', notes: [10] },
+        { id: 'threads', icon: 'drill', title: 'Threads', short: 'Thread the holes with a single-point thread mill.', notes: [15] },
         { id: 'labels', icon: 'text', title: 'Labels', short: 'Engrave the hole names, V-bit or laser.', notes: [11] } ] },
       { title: 'No holes: lines', pages: [
         { id: 'lines', icon: 'map', title: 'Grid lines', short: 'Laser or engrave the grid instead of drilling it.', notes: [12] },
