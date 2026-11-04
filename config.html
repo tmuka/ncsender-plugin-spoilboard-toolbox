@@ -105,6 +105,7 @@
   .mw-pos { display: grid; grid-template-columns: auto 1fr 1fr; gap: 2px 8px; padding: 0 12px; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
   .mw-pos-h { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); text-align: right; }
   .mw-pos-ax { font-weight: 700; }
+  .mw-pos-h.mw-pos-other { color: var(--mw-warn); }
   .mw-pos-ax[data-ax="X"] { color: #e5534b; } .mw-pos-ax[data-ax="Y"] { color: #3fb950; } .mw-pos-ax[data-ax="Z"] { color: #4c8dff; }
   .mw-pos-v { text-align: right; white-space: nowrap; }
   .mw-pos-m { color: var(--color-text-secondary); }
@@ -5119,7 +5120,7 @@
       btn.addEventListener('keyup', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') stopHold(true, btn); });
       btn.addEventListener('blur', function() { stopHold(false, btn); });
     });
-    $('mw-hole-wcs').addEventListener('change', renderHoles);
+    $('mw-hole-wcs').addEventListener('change', function() { renderHoles(); showPosition(false); });
     setHoleLock(saved.holeDia != null);
     $('mw-hole-lock').addEventListener('click', function() {
       setHoleLock(!holeLocked());
@@ -6161,15 +6162,30 @@
     renderHoles(true);
   }
   // The sidebar's position readout: work (MPos - WCO, as ncSender's own
-  // display works it out) and machine, in the units shown.
+  // display works it out) and machine, in the units shown. On the XY0
+  // Picker, work is in the work offset picked in its menu: a picked one
+  // that isn't active swaps its offset for the active one's in WCO, which
+  // keeps the G92 and tool length offset the controller adds. Only
+  // G54-G59 are in ncSender's state; G59.1-G59.3 show dashes when picked.
   function showPosition(fromNc) {
     if (fromNc) state.posAt = Date.now();
     var ms = state.machine || {}, n = function(v) { return String(v || '').split(',').map(parseFloat); };
     var m = n(ms.MPos), wco = n(ms.WCO), w = m.map(function(v, i) { return v - (wco[i] || 0); });
+    var activeName = String(ms.workspace || '').toUpperCase(), name = activeName;
+    var onPicker = !$('mw-pick-card').closest('[hidden]') && $('mw-hole-wcs').value;
+    if (onPicker) {
+      name = WCS_NAMES[+$('mw-hole-wcs').value];
+      if (name !== activeName) {
+        var act = n(ms[activeName.toLowerCase()]), pick = n(ms[name.toLowerCase()]);
+        w = act.length >= 3 && pick.length >= 3 ? w.map(function(v, i) { return v + act[i] - pick[i]; }) : [NaN, NaN, NaN];
+      }
+    }
     var ok = ms.connected && m.length >= 3 && m.slice(0, 3).every(isFinite);
     var pos = $('mw-pos');
     if (ok) pos.removeAttribute('data-stale'); else pos.setAttribute('data-stale', '');
-    $('mw-pos-wh').textContent = ms.workspace ? String(ms.workspace).toUpperCase() : 'Work';
+    $('mw-pos-wh').textContent = name || 'Work';
+    $('mw-pos-wh').title = name && name !== activeName ? name + ' (picked in the XY0 Picker; ' + (activeName || 'another') + ' is active in ncSender)' : '';
+    $('mw-pos-wh').classList.toggle('mw-pos-other', !!(name && name !== activeName));
     ['x', 'y', 'z'].forEach(function(a, i) {
       $('mw-pos-w' + a).textContent = ok && isFinite(w[i]) ? shown(w[i]) : '\u2013';
       $('mw-pos-m' + a).textContent = ok ? shown(m[i]) : '\u2013';
@@ -9351,6 +9367,7 @@
     $('mw-help-btn').classList.toggle('active', name === 'help');
     ROOT.querySelector('.mw-panel').scrollTop = 0;
     if (name === 'holes') renderHoles();
+    showPosition(false);
     // The bit, feeds and spindle card is shared: it moves to whichever of
     // Spoilboard and Stock is showing.
     if (name === 'cut' || name === 'stock') {

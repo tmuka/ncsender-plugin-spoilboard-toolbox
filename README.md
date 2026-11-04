@@ -190,7 +190,8 @@ Either way, the Z0 macros are a separate, optional step for machines with measur
 ## What you get
 
 The sidebar shows ncSender's work and machine position live, above Help, so you can jog from the
-keyboard with Spoilboard Toolbox open and follow the spindle.
+keyboard with Spoilboard Toolbox open and follow the spindle. On the XY0 Picker, the work position is in
+the work offset picked in its menu (G54–G59; its heading turns amber when that isn't the active one).
 
 **XY0 Picker:** repeatable XY zero from your spoilboard grid. Use it for bench-dog stops and fences,
 fixtures and jigs that register in the holes, or to get back to the same work origin job after job,
