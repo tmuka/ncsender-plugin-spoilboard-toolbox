@@ -235,6 +235,7 @@
   .mw-hole-map .mw-h-stock-alt { fill: color-mix(in srgb, var(--color-accent) 6%, transparent); stroke: var(--mw-accent-text); stroke-width: 1; stroke-dasharray: 5 4; pointer-events: none; }
   .mw-hole-map .mw-h-alt-label { fill: var(--mw-accent-text); font-size: 11px; font-weight: 700; pointer-events: none; }
   .mw-stock-wl { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  #mw-stock-tauto[aria-pressed="true"] { border-color: var(--mw-accent) !important; color: var(--mw-accent) !important; }
   .mw-maptools-row .mw-btn { min-height: 0 !important; padding: 4px 10px !important; }
   .mw-btn.mw-btn-quiet[aria-pressed="true"] { background: color-mix(in srgb, var(--color-accent) 32%, transparent) !important; border-color: var(--color-accent) !important; }
   .mw-favs { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -676,7 +677,7 @@
             <span class="mw-hint mw-unit">mm</span></span>
             <span class="mw-stock-wl"><span class="mw-hint">T</span>
             <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
-            <span class="mw-hint mw-unit">mm</span></span>
+            <span class="mw-hint mw-unit">mm</span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Auto: T follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, T would be that height. Turn it off and type T then.">Auto</button></span>
             <span class="mw-stock-wl"><span class="mw-hint">Clamp margin</span>
             <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-m" aria-label="Clamp margin" title="Room to leave along every edge of the stock for clamps or screws: the loaded program's cuts, the bit's width included, should stay this far inside the stock. 0 or blank: right up to the edge.">
             <span class="mw-hint mw-unit">mm</span></span>
@@ -4419,7 +4420,7 @@
       slot: $('mw-slot').value, backup: $('mw-backup').value, thick: $('mw-thick').value,
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
-      stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'), stockM: fieldVal('mw-stock-m'),
+      stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'), stockTAuto: holes.thickAuto, stockM: fieldVal('mw-stock-m'),
       stockZMode: $('mw-stock-zmode').value,
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
       stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
@@ -4695,6 +4696,7 @@
     var z = function(p) { var v = hash[WCS_NAMES[p]]; return v ? v[2] : null; };
     var spoil = z(s.slot), thick = z(s.thick), saved = z(s.backup), cur = z(s.wcs);
     state.spoilZ = spoil || null;
+    state.storedThickMm = thick || null;
     var mm = function(v) { return fmt(v) + ' mm'; };
     var set = function(key, text) { ROOT.querySelectorAll('[data-val="' + key + '"]').forEach(function(el) { el.textContent = text; }); };
     set('spoil', spoil ? ' \u2014 height ' + mm(spoil) : spoil === 0 ? ' \u2014 height not recorded yet' : '');
@@ -4809,6 +4811,7 @@
     }).map(function(z) { return { block: true, name: 'Blocked', minX: z.minX, maxX: z.maxX, minY: z.minY, maxY: z.maxY }; }) : [];
     $('mw-stock-on').checked = !!saved.stockOn;
     if (saved.stockZMode === 'top') $('mw-stock-zmode').value = 'top';
+    setThickAuto(saved.stockTAuto === true, true);
     ['W', 'L', 'T'].forEach(function(k) {
       var v = parseFloat(saved['stock' + k]);
       if (isFinite(v) && v > 0) $('mw-stock-' + k.toLowerCase()).value = +(v * conv).toFixed(4);
@@ -4949,6 +4952,7 @@
     $('mw-stock-far').addEventListener('click', function() { readMachineState().then(function() { stockFromSpindle(); stockSync(); }); });
     $('mw-stock-fit').addEventListener('click', function() { stockFromProgram(); stockSync(); });
     $('mw-stock-t').addEventListener('input', function() { holes.thickFrom = 'typed'; });
+    $('mw-stock-tauto').addEventListener('click', function() { setThickAuto(!holes.thickAuto); stockSync(); saveSettings(); });
     ['mw-stock-corner', 'mw-stock-zmode'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
     ['mw-stock-w', 'mw-stock-l', 'mw-stock-t', 'mw-stock-m'].forEach(function(id) {
       $(id).addEventListener('input', function() { renderHoles(); });
@@ -5184,8 +5188,33 @@
   // thickness or Store wrote) until it's typed in this session.
   function takeMeasuredThickness(mm) {
     if (!(mm > 0) || holes.thickFrom === 'typed') return;
+    if (holes.thickAuto) { autoThick(); return; }
     var el = $('mw-stock-t'), v = +(mm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
     holes.thickFrom = 'measured';
+    if (unitVal(el) === v) return;
+    el.value = v;
+    el.classList.remove('mw-invalid');
+    saveSettings();
+  }
+  // Auto T: the active work offset's Z0 height above the recorded
+  // spoilboard when it's more than 1 mm above it (a stock top), else the
+  // stored thickness. Follows Z0 as it changes; never writes anything to
+  // the controller.
+  function setThickAuto(on, loading) {
+    holes.thickAuto = !!on;
+    $('mw-stock-tauto').setAttribute('aria-pressed', on ? 'true' : 'false');
+    $('mw-stock-t').readOnly = !!on;
+    if (on && !loading) autoThick(); else if (!on && holes.thickFrom === 'z0') holes.thickFrom = 'typed';
+  }
+  function autoThick() {
+    if (!holes.thickAuto) return;
+    var ms = state.machine || {}, w = String(ms.workspace || '').toLowerCase();
+    var z0 = ms[w] ? parseFloat(String(ms[w]).split(',')[2]) : NaN;
+    var r = isFinite(z0) && state.spoilZ ? z0StockTop({ cur: z0, spoil: state.spoilZ }) : {};
+    var mm = r.hMm != null ? r.hMm : state.storedThickMm, from = r.hMm != null ? 'z0' : 'measured';
+    if (!(mm > 0)) return;
+    holes.thickFrom = from;
+    var el = $('mw-stock-t'), v = +(mm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
     if (unitVal(el) === v) return;
     el.value = v;
     el.classList.remove('mw-invalid');
@@ -6350,6 +6379,7 @@
   // live: only the machine moved (the position poll), so Setup's
   // profile menu is left alone.
   function renderHoles(live) {
+    autoThick();
     var svg = $('mw-hole-map'), note = $('mw-hole-note'), t = state.travel, h = readHoles();
     svg.textContent = '';
     svg.setAttribute('data-mode', holes.mode);
@@ -7079,7 +7109,7 @@
       var top = $('mw-stock-zmode').value === 'top', t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
       if (top && !(t > 0)) return null;
       var under = base != null ? on : 'the spoilboard';
-      var from = holes.thickFrom === 'measured' ? 'measured' : holes.thickFrom === 'typed' ? 'typed' : 'from last time';
+      var from = holes.thickFrom === 'z0' ? 'from Z0' : holes.thickFrom === 'measured' ? 'measured' : holes.thickFrom === 'typed' ? 'typed' : 'from last time';
       return { hMm: (base || 0) + (top ? t : 0), what: top ? 'the stock top (' + shown(t) + ' ' + unitName() + ' ' + from + ', on ' + under + ')' : base != null ? 'the stock bottom (on ' + on + ')' : 'the spoilboard' };
     }
     return base != null ? { hMm: base, what: 'the surface of ' + on } : null;
@@ -7994,7 +8024,9 @@
       else if (Math.abs(above - thick) > 0.5) res.warn = o.wcsName + ' Z0 is ' + shown(above) + ' ' + unitName() + ' above the spoilboard height recorded in ' + slotName + ' Z, but T is ' + shown(thick) + ' ' + unitName() +
         '. The holes are cut down from Z0, so check it\u2019s on this stock\u2019s top: touch the bit to the top and ncSender\u2019s Z should read 0. If it does, something ' + shown(above - thick) + ' ' + unitName() +
         ' thick is under the stock, or the recorded spoilboard height is out of date (record it again in Z0 macros before using SBT: Z0 on spoilboard).';
-    } else if (thick > 0) res.warn = 'Z0 can’t be checked: no spoilboard height is recorded yet (Z0 macros). Make sure ' + o.wcsName + ' Z0 is on the stock’s top: on the spoilboard, the holes would go a stock’s thickness too deep.';
+    }
+    if (thick > 0 && holes.thickFrom === 'z0' && !res.warn && state.spoilZ) res.warn = 'T is Auto: ' + shown(thick) + ' ' + unitName() + ', ' + o.wcsName + ' Z0\u2019s height above the spoilboard. That\u2019s only the stock\u2019s thickness with the stock lying on the spoilboard: on a vise, a fixture or a riser, the through holes would go that deep. Turn Auto off and type T then.';
+    else if (thick > 0 && !(o.zWcs != null && state.spoilZ)) res.warn = 'Z0 can’t be checked: no spoilboard height is recorded yet (Z0 macros). Make sure ' + o.wcsName + ' Z0 is on the stock’s top: on the spoilboard, the holes would go a stock’s thickness too deep.';
     // Blank or 0: no counterbore, and its depth doesn't matter.
     var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '' && cb !== 0;
     res.hasCb = hasCb;
@@ -8779,7 +8811,7 @@
         '<li><strong>Against Pins:</strong> push it against pins in dog holes, two along one edge and one along the other (an L), and tap those holes. Each edge is a pin radius off its pins&rsquo; row or column (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Two pins on a diagonal can hold it either way: it asks. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
         '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is.</li>' +
         '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Here</strong>. The pinned corner needs no size; every other point does, and the line beside Set says so.</li>' +
-        '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one.</li></ul>' +
+        '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Auto</strong> beside T if you probe Z0 on the stock&rsquo;s top: T follows Z0&rsquo;s height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness with Z0 on the spoilboard. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, T would be that height, so turn Auto off and type T.</li></ul>' +
         '<p>It stays where it is when you close and reopen the plugin, and Stock Holes and Cut Board&rsquo;s Into the stock on top option use it. The keyboard macros always use a hole.</p>',
       '<strong>Zoom</strong> for a big bed, with <strong>Map view</strong> under the map: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',

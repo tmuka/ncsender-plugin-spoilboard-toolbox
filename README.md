@@ -662,7 +662,13 @@ size and thickness; the holes come from the grid picked in Setup.
   apply. A diagram above the summary shows the depths with your numbers, and Z0's height as measured
   against the recorded spoilboard.
 - **T** follows the thickness the Z0 macros stored (Measure stock thickness or Store) until you type
-  one; type the stock's real thickness if it differs.
+  one; type the stock's real thickness if it differs. Or press **Auto** beside it, if you probe Z0 on
+  the stock's top first (ncSender's Probe dialog, any time, even with the plugin open): T then follows
+  the active work offset's Z0 height above the recorded spoilboard whenever Z0 is more than 1 mm above
+  it, and the stored thickness when Z0 is on the spoilboard. Only for stock lying on the spoilboard: with
+  Z0 on a vise jaw, a fixture or a riser, T would be that height and through holes would go that deep, so
+  turn Auto off and type T for those. Stock Holes reminds you while T is Auto. Auto is off until you
+  press it, so typing T or measuring it with the macros works as before.
 - It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard
   rather than the stock top (once the Z0 macros have recorded the spoilboard height), and the program
   stops before moving if Z0 changed since it was generated.
