@@ -46,7 +46,8 @@
   .mw-wrapper:not(.mw-mini) > .mw-minicard { display: none !important; }
   .mw-minicard { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; overflow-y: auto; min-height: 0; }
   .mw-mini-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .mw-mini-title { font-weight: 700; color: var(--mw-accent-text); }
+  .mw-mini-titles { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .mw-mini-title { font-weight: 700; }
   .mw-mini-text { margin: 0; line-height: 1.45; }
   .mw-mini-text[data-state="warn"] { color: var(--mw-warn); }
   .mw-mini-text[data-state="ok"] { color: var(--mw-ok); }
@@ -99,6 +100,15 @@
     display: flex; flex-direction: column; gap: 10px;
   }
   .mw-close { width: 100%; }
+  /* ncSender's work and machine position, live, so jogging from the
+     keyboard can be followed with this open. */
+  .mw-pos { display: grid; grid-template-columns: auto 1fr 1fr; gap: 2px 8px; padding: 0 12px; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+  .mw-pos-h { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); text-align: right; }
+  .mw-pos-ax { font-weight: 700; }
+  .mw-pos-ax[data-ax="X"] { color: #e5534b; } .mw-pos-ax[data-ax="Y"] { color: #3fb950; } .mw-pos-ax[data-ax="Z"] { color: #4c8dff; }
+  .mw-pos-v { text-align: right; white-space: nowrap; }
+  .mw-pos-m { color: var(--color-text-secondary); }
+  .mw-pos[data-stale] .mw-pos-v { opacity: 0.5; }
   .mw-help-card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
   .mw-help-card li { line-height: 1.45; }
   .mw-help-tips { display: grid; grid-template-columns: minmax(110px, 14em) minmax(0, 1fr); gap: 6px 14px; margin: 0; line-height: 1.45; }
@@ -640,6 +650,12 @@
         </button>
       </nav>
       <div class="mw-sidebar-footer">
+        <div class="mw-pos" id="mw-pos" role="group" aria-label="Position, from ncSender" title="ncSender's position, live: work (the active work offset) and machine. Jog from the keyboard with this open and follow it here.">
+          <span></span><span class="mw-pos-h" id="mw-pos-wh">Work</span><span class="mw-pos-h">Machine</span>
+          <span class="mw-pos-ax" data-ax="X">X</span><span class="mw-pos-v" id="mw-pos-wx">–</span><span class="mw-pos-v mw-pos-m" id="mw-pos-mx">–</span>
+          <span class="mw-pos-ax" data-ax="Y">Y</span><span class="mw-pos-v" id="mw-pos-wy">–</span><span class="mw-pos-v mw-pos-m" id="mw-pos-my">–</span>
+          <span class="mw-pos-ax" data-ax="Z">Z</span><span class="mw-pos-v" id="mw-pos-wz">–</span><span class="mw-pos-v mw-pos-m" id="mw-pos-mz">–</span>
+        </div>
         <button type="button" class="mw-nav-btn" id="mw-help-btn" title="More about this tab">
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.6"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg></span>
           <span class="mw-nav-label">Help</span>
@@ -1675,7 +1691,7 @@
   </div>
   <div class="mw-minicard" id="mw-mini" role="region" aria-label="Probe the stock top">
     <div class="mw-mini-head">
-      <span class="mw-mini-title">Probe Stock Top</span>
+      <span class="mw-mini-titles"><span class="mw-sidebar-eyebrow">Spoilboard Toolbox</span><span class="mw-mini-title">Probe Stock Top</span></span>
       <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-mini-move" title="Move this card to another corner">Move ⇲</button>
     </div>
     <p class="mw-mini-text" id="mw-mini-text" role="status"></p>
@@ -6070,6 +6086,21 @@
     holes.liveAt = Date.now();
     renderHoles(true);
   }
+  // The sidebar's position readout: work (MPos - WCO, as ncSender's own
+  // display works it out) and machine, in the units shown.
+  function showPosition(fromNc) {
+    if (fromNc) state.posAt = Date.now();
+    var ms = state.machine || {}, n = function(v) { return String(v || '').split(',').map(parseFloat); };
+    var m = n(ms.MPos), wco = n(ms.WCO), w = m.map(function(v, i) { return v - (wco[i] || 0); });
+    var ok = ms.connected && m.length >= 3 && m.slice(0, 3).every(isFinite);
+    var pos = $('mw-pos');
+    if (ok) pos.removeAttribute('data-stale'); else pos.setAttribute('data-stale', '');
+    $('mw-pos-wh').textContent = ms.workspace ? String(ms.workspace).toUpperCase() : 'Work';
+    ['x', 'y', 'z'].forEach(function(a, i) {
+      $('mw-pos-w' + a).textContent = ok && isFinite(w[i]) ? shown(w[i]) : '\u2013';
+      $('mw-pos-m' + a).textContent = ok ? shown(m[i]) : '\u2013';
+    });
+  }
   function startLive() {
     ROOT.addEventListener('pointerdown', function() { holes.pressing = true; }, true);
     window.addEventListener('pointerup', function onUp() {
@@ -6082,8 +6113,17 @@
       if (!ms) return;
       state.machine = Object.assign({}, state.machine || {}, ms);
       if ('jobLoaded' in evt.data.state) readProgram(evt.data.state.jobLoaded);
+      showPosition(true);
       liveRender();
     });
+    // When ncSender sends nothing for a while, read it here.
+    var posTimer = setInterval(async function() {
+      if (!rootAlive()) { clearInterval(posTimer); return; }
+      if (document.hidden || holes.polling || Date.now() - (state.posAt || 0) < 1500) return;
+      holes.polling = true;
+      try { await readMachineState(); } finally { holes.polling = false; }
+      showPosition(false);
+    }, 1000);
     var timer = setInterval(async function() {
       if (!rootAlive()) { clearInterval(timer); return; }
       if (document.hidden || holes.busy || holes.polling || $('mw-pick-card').closest('[hidden]')) return;
