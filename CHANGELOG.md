@@ -6,7 +6,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### ✨ New
-- **Remember Z0 as stock top:** a new Z0 macro for a stock probed some other way (ncSender's Probe dialog). Run it right after probing: it stores that Z0's height above the spoilboard as the stock thickness, so **Z0 on stock top** gives the same Z0 for every tool. Press **Create macros** to add it.
+- **Z0 on stock top learns a new stock:** probed a new stock with ncSender's Probe dialog? Run **SBT: Z0 on stock top** right after, with the same tool. When the current Z0 isn't one the macros set and is more than 1 mm above the spoilboard, it keeps that Z0 and stores its height as the stock thickness, so every tool after gets it. Not after zeroing on a vise jaw, a fixture or a step: Help and the README say when it's safe. Press **Create macros** to update the macro.
 - **Laser offset:** with grblHAL's laser offset set (`$770`/`$771`, e.g. by the Laser Toolbox plugin) and `$772=1`, a laser program (grid lines, laser test, labels) needs the laser selected: grblHAL shows it as a G92 offset equal to the laser's, and the program stops before moving otherwise (with the spindle selected, its `M4` would run the spindle). With `$772=0` it refuses to make one, since the laser would land off by its offset.
 
 ### 🐛 Fixed

@@ -147,11 +147,11 @@ test('names start SBT:, descriptions are the first comment line after its prefix
   }
 });
 
-test('macros: the core six always, extras only when ticked', () => {
-  assert.deepEqual(Object.keys(buildMacros(base)), ['record', 'measure', 'set', 'stock', 'remember', 'restore']);
+test('macros: the core five always, extras only when ticked', () => {
+  assert.deepEqual(Object.keys(buildMacros(base)), ['record', 'measure', 'set', 'stock', 'restore']);
   assert.deepEqual(Object.keys(buildMacros(Object.assign({}, base, { extras: allExtras }))),
-    ['record', 'measure', 'set', 'stock', 'remember', 'restore', 'midX', 'midY', 'midXY', 'saveXY', 'restoreXY', 'center']);
-  assert.deepEqual(Object.keys(buildMacros(Object.assign({}, base, { extras: { midX: true } }))).slice(6), ['midX']);
+    ['record', 'measure', 'set', 'stock', 'restore', 'midX', 'midY', 'midXY', 'saveXY', 'restoreXY', 'center']);
+  assert.deepEqual(Object.keys(buildMacros(Object.assign({}, base, { extras: { midX: true } }))).slice(5), ['midX']);
 });
 
 test('measure stores stock top minus the spoilboard in the thickness slot', () => {
@@ -250,7 +250,7 @@ test('other work offset and slots', () => {
 test('imperial: values in mm, G21 first and G20 last in every Z macro', () => {
   const m = buildMacros(Object.assign({}, base, { blockMm: 0.5 * 25.4, imperial: true, extras: allExtras }));
   assert.match(m.record.body, /- 12\.700 - #5403\]/);
-  for (const k of ['record', 'measure', 'set', 'stock', 'remember', 'restore']) {
+  for (const k of ['record', 'measure', 'set', 'stock', 'restore']) {
     const c = code(m[k].body);
     assert.ok(c.includes('G21'), k);
     assert.equal(c[c.length - 1], 'G20', k);
@@ -309,14 +309,14 @@ test('guards: nothing changes unless homed, an offset is active and the values e
     assert.ok(m[k].body.includes(p._error + ' (SBT stop: record the spoilboard height first)'), k);
     assert.deepEqual([p[5223], p[5343], p[5363]], [-77.5, 18, 0], k + ' changes nothing');
   }
-  // No stock thickness stored.
-  const p = run(m.stock.body, Object.assign({}, start, ready, { 5343: 0 }));
+  // No stock thickness stored, and Z0 on the spoilboard (nothing to learn from).
+  const p = run(m.stock.body, Object.assign({}, start, ready, { 5343: 0, 5223: -95 }));
   assert.ok(m.stock.body.includes(p._error + ' (SBT stop: store a stock thickness first)'));
-  assert.deepEqual([p[5223], p[5363]], [-77.5, 0]);
+  assert.deepEqual([p[5223], p[5363], p[5343]], [-95, 0, 0]);
   // Back to saved needs none of it, only no G92 Z.
   assert.deepEqual(m.restore.body.match(/SBT stop: [^)]*/g), ['SBT stop: a G92 Z offset is active; G92.1 clears it', 'SBT stop: G54 isn\'t active; select it first']);
   // A G92 Z offset stops the three that set Z0, changing nothing.
-  for (const k of ['set', 'stock', 'remember', 'restore']) {
+  for (const k of ['set', 'stock', 'restore']) {
     const q = run(m[k].body, Object.assign({}, start, ready, { 5213: 3, 5363: -50 }));
     assert.ok(m[k].body.includes(q._error + ' (SBT stop: a G92 Z offset is active; G92.1 clears it)'), k);
     assert.deepEqual([q[5223], q[5363], q[5343]], [-77.5, -50, start[5343]], k + ' changes nothing with G92 Z');
@@ -326,7 +326,7 @@ test('guards: nothing changes unless homed, an offset is active and the values e
 test('another work offset active: every macro that uses G54 stops and changes nothing', () => {
   const m = buildMacros(Object.assign({}, base, { extras: allExtras }));
   const start = Object.assign({ 5223: -77.5, 5383: -95, 5343: 18, 5363: -60, 5361: 10, 5362: 20, 5221: 100, 5222: 50, 5403: 12, 5063: 27.5, 5220: 2 }, ready);
-  for (const k of ['record', 'measure', 'set', 'stock', 'remember', 'restore', 'saveXY', 'restoreXY']) {
+  for (const k of ['record', 'measure', 'set', 'stock', 'restore', 'saveXY', 'restoreXY']) {
     const p = run(m[k].body, Object.assign({}, start));
     assert.ok(m[k].body.includes(p._error + ' (SBT stop: G54 isn\'t active; select it first)'), k + ' stops');
     for (const n of [5223, 5383, 5343, 5363, 5361, 5362, 5221, 5222]) assert.equal(p[n], start[n], k + ' leaves #' + n);
@@ -2019,27 +2019,31 @@ test('thread sizes: tap drills between the minor and major diameters', () => {
   }
 });
 
-test('remember this Z0 as stock top: its height above the spoilboard becomes the thickness', () => {
+test('Z0 on stock top learns a new stock from a Z0 set some other way', () => {
   const m = buildMacros(base);
-  assert.equal(m.remember.name, 'SBT: Remember G54 Z0 as stock top');
-  assert.equal(m.remember.description, 'remember this Z0 as stock top');
   // Probed with ncSender's Probe dialog on a 19.5 mm stock; 18 mm still stored.
-  const p = run(m.remember.body, Object.assign({ 5383: -95, 5343: 18, 5223: -75.5, 5363: -60 }, ready));
+  const p = run(m.stock.body, Object.assign({ 5383: -95, 5343: 18, 5223: -75.5, 5363: -60 }, ready));
   assert.equal(p._error, undefined);
-  assert.equal(p[5343], 19.5);
-  assert.deepEqual([p[5223], p[5363]], [-75.5, -60], 'Z0 and the saved Z0 untouched');
-  // Then Z0 on stock top gives that Z0, and doesn't save over the saved one.
+  assert.deepEqual([p[5223], p[5343], p[5363]], [-75.5, 19.5, -75.5], 'Z0 kept, thickness learned, probed Z0 saved');
+  // Switching with the macros then never learns from their own Z0s.
+  run(m.set.body, p);
   run(m.stock.body, p);
-  assert.deepEqual([p[5223], p[5363]], [-75.5, -60]);
-  // Z0 on or below the spoilboard, or no spoilboard height: stops, nothing stored.
-  for (const [z, spoil, why] of [[-95, -95, "G54 Z0 isn't above the spoilboard"], [-96, -95, "G54 Z0 isn't above the spoilboard"], [-75.5, 0, 'record the spoilboard height first']]) {
-    const q = run(m.remember.body, Object.assign({ 5383: spoil, 5343: 18, 5223: z }, ready));
-    assert.ok(m.remember.body.includes(q._error + ' (SBT stop: ' + why + ')'), why);
-    assert.equal(q[5343], 18);
-    assert.equal(runAll(m.remember.body, Object.assign({ 5383: spoil, 5343: 18, 5223: z }, ready))[5343], 18, why + ' (stop skipped)');
+  assert.deepEqual([p[5223], p[5343]], [-75.5, 19.5]);
+  // No thickness stored yet: a probed stock top is enough.
+  assert.equal(run(m.stock.body, Object.assign({ 5383: -95, 5343: 0, 5223: -75.5 }, ready))[5343], 19.5);
+  // 1 mm or less above the spoilboard, below it, or an offset never set (0):
+  // the stored thickness is used.
+  for (const z of [-94.5, -96, 0]) {
+    const q = run(m.stock.body, Object.assign({ 5383: -95, 5343: 18, 5223: z }, ready));
+    assert.deepEqual([q[5223], q[5343]], [-77, 18], 'Z0 ' + z);
   }
-  // Not homed or no tool length offset: stops too.
-  for (const r of [{ _homed_state: 0, _tool_offset: 1 }, { _homed_state: 1, _tool_offset: 0 }]) {
-    assert.equal(runAll(m.remember.body, Object.assign({ 5383: -95, 5343: 18, 5223: -75.5 }, r))[5343], 18);
+  // ... and with nothing stored, those stop.
+  const q = run(m.stock.body, Object.assign({ 5383: -95, 5343: 0, 5223: -94.5 }, ready));
+  assert.ok(m.stock.body.includes(q._error + ' (SBT stop: store a stock thickness first)'));
+  // Set Z0's last height (the thickness slot's X) isn't learned from either.
+  assert.equal(run(m.stock.body, Object.assign({ 5383: -95, 5343: 18, 5341: 30, 5223: -65 }, ready))[5343], 18);
+  // Not homed, no tool length offset, or a G92 Z: nothing learned, even with the stops skipped.
+  for (const r of [{ _homed_state: 0, _tool_offset: 1 }, { _homed_state: 1, _tool_offset: 0 }, Object.assign({ 5213: 2 }, ready)]) {
+    assert.deepEqual([runAll(m.stock.body, Object.assign({ 5383: -95, 5343: 18, 5223: -75.5 }, r))[5343]], [18]);
   }
 });

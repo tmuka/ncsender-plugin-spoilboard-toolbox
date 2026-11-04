@@ -30,13 +30,17 @@ the plugin next opened), missed the real danger (Z0 on stock top from a key with
 nagged after a re-probe a few hundredths off, could only check the tool length offset now rather than when
 Z0 was set, and one wrong tap shifted every later Z0. It also stored inch values as mm with `$13=1`.
 
-Instead, one macro, **SBT: Remember G54 Z0 as stock top**, run right after probing the stock with
-ncSender's Probe dialog, with the same tool:
+Instead, **SBT: Z0 on stock top** learns: run right after probing the stock with ncSender's Probe
+dialog, with the same tool, it takes a Z0 the macros didn't set and that's more than 1 mm above the
+spoilboard as the new stock top (a separate "Remember Z0 as stock top" macro was built first, then
+folded in at the user's request):
 
-- `G10 L2 P7 Z[#5223 - #5383]`: the Z0's height above the spoilboard becomes the thickness. Nothing moves
-  or probes.
-- The usual stops (homed, tool length offset, spoilboard height recorded, no G92 Z, the macros' offset
-  active), plus Z0 must be above the spoilboard.
+- `#2` = not the stored stock top, not Set Z0's last height, not 0, and more than 1 mm above the
+  spoilboard; then `G10 L2 P7 Z[#5343 + [#5223 - #5383 - #5343] * #2]`, and Z0 = spoilboard + thickness
+  (unchanged when learned). The usual stops apply; with no thickness stored it still works when there's
+  a Z0 to learn from.
+- The catch: a Z0 on a vise jaw, fixture or step is learned as a "thickness" too. Help and the README
+  list the safe and unsafe uses.
 - No spoilboard version: Record and the surfacing note cover that.
 
 ## Later: when the plugin is closed (needs ncSender)

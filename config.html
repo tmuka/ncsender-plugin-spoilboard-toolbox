@@ -1071,7 +1071,7 @@
           <li>Run <strong data-name="restore"></strong>. Work Z0 goes back to where it was before step 3.</li>
           <li>From then on, with any measured tool, just run <strong data-name="set"></strong> or <strong data-name="stock"></strong>.</li>
           <li>For <strong data-name="stock"></strong>, first press <strong>Store</strong> for a known thickness, or put the block on the stock and run <strong data-name="measure"></strong>.</li>
-          <li>Probed Z0 on a new stock with ncSender&rsquo;s Probe dialog instead? Run <strong data-name="remember"></strong> right after, with the same tool: it stores that Z0&rsquo;s height above the spoilboard as the thickness, so <strong data-name="stock"></strong> gives it back for any tool.</li>
+          <li>Probed Z0 on a new stock with ncSender&rsquo;s Probe dialog instead? Run <strong data-name="stock"></strong> right after, with the same tool: it keeps that Z0 and stores its height as the new thickness, for every tool after. Not after zeroing on a vise jaw, a fixture or a step: see Help.</li>
         </ol>
         <p class="mw-hint">The macros <strong>stop without changing anything</strong> when the machine isn&rsquo;t homed, no tool
           length offset is active, or the spoilboard height (or stock thickness) hasn&rsquo;t been stored yet. ncSender&rsquo;s
@@ -1724,6 +1724,9 @@
   // one after an error or abort) turns G43.1 off, so #<_tool_offset> reads
   // 0, but keeps the measured offset applied (#5403); a restart clears both.
   var TLO_ACTIVE = '[#<_tool_offset> OR [ABS[#5403] GT 0.0005]]';
+  // Z0 on stock top takes a Z0 it didn't set as a new stock top when it's
+  // more than this above the spoilboard (mm).
+  var LEARN_MM = 1;
   function buildMacros(o) {
     var wcs = WCS_NAMES[o.wcs], slot = WCS_NAMES[o.slot], bak = WCS_NAMES[o.backup], thk = WCS_NAMES[o.thick];
     var cur = '#' + offsetZParam(o.wcs), spoil = '#' + offsetZParam(o.slot);
@@ -1800,38 +1803,32 @@
       saveLine,
       'G10 L2 P' + o.wcs + ' Z[' + spoil + ' / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + G92Z + ' AND ' + ACTIVE + ']]'
     ].concat(tail));
+    // A Z0 the macros didn't set, more than LEARN_MM above the spoilboard,
+    // is taken as a new stock's top (probed with ncSender's Probe dialog,
+    // say): its height becomes the thickness, so Z0 stays where it is and
+    // the next tool gets it too. Not an offset never set (0). Worked out
+    // into #2 before the saved Z0 is touched.
+    // (More than LEARN_MM above it already means it's not the spoilboard.)
+    var learn = '[[ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + mark + '] GT 0.001] AND [' + cur + ' NE 0] AND [[' + cur + ' - ' + spoil + '] GT ' + fmt(LEARN_MM) + ']]';
     m.stock = macro(wcs + ' Z0 on stock top', [
       '(SBT: work Z0 on stock top)',
-      '(Uses the thickness in ' + thk + ' Z.)',
+      '(Uses the thickness in ' + thk + ' Z. A Z0)',
+      '(set some other way, over ' + LEARN_MM + ' mm above)',
+      '(the spoilboard, becomes the new)',
+      '(thickness instead: see Help.)',
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
       needHomed,
       needTlo,
       needSpoil,
-      needThick,
+      stop('[' + hasThick + ' OR [[' + cur + ' - ' + spoil + '] GT ' + fmt(LEARN_MM) + ']]', 'store a stock thickness first'),
       noG92Z,
       needWcs,
       'G21',
+      '#2=' + learn + ' (1: a new stock top)',
       saveLine,
+      'G10 L2 P' + o.thick + ' Z[[' + thick + ' + [' + cur + ' - ' + spoil + ' - ' + thick + '] * #2] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + G92Z + ' AND ' + ACTIVE + ']]',
       'G10 L2 P' + o.wcs + ' Z[[' + spoil + ' + ' + thick + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + hasThick + ' AND ' + G92Z + ' AND ' + ACTIVE + ']]'
-    ].concat(tail));
-    // A stock top probed some other way (ncSender's Probe dialog): its
-    // height above the spoilboard becomes the thickness, so Z0 on stock top
-    // gives the same Z0 for any tool. Nothing moves or probes.
-    var above = '[[' + cur + ' - ' + spoil + '] GT 0.001]';
-    m.remember = macro('Remember ' + wcs + ' Z0 as stock top', [
-      '(SBT: remember this Z0 as stock top)',
-      '(Run right after probing Z0 on the)',
-      '(stock. Stores its height above the)',
-      '(spoilboard in ' + thk + ' Z.)',
-      needHomed,
-      needTlo,
-      needSpoil,
-      noG92Z,
-      needWcs,
-      stop(above, wcs + ' Z0 isn\'t above the spoilboard'),
-      'G21',
-      'G10 L2 P' + o.thick + ' Z[[' + cur + ' - ' + spoil + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + G92Z + ' AND ' + ACTIVE + ' AND ' + above + ']]'
     ].concat(tail));
     m.restore = macro(wcs + ' Z0 back to saved', [
       '(SBT: put back the Z0 saved in ' + bak + ' Z)',
@@ -8771,7 +8768,7 @@
       'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, a value it needs isn&rsquo;t stored, or another work offset is active (the macros are made for one, Work Offset to Set); ncSender&rsquo;s terminal shows <code>error:72</code>.',
       '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.',
       HELP_KEYS, HELP_NEEDS, HELP_UNITS,
-      '<strong>A Z0 probed some other way</strong> (ncSender&rsquo;s Probe dialog on a new stock) leaves the stored thickness as it was, so <strong>SBT: Z0 on stock top</strong> would give the old stock&rsquo;s top. Right after probing, with the same tool, run <strong>SBT: Remember G54 Z0 as stock top</strong> (named for Work Offset to Set): it stores that Z0&rsquo;s height above the spoilboard as the thickness, so Z0 on stock top gives it back for any tool. It doesn&rsquo;t move or probe. It stops like the others do, and also when Z0 isn&rsquo;t above the spoilboard.' ] }
+      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10): run <strong>SBT: Z0 on stock top</strong> right after, with the same tool. When the current Z0 isn&rsquo;t one the macros put down and is more than 1 mm (0.04&quot;) above the spoilboard, it takes that Z0 as the stock&rsquo;s top: it stores its height above the spoilboard as the new thickness and leaves Z0 where it is, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from). A thickness typed with Store or measured stays until Z0 on stock top is run with a Z0 set some other way.<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Pressing Z0 on stock top then keeps your Z0 but stores that height as the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. Don&rsquo;t put Z0 on stock top on a key you might press by habit after zeroing on a vise.<br>It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the tool already measured.' ] }
   };
   var HELP_DOCS = 'https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox#readme';
   // The help's index: each tab's notes (by their place in its notes list)
@@ -8857,7 +8854,7 @@
         { id: 'checks', icon: 'gear', title: 'Run checks and Create', short: 'Check the controller, then write the macros.', notes: [2, 5] },
         { id: 'keys', icon: 'keys', title: 'Put them on keys', short: 'One keypress at the machine for each.', notes: [6] },
         { id: 'stops', icon: 'shield', title: 'Safety stops', short: 'They stop rather than set a wrong Z0.', notes: [4] },
-        { id: 'elsewhere', icon: 'refresh', title: 'A Z0 probed elsewhere', short: 'Remember it as the stock top, for any tool.', notes: [9] },
+        { id: 'elsewhere', icon: 'refresh', title: 'A Z0 probed elsewhere', short: 'Z0 on stock top learns a new stock; not after a vise.', notes: [9] },
         { id: 'slots', icon: 'layers', title: 'Where values are kept', short: 'Spare work offsets hold the heights.', notes: [3] },
         { id: 'units', icon: 'units', title: 'Typing units', short: 'mm or inches, fractions too.', notes: [8] } ] } ] }
   };

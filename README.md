@@ -202,8 +202,7 @@ tool, without re-probing after a tool change:
 | --- | --- |
 | **Record spoilboard height** | Probes a block on the spoilboard once and remembers the height. |
 | **Z0 on spoilboard** | Sets work Z0 on the spoilboard, for any measured tool. For through-cuts and parts zeroed from the bottom. |
-| **Z0 on stock top** | Sets work Z0 on top of the stock: the spoilboard plus a stored stock thickness (typed in, or probed with **Measure stock thickness**). |
-| **Remember Z0 as stock top** | Stores the Z0 you just probed on the stock (e.g. with ncSender's Probe dialog) as the stock thickness, for **Z0 on stock top**. |
+| **Z0 on stock top** | Sets work Z0 on top of the stock: the spoilboard plus a stored stock thickness (typed in, or probed with **Measure stock thickness**). Run right after probing a new stock some other way, it learns the thickness from that Z0 instead. |
 | **Z0 back to saved** | Puts back the Z0 you had before, e.g. one you probed on the stock. |
 
 In ncSender's Macros tab they're named **SBT: …**, with the work offset they set (e.g.
@@ -259,11 +258,23 @@ Re-record after surfacing the spoilboard.
 - **Zeroing from the bottom** (set the job's Z origin to the bottom of the stock in your CAM): run
   **Z0 on spoilboard**. No stock probing at all, and through-cuts come out exact.
 
-**Probed the stock some other way?** ncSender's Probe dialog puts Z0 on the stock but leaves the stored
-thickness as it was, so a later **Z0 on stock top** would give the old stock's top. Right after probing,
-with the same tool, run **Remember Z0 as stock top**: it stores that Z0's height above the spoilboard as the
-thickness, so **Z0 on stock top** gives it back for every tool after. It doesn't move or probe, and stops
-like the others (and when Z0 isn't above the spoilboard).
+**Probed the stock some other way?** ncSender's Probe dialog puts Z0 on the stock but doesn't tell the
+macros the new thickness. Run **Z0 on stock top** right after probing, with the same tool: when the current
+Z0 isn't one the macros put down and is more than 1 mm (0.04") above the spoilboard, it takes that Z0 as the
+stock's top. It keeps Z0 where you probed it and stores its height above the spoilboard as the new
+thickness, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before.
+
+- **Safe:** a new sheet or board lying flat on the spoilboard, probed on its top; the same stock probed
+  again; switching between spoilboard and stock top with the macros (their own Z0s are never learned
+  from).
+- **Not safe:** after zeroing on anything that isn't the top of stock lying on the spoilboard: a **vise
+  jaw** or a part held in a vise, a fixture, a jig or riser block, a step or pocket floor for a second
+  operation, or Z0 set partway down a part. Pressing **Z0 on stock top** then keeps your Z0 but stores
+  that height as the stock thickness, and later stock-top Z0s land there. Put the real thickness back
+  with **Store** or **Measure stock thickness**. If you often zero on a vise, don't put **Z0 on stock
+  top** on a key you might press by habit.
+- It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the
+  tool already measured.
 
 So you probe once per new stock, not once per tool.
 
@@ -689,9 +700,8 @@ size and thickness; the holes come from the grid picked in Setup.
      stock top minus the spoilboard height.
    - **G54 Z0 on spoilboard**: saves the current Z0, then sets Z0 on the spoilboard.
    - **G54 Z0 on stock top**: saves the current Z0, then sets Z0 the stored thickness above the
-     spoilboard.
-   - **Remember G54 Z0 as stock top**: stores G54's Z0 height above the spoilboard as the stock
-     thickness (run it right after probing Z0 on the stock some other way).
+     spoilboard; or, after a Z0 set some other way more than 1 mm above it, keeps that Z0 and stores
+     its height as the thickness.
    - **G54 Z0 back to saved**: puts the saved Z0 back (does nothing if none was saved).
    - The extras you ticked.
    - **Delete SBT: macros** removes every macro whose name starts with "SBT:" (or "ZS:", "MW:" or "Macro Wiz:", from older versions; for example
@@ -759,7 +769,7 @@ position. **Back to saved** needs none of these, except the active work offset.
 
 The three macros that set Z0 (spoilboard, stock top, back to saved) also stop while a **G92 Z offset**
 is active: grblHAL adds it on top of the work offset, so Z0 would land that far above or below where
-it should. **Remember Z0 as stock top** stops too, since a Z0 probed then is off by the same amount.
+it should (and a Z0 **Z0 on stock top** would learn from is off by the same amount).
 `G92.1` clears it. (The probing in record and measure isn't affected: grblHAL reports the
 probe point relative to the work offset only.)
 
