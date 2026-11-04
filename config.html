@@ -717,7 +717,7 @@
             <span class="mw-hint mw-unit">mm</span></span>
             <span class="mw-stock-wl"><span class="mw-hint">T</span>
             <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
-            <span class="mw-hint mw-unit">mm</span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Follow Z0: T follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, T would be that height. Turn it off and type T then.">Follow Z0</button></span>
+            <span class="mw-hint mw-unit">mm</span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Follow Z0: T follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, T would be that height. Turn it off and type T then.">Follow Z0</button><button type="button" class="mw-btn mw-btn-small" id="mw-stock-tstore" hidden title="T differs from the stock thickness the Z0 macros use (stored in the controller): store T there, so SBT: Z0 on stock top puts Z0 this far above the spoilboard.">Store for Macros</button></span>
             <span class="mw-stock-wl"><span class="mw-hint">Clamp margin</span>
             <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-m" aria-label="Clamp margin" title="Room to leave along every edge of the stock for clamps or screws: the loaded program's cuts, the bit's width included, should stay this far inside the stock. 0 or blank: right up to the edge.">
             <span class="mw-hint mw-unit">mm</span></span>
@@ -4507,6 +4507,7 @@
         if (!r.ok) throw new Error('the controller rejected ' + cmds[i]);
       }
       status.setAttribute('data-state', 'ok');
+      state.storedThickMm = mm;
       status.textContent = 'Stored ' + fmt(mm) + ' mm in ' + WCS_NAMES[s.thick] + ' Z. The stock-top macro uses it from now on.';
       readNumbers();
     } catch (err) {
@@ -4542,6 +4543,7 @@
     var gc = parseGcState((await ask('$G', 500)).lines);
     await sendHoleCommands(['G21', storeThicknessCommand(s.thick, r.hMm)], gc ? gc.imperial : null);
     $('mw-stock').value = +(r.hMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
+    state.storedThickMm = r.hMm;
     takeMeasuredThickness(r.hMm);
     saveSettings();
   }
@@ -4901,6 +4903,9 @@
     set('spoil', spoil ? ' \u2014 height ' + mm(spoil) : spoil === 0 ? ' \u2014 height not recorded yet' : '');
     set('thick', thick ? mm(thick) + ' thick' : thick === 0 ? 'thickness not stored yet' : '');
     if (thick != null) { takeMeasuredThickness(thick); updatePicked(); }
+    // The Z0 tab's Stock Thickness box shows the stored one too, until typed.
+    if (thick > 0 && !state.stockBoxTyped) $('mw-stock').value = +(thick / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
+    showTStore();
     set('saved', saved ? WCS_NAMES[s.backup] + ' Z: ' + mm(saved) : saved === 0 ? 'nothing saved yet' : '');
     set('tlo', hash.TLO != null ? (state.loadedTool ? 'T' + state.loadedTool + ': ' : 'Loaded tool: ') + mm(hash.TLO) : '');
     var near = function(a, b) { return a != null && b != null && Math.abs(a - b) <= 0.001; };
@@ -5072,6 +5077,8 @@
       $(id).addEventListener('input', render);
       $(id).addEventListener('change', render);
     });
+    $('mw-stock').addEventListener('input', function() { state.stockBoxTyped = true; });
+    $('mw-stock-tstore').addEventListener('click', storeTForMacros);
     $('mw-run-checks').addEventListener('click', runChecks);
     $('mw-d-refresh').addEventListener('click', function(evt) { evt.preventDefault(); readNumbers(); });
     $('mw-save').addEventListener('click', function() { disarmDelete(); saveMacros(); });
@@ -5163,7 +5170,7 @@
     $('mw-migrated-ok').addEventListener('click', function() { $('mw-migrated').hidden = true; });
     $('mw-stock-far').addEventListener('click', function() { readMachineState().then(function() { stockFromSpindle(); stockSync(); }); });
     $('mw-stock-fit').addEventListener('click', function() { stockFromProgram(); stockSync(); });
-    $('mw-stock-t').addEventListener('input', function() { holes.thickFrom = 'typed'; });
+    $('mw-stock-t').addEventListener('input', function() { holes.thickFrom = 'typed'; showTStore(); });
     $('mw-stock-tauto').addEventListener('click', function() { setThickAuto(!holes.thickAuto); stockSync(); saveSettings(); });
     ['mw-stock-corner', 'mw-stock-zmode'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
     ['mw-stock-w', 'mw-stock-l', 'mw-stock-t', 'mw-stock-m'].forEach(function(id) {
@@ -5431,6 +5438,37 @@
     el.value = v;
     el.classList.remove('mw-invalid');
     saveSettings();
+  }
+  // Store for Macros beside T: shown when T differs from the thickness the
+  // Z0 macros use. One press stores it; typing never does.
+  function showTStore() {
+    var t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1), st = state.storedThickMm;
+    $('mw-stock-tstore').hidden = !(t > 0) || !state.spoilZ || (st > 0 && Math.abs(t - st) <= 0.002);
+  }
+  async function storeTForMacros() {
+    var status = $('mw-hole-status'), btn = $('mw-stock-tstore'), s = readSettings();
+    var mm = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
+    if (!s || !(mm > 0)) return;
+    btn.disabled = true;
+    try {
+      await readMachineState();
+      var ms = state.machine || {};
+      if (!ms.connected) throw new Error('the controller isn\u2019t connected');
+      if (String(ms.status || '').indexOf('Idle') !== 0) throw new Error('the machine isn\u2019t idle');
+      var gc = parseGcState((await ask('$G', 500)).lines);
+      await sendHoleCommands(['G21', storeThicknessCommand(s.thick, mm)], gc ? gc.imperial : null);
+      state.storedThickMm = mm;
+      if (!state.stockBoxTyped) $('mw-stock').value = $('mw-stock-t').value;
+      status.setAttribute('data-state', 'ok');
+      status.textContent = 'Stored ' + shown(mm) + ' ' + unitName() + ' as the Z0 macros\u2019 stock thickness (' + WCS_NAMES[s.thick] + ' Z): SBT: Z0 on stock top now uses it.';
+      showTStore();
+      readNumbers();
+    } catch (err) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Couldn\u2019t store the thickness: ' + err.message + '.';
+    } finally {
+      btn.disabled = false;
+    }
   }
   // Width and length from the spindle over the stock's far corner, from
   // the placed corner (against the pins, or on X0 Y0 as taken).
@@ -6616,6 +6654,7 @@
   // profile menu is left alone.
   function renderHoles(live) {
     autoThick();
+    showTStore();
     var svg = $('mw-hole-map'), note = $('mw-hole-note'), t = state.travel, h = readHoles();
     svg.textContent = '';
     svg.setAttribute('data-mode', holes.mode);
@@ -9055,7 +9094,7 @@
         '<li><strong>Against Pins:</strong> push it against pins in dog holes, two along one edge and one along the other (an L), and tap those holes. Each edge is a pin radius off its pins&rsquo; row or column (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Two pins on a diagonal can hold it either way: it asks. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
         '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is.</li>' +
         '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Here</strong>. The pinned corner needs no size; every other point does, and the line beside Set says so.</li>' +
-        '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> beside T if you probe Z0 on the stock&rsquo;s top: T follows Z0&rsquo;s height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness with Z0 on the spoilboard. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, T would be that height, so turn Follow Z0 off and type T.</li></ul>' +
+        '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> beside T if you probe Z0 on the stock&rsquo;s top: T follows Z0&rsquo;s height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness with Z0 on the spoilboard. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, T would be that height, so turn Follow Z0 off and type T. Typing T doesn&rsquo;t change the thickness the Z0 macros use: when they differ, <strong>Store for Macros</strong> appears beside it and stores T for SBT: Z0 on stock top.</li></ul>' +
         '<p>It stays where it is when you close and reopen the plugin, and Stock Holes and Cut Board&rsquo;s Into the stock on top option use it. The keyboard macros always use a hole.</p>',
       '<strong>Zoom</strong> for a big bed, with <strong>Map view</strong> under the map: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',

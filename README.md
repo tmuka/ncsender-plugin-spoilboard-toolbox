@@ -676,6 +676,9 @@ size and thickness; the holes come from the grid picked in Setup.
   Z0 on a vise jaw, a fixture or a riser, T would be that height and through holes would go that deep, so
   turn Follow Z0 off and type T for those. Stock Holes reminds you while T follows Z0. Follow Z0 is off
   until you press it, so typing T or measuring it with the macros works as before.
+- Typing T (or Follow Z0, or Size to Program) doesn't change the thickness the Z0 macros use. When they
+  differ, **Store for Macros** appears beside T: one press stores T for **Z0 on stock top**. The Z0 macros
+  tab's Stock Thickness box shows the stored thickness too, until you type in it.
 - It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard
   rather than the stock top (once the Z0 macros have recorded the spoilboard height), and the program
   stops before moving if Z0 changed since it was generated.
