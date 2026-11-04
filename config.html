@@ -754,6 +754,7 @@
               <option value="4">G57</option><option value="5">G58</option><option value="6">G59</option>
               <option value="7">G59.1</option><option value="8">G59.2</option><option value="9">G59.3</option>
             </select>
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-activate" hidden style="width: 100%" title="Make the work offset picked in the menu the active one in ncSender (sends e.g. G55), so jogging, ncSender's position and programs without their own G54-G59 line use it. Only when the machine is idle and no job is running.">Make Active</button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> XY0<span class="mw-set-at" id="mw-hole-set-at"></span><span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset in the menu on the surface shown above it: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> Z0<span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-only-stock" data-probe-top="picker" style="width: 100%" title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top in the work offset picked in the menu, and the card offers to store its height above the spoilboard as the stock thickness (T follows it). Only for stock lying on the spoilboard.">Probe Stock Top</button>
@@ -5080,6 +5081,7 @@
     });
     $('mw-stock').addEventListener('input', function() { state.stockBoxTyped = true; });
     $('mw-stock-tstore').addEventListener('click', storeTForMacros);
+    $('mw-hole-activate').addEventListener('click', makeActive);
     $('mw-run-checks').addEventListener('click', runChecks);
     $('mw-d-refresh').addEventListener('click', function(evt) { evt.preventDefault(); readNumbers(); });
     $('mw-save').addEventListener('click', function() { disarmDelete(); saveMacros(); });
@@ -5439,6 +5441,42 @@
     el.value = v;
     el.classList.remove('mw-invalid');
     saveSettings();
+  }
+  // Make Active beside the XY0 Picker's menu: shown when the picked work
+  // offset isn't the active one. ncSender's state doesn't follow
+  // G59.1-G59.3, so one just made active is remembered until it changes.
+  function showMakeActive() {
+    var v = $('mw-hole-wcs').value, name = v ? WCS_NAMES[+v] : '', ms = state.machine || {};
+    var active = String(ms.workspace || '').toUpperCase(), made = holes.madeActive;
+    var isActive = name === active || !!(made && /^G59\.\d$/.test(name) && made.name === name && made.was === active);
+    var b = $('mw-hole-activate');
+    b.hidden = !name || !ms.connected || isActive;
+    b.textContent = 'Make ' + name + ' Active';
+  }
+  async function makeActive() {
+    var status = $('mw-hole-status'), b = $('mw-hole-activate'), name = WCS_NAMES[+$('mw-hole-wcs').value];
+    if (!name) return;
+    b.disabled = true;
+    try {
+      var st = await (await fetch(BASE_URL + '/api/server-state')).json(), ms = st.machineState || {}, job = st.jobLoaded || {};
+      state.machine = ms;
+      if (!ms.connected) throw new Error('the controller isn\u2019t connected');
+      if (job.status === 'running' || job.status === 'paused') throw new Error('a job is running');
+      if (String(ms.status || '').indexOf('Idle') !== 0) throw new Error('the machine isn\u2019t idle');
+      var r = await sendCommand(name);
+      if (!r.ok) throw new Error('the controller rejected ' + name);
+      holes.madeActive = { name: name, was: String(ms.workspace || '').toUpperCase() };
+      status.setAttribute('data-state', 'ok');
+      status.textContent = name + ' is the active work offset now.';
+      await readMachineState();
+      renderHoles();
+      showPosition(false);
+    } catch (err) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Couldn\u2019t make ' + name + ' active: ' + err.message + '.';
+    } finally {
+      b.disabled = false;
+    }
   }
   // Store for Macros beside T: shown when T differs from the thickness the
   // Z0 macros use. One press stores it; typing never does.
@@ -7095,6 +7133,7 @@
     var curXY = xyOf(ms0[wName]), curZ = ms0[wName] ? parseFloat(String(ms0[wName]).split(',')[2]) : NaN;
     var xyDone = !!(aim && !problem && curXY && Math.abs(curXY.x - tg.x) < 0.005 && Math.abs(curXY.y - tg.y) < 0.005);
     $('mw-hole-set').classList.toggle('mw-already', xyDone);
+    showMakeActive();
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy || xyDone;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto-text').textContent = aim ? 'Go to ' + targetShort(aim) : 'Go to Selected';
@@ -9076,7 +9115,7 @@
       '<strong>Two ways to start.</strong> <strong>No holes yet:</strong> home the machine, surface the board, describe the grid you want in Setup (or load a preset), cut a fit test in scrap to choose the hole size (X0 Y0 and Z0 on the scrap), put Z0 on the board&rsquo;s top, then Cut Board &rsaquo; Dog holes &rsaquo; Generate; the board and the map come from the same numbers, so they agree. <strong>Holes already there:</strong> type the grid&rsquo;s size and spacing in Setup, pick a hole, jog over its real center and press <strong>Grab First Hole Center</strong> (it names the hole you picked, e.g. Grab B3 Center); then Measure Holes on the three it suggests and <strong>Apply to Setup</strong>, suppress missing holes with Edit Holes, and check with Go to Selected over a far hole. Save Setup as a profile either way.',
       '<strong>Your spoilboard&rsquo;s holes are a precision fixture; this turns them into work zero.</strong> Jog roughly near a hole, tap <strong>Pick Nearest Hole</strong>, hold <strong>Set</strong>, and X0 Y0 is exactly on its center or edge: no edge finder, no XY probe, nothing typed, and the same zero next time. Or switch to <strong>Stock</strong>, tap the holes your pins are in, and zero on the stock pushed against them: its corner, an edge or its center, worked out from the pins. <strong>Measure Holes</strong> fits the grid to your real board, with a 3D probe or a pin centered by eye. Missing holes, T-tracks, several grids, custom pins and a profile per board each have a Help page of their own.',
       '<strong>For example:</strong> push the stock against pins in B4, B6 (its front edge) and C3 (its left edge). In <strong>Stock</strong>, tap those three holes: the stock\u2019s front left corner is a pin radius right of column 3 and behind row B, and the line beside Set says so with the numbers. Hold <strong>Set</strong>: no edge finder, no XY probe, nothing typed. Pick its center (or any other dot) and it also needs the stock&rsquo;s size: type it, or jog over the far corner and press <strong>Far Corner Here</strong>.',
-      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sets the work offset there, without moving (G10 L2). The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. The machine has to be homed and idle, since the holes are machine positions.',
+      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sets the work offset there, without moving (G10 L2). The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. Picking one doesn&rsquo;t switch ncSender to it; when it isn&rsquo;t the active one, <strong>Make G55 Active</strong> (say) appears under the menu and does, while the machine is idle. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       '<p><strong>Measure Holes</strong> (Setup unlocked) fits Setup&rsquo;s spacing, insets and Turn to your real holes. Measure two or more far apart, then <strong>Apply to Setup</strong>.</p>' +
         '<p><strong>Measure with</strong> picks how; only that way&rsquo;s buttons show, and it opens on by eye, so a pin is never sent probing.</p><ul>' +
