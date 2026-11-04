@@ -267,7 +267,11 @@ Z0 isn't one the macros put down and is more than 1 mm (0.04") above the spoilbo
 stock's top. It keeps Z0 where you probed it and stores its height above the spoilboard as the new
 thickness, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before.
 With Spoilboard Toolbox open, **From Z0** (beside **Store**) does the same but shows the height and asks
-for a second press first.
+for a second press first. Or press **Probe Stock Top** (beside **From Z0**, and in the XY0 Picker's Stock
+mode): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender's Probe dialog. Probe Z on the
+stock's top; when Z0 changes, the card shows its height above the spoilboard, and **Store** saves it as the
+thickness. (It opens the dialog by pressing ncSender's own Probe button on the 3D view; if that ever
+fails, the card asks you to press Probe yourself, then **Check Z0**.)
 
 - **Safe:** a new sheet or board lying flat on the spoilboard, probed on its top; the same stock probed
   again; switching between spoilboard and stock top with the macros (their own Z0s are never learned

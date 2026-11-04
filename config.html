@@ -33,6 +33,26 @@
   .plugin-dialog-container:has(.mw-wrapper) { max-height: none !important; max-width: none !important; }
   .mw-wrapper { width: calc(100vw - 48px) !important; max-width: none !important; height: calc(100vh - 48px) !important; max-height: none !important; }
   .mw-container { display: flex; flex: 1; min-height: 0; }
+  /* Probe Stock Top: Spoilboard Toolbox shrinks to a card in a corner and
+     ncSender (its Probe dialog) stays usable behind it, as in CNC Tutor. */
+  .plugin-dialog-backdrop:has(.mw-wrapper.mw-mini) { background: transparent !important; pointer-events: none !important; padding: 20px; box-sizing: border-box; }
+  .plugin-dialog-backdrop:has(.mw-wrapper.mw-mini[data-corner="bl"]) { justify-content: flex-start !important; align-items: flex-end !important; }
+  .plugin-dialog-backdrop:has(.mw-wrapper.mw-mini[data-corner="tl"]) { justify-content: flex-start !important; align-items: flex-start !important; }
+  .plugin-dialog-backdrop:has(.mw-wrapper.mw-mini[data-corner="tr"]) { justify-content: flex-end !important; align-items: flex-start !important; }
+  .plugin-dialog-backdrop:has(.mw-wrapper.mw-mini[data-corner="br"]) { justify-content: flex-end !important; align-items: flex-end !important; }
+  .plugin-dialog-container:has(.mw-wrapper.mw-mini) { pointer-events: auto; min-width: 0 !important; box-shadow: 0 12px 40px rgba(0, 0, 0, .45), 0 0 0 2px var(--color-accent) !important; }
+  .mw-wrapper.mw-mini { width: 400px !important; max-width: calc(100vw - 40px) !important; height: auto !important; max-height: 70vh !important; }
+  .mw-wrapper.mw-mini > :not(.mw-minicard) { display: none !important; }
+  .mw-wrapper:not(.mw-mini) > .mw-minicard { display: none !important; }
+  .mw-minicard { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; overflow-y: auto; min-height: 0; }
+  .mw-mini-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .mw-mini-title { font-weight: 700; color: var(--mw-accent-text); }
+  .mw-mini-text { margin: 0; line-height: 1.45; }
+  .mw-mini-text[data-state="warn"] { color: var(--mw-warn); }
+  .mw-mini-text[data-state="ok"] { color: var(--mw-ok); }
+  .mw-mini-text[data-state="bad"] { color: var(--mw-danger); }
+  .mw-mini-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  #mw-mini-move { min-height: 0 !important; padding: 3px 10px !important; }
   /* A slim scrollbar like ncSender's own, instead of the system's (a wide
      grey one with arrows on the Pi, none at all on a Mac). */
   .mw-wrapper ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -198,7 +218,7 @@
   .mw-stock { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); }
   .mw-stock .mw-dots-wrap .mw-hole-origin { margin: 6px 8px; }
   .mw-stock-from { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-  .mw-stock-from .mw-btn { min-height: 0 !important; padding: 3px 10px !important; }
+  .mw-stock-from .mw-btn, .mw-stock-wl .mw-btn { min-height: 0 !important; padding: 3px 10px !important; }
   .mw-maptools { flex: 1 1 100%; display: flex; flex-direction: column; gap: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
   .mw-maptools-row, .mw-stock { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
   .mw-stock-on { align-items: center; }
@@ -690,7 +710,7 @@
               <option value="back-left">Its back left corner</option><option value="back-right">Its back right corner</option>
             </select>
             <span class="mw-dots-wrap"><span class="mw-dots-cap">New X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
-            <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><span class="mw-stock-which" id="mw-stock-which"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear</button></span>
+            <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><span class="mw-stock-which" id="mw-stock-which"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" data-probe-top title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top, and the card offers to store its height above the spoilboard as the stock thickness (T follows it). Only for stock lying on the spoilboard.">Probe Stock Top</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear</button></span>
             <span class="mw-stock-prog" id="mw-stock-prog" hidden><span class="mw-hint" id="mw-stock-prog-text" role="status"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fit" hidden title="Make the stock's width and length the loaded program's cuts, the bit's width and the clamp margin on every side, rounded up: the stock to cut a QuickCut or Gears part from.">Size to Program</button></span>
           </div>
           <div class="mw-dots-wrap mw-only-hole"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
@@ -988,6 +1008,7 @@
               <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock" step="0.001" min="0" value="18" title="A known stock thickness, e.g. a sheet. Store writes it to the controller for the stock-top macro; the measure macro writes a probed one.">
               <button type="button" class="mw-btn mw-btn-small" id="mw-store-stock">Store</button>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fromz" title="Probed Z0 on top of a new stock (ncSender's Probe dialog)? This reads how far Work Offset to Set's Z0 is above the spoilboard and, on a second press, stores it as the stock thickness. Only for stock lying on the spoilboard: not after zeroing on a vise jaw, a fixture or a step.">From Z0</button>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" data-probe-top title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top, and the card offers to store its height above the spoilboard as the stock thickness. Only for stock lying on the spoilboard.">Probe Stock Top</button>
             </div>
           </div>
           <div class="mw-field">
@@ -1651,6 +1672,19 @@
       <div><button type="button" class="mw-btn" id="mw-help-back">Back</button></div>
     </div>
     </main>
+  </div>
+  <div class="mw-minicard" id="mw-mini" role="region" aria-label="Probe the stock top">
+    <div class="mw-mini-head">
+      <span class="mw-mini-title">Probe Stock Top</span>
+      <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-mini-move" title="Move this card to another corner">Move ⇲</button>
+    </div>
+    <p class="mw-mini-text" id="mw-mini-text" role="status"></p>
+    <div class="mw-mini-actions">
+      <button type="button" class="mw-btn mw-btn-small" id="mw-mini-store" hidden>Store</button>
+      <button type="button" class="mw-btn mw-btn-small" id="mw-mini-check">Check Z0</button>
+      <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-mini-open">Open Probe</button>
+      <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-mini-back">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -4482,6 +4516,126 @@
       return { why: 'no tool length offset is in effect, so the Z0 isn\u2019t a height every tool shares' };
     return r;
   }
+  async function storeZ0Thickness(s, r) {
+    var gc = parseGcState((await ask('$G', 500)).lines);
+    await sendHoleCommands(['G21', storeThicknessCommand(s.thick, r.hMm)], gc ? gc.imperial : null);
+    $('mw-stock').value = +(r.hMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
+    takeMeasuredThickness(r.hMm);
+    saveSettings();
+  }
+  // One $# at a time: wait out a numbers read in progress.
+  async function numbersLock() {
+    for (var n = 0; numbersBusy && n < 30; n++) await new Promise(function(res) { setTimeout(res, 100); });
+    numbersBusy = true;
+  }
+
+  // Probe Stock Top: shrink to a corner card, open ncSender's Probe dialog
+  // (by pressing its Probe button: ncSender has no message for it yet), and
+  // when Z0 changes, or Check Z0 is pressed, offer to store Z0's height
+  // above the spoilboard as the thickness. Nothing is sent to the
+  // controller until Store.
+  var pf = { on: false, step: '', base: null, r: null, busy: false, timer: null, corner: 'br' };
+  function activeZ0() {
+    var ms = state.machine || {}, w = String(ms.workspace || '').toLowerCase();
+    var z = ms[w] ? parseFloat(String(ms[w]).split(',')[2]) : NaN;
+    return isFinite(z) ? z : null;
+  }
+  function ncProbeButton() {
+    var b = document.querySelector('button.probe-button');
+    return b && !ROOT.contains(b) ? b : null;
+  }
+  function openNcProbe() {
+    var b = ncProbeButton();
+    if (!b || b.disabled) return false;
+    b.click();
+    return true;
+  }
+  function showMini(step, text, tone) {
+    pf.step = step;
+    var t = $('mw-mini-text');
+    t.textContent = text;
+    if (tone) t.setAttribute('data-state', tone); else t.removeAttribute('data-state');
+    $('mw-mini-store').hidden = step !== 'confirm';
+    $('mw-mini-check').hidden = step === 'confirm' || step === 'done';
+    $('mw-mini-open').hidden = step === 'confirm' || step === 'done';
+    $('mw-mini-back').textContent = step === 'done' ? 'Back to Spoilboard Toolbox' : 'Cancel';
+  }
+  function setMini(on) {
+    ROOT.classList.toggle('mw-mini', on);
+    ROOT.setAttribute('data-corner', pf.corner);
+  }
+  function startProbeTop() {
+    var s = readSettings();
+    if (!s) return;
+    disarmFromZ();
+    pf.on = true; pf.r = null; pf.base = activeZ0();
+    setMini(true);
+    var w = WCS_NAMES[s.wcs], opened = openNcProbe();
+    showMini('probe', (opened ? 'In ncSender\u2019s Probe dialog, probe Z on the stock\u2019s top' : 'Press Probe in ncSender (the button on the 3D view), probe Z on the stock\u2019s top') +
+      ' with ' + w + ' active and the tool you\u2019ll cut with. This card checks Z0 when the probe finishes, or press Check Z0. Only for stock lying on the spoilboard, not a vise or fixture.');
+    clearInterval(pf.timer);
+    pf.timer = setInterval(function() { if (!rootAlive() || !pf.on) { clearInterval(pf.timer); return; } watchProbeTop(); }, 700);
+  }
+  async function watchProbeTop() {
+    if (pf.step !== 'probe' || pf.busy || holes.polling) return;
+    holes.polling = true;
+    try { await readMachineState(); } finally { holes.polling = false; }
+    var ms = state.machine || {}, z = activeZ0();
+    if (ms.isProbing || z == null) return;
+    if (pf.base == null) { pf.base = z; return; }
+    if (Math.abs(z - pf.base) > 0.0005) checkProbeTop();
+  }
+  async function checkProbeTop() {
+    var s = readSettings();
+    if (!s || pf.busy) return;
+    var w = WCS_NAMES[s.wcs];
+    pf.busy = true;
+    showMini('checking', 'Reading ' + w + ' Z0\u2026');
+    await numbersLock();
+    try {
+      var active = String((state.machine || {}).workspace || '').toUpperCase();
+      if (active && active !== w) throw new Error(active + ' is active, but the Z0 macros and this check use ' + w + ' (Work Offset to Set): select ' + w + ' and probe again');
+      var r = await readZ0StockTop(s);
+      pf.base = r.cur;
+      if (r.why) throw new Error(r.why);
+      var h = shown(r.hMm) + ' ' + unitName();
+      if (r.same) { showMini('done', w + ' Z0 is ' + h + ' above the spoilboard: that\u2019s already the stored stock thickness.', 'ok'); return; }
+      pf.r = r;
+      $('mw-mini-store').textContent = 'Store ' + h;
+      showMini('confirm', w + ' Z0 is ' + h + ' above the spoilboard. Store that as the stock thickness, so SBT: Z0 on stock top gives this Z0 for any tool? Only if Z0 is on top of stock lying on the spoilboard: not a vise jaw, a fixture, a riser or a step.', 'warn');
+    } catch (err) {
+      showMini('probe', 'Not stored: ' + err.message + '. Probe Z on the stock\u2019s top, then Check Z0 again.', 'bad');
+    } finally {
+      pf.busy = false; numbersBusy = false;
+    }
+  }
+  async function storeProbeTop() {
+    var s = readSettings(), armed = pf.r;
+    if (!s || !armed || pf.busy) return;
+    pf.busy = true;
+    $('mw-mini-store').disabled = true;
+    await numbersLock();
+    try {
+      var r = await readZ0StockTop(s);
+      if (r.why) throw new Error(r.why);
+      if (Math.abs(r.cur - armed.cur) > 0.002 || Math.abs(r.spoil - armed.spoil) > 0.002) throw new Error('Z0 or the spoilboard height changed since; check again');
+      await storeZ0Thickness(s, r);
+      showMini('done', 'Stored ' + shown(r.hMm) + ' ' + unitName() + ' as the stock thickness in ' + WCS_NAMES[s.thick] + ' Z. SBT: Z0 on stock top now gives this Z0 for any measured tool.', 'ok');
+    } catch (err) {
+      showMini('probe', 'Not stored: ' + err.message + '.', 'bad');
+    } finally {
+      pf.busy = false; numbersBusy = false;
+      $('mw-mini-store').disabled = false;
+    }
+  }
+  function endProbeTop() {
+    pf.on = false; pf.step = ''; pf.r = null;
+    clearInterval(pf.timer);
+    setMini(false);
+    readNumbers();
+    renderHoles();
+  }
+
   async function stockFromZ0() {
     var status = $('mw-store-status'), btn = $('mw-stock-fromz'), s = readSettings();
     if (fromZ.busy) return;
@@ -4489,9 +4643,7 @@
     var w = WCS_NAMES[s.wcs], armed = fromZ.armed;
     disarmFromZ();
     fromZ.busy = true;
-    // One $# at a time: wait out a numbers read in progress.
-    for (var n = 0; numbersBusy && n < 30; n++) await new Promise(function(res) { setTimeout(res, 100); });
-    numbersBusy = true;
+    await numbersLock();
     btn.disabled = true;
     status.removeAttribute('data-state');
     status.textContent = 'Reading ' + w + ' Z0\u2026';
@@ -4509,11 +4661,7 @@
         return;
       }
       if (Math.abs(r.cur - armed.cur) > 0.002 || Math.abs(r.spoil - armed.spoil) > 0.002) throw new Error(w + ' Z0 or the spoilboard height changed since; press From Z0 again');
-      var gc = parseGcState((await ask('$G', 500)).lines);
-      await sendHoleCommands(['G21', storeThicknessCommand(s.thick, r.hMm)], gc ? gc.imperial : null);
-      $('mw-stock').value = +(r.hMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
-      takeMeasuredThickness(r.hMm);
-      saveSettings();
+      await storeZ0Thickness(s, r);
       status.setAttribute('data-state', 'ok');
       status.textContent = 'Stored ' + h + ' as the stock thickness in ' + WCS_NAMES[s.thick] + ' Z. SBT: Z0 on stock top now gives this Z0 for any measured tool.';
     } catch (err) {
@@ -4855,6 +5003,18 @@
     wireUnitFields();
     $('mw-store-stock').addEventListener('click', storeThickness);
     $('mw-stock-fromz').addEventListener('click', stockFromZ0);
+    ROOT.querySelectorAll('[data-probe-top]').forEach(function(b) { b.addEventListener('click', startProbeTop); });
+    $('mw-mini-check').addEventListener('click', checkProbeTop);
+    $('mw-mini-open').addEventListener('click', function() {
+      if (!openNcProbe()) showMini('probe', 'Couldn\u2019t open it from here' + (ncProbeButton() ? ' (the machine isn\u2019t ready to probe)' : '') + ': press Probe in ncSender (the button on the 3D view), probe Z on the stock\u2019s top, then Check Z0.', 'warn');
+    });
+    $('mw-mini-store').addEventListener('click', storeProbeTop);
+    $('mw-mini-back').addEventListener('click', endProbeTop);
+    $('mw-mini-move').addEventListener('click', function() {
+      var order = ['br', 'bl', 'tl', 'tr'];
+      pf.corner = order[(order.indexOf(pf.corner) + 1) % order.length];
+      ROOT.setAttribute('data-corner', pf.corner);
+    });
     EXTRAS.forEach(function(k) { $('mw-x-' + k).addEventListener('change', render); });
     ['mw-block', 'mw-feed', 'mw-travel', 'mw-retract', 'mw-stock', 'mw-wcs', 'mw-slot', 'mw-backup', 'mw-thick'].forEach(function(id) {
       $(id).addEventListener('input', render);
@@ -8881,7 +9041,7 @@
       'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, a value it needs isn&rsquo;t stored, or another work offset is active (the macros are made for one, Work Offset to Set); ncSender&rsquo;s terminal shows <code>error:72</code>.',
       '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.',
       HELP_KEYS, HELP_NEEDS, HELP_UNITS,
-      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10): run <strong>SBT: Z0 on stock top</strong> right after, with the same tool. When the current Z0 isn&rsquo;t one the macros put down and is more than 1 mm (0.04&quot;) above the spoilboard, it takes that Z0 as the stock&rsquo;s top: it stores its height above the spoilboard as the new thickness and leaves Z0 where it is, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before. With this open, <strong>From Z0</strong> (beside Store) does the same but shows the height first and stores it on a second press.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from). A thickness typed with Store or measured stays until Z0 on stock top is run with a Z0 set some other way.<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Pressing Z0 on stock top then keeps your Z0 but stores that height as the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. Don&rsquo;t put Z0 on stock top on a key you might press by habit after zeroing on a vise.<br>It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the tool already measured.' ] }
+      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10): run <strong>SBT: Z0 on stock top</strong> right after, with the same tool. When the current Z0 isn&rsquo;t one the macros put down and is more than 1 mm (0.04&quot;) above the spoilboard, it takes that Z0 as the stock&rsquo;s top: it stores its height above the spoilboard as the new thickness and leaves Z0 where it is, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before. With this open, <strong>From Z0</strong> (beside Store) does the same but shows the height first and stores it on a second press. Or press <strong>Probe Stock Top</strong> (beside From Z0, and in the XY0 Picker&rsquo;s Stock mode): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender&rsquo;s Probe dialog; probe Z on the stock&rsquo;s top, and when Z0 changes the card shows its height above the spoilboard and stores it as the thickness on <strong>Store</strong>. If the Probe dialog doesn&rsquo;t open, press ncSender&rsquo;s Probe button yourself, then <strong>Check Z0</strong>.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from). A thickness typed with Store or measured stays until Z0 on stock top is run with a Z0 set some other way.<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Pressing Z0 on stock top then keeps your Z0 but stores that height as the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. Don&rsquo;t put Z0 on stock top on a key you might press by habit after zeroing on a vise.<br>It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the tool already measured.' ] }
   };
   var HELP_DOCS = 'https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox#readme';
   // The help's index: each tab's notes (by their place in its notes list)
