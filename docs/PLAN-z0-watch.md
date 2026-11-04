@@ -22,34 +22,27 @@ doesn't change those numbers. Two things can still go wrong:
 - Run checks: tries `#1=[#5220]`; a controller that rejects it gets a warning that the macros would
   stop. The "You're working in G55" note says the macros stop there.
 
-## 2. Ask where a new Z0 is (build now, in the plugin's page)
+## 2. Remember this Z0 as stock top (built instead of a question banner)
 
-ncSender gives plugins no "Z0 changed" event, and its server-side plugin context can't read work
-offsets (`getServerState` has status, tool and job only; `onBeforeCommand` misses the Probe dialog,
-which sends straight to the controller). The plugin's page can: ncSender refreshes the G54–G59 values
-in its state after any G10, and the page reads `$#` itself. So for now the question is asked **when
-Spoilboard Toolbox is open** (on opening, and when the offset changes while it's open).
+A first build asked, in a banner while the plugin was open, whether a Z0 set elsewhere was the stock top
+or the spoilboard. Independent reviews (machinist, ncSender, code) said drop it: it asked late (whenever
+the plugin next opened), missed the real danger (Z0 on stock top from a key with the plugin closed),
+nagged after a re-probe a few hundredths off, could only check the tool length offset now rather than when
+Z0 was set, and one wrong tap shifted every later Z0. It also stored inch values as mm with `$13=1`.
 
-- **When:** the machine is connected, homed, Idle, with no job running; the spoilboard height is
-  recorded (you use the Z0 macros); a tool length offset is in effect; the macros' offset's Z0 isn't
-  the spoilboard, the stock top, or the last Set Z0 height (the same test the macros' "save the old
-  Z0" uses); and that Z0 hasn't been answered already.
-- **The question** (a banner at the top, like the surfacing note): "G54 Z0 was set outside the Z0
-  macros: 18.4 mm above the spoilboard. Where is it?"
-  - **Stock top:** stores 18.4 mm as the stock thickness (G21, `G10 L2 P7 Z18.4`, G20 back). Then
-    Z0 on stock top gives this Z0 for any tool. Not offered when it's at or below the spoilboard or
-    more than the Z travel.
-  - **Spoilboard:** stores it as the spoilboard height (`G10 L2 P9 Z…`), "e.g. after surfacing". Says
-    how far it is from the recorded one; more than 3 mm asks to be sure.
-  - **Neither:** nothing changes; that Z0 isn't asked about again.
-- **Ask When Z0 Changes** (a checkbox on the Z0 macros tab, on by default) turns it off.
-- The answered Z0 is remembered in the plugin's settings (per offset), so other screens don't ask
-  again.
+Instead, one macro, **SBT: Remember G54 Z0 as stock top**, run right after probing the stock with
+ncSender's Probe dialog, with the same tool:
+
+- `G10 L2 P7 Z[#5223 - #5383]`: the Z0's height above the spoilboard becomes the thickness. Nothing moves
+  or probes.
+- The usual stops (homed, tool length offset, spoilboard height recorded, no G92 Z, the macros' offset
+  active), plus Z0 must be above the spoilboard.
+- No spoilboard version: Record and the surfacing note cover that.
 
 ## Later: when the plugin is closed (needs ncSender)
 
 Asking while the plugin is closed needs ncSender to tell a plugin's server-side part about offsets:
 `pluginContext.getServerState()` adding the active offset and G54–G59.3 values, or an
 `onWorkOffsetChange` event (CncController already spots Z offset writes). Then a small background
-script (`events: ["background"]`) could ask with `showDialogAsync` on every screen. A PR for
-siganberg, so ask the user first.
+script (`events: ["background"]`) could ask with `showDialogAsync` on every screen, right when Z0 is
+probed. Not planned now; it's a PR for siganberg, so ask the user first.
