@@ -254,7 +254,10 @@ Re-record after surfacing the spoilboard.
   - put the block on the stock and run **Measure stock thickness** (one probe, good for every tool in
     the job), or
   - type the thickness in the wizard and press **Store**, if you trust the material's nominal size
-    (sheet goods often vary by a few tenths of a mm, so measure when depth matters).
+    (sheet goods often vary by a few tenths of a mm, so measure when depth matters), or
+  - probe Z0 on the stock's top your usual way (ncSender's Probe dialog), then press **From Z0** beside
+    **Store**: it shows how far that Z0 is above the spoilboard, and a second press stores it as the
+    thickness. Only for stock lying on the spoilboard, not a vise (see below).
 - **Zeroing from the bottom** (set the job's Z origin to the bottom of the stock in your CAM): run
   **Z0 on spoilboard**. No stock probing at all, and through-cuts come out exact.
 
@@ -263,6 +266,8 @@ macros the new thickness. Run **Z0 on stock top** right after probing, with the 
 Z0 isn't one the macros put down and is more than 1 mm (0.04") above the spoilboard, it takes that Z0 as the
 stock's top. It keeps Z0 where you probed it and stores its height above the spoilboard as the new
 thickness, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before.
+With Spoilboard Toolbox open, **From Z0** (beside **Store**) does the same but shows the height and asks
+for a second press first.
 
 - **Safe:** a new sheet or board lying flat on the spoilboard, probed on its top; the same stock probed
   again; switching between spoilboard and stock top with the macros (their own Z0s are never learned

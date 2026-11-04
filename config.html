@@ -986,6 +986,7 @@
             <div class="mw-inline-row">
               <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock" step="0.001" min="0" value="18" title="A known stock thickness, e.g. a sheet. Store writes it to the controller for the stock-top macro; the measure macro writes a probed one.">
               <button type="button" class="mw-btn mw-btn-small" id="mw-store-stock">Store</button>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fromz" title="Probed Z0 on top of a new stock (ncSender's Probe dialog)? This reads how far Work Offset to Set's Z0 is above the spoilboard and, on a second press, stores it as the stock thickness. Only for stock lying on the spoilboard: not after zeroing on a vise jaw, a fixture or a step.">From Z0</button>
             </div>
           </div>
           <div class="mw-field">
@@ -1921,6 +1922,20 @@
   // controller is in (G10 values follow G20/G21; grblHAL keeps mm).
   function storeThicknessCommand(thickSlot, value) {
     return 'G10 L2 P' + thickSlot + ' Z' + fmt(value);
+  }
+
+  // Using the current Z0 as a stock top: its height above the spoilboard,
+  // in mm (the caller converts $# values reported in inches). cur: the
+  // macros' work offset Z; spoil, thick: the stored heights; mark: Set
+  // Z0's last height above the spoilboard. { hMm } or { why }.
+  function z0StockTop(o) {
+    if (!o.spoil) return { why: 'record the spoilboard height first' };
+    if (!o.cur) return { why: 'its Z0 isn\u2019t set' };
+    var h = Math.round((o.cur - o.spoil) * 1e6) / 1e6;
+    if (!(h > LEARN_MM)) return { why: 'its Z0 isn\u2019t more than ' + LEARN_MM + ' mm above the spoilboard, so it isn\u2019t a stock top' };
+    if (o.mark && Math.abs(h - o.mark) <= 0.002) return { why: 'its Z0 is the one Set Z0 put down (on a vise or fixture, say), not a stock top' };
+    if (o.thick && Math.abs(h - o.thick) <= 0.002) return { hMm: h, same: true };
+    return { hMm: h };
   }
 
   // `$#` lines: [G54:0.000,0.000,-80.000], [TLO:0.000,0.000,12.345,0.000]
@@ -4445,6 +4460,71 @@
     }
   }
 
+  // From Z0: the first press reads how far Work Offset to Set's Z0 is
+  // above the spoilboard and shows it, with the vise warning; a second
+  // press within 8 s stores it as the thickness, if nothing changed.
+  var fromZ = { armed: null, timer: null, busy: false };
+  function disarmFromZ() {
+    clearTimeout(fromZ.timer);
+    fromZ.armed = null;
+    $('mw-stock-fromz').textContent = 'From Z0';
+  }
+  async function readZ0StockTop(s) {
+    await machineReady();
+    var hash = parseHashReport((await ask('$#', 900)).lines);
+    var k = state.reportInches ? MM_PER_INCH : 1;
+    var z = function(p) { var v = hash[WCS_NAMES[p]]; return v ? v[2] * k : null; };
+    var markV = hash[WCS_NAMES[s.thick]];
+    var r = z0StockTop({ cur: z(s.wcs), spoil: z(s.slot), thick: z(s.thick), mark: markV ? markV[0] * k : 0 });
+    r.cur = z(s.wcs); r.spoil = z(s.slot);
+    if (r.hMm != null && !tloInEffect(parseGcState((await ask('$G', 500)).lines), hash))
+      return { why: 'no tool length offset is in effect, so the Z0 isn\u2019t a height every tool shares' };
+    return r;
+  }
+  async function stockFromZ0() {
+    var status = $('mw-store-status'), btn = $('mw-stock-fromz'), s = readSettings();
+    if (fromZ.busy) return;
+    if (!s) { status.setAttribute('data-state', 'bad'); status.textContent = 'Pick three different slots first.'; return; }
+    var w = WCS_NAMES[s.wcs], armed = fromZ.armed;
+    disarmFromZ();
+    fromZ.busy = true;
+    // One $# at a time: wait out a numbers read in progress.
+    for (var n = 0; numbersBusy && n < 30; n++) await new Promise(function(res) { setTimeout(res, 100); });
+    numbersBusy = true;
+    btn.disabled = true;
+    status.removeAttribute('data-state');
+    status.textContent = 'Reading ' + w + ' Z0\u2026';
+    try {
+      var r = await readZ0StockTop(s);
+      if (r.why) throw new Error(r.why);
+      var h = shown(r.hMm) + ' ' + unitName();
+      if (r.same) { status.setAttribute('data-state', 'ok'); status.textContent = w + ' Z0 is ' + h + ' above the spoilboard: that\u2019s already the stored thickness.'; return; }
+      if (!armed) {
+        fromZ.armed = r;
+        btn.textContent = 'Store ' + h;
+        fromZ.timer = setTimeout(function() { if (rootAlive()) disarmFromZ(); }, 8000);
+        status.setAttribute('data-state', 'warn');
+        status.textContent = w + ' Z0 is ' + h + ' above the spoilboard. Press Store ' + h + ' to make that the stock thickness, so SBT: Z0 on stock top gives this Z0 for any tool. Only if Z0 is on top of stock lying on the spoilboard: not on a vise jaw, a fixture, a riser or a step.';
+        return;
+      }
+      if (Math.abs(r.cur - armed.cur) > 0.002 || Math.abs(r.spoil - armed.spoil) > 0.002) throw new Error(w + ' Z0 or the spoilboard height changed since; press From Z0 again');
+      var gc = parseGcState((await ask('$G', 500)).lines);
+      await sendHoleCommands(['G21', storeThicknessCommand(s.thick, r.hMm)], gc ? gc.imperial : null);
+      $('mw-stock').value = +(r.hMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
+      takeMeasuredThickness(r.hMm);
+      saveSettings();
+      status.setAttribute('data-state', 'ok');
+      status.textContent = 'Stored ' + h + ' as the stock thickness in ' + WCS_NAMES[s.thick] + ' Z. SBT: Z0 on stock top now gives this Z0 for any measured tool.';
+    } catch (err) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Couldn\u2019t use ' + w + ' Z0 as the stock top: ' + err.message + '.';
+    } finally {
+      fromZ.busy = false; numbersBusy = false;
+      btn.disabled = false;
+      if (!fromZ.armed) readNumbers();
+    }
+  }
+
   // Delete every macro this wizard made (name starts "SBT:", or "ZS:", "MW:" or
   // "Macro Wiz:" from earlier versions), e.g. ones left over from older settings or
   // another work offset. The first press only lists them
@@ -4771,6 +4851,7 @@
     wireCut();
     wireUnitFields();
     $('mw-store-stock').addEventListener('click', storeThickness);
+    $('mw-stock-fromz').addEventListener('click', stockFromZ0);
     EXTRAS.forEach(function(k) { $('mw-x-' + k).addEventListener('change', render); });
     ['mw-block', 'mw-feed', 'mw-travel', 'mw-retract', 'mw-stock', 'mw-wcs', 'mw-slot', 'mw-backup', 'mw-thick'].forEach(function(id) {
       $(id).addEventListener('input', render);
@@ -8768,7 +8849,7 @@
       'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, a value it needs isn&rsquo;t stored, or another work offset is active (the macros are made for one, Work Offset to Set); ncSender&rsquo;s terminal shows <code>error:72</code>.',
       '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.',
       HELP_KEYS, HELP_NEEDS, HELP_UNITS,
-      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10): run <strong>SBT: Z0 on stock top</strong> right after, with the same tool. When the current Z0 isn&rsquo;t one the macros put down and is more than 1 mm (0.04&quot;) above the spoilboard, it takes that Z0 as the stock&rsquo;s top: it stores its height above the spoilboard as the new thickness and leaves Z0 where it is, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from). A thickness typed with Store or measured stays until Z0 on stock top is run with a Z0 set some other way.<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Pressing Z0 on stock top then keeps your Z0 but stores that height as the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. Don&rsquo;t put Z0 on stock top on a key you might press by habit after zeroing on a vise.<br>It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the tool already measured.' ] }
+      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10): run <strong>SBT: Z0 on stock top</strong> right after, with the same tool. When the current Z0 isn&rsquo;t one the macros put down and is more than 1 mm (0.04&quot;) above the spoilboard, it takes that Z0 as the stock&rsquo;s top: it stores its height above the spoilboard as the new thickness and leaves Z0 where it is, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before. With this open, <strong>From Z0</strong> (beside Store) does the same but shows the height first and stores it on a second press.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from). A thickness typed with Store or measured stays until Z0 on stock top is run with a Z0 set some other way.<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Pressing Z0 on stock top then keeps your Z0 but stores that height as the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. Don&rsquo;t put Z0 on stock top on a key you might press by habit after zeroing on a vise.<br>It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the tool already measured.' ] }
   };
   var HELP_DOCS = 'https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox#readme';
   // The help's index: each tab's notes (by their place in its notes list)
@@ -8854,7 +8935,7 @@
         { id: 'checks', icon: 'gear', title: 'Run checks and Create', short: 'Check the controller, then write the macros.', notes: [2, 5] },
         { id: 'keys', icon: 'keys', title: 'Put them on keys', short: 'One keypress at the machine for each.', notes: [6] },
         { id: 'stops', icon: 'shield', title: 'Safety stops', short: 'They stop rather than set a wrong Z0.', notes: [4] },
-        { id: 'elsewhere', icon: 'refresh', title: 'A Z0 probed elsewhere', short: 'Z0 on stock top learns a new stock; not after a vise.', notes: [9] },
+        { id: 'elsewhere', icon: 'refresh', title: 'A Z0 probed elsewhere', short: 'From Z0 or Z0 on stock top learn a new stock; not after a vise.', notes: [9] },
         { id: 'slots', icon: 'layers', title: 'Where values are kept', short: 'Spare work offsets hold the heights.', notes: [3] },
         { id: 'units', icon: 'units', title: 'Typing units', short: 'mm or inches, fractions too.', notes: [8] } ] } ] }
   };
