@@ -2715,7 +2715,7 @@
 
   // Unit fields (type 1/4", 6.35mm, 8mm*2 in any length or feed field):
   // the shared ncsender-unit-input library, from QuickCut.
-// BEGIN ncsender-unit-input 0.1.1 (8e2359e): pasted by node .scripts/sync-unit-input.mjs; edit the library, not this.
+// BEGIN ncsender-unit-input 0.1.2 (53aa971): pasted by node .scripts/sync-unit-input.mjs; edit the library, not this.
 // Generated from src/unit-input.js by build.mjs: edit that, then npm run build.
 var NcUnitInput = (function () {
 /**
@@ -2918,8 +2918,9 @@ function roundInches(inch) {
  * ("length" or "feed") work like QuickCut's:
  * - Leaving it (or Enter) rewrites what was typed as a plain number in the
  *   active units ("6mm" -> 0.2362 on an inch machine) and fires `input`.
- *   It runs in the capture phase on root, so the plugin's own focusout,
- *   blur and Enter handlers see the plain number.
+ *   It listens for blur (not focusout, which fires after the field's own
+ *   blur) in the capture phase on root, so the plugin's own blur,
+ *   focusout and Enter handlers see the plain number.
  * - Up / Down step the value like Chrome DevTools: 1, Shift 10, Alt
  *   (Option) 0.1, Ctrl (Command) 0.001, in the field's units. A step never
  *   goes under the field's min (data-min or min): it stops at a whole
@@ -2943,7 +2944,7 @@ function wireUnitFields(root, opts) {
     el.value = v;
     el.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  function onFocusOut(evt) {
+  function onBlur(evt) {
     var el = unitField(evt.target);
     if (el) normalize(el);
   }
@@ -2970,10 +2971,10 @@ function wireUnitFields(root, opts) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     if (opts.onStep) opts.onStep(el);
   }
-  root.addEventListener('focusout', onFocusOut, true);
+  root.addEventListener('blur', onBlur, true);
   root.addEventListener('keydown', onKeyDown, true);
   return function unwire() {
-    root.removeEventListener('focusout', onFocusOut, true);
+    root.removeEventListener('blur', onBlur, true);
     root.removeEventListener('keydown', onKeyDown, true);
   };
 }
@@ -4621,7 +4622,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     });
     var before = null;
     var unitField = function(el) { return el && el.tagName === 'INPUT' && el.hasAttribute('data-unit') ? el : null; };
-    ROOT.addEventListener('focusout', function(evt) { before = unitField(evt.target) ? evt.target.value : null; }, true);
+    // Before the library's own blur listener (same phase: the order added), which converts it.
+    ROOT.addEventListener('blur', function(evt) { before = unitField(evt.target) ? evt.target.value : null; }, true);
     NcUnitInput.wireUnitFields(ROOT, { imperial: function() { return state.imperial; },
       onStep: function(el) { el.dispatchEvent(new Event('change', { bubbles: true })); } });
     ROOT.addEventListener('focusout', function(evt) {
