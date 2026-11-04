@@ -31,6 +31,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Stock Holes:** when Z0 can't be checked (no spoilboard height recorded yet), the warning sits beside Generate.
 
 ### ✨ Better
+- **Number fields:** Up / Down step a length or feed field (Shift 10, Alt 0.1), and Enter converts what you typed, as in QuickCut: Spoilboard Toolbox now uses the shared ncsender-unit-input library for its fields.
 - **Getting started** in the welcome page, Help and README: home first, the fit test zeroed on the scrap, then Z0
   back on the board before the dog holes.
 - **Where to zero** for each program, in Help and the README, and a README **Troubleshooting** list; Install moved

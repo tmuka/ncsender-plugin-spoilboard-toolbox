@@ -257,7 +257,7 @@ Each change came with tests first or alongside, then a browser check of the UI, 
   - If proposed upstream, Spoilboard Toolbox is the working prototype.
 
 - **Idea, not started: unit-aware input as a native ncSender library.** Typing mm or inches in any
-  field and converting to the machine's units (`parseUnitValue`, from QuickCut's `lib/unit-input.cjs`)
+  field and converting to the machine's units (`parseUnitValue` and `wireUnitFields` from the shared [ncsender-unit-input](https://github.com/tmuka/ncsender-unit-input) library, pasted into config.html between its BEGIN/END lines: change the library, then `node .scripts/sync-unit-input.mjs`; a test fails when the copy differs from `../ncsender-unit-input/dist`)
   is copied into each plugin. Ideally ncSender would provide it, so every plugin and ncSender's own
   fields could use one shared, tested version.
 

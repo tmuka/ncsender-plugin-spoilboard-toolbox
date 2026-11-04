@@ -2058,3 +2058,12 @@ test('Z0 on stock top learns a new stock from a Z0 set some other way', () => {
     assert.deepEqual([runAll(m.stock.body, Object.assign({ 5383: -95, 5343: 18, 5223: -75.5 }, r))[5343]], [18]);
   }
 });
+
+test('the ncsender-unit-input copy in config.html matches the library', (t) => {
+  const libFile = path.join(__dirname, '..', '..', 'ncsender-unit-input', 'dist', 'unit-input.global.js');
+  if (!fs.existsSync(libFile)) { t.skip('no ../ncsender-unit-input checkout'); return; }
+  const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
+  const begin = html.indexOf('// BEGIN ncsender-unit-input'), end = html.indexOf('// END ncsender-unit-input');
+  const pasted = html.slice(html.indexOf('\n', begin) + 1, end);
+  assert.equal(pasted, fs.readFileSync(libFile, 'utf8'), 'run node .scripts/sync-unit-input.mjs');
+});
