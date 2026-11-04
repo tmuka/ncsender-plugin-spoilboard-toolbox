@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.5.7: Probe Stock Top
 
 ### ✨ New
 - **Probe Stock Top** (Z0 macros tab, and under Set Z0 in the XY0 Picker's Stock mode): Spoilboard Toolbox shrinks to a card in a corner, labeled Spoilboard Toolbox, and opens ncSender's Probe dialog. Probe Z on the stock's top and the card shows that Z0's height above the spoilboard; **Store** saves it as the stock thickness, with the vise warning. If the work offset picked isn't the active one, the card offers to switch to it first.
