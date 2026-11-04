@@ -2715,7 +2715,7 @@
 
   // Unit fields (type 1/4", 6.35mm, 8mm*2 in any length or feed field):
   // the shared ncsender-unit-input library, from QuickCut.
-// BEGIN ncsender-unit-input 0.1.2 (53aa971): pasted by node .scripts/sync-unit-input.mjs; edit the library, not this.
+// BEGIN ncsender-unit-input 0.1.3 (54e37bc): pasted by node .scripts/sync-unit-input.mjs; edit the library, not this.
 // Generated from src/unit-input.js by build.mjs: edit that, then npm run build.
 var NcUnitInput = (function () {
 /**
@@ -2744,8 +2744,12 @@ var MM_PER_INCH = 25.4;
 // when it can't be read. QuickCut's parser (parseUnitQuantity), plus
 // simple math from Spoilboard Toolbox (parseUnitMath) when it isn't a single value.
 function parseUnitValue(text, isImperial, kind) {
-  // A decimal comma (1,5mm, ,25in) reads as a point
-  text = String(text == null ? '' : text).replace(/,/g, '.');
+  // A decimal comma (1,5mm, ,25in) reads as a point, but not one before
+  // exactly three digits: 1,000 or 2,540 may be a thousands separator, and
+  // 1 or 2.54 instead would be quietly wrong, so that's unreadable.
+  text = String(text == null ? '' : text);
+  if (/\d,\d{3}(?!\d)/.test(text)) return null;
+  text = text.replace(/,/g, '.');
   var one = parseUnitQuantity(text, isImperial, kind);
   return one !== null ? one : parseUnitMath(text, isImperial, kind);
 }
