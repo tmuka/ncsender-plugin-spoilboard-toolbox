@@ -260,31 +260,33 @@ Re-record after surfacing the spoilboard.
     the job), or
   - type the thickness in the wizard and press **Store**, if you trust the material's nominal size
     (sheet goods often vary by a few tenths of a mm, so measure when depth matters), or
-  - probe Z0 on the stock's top your usual way (ncSender's Probe dialog), then press **From Z0** beside
-    **Store**: it shows how far that Z0 is above the spoilboard, and a second press stores it as the
-    thickness. Only for stock lying on the spoilboard, not a vise (see below).
+  - probe Z0 on the stock's top your usual way: see below. Only for stock lying on the spoilboard, not a
+    vise.
 - **Zeroing from the bottom** (set the job's Z origin to the bottom of the stock in your CAM): run
   **Z0 on spoilboard**. No stock probing at all, and through-cuts come out exact.
 
 **Probed the stock some other way?** ncSender's Probe dialog puts Z0 on the stock but doesn't tell the
-macros the new thickness. Run **Z0 on stock top** right after probing, with the same tool: when the current
-Z0 isn't one the macros put down and is more than 1 mm (0.04") above the spoilboard, it takes that Z0 as the
-stock's top. It keeps Z0 where you probed it and stores its height above the spoilboard as the new
-thickness, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before.
-With Spoilboard Toolbox open, **From Z0** (beside **Store**) does the same but shows the height and asks
-for a second press first. Or press **Probe Stock Top** (beside **From Z0**, and under **Set Z0** in the XY0 Picker's
-Stock mode, for the work offset picked there): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender's Probe dialog. Probe Z on the
-stock's top; when Z0 changes, the card shows its height above the spoilboard, and **Store** saves it as the
-thickness. (It opens the dialog by pressing ncSender's own Probe button on the 3D view; if that ever
-fails, the card asks you to press Probe yourself, then **Check Z0**.)
+macros the new thickness. Two ways to give it to them:
+
+- **Probe Stock Top** (on the Z0 macros tab, and under **Set Z0** in the XY0 Picker's Stock mode, for the
+  work offset picked there): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender's Probe
+  dialog. Probe Z on the stock's top; the card shows that Z0's height above the spoilboard, and **Store**
+  saves it as the thickness. Already probed? Press **Check Z0** on the card. (It opens the dialog by
+  pressing ncSender's own Probe button; if that ever fails, it asks you to press Probe yourself.)
+- **Z0 on stock top** learns it: run it right after probing, with the same tool. When Z0 was set some other
+  way since the thickness was last stored and is more than 1 mm (0.04") above the spoilboard, it keeps that
+  Z0 and stores its height as the new thickness, so every tool after gets the same Z0. Otherwise it uses the
+  stored thickness. A Z0 left over from an earlier stock never replaces a thickness you've measured or
+  stored since. Turn learning off with **Stock Top Learns New Stock** (Z0 macros Settings), then press
+  **Create macros**.
 
 - **Safe:** a new sheet or board lying flat on the spoilboard, probed on its top; the same stock probed
   again; switching between spoilboard and stock top with the macros (their own Z0s are never learned
   from).
 - **Not safe:** after zeroing on anything that isn't the top of stock lying on the spoilboard: a **vise
   jaw** or a part held in a vise, a fixture, a jig or riser block, a step or pocket floor for a second
-  operation, or Z0 set partway down a part. Pressing **Z0 on stock top** then keeps your Z0 but stores
-  that height as the stock thickness, and later stock-top Z0s land there. Put the real thickness back
+  operation, or Z0 set partway down a part. Storing it (or pressing **Z0 on stock top** with learning on)
+  makes that height the stock thickness, and later stock-top Z0s land there. Put the real thickness back
   with **Store** or **Measure stock thickness**. If you often zero on a vise, don't put **Z0 on stock
   top** on a key you might press by habit.
 - It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the

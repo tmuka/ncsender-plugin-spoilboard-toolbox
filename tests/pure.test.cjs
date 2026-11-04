@@ -70,7 +70,7 @@ const PLAIN = /^(G2[01]|G90|G5[4-9](\.[1-3])?|G91 G38\.2 Z-[\d.]+ F[\d.]+|G91 G0
 function words(text) {
   const out = [];
   for (let i = 0; i < text.length; i++) {
-    if (!/[XY]/.test(text[i]) || text[i + 1] !== '[') continue;
+    if (!/[XYZ]/.test(text[i]) || text[i + 1] !== '[') continue;
     let depth = 0, j = i + 1;
     for (; j < text.length; j++) { if (text[j] === '[') depth++; else if (text[j] === ']' && --depth === 0) break; }
     out.push([text[i], text.slice(i + 2, j)]);
@@ -84,13 +84,12 @@ function step(line, params) {
     if (m) { params[m[1]] = evalExpr(m[2], params); return; }
     m = /^G10 L2 P0 X\[(.*)\] Y\[(.*)\]$/.exec(line);
     if (m) { params.P0_x = evalExpr(m[1], params); params.P0_y = evalExpr(m[2], params); return; }
-    m = /^G10 L2 P(\d) Z\[(.*)\]$/.exec(line);
-    if (m) { params[offsetZParam(+m[1])] = evalExpr(m[2], params); return; }
-    m = /^G10 L2 P(\d) X\[(.*)\] Y\[(.*)\]$/.exec(line);
-    if (m) {
-      const vx = evalExpr(m[2], params), vy = evalExpr(m[3], params);
-      params[offsetZParam(+m[1]) - 2] = vx;
-      params[offsetZParam(+m[1]) - 1] = vy;
+    // G10 L2 Pn with any of X[...] Y[...] Z[...]: every word is evaluated
+    // first, so one rejected word stores nothing.
+    m = /^G10 L2 P([1-9]) ([XYZ]\[.*\])$/.exec(line);
+    if (m && words(m[2]).length) {
+      const at = { X: -2, Y: -1, Z: 0 }, vals = words(m[2]).map(([axis, expr]) => [axis, evalExpr(expr, params)]);
+      for (const [axis, v] of vals) params[offsetZParam(+m[1]) + at[axis]] = v;
       return;
     }
     m = /^G53 (?:G90 )?G0 Z\[(.*)\]$/.exec(line);
@@ -156,7 +155,7 @@ test('macros: the core five always, extras only when ticked', () => {
 
 test('measure stores stock top minus the spoilboard in the thickness slot', () => {
   const m = buildMacros(base);
-  assert.match(m.measure.body, /^G10 L2 P7 Z\[\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\] \/ \[#<_homed_state> AND \[#<_tool_offset> OR \[ABS\[#5403\] GT 0\.0005\]\] AND \[#5383 NE 0\] AND \[#5220 EQ 1\]\]\]$/m);
+  assert.match(m.measure.body, /^G10 L2 P7 Y\[#5223\] Z\[\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\] \/ \[#<_homed_state> AND \[#<_tool_offset> OR \[ABS\[#5403\] GT 0\.0005\]\] AND \[#5383 NE 0\] AND \[#5220 EQ 1\]\]\]$/m);
   // G54 Z -77.5; tool with TLO 12; block (15) on 18 mm stock on a spoilboard at -95
   // (zero-length tool): the tip touches the block at machine -95 + 18 + 15 + 12 = -50,
   // which is -50 - (-77.5) = 27.5 in G54.
@@ -226,6 +225,7 @@ test('save and restore X/Y: kept in the saved-Z0 slot, Z untouched, nothing save
 
 test('typed thickness is stored with one G10 line', () => {
   assert.equal(storeThicknessCommand(7, 18), 'G10 L2 P7 Z18.000');
+  assert.equal(storeThicknessCommand(7, 18, 1), 'G10 L2 P7 Y[#5223] Z18.000');
 });
 
 test('restore with nothing saved leaves Z0 alone', () => {
@@ -341,7 +341,7 @@ test('another work offset active: every macro that uses G54 stops and changes no
 test('guards: the stored value itself is guarded too, if a stop line were skipped', () => {
   const m = buildMacros(base);
   for (const k of ['record', 'measure', 'set', 'stock']) {
-    const g10 = code(m[k].body).filter(l => /^G10 L2 P(9|7|1) Z\[\[?#(5063|5383)/.test(l)).pop();
+    const g10 = code(m[k].body).filter(l => /^G10 L2 P(9|7|1) (Y\[#5223\] )?Z\[\[?#(5063|5383)/.test(l)).pop();
     assert.ok(g10, k);
     const p = Object.assign({ 5223: -77.5, 5383: -95, 5343: 18, 5403: 12, 5063: 27.5 }, { _homed_state: 0, _tool_offset: 1 });
     assert.throws(() => step(g10, p), /error:72/, k);
@@ -2017,6 +2017,54 @@ test('thread sizes: tap drills between the minor and major diameters', () => {
     const minor = t.major - 1.0825 * t.pitch;
     assert.ok(t.drill > minor - 0.1 && t.drill < t.major - 0.4 * t.pitch, t.id);
   }
+});
+
+test('Z0 on stock top: no learning from a Z0 left from before a Measure or Store', () => {
+  const m = buildMacros(base);
+  // Yesterday's 12 mm stock probed with ncSender (G54 Z -83); today 19 mm measured.
+  const p = Object.assign({ 5383: -95, 5223: -83, 5343: 12 }, ready);
+  run(m.measure.body.split('\n').filter((l) => !/^G9[01]( |$)/.test(l)).join('\n'), Object.assign(p, { 5403: 0, 5063: -95 + 19 + 15 - -83 }));
+  assert.deepEqual([p[5343], p[5342]], [19, -83], 'measured, with the Z0 then');
+  run(m.stock.body, p);
+  assert.deepEqual([p[5343], p[5223]], [19, -76], 'the measured thickness is used, not the old Z0');
+  // A Store from the page records the Z0 too.
+  const q = Object.assign({ 5383: -95, 5223: -83, 5343: 12 }, ready);
+  step(storeThicknessCommand(7, 19, 1).replace(/Z([\d.]+)$/, 'Z[$1]'), q);
+  run(m.stock.body, q);
+  assert.deepEqual([q[5343], q[5223]], [19, -76]);
+  // A Z0 probed after that is learned, and remembered as learned.
+  q[5223] = -70;
+  run(m.stock.body, q);
+  assert.deepEqual([q[5343], q[5342], q[5223]], [25, -70, -70]);
+  // An offset never set (0) with nothing stored stops before saving anything.
+  const r = run(m.stock.body, Object.assign({ 5383: -95, 5223: 0, 5343: 0, 5363: -60 }, ready));
+  assert.ok(m.stock.body.includes(r._error + ' (SBT stop: store a stock thickness first)'));
+  assert.equal(r[5363], -60);
+});
+
+test('Z0 on stock top with learning off uses the stored thickness only', () => {
+  const m = buildMacros(Object.assign({}, base, { learn: false }));
+  const p = run(m.stock.body, Object.assign({ 5383: -95, 5343: 18, 5223: -75.5 }, ready));
+  assert.deepEqual([p[5343], p[5223]], [18, -77]);
+  assert.ok(!/#2=/.test(m.stock.body));
+  const q = run(m.stock.body, Object.assign({ 5383: -95, 5343: 0, 5223: -75.5 }, ready));
+  assert.ok(m.stock.body.includes(q._error + ' (SBT stop: store a stock thickness first)'));
+});
+
+test('Set Z0 on the top of stock lying on the spoilboard stores T as the thickness', () => {
+  const s = { wcs: 1, slot: 9, backup: 8, thick: 7 };
+  const p = Object.assign({ 5383: -95, 5343: 12, 5223: -60, 5213: 0 }, ready);
+  for (const l of zAboveSpoilLines(s, 1, 19, 19)) if (!/^#1=/.test(l)) step(l, p);
+  assert.deepEqual([p[5223], p[5343], p[5341], p[5342]], [-76, 19, 0, -76]);
+  // Z0 on stock top keeps it for any tool.
+  run(buildMacros(base).stock.body, p);
+  assert.deepEqual([p[5223], p[5343]], [-76, 19]);
+  // On a vise point (no stock thickness): the height is kept as Set Z0's mark, the thickness untouched.
+  const q = Object.assign({ 5383: -95, 5343: 12, 5223: -60, 5213: 0 }, ready);
+  for (const l of zAboveSpoilLines(s, 1, 60)) if (!/^#1=/.test(l)) step(l, q);
+  assert.deepEqual([q[5223], q[5343], q[5341]], [-35, 12, 60]);
+  run(buildMacros(base).stock.body, q);
+  assert.equal(q[5343], 12, 'not learned from a vise point');
 });
 
 test('From Z0: the Z0 as a stock top, or why not', () => {

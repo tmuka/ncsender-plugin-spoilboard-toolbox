@@ -6,18 +6,20 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### ✨ New
-- **Z0 on stock top learns a new stock:** probed a new stock with ncSender's Probe dialog? Run **SBT: Z0 on stock top** right after, with the same tool. When the current Z0 isn't one the macros set and is more than 1 mm above the spoilboard, it keeps that Z0 and stores its height as the stock thickness, so every tool after gets it. Not after zeroing on a vise jaw, a fixture or a step: Help and the README say when it's safe. Press **Create macros** to update the macro.
-- **From Z0** (Z0 macros › Settings, beside Store): probed Z0 on a new stock? It shows how far that Z0 is above the spoilboard, and a second press stores it as the stock thickness. It refuses a Z0 that's at or near the spoilboard, the one Set Z0 put down, or one with no tool length offset in effect, and warns about vises.
+- **Probe Stock Top** (Z0 macros tab, and under Set Z0 in the XY0 Picker's Stock mode): Spoilboard Toolbox shrinks to a card in a corner, labeled Spoilboard Toolbox, and opens ncSender's Probe dialog. Probe Z on the stock's top and the card shows that Z0's height above the spoilboard; **Store** saves it as the stock thickness, with the vise warning. If the work offset picked isn't the active one, the card offers to switch to it first.
+- **Z0 on stock top learns a new stock:** run it right after probing a new stock some other way (ncSender's Probe dialog), with the same tool. When Z0 was set since the thickness was last stored and is more than 1 mm above the spoilboard, it keeps that Z0 and stores its height as the thickness, so every tool after gets it. It never replaces a thickness you've measured or stored since. Not after zeroing on a vise jaw, a fixture or a step: Help and the README say when it's safe, and **Stock Top Learns New Stock** (Z0 macros Settings) turns it off. Press **Create macros** to update the macro.
+- **Follow Z0** (XY0 Picker › Stock, beside T): if you probe Z0 on the stock's top first, T follows that Z0's height above the spoilboard, for the work offset picked in the menu, and says so under T. Programs that cut through the stock wait until you press **Store for Macros** to confirm it's this stock's thickness. Nothing is written to the controller, and it's off each time you open Spoilboard Toolbox.
 - **Store for Macros** beside the stock's T: when T differs from the thickness the Z0 macros use, one press stores it for **Z0 on stock top** (typing never does). The Z0 macros tab's Stock Thickness box now shows the stored thickness until you type in it.
-- **Make Active** beside the XY0 Picker's work offset menu: when the offset picked there isn't the active one, one press makes it active in ncSender (sends e.g. `G55`), only while idle with no job running. Picking in the menu alone never switches it.
-- **Set XY0** (was Set XY) and **Set Z0** say "already set" and wait when the work offset already has that zero.
-- **Position in the sidebar:** ncSender's work and machine X, Y and Z, live above Help, so you can jog from the keyboard with Spoilboard Toolbox open and follow where the spindle is. On the XY0 Picker, the work column follows the work offset picked in its menu (G54–G59).
-- **Probe Stock Top** (beside From Z0, and under Set Z0 in the XY0 Picker's Stock mode, for the work offset picked there; it offers to switch to it first): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender's Probe dialog. Probe Z on the stock's top, and the card (labeled Spoilboard Toolbox) offers to store its height above the spoilboard as the stock thickness, with the vise warning.
-- **Follow Z0** (XY0 Picker › Stock, beside T): for a probe-first workflow, T follows the active work offset's Z0 height above the recorded spoilboard whenever Z0 is more than 1 mm above it, and the stored thickness with Z0 on the spoilboard. Nothing is written to the controller. Off until you press it; only for stock lying on the spoilboard, not a vise or fixture (Stock Holes reminds you).
+- **Set Z0 on the stock top** (XY0 Picker, stock lying on the spoilboard) also stores T as the Z0 macros' thickness, so Z0 on stock top gives the same Z0 for the next tool.
+- **Make G55 Active** (say), under the XY0 Picker's work offset menu: when the offset picked there isn't the active one, one press makes it active in ncSender, only while idle with no job running. Picking in the menu alone never switches it.
+- **Set G54 XY0** (was Set XY) and **Set G54 Z0** read "already set" when the work offset already has that zero.
+- **Position in the sidebar:** ncSender's work and machine X, Y and Z, live above Help, so you can jog from the keyboard with Spoilboard Toolbox open and follow where the spindle is. On the XY0 Picker, the work column follows the work offset picked in its menu (G54–G59), and says when that isn't the active one.
+- **Out-of-date macros:** the Z0 macros tab says when your SBT: macros in ncSender differ from what the settings make (an older version's, without the newer safety stops), so you know to press Create macros.
 - **Laser offset:** with grblHAL's laser offset set (`$770`/`$771`, e.g. by the Laser Toolbox plugin) and `$772=1`, a laser program (grid lines, laser test, labels) needs the laser selected: grblHAL shows it as a G92 offset equal to the laser's, and the program stops before moving otherwise (with the spindle selected, its `M4` would run the spindle). With `$772=0` it refuses to make one, since the laser would land off by its offset.
 
 ### 🐛 Fixed
 - **Z0 macros on another work offset:** they set Z0 in the offset they were made for (G54 by default) even while the job used another, and Record and Measure switched you to it. Now each stops with a message while another offset is active, and nothing switches offsets. Press **Create macros** again to update them; **Run checks** confirms your grblHAL reads the active offset (`#5220`).
+- **Inch reports (`$13=1`):** the stored spoilboard height and thickness shown on the Z0 macros tab were inches read as mm.
 - **Grid lines** showed the V-bit's Depth with a laser picked, and Laser Power with a V-bit.
 - **Stock mode** in the XY0 Picker no longer pushes Set and Go to below the screen.
 - A Bit Diameter that isn't a number no longer adds a false "holes reach outside the machine's travel".
@@ -31,7 +33,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Stock Holes:** when Z0 can't be checked (no spoilboard height recorded yet), the warning sits beside Generate.
 
 ### ✨ Better
-- **Number fields:** Up / Down step a length or feed field (Shift 10, Alt 0.1), and Enter converts what you typed, as in QuickCut: Spoilboard Toolbox now uses the shared ncsender-unit-input library for its fields.
+- **Number fields:** the Up and Down keys step a length or feed field by 1 (with Shift by 10, with Alt by 0.1), and Enter converts what you typed, as in QuickCut; a decimal comma (1,5) reads as a point. Spoilboard Toolbox now uses the shared ncsender-unit-input library for its fields.
 - **Getting started** in the welcome page, Help and README: home first, the fit test zeroed on the scrap, then Z0
   back on the board before the dog holes.
 - **Where to zero** for each program, in Help and the README, and a README **Troubleshooting** list; Install moved

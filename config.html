@@ -106,6 +106,7 @@
   .mw-pos-h { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); text-align: right; }
   .mw-pos-ax { font-weight: 700; }
   .mw-pos-h.mw-pos-other { color: var(--mw-warn); }
+  .mw-pos-note { grid-column: 1 / -1; font-size: 0.75rem; color: var(--mw-warn); }
   .mw-pos-ax[data-ax="X"] { color: #e5534b; } .mw-pos-ax[data-ax="Y"] { color: #3fb950; } .mw-pos-ax[data-ax="Z"] { color: #4c8dff; }
   .mw-pos-v { text-align: right; white-space: nowrap; }
   .mw-pos-m { color: var(--color-text-secondary); }
@@ -660,6 +661,7 @@
           <span class="mw-pos-ax" data-ax="X">X</span><span class="mw-pos-v" id="mw-pos-wx">–</span><span class="mw-pos-v mw-pos-m" id="mw-pos-mx">–</span>
           <span class="mw-pos-ax" data-ax="Y">Y</span><span class="mw-pos-v" id="mw-pos-wy">–</span><span class="mw-pos-v mw-pos-m" id="mw-pos-my">–</span>
           <span class="mw-pos-ax" data-ax="Z">Z</span><span class="mw-pos-v" id="mw-pos-wz">–</span><span class="mw-pos-v mw-pos-m" id="mw-pos-mz">–</span>
+          <span class="mw-pos-note" id="mw-pos-note" hidden></span>
         </div>
         <button type="button" class="mw-nav-btn" id="mw-help-btn" title="More about this tab">
           <span class="mw-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.6"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg></span>
@@ -718,7 +720,7 @@
             <span class="mw-hint mw-unit">mm</span></span>
             <span class="mw-stock-wl"><span class="mw-hint">T</span>
             <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
-            <span class="mw-hint mw-unit">mm</span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Follow Z0: T follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, T would be that height. Turn it off and type T then.">Follow Z0</button><button type="button" class="mw-btn mw-btn-small" id="mw-stock-tstore" hidden title="T differs from the stock thickness the Z0 macros use (stored in the controller): store T there, so SBT: Z0 on stock top puts Z0 this far above the spoilboard.">Store for Macros</button></span>
+            <span class="mw-hint mw-unit">mm</span><span class="mw-hint mw-warn-text" id="mw-stock-tnote" hidden style="flex-basis: 100%"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Follow Z0: T follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, T would be that height. Turn it off and type T then.">Follow Z0</button><button type="button" class="mw-btn mw-btn-small" id="mw-stock-tstore" hidden title="T differs from the stock thickness the Z0 macros use (stored in the controller): store T there, so SBT: Z0 on stock top puts Z0 this far above the spoilboard.">Store for Macros</button></span>
             <span class="mw-stock-wl"><span class="mw-hint">Clamp margin</span>
             <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-m" aria-label="Clamp margin" title="Room to leave along every edge of the stock for clamps or screws: the loaded program's cuts, the bit's width included, should stay this far inside the stock. 0 or blank: right up to the edge.">
             <span class="mw-hint mw-unit">mm</span></span>
@@ -1030,9 +1032,15 @@
             <div class="mw-inline-row">
               <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock" step="0.001" min="0" value="18" title="A known stock thickness, e.g. a sheet. Store writes it to the controller for the stock-top macro; the measure macro writes a probed one.">
               <button type="button" class="mw-btn mw-btn-small" id="mw-store-stock">Store</button>
-              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fromz" title="Probed Z0 on top of a new stock (ncSender's Probe dialog)? This reads how far Work Offset to Set's Z0 is above the spoilboard and, on a second press, stores it as the stock thickness. Only for stock lying on the spoilboard: not after zeroing on a vise jaw, a fixture or a step.">From Z0</button>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" data-probe-top title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top, and the card offers to store its height above the spoilboard as the stock thickness. Only for stock lying on the spoilboard.">Probe Stock Top</button>
             </div>
+          </div>
+          <div class="mw-field">
+            <label for="mw-learn">Stock Top Learns New Stock</label>
+            <select class="mw-select" id="mw-learn" title="Yes: SBT: Z0 on stock top keeps a Z0 probed some other way since the thickness was stored (more than 1 mm above the spoilboard) and stores its height as the thickness. Only right for stock lying on the spoilboard: pick No if you zero on a vise or fixture and might press it by habit. Press Create macros after changing it.">
+              <option value="1" selected>Yes</option>
+              <option value="0">No</option>
+            </select>
           </div>
           <div class="mw-field">
             <label for="mw-wcs">Work Offset to Set</label>
@@ -1074,8 +1082,8 @@
         <p class="mw-hint">
           The spoilboard height, your saved Z0 and the stock thickness are kept in three spare work offsets'
           Z, which the controller keeps through power cycles; pick ones you don't use. The stock-top macro
-          uses whatever thickness is stored: press <strong>Store</strong> for a known thickness, or run the
-          measure macro. The macros switch to mm (<code class="mw-inline">G21</code>) while they work,
+          uses the stored thickness (<strong>Store</strong> a known one, run the measure macro, or <strong>Probe Stock Top</strong>),
+          or, run right after you probe a new stock&rsquo;s top, learns it from that Z0. The macros switch to mm (<code class="mw-inline">G21</code>) while they work,
           because grblHAL reports stored offsets and tool lengths in mm whatever the units mode.
         </p>
       </section>
@@ -1102,6 +1110,7 @@
           </div>
         </div>
         <p class="mw-status" id="mw-save-status" role="status"></p>
+        <p class="mw-status" id="mw-macros-stale" data-state="warn" role="status" hidden></p>
         <div class="mw-macros" id="mw-macros"></div>
         <p class="mw-hint">The spoilboard and stock-top macros save the current Z0 first, unless it's already one
           of theirs, so <strong>back to saved</strong> returns to your probed Z0 however many times you switch.</p>
@@ -1849,7 +1858,7 @@
       needTlo,
       needSpoil,
       needWcs
-    ].concat(probe, ['G10 L2 P' + o.thick + ' Z[[' + surface + ' - ' + spoil + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + ACTIVE + ']]'], back, tail));
+    ].concat(probe, ['G10 L2 P' + o.thick + ' Y[' + cur + '] Z[[' + surface + ' - ' + spoil + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + ACTIVE + ']]'], back, tail));
     m.set = macro(wcs + ' Z0 on spoilboard', [
       '(SBT: work Z0 on spoilboard)',
       '(Tool length offset must be active.)',
@@ -1866,30 +1875,42 @@
     // A Z0 the macros didn't set, more than LEARN_MM above the spoilboard,
     // is taken as a new stock's top (probed with ncSender's Probe dialog,
     // say): its height becomes the thickness, so Z0 stays where it is and
-    // the next tool gets it too. Not an offset never set (0). Worked out
-    // into #2 before the saved Z0 is touched.
-    // (More than LEARN_MM above it already means it's not the spoilboard.)
-    var learn = '[[ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + mark + '] GT 0.001] AND [' + cur + ' NE 0] AND [[' + cur + ' - ' + spoil + '] GT ' + fmt(LEARN_MM) + ']]';
+    // the next tool gets it too. Only when Z0 changed since the thickness
+    // was stored (its Z0 then is in the slot's Y), so a Measure or Store
+    // isn't replaced by a Z0 left from the last stock; not Set Z0's last
+    // point height (X) or an offset never set (0). o.learn false: off.
+    var snap = '#' + (offsetZParam(o.thick) - 1), learnOn = o.learn !== false;
+    var learnA = '[[ABS[' + cur + ' - ' + spoil + ' - ' + thick + '] GT 0.001] AND [ABS[' + cur + ' - ' + spoil + ' - ' + mark + '] GT 0.001] AND [[' + cur + ' - ' + spoil + '] GT ' + fmt(LEARN_MM) + ']]';
+    var learnB = '[#2 AND [' + cur + ' NE 0] AND [ABS[' + cur + ' - ' + snap + '] GT 0.001]]';
+    var guard = '[' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + G92Z + ' AND ' + ACTIVE + ']';
     m.stock = macro(wcs + ' Z0 on stock top', [
       '(SBT: work Z0 on stock top)',
-      '(Uses the thickness in ' + thk + ' Z. A Z0)',
-      '(set some other way, over ' + LEARN_MM + ' mm above)',
-      '(the spoilboard, becomes the new)',
-      '(thickness instead: see Help.)',
+      '(Uses the thickness in ' + thk + ' Z.' + (learnOn ? ' A Z0' : ')')
+    ].concat(learnOn ? [
+      '(probed some other way since, over ' + LEARN_MM + ' mm)',
+      '(above the spoilboard, becomes the new)',
+      '(thickness instead: see Help.)'
+    ] : [], [
       '(Tool length offset must be active.)',
       '(Saves the current Z0 in ' + bak + ' Z.)',
       needHomed,
       needTlo,
       needSpoil,
-      stop('[' + hasThick + ' OR [[' + cur + ' - ' + spoil + '] GT ' + fmt(LEARN_MM) + ']]', 'store a stock thickness first'),
+      learnOn ? stop('[' + hasThick + ' OR [[' + cur + ' NE 0] AND [[' + cur + ' - ' + spoil + '] GT ' + fmt(LEARN_MM) + ']]]', 'store a stock thickness first') : needThick,
       noG92Z,
       needWcs,
-      'G21',
-      '#2=' + learn + ' (1: a new stock top)',
-      saveLine,
-      'G10 L2 P' + o.thick + ' Z[[' + thick + ' + [' + cur + ' - ' + spoil + ' - ' + thick + '] * #2] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + G92Z + ' AND ' + ACTIVE + ']]',
+      'G21'
+    ], learnOn ? [
+      '#2=' + learnA + ' (1: a new stock top...)',
+      '#2=' + learnB + ' (...set since)',
+      '#3=' + guard
+    ] : [], [
+      saveLine
+    ], learnOn ? [
+      'G10 L2 P' + o.thick + ' Y[[' + snap + ' + [' + cur + ' - ' + snap + '] * #2] / #3] Z[[' + thick + ' + [' + cur + ' - ' + spoil + ' - ' + thick + '] * #2] / #3]'
+    ] : [], [
       'G10 L2 P' + o.wcs + ' Z[[' + spoil + ' + ' + thick + '] / [' + HOMED + ' AND ' + TLO + ' AND ' + hasSpoil + ' AND ' + hasThick + ' AND ' + G92Z + ' AND ' + ACTIVE + ']]'
-    ].concat(tail));
+    ], tail));
     m.restore = macro(wcs + ' Z0 back to saved', [
       '(SBT: put back the Z0 saved in ' + bak + ' Z)',
       '(Leaves Z0 alone if nothing was saved.)',
@@ -1977,10 +1998,12 @@
     return m;
   }
 
-  // `G10 L2` line that stores a typed stock thickness, in the units the
-  // controller is in (G10 values follow G20/G21; grblHAL keeps mm).
-  function storeThicknessCommand(thickSlot, value) {
-    return 'G10 L2 P' + thickSlot + ' Z' + fmt(value);
+  // `G10 L2` line that stores a stock thickness (send G21 first: G10
+  // values follow G20/G21; grblHAL keeps mm). With the Z0 macros' work
+  // offset, its Z0 then goes in the slot's Y: Z0 on stock top only learns
+  // a new stock from a Z0 set after the thickness was.
+  function storeThicknessCommand(thickSlot, value, wcsP) {
+    return 'G10 L2 P' + thickSlot + (wcsP ? ' Y[#' + offsetZParam(wcsP) + ']' : '') + ' Z' + fmt(value);
   }
 
   // Using the current Z0 as a stock top: its height above the spoilboard,
@@ -2564,7 +2587,10 @@
   // Z) plus hMm. Guarded like those macros: homed, a tool length offset
   // active, the spoilboard recorded, no G92 Z; every line that changes
   // anything is divided by the same checks.
-  function zAboveSpoilLines(o, P, hMm) {
+  // stockT: the stock's thickness when hMm is the top of stock lying on
+  // the spoilboard; it's then stored as the Z0 macros' thickness too (with
+  // this Z0 as the slot's Y), and no point height is kept in X.
+  function zAboveSpoilLines(o, P, hMm, stockT) {
     var cur = '#' + offsetZParam(P), spoil = '#' + offsetZParam(o.slot), saved = '#' + offsetZParam(o.backup), thick = '#' + offsetZParam(o.thick);
     var markX = '#' + (offsetZParam(o.thick) - 2), markY = '#' + (offsetZParam(o.thick) - 1);
     var ok = '[#<_homed_state> AND ' + TLO_ACTIVE + ' AND [' + spoil + ' NE 0] AND [ABS[#5213] LT 0.0005]]';
@@ -2587,7 +2613,8 @@
       'G10 L2 P' + o.backup + ' Z[[' + saved + ' + [' + cur + ' - ' + saved + '] * #2] / ' + ok + ']'
     ] : [], [
       'G10 L2 P' + P + ' Z[[' + spoil + ' + ' + fmt(hMm) + '] / ' + ok + ']'
-    ], save ? ['G10 L2 P' + o.thick + ' X[' + fmt(hMm) + ' / ' + ok + '] Y[' + markY + ']'] : []);
+    ], stockT > 0 ? ['G10 L2 P' + o.thick + ' X[0 / ' + ok + '] Y[' + (save ? '[' + spoil + ' + ' + fmt(hMm) + ']' : markY) + ' / ' + ok + '] Z[' + fmt(stockT) + ' / ' + ok + ']']
+      : save ? ['G10 L2 P' + o.thick + ' X[' + fmt(hMm) + ' / ' + ok + '] Y[' + markY + ']'] : []);
   }
 
 
@@ -3193,8 +3220,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // spindle instead).
   function g92Stop(o, less) {
     var lo = o.laser && o.laserOffset && o.laserOffset.updateG92 && (o.laserOffset.x || o.laserOffset.y) ? o.laserOffset : null;
-    if (!lo) return '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (SBT stop: a G92 offset is active; G92.1 clears it)';
-    return '#1=[1 / [[ABS[#5211' + less(lo.x) + '] LT 0.0005] AND [ABS[#5212' + less(lo.y) + '] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (SBT stop: select the laser first; its offset X' +
+    var other = !o.laser && o.laserOffset && o.laserOffset.updateG92 && (o.laserOffset.x || o.laserOffset.y);
+    if (!lo) return '#1=[1 / [[ABS[#5211] LT 0.0005] AND [ABS[#5212] LT 0.0005] AND [ABS[#5213] LT 0.0005]]] (SBT stop: a G92 offset is active; ' + (other ? 'select the spindle, not the laser, or G92.1 clears it)' : 'G92.1 clears it)');
+    // 0.001: $770 / $771 may carry more decimals than fmt keeps.
+    return '#1=[1 / [[ABS[#5211' + less(lo.x) + '] LT 0.001] AND [ABS[#5212' + less(lo.y) + '] LT 0.001] AND [ABS[#5213] LT 0.0005]]] (SBT stop: select the laser first; its offset X' +
       fmt(lo.x) + ' Y' + fmt(lo.y) + ' should be the G92 offset)';
   }
   // A laser offset in grblHAL with $772=0 moves work coordinates when the
@@ -4393,16 +4422,23 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     return { ok: res.ok && body.status !== 'error' && body.Status !== 'error', body: body };
   }
   // Send a command and collect the lines the controller answers with.
-  async function ask(command, waitMs) {
-    state.capturing = [];
-    var lines = state.capturing;
-    try {
-      var r = await sendCommand(command);
-      await new Promise(function(res) { setTimeout(res, waitMs || 600); });
-      return { ok: r.ok, body: r.body, lines: lines };
-    } finally {
-      state.capturing = null;
-    }
+  // One question at a time: the replies are captured from the shared
+  // console stream, so a second ask() waits for the first.
+  var askChain = Promise.resolve();
+  function ask(command, waitMs) {
+    var run = askChain.then(async function() {
+      state.capturing = [];
+      var lines = state.capturing;
+      try {
+        var r = await sendCommand(command);
+        await new Promise(function(res) { setTimeout(res, waitMs || 600); });
+        return { ok: r.ok, body: r.body, lines: lines };
+      } finally {
+        state.capturing = null;
+      }
+    });
+    askChain = run.catch(function() {});
+    return run;
   }
 
   function addCheck(list, stateName, title, detail) {
@@ -4516,6 +4552,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       backup: +$('mw-backup').value,
       thick: +$('mw-thick').value,
       extras: {},
+      learn: $('mw-learn').value !== '0',
       safeZMm: state.safeZMm,
       imperial: state.imperial
     };
@@ -4534,6 +4571,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function render() {
     var s = readSettings();
     if (!s) return;
+    checkMacrosCurrent();
     var m = buildMacros(s), host = $('mw-macros');
     // The steps name the macros as they appear in ncSender's Macros tab.
     ROOT.querySelectorAll('[data-name]').forEach(function(el) {
@@ -4626,10 +4664,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var body = Object.assign({
       block: u('mw-block'), feed: u('mw-feed'), travel: u('mw-travel'),
       retract: u('mw-retract'), stock: u('mw-stock'), wcs: $('mw-wcs').value,
-      slot: $('mw-slot').value, backup: $('mw-backup').value, thick: $('mw-thick').value,
+      slot: $('mw-slot').value, backup: $('mw-backup').value, thick: $('mw-thick').value, learn: $('mw-learn').value !== '0',
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
-      stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'), stockTAuto: holes.thickAuto, stockM: fieldVal('mw-stock-m'),
+      stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'), stockM: fieldVal('mw-stock-m'),
       stockZMode: $('mw-stock-zmode').value,
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
       stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
@@ -4654,36 +4692,29 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     status.removeAttribute('data-state');
     status.textContent = 'Storing…';
     try {
-      var cmds = ['G21', storeThicknessCommand(s.thick, mm)].concat(state.imperial ? ['G20'] : []);
-      for (var i = 0; i < cmds.length; i++) {
-        var r = await sendCommand(cmds[i]);
-        if (!r.ok) throw new Error('the controller rejected ' + cmds[i]);
-      }
+      await noJobRunning();
+      var gc = parseGcState((await ask('$G', 500)).lines);
+      await sendHoleCommands(['G21', storeThicknessCommand(s.thick, mm, s.wcs)], gc ? gc.imperial : null);
       status.setAttribute('data-state', 'ok');
       state.storedThickMm = mm;
       status.textContent = 'Stored ' + fmt(mm) + ' mm in ' + WCS_NAMES[s.thick] + ' Z. The stock-top macro uses it from now on.';
       readNumbers();
     } catch (err) {
       status.setAttribute('data-state', 'bad');
-      status.textContent = 'Couldn\'t store the thickness: ' + err.message + '. Is the controller connected?';
+      status.textContent = 'Couldn\'t store the thickness: ' + err.message + '.';
     } finally {
       btn.disabled = false;
     }
   }
 
-  // From Z0: the first press reads how far Work Offset to Set's Z0 is
-  // above the spoilboard and shows it, with the vise warning; a second
-  // press within 8 s stores it as the thickness, if nothing changed.
-  var fromZ = { armed: null, timer: null, busy: false };
-  function disarmFromZ() {
-    clearTimeout(fromZ.timer);
-    fromZ.armed = null;
-    $('mw-stock-fromz').textContent = 'From Z0';
-  }
+  // The Z0 of work offset s.wcs as a stock top (z0StockTop), read from the
+  // controller, with the checks a stored thickness needs: homed, idle, no
+  // G92 Z offset, a tool length offset in effect.
   async function readZ0StockTop(s) {
     await machineReady();
     var hash = parseHashReport((await ask('$#', 900)).lines);
     var k = state.reportInches ? MM_PER_INCH : 1;
+    if (hash.G92 && Math.abs(hash.G92[2] || 0) > 0.0005) return { why: 'a G92 Z offset is active, which shifts Z0 (send G92.1 to clear it, then probe again)' };
     var z = function(p) { var v = hash[WCS_NAMES[p]]; return v ? v[2] * k : null; };
     var markV = hash[WCS_NAMES[s.thick]];
     var r = z0StockTop({ cur: z(s.wcs), spoil: z(s.slot), thick: z(s.thick), mark: markV ? markV[0] * k : 0 });
@@ -4692,13 +4723,25 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       return { why: 'no tool length offset is in effect, so the Z0 isn\u2019t a height every tool shares' };
     return r;
   }
-  async function storeZ0Thickness(s, r) {
+  // wcsP: the work offset whose Z0 that was; the Z0 macros' own is noted
+  // with the thickness (storeThicknessCommand).
+  async function storeZ0Thickness(s, r, wcsP) {
+    await noJobRunning();
     var gc = parseGcState((await ask('$G', 500)).lines);
-    await sendHoleCommands(['G21', storeThicknessCommand(s.thick, r.hMm)], gc ? gc.imperial : null);
+    await sendHoleCommands(['G21', storeThicknessCommand(s.thick, r.hMm, wcsP === s.wcs ? s.wcs : null)], gc ? gc.imperial : null);
     $('mw-stock').value = +(r.hMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
     state.storedThickMm = r.hMm;
     takeMeasuredThickness(r.hMm);
     saveSettings();
+  }
+  // Before sending anything that changes offsets or modes: connected, idle
+  // and no job running or paused (a paused job would resume with it).
+  async function noJobRunning() {
+    var st = await (await fetch(BASE_URL + '/api/server-state')).json(), ms = st.machineState || {}, job = st.jobLoaded || {};
+    state.machine = ms;
+    if (!ms.connected) throw new Error('the controller isn\u2019t connected');
+    if (job.status === 'running' || job.status === 'paused') throw new Error('a job is ' + job.status);
+    if (String(ms.status || '').indexOf('Idle') !== 0) throw new Error('the machine isn\u2019t idle');
   }
   // One $# at a time: wait out a numbers read in progress.
   async function numbersLock() {
@@ -4711,10 +4754,16 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // when Z0 changes, or Check Z0 is pressed, offer to store Z0's height
   // above the spoilboard as the thickness. Nothing is sent to the
   // controller until Store.
-  var pf = { on: false, step: '', base: null, r: null, busy: false, timer: null, corner: 'br', wcs: 1 };
+  var pf = { on: false, step: '', base: null, baseWs: '', r: null, busy: false, timer: null, corner: 'br', wcs: 1 };
+  // A work offset's values from ncSender's state ("x,y,z,a" as $# gives
+  // them), in mm: grblHAL reports inches with $13=1.
+  function stateMm(str) {
+    var k = state.reportInches ? MM_PER_INCH : 1;
+    return String(str || '').split(',').map(function(v) { return parseFloat(v) * k; });
+  }
   function activeZ0() {
     var ms = state.machine || {}, w = String(ms.workspace || '').toLowerCase();
-    var z = ms[w] ? parseFloat(String(ms[w]).split(',')[2]) : NaN;
+    var z = ms[w] ? stateMm(ms[w])[2] : NaN;
     return isFinite(z) ? z : null;
   }
   function ncProbeButton() {
@@ -4742,22 +4791,39 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     ROOT.classList.toggle('mw-mini', on);
     ROOT.setAttribute('data-corner', pf.corner);
   }
+  // Watching starts from the Z0 ncSender shows now, for the active offset.
+  function probeTopBase() {
+    pf.base = activeZ0();
+    pf.baseWs = String((state.machine || {}).workspace || '');
+  }
   // From the XY0 Picker: the work offset in its menu (Active: the one in
   // use); from the Z0 macros: Work Offset to Set. ncSender's Probe dialog
   // sets the active one, so a different one is switched to first, on Switch.
   async function startProbeTop(evt) {
     var s = readSettings();
     if (!s) return;
-    disarmFromZ();
     var fromPicker = evt && evt.currentTarget && evt.currentTarget.getAttribute('data-probe-top') === 'picker';
-    pf.on = true; pf.r = null; pf.base = activeZ0();
     pf.wcs = fromPicker ? holeWcs() : s.wcs;
+    var w = WCS_NAMES[pf.wcs], status = fromPicker ? $('mw-hole-status') : $('mw-store-status');
+    if ([s.slot, s.backup, s.thick].indexOf(pf.wcs) >= 0) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = w + ' holds the Z0 macros’ stored values; pick another work offset in the menu.';
+      return;
+    }
+    try { await noJobRunning(); } catch (err) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Can’t probe the stock top now: ' + err.message + '.';
+      return;
+    }
+    pf.on = true; pf.r = null;
+    probeTopBase();
     setMini(true);
+    showMini('checking', 'Checking the active work offset…');
     clearInterval(pf.timer);
     pf.timer = setInterval(function() { if (!rootAlive() || !pf.on) { clearInterval(pf.timer); return; } watchProbeTop(); }, 700);
     var active = null;
     try { var gc = parseGcState((await ask('$G', 500)).lines); active = gc && gc.wcs; } catch (e) { /* asked again on Check Z0 */ }
-    var w = WCS_NAMES[pf.wcs];
+    if (!pf.on) return;
     if (active && active !== w) {
       $('mw-mini-switch').textContent = 'Switch to ' + w;
       showMini('switch', w + ' is picked, but ncSender has ' + active + ' active, and its Probe dialog sets Z0 in the active one. Switch to ' + w + ' first?', 'warn');
@@ -4767,52 +4833,56 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function probeTopReady() {
     var w = WCS_NAMES[pf.wcs], opened = openNcProbe();
-    pf.base = activeZ0();
-    showMini('probe', (opened ? 'In ncSender\u2019s Probe dialog, probe Z on the stock\u2019s top' : 'Press Probe in ncSender (the button on the 3D view), probe Z on the stock\u2019s top') +
-      ' with ' + w + ' active and the tool you\u2019ll cut with. This card checks Z0 when the probe finishes, or press Check Z0. Only for stock lying on the spoilboard, not a vise or fixture.');
+    probeTopBase();
+    showMini('probe', (opened ? 'In ncSender’s Probe dialog, probe Z on the stock’s top' : 'Press Probe in ncSender (the button on the 3D view), probe Z on the stock’s top') +
+      ' with ' + w + ' active and the tool you’ll cut with. This card checks Z0 when the probe finishes; already probed it? Press Check Z0. Only for stock lying on the spoilboard, not a vise or fixture.');
   }
   async function switchProbeTop() {
     var w = WCS_NAMES[pf.wcs];
     try {
+      await noJobRunning();
       var r = await sendCommand(w);
       if (!r.ok) throw new Error('the controller rejected ' + w);
       await readMachineState();
       probeTopReady();
     } catch (err) {
-      showMini('switch', 'Couldn\u2019t switch: ' + err.message + '. Select ' + w + ' in ncSender, then Switch again or Cancel.', 'bad');
+      showMini('switch', 'Couldn’t switch: ' + err.message + '. Select ' + w + ' in ncSender, then Switch again or Cancel.', 'bad');
     }
   }
+  // A changed Z0 in the same active offset is checked once; another offset
+  // becoming active (ncSender catching up after Switch) only moves the base.
   async function watchProbeTop() {
     if (pf.step !== 'probe' || pf.busy || holes.polling) return;
     holes.polling = true;
     try { await readMachineState(); } finally { holes.polling = false; }
     var ms = state.machine || {}, z = activeZ0();
     if (ms.isProbing || z == null) return;
-    if (pf.base == null) { pf.base = z; return; }
-    if (Math.abs(z - pf.base) > 0.0005) checkProbeTop();
+    if (pf.base == null || String(ms.workspace || '') !== pf.baseWs) { probeTopBase(); return; }
+    if (Math.abs(z - pf.base) > 0.002) { probeTopBase(); checkProbeTop(); }
   }
   async function checkProbeTop() {
     var s = readSettings();
     if (!s || pf.busy) return;
     var w = WCS_NAMES[pf.wcs];
     pf.busy = true;
-    showMini('checking', 'Reading ' + w + ' Z0\u2026');
+    $('mw-mini-back').disabled = true;
+    showMini('checking', 'Reading ' + w + ' Z0…');
     await numbersLock();
     try {
       var gc = parseGcState((await ask('$G', 500)).lines), active = gc && gc.wcs;
-      if (active && active !== w) throw new Error(active + ' is active, not ' + w + ': ncSender\u2019s Probe dialog set ' + active + '\u2019s Z0. Select ' + w + ' and probe again');
+      if (active && active !== w) throw new Error(active + ' is active, not ' + w + ': ncSender’s Probe dialog set ' + active + '’s Z0. Select ' + w + ' and probe again');
       var r = await readZ0StockTop(Object.assign({}, s, { wcs: pf.wcs }));
-      pf.base = r.cur;
       if (r.why) throw new Error(r.why);
       var h = shown(r.hMm) + ' ' + unitName();
-      if (r.same) { showMini('done', w + ' Z0 is ' + h + ' above the spoilboard: that\u2019s already the stored stock thickness.', 'ok'); return; }
+      if (r.same) { showMini('done', w + ' Z0 is ' + h + ' above the spoilboard: that’s already the stored stock thickness.', 'ok'); return; }
       pf.r = r;
       $('mw-mini-store').textContent = 'Store ' + h;
       showMini('confirm', w + ' Z0 is ' + h + ' above the spoilboard. Store that as the stock thickness, so SBT: Z0 on stock top gives this Z0 for any tool? Only if Z0 is on top of stock lying on the spoilboard: not a vise jaw, a fixture, a riser or a step.', 'warn');
     } catch (err) {
-      showMini('probe', 'Not stored: ' + err.message + '. Probe Z on the stock\u2019s top, then Check Z0 again.', 'bad');
+      showMini('probe', 'Not stored: ' + err.message + '. Probe Z on the stock’s top, then Check Z0 again.', 'bad');
     } finally {
       pf.busy = false; numbersBusy = false;
+      $('mw-mini-back').disabled = false;
     }
   }
   async function storeProbeTop() {
@@ -4820,64 +4890,30 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (!s || !armed || pf.busy) return;
     pf.busy = true;
     $('mw-mini-store').disabled = true;
+    $('mw-mini-back').disabled = true;
     await numbersLock();
     try {
       var r = await readZ0StockTop(Object.assign({}, s, { wcs: pf.wcs }));
       if (r.why) throw new Error(r.why);
       if (Math.abs(r.cur - armed.cur) > 0.002 || Math.abs(r.spoil - armed.spoil) > 0.002) throw new Error('Z0 or the spoilboard height changed since; check again');
-      await storeZ0Thickness(s, r);
+      if (!pf.on) return;
+      await storeZ0Thickness(s, r, pf.wcs);
       showMini('done', 'Stored ' + shown(r.hMm) + ' ' + unitName() + ' as the stock thickness in ' + WCS_NAMES[s.thick] + ' Z. SBT: Z0 on stock top now gives this Z0 for any measured tool.', 'ok');
     } catch (err) {
       showMini('probe', 'Not stored: ' + err.message + '.', 'bad');
     } finally {
       pf.busy = false; numbersBusy = false;
       $('mw-mini-store').disabled = false;
+      $('mw-mini-back').disabled = false;
     }
   }
   function endProbeTop() {
+    if (pf.busy) return;
     pf.on = false; pf.step = ''; pf.r = null;
     clearInterval(pf.timer);
     setMini(false);
     readNumbers();
     renderHoles();
-  }
-
-  async function stockFromZ0() {
-    var status = $('mw-store-status'), btn = $('mw-stock-fromz'), s = readSettings();
-    if (fromZ.busy) return;
-    if (!s) { status.setAttribute('data-state', 'bad'); status.textContent = 'Pick three different slots first.'; return; }
-    var w = WCS_NAMES[s.wcs], armed = fromZ.armed;
-    disarmFromZ();
-    fromZ.busy = true;
-    await numbersLock();
-    btn.disabled = true;
-    status.removeAttribute('data-state');
-    status.textContent = 'Reading ' + w + ' Z0\u2026';
-    try {
-      var r = await readZ0StockTop(s);
-      if (r.why) throw new Error(r.why);
-      var h = shown(r.hMm) + ' ' + unitName();
-      if (r.same) { status.setAttribute('data-state', 'ok'); status.textContent = w + ' Z0 is ' + h + ' above the spoilboard: that\u2019s already the stored thickness.'; return; }
-      if (!armed) {
-        fromZ.armed = r;
-        btn.textContent = 'Store ' + h;
-        fromZ.timer = setTimeout(function() { if (rootAlive()) disarmFromZ(); }, 8000);
-        status.setAttribute('data-state', 'warn');
-        status.textContent = w + ' Z0 is ' + h + ' above the spoilboard. Press Store ' + h + ' to make that the stock thickness, so SBT: Z0 on stock top gives this Z0 for any tool. Only if Z0 is on top of stock lying on the spoilboard: not on a vise jaw, a fixture, a riser or a step.';
-        return;
-      }
-      if (Math.abs(r.cur - armed.cur) > 0.002 || Math.abs(r.spoil - armed.spoil) > 0.002) throw new Error(w + ' Z0 or the spoilboard height changed since; press From Z0 again');
-      await storeZ0Thickness(s, r);
-      status.setAttribute('data-state', 'ok');
-      status.textContent = 'Stored ' + h + ' as the stock thickness in ' + WCS_NAMES[s.thick] + ' Z. SBT: Z0 on stock top now gives this Z0 for any measured tool.';
-    } catch (err) {
-      status.setAttribute('data-state', 'bad');
-      status.textContent = 'Couldn\u2019t use ' + w + ' Z0 as the stock top: ' + err.message + '.';
-    } finally {
-      fromZ.busy = false; numbersBusy = false;
-      btn.disabled = false;
-      if (!fromZ.armed) readNumbers();
-    }
   }
 
   // Delete every macro this wizard made (name starts "SBT:", or "ZS:", "MW:" or
@@ -5008,6 +5044,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         removed.push((old.name || old.Name));
       }
       saveSettings();
+      checkMacrosCurrent();
       status.setAttribute('data-state', 'ok');
       status.textContent = 'Saved: M98 P' + done.join(', M98 P') + '. Run them from the Macros tab.' +
         (renamed ? ' Renamed ' + renamed + ' from ZS: to SBT:, keeping their numbers, so their keyboard shortcuts still work.' : '') +
@@ -5018,6 +5055,28 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     } finally {
       btn.disabled = false;
     }
+  }
+
+  // Whether the SBT: macros in ncSender are the ones these settings make:
+  // ones from an older version (without the work offset stop, say) or
+  // older settings get a note to press Create macros.
+  var staleCheck = null;
+  function checkMacrosCurrent() {
+    clearTimeout(staleCheck);
+    staleCheck = setTimeout(async function() {
+      if (!rootAlive()) return;
+      var s = readSettings(), note = $('mw-macros-stale');
+      if (!s) return;
+      try {
+        var list = await (await fetch(BASE_URL + '/api/m98-macros')).json(), m = buildMacros(s);
+        var byName = {};
+        (list || []).forEach(function(x) { byName[x.name != null ? x.name : x.Name] = x.body != null ? x.body : x.Body; });
+        var old = Object.keys(m).filter(function(k) { return byName[m[k].name] != null && byName[m[k].name] !== m[k].body; });
+        note.hidden = !old.length;
+        note.textContent = old.length ? old.length + ' of your SBT: macros in ncSender (' + old.map(function(k) { return m[k].name.slice(MACRO_PREFIX.length); }).join(', ') +
+          ') differ from what these settings make: from an older version (they may lack the newer safety stops) or other settings. Press Create macros to update them.' : '';
+      } catch (e) { /* no macro list: nothing to say */ }
+    }, 600);
   }
 
   // The diagram's numbers: the stored spoilboard height, stock thickness
@@ -5047,10 +5106,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function showNumbers(hash) {
     var s = readSettings();
     if (!s || !hash) return;
-    var z = function(p) { var v = hash[WCS_NAMES[p]]; return v ? v[2] : null; };
-    var spoil = z(s.slot), thick = z(s.thick), saved = z(s.backup), cur = z(s.wcs);
+    // $# follows $13: inches when it's 1.
+    var k = state.reportInches ? MM_PER_INCH : 1;
+    var z = function(p) { var v = hash[WCS_NAMES[p]]; return v ? v[2] * k : null; };
+    var spoil = z(s.slot), thick = z(s.thick), saved = z(s.backup), cur = z(s.wcs), tv = hash[WCS_NAMES[s.thick]];
     state.spoilZ = spoil || null;
     state.storedThickMm = thick || null;
+    state.markMm = tv ? tv[0] * k : 0;
     var mm = function(v) { return fmt(v) + ' mm'; };
     var set = function(key, text) { ROOT.querySelectorAll('[data-val="' + key + '"]').forEach(function(el) { el.textContent = text; }); };
     set('spoil', spoil ? ' \u2014 height ' + mm(spoil) : spoil === 0 ? ' \u2014 height not recorded yet' : '');
@@ -5168,7 +5230,6 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }).map(function(z) { return { block: true, name: 'Blocked', minX: z.minX, maxX: z.maxX, minY: z.minY, maxY: z.maxY }; }) : [];
     $('mw-stock-on').checked = !!saved.stockOn;
     if (saved.stockZMode === 'top') $('mw-stock-zmode').value = 'top';
-    setThickAuto(saved.stockTAuto === true, true);
     ['W', 'L', 'T'].forEach(function(k) {
       var v = parseFloat(saved['stock' + k]);
       if (isFinite(v) && v > 0) $('mw-stock-' + k.toLowerCase()).value = +(v * conv).toFixed(4);
@@ -5207,11 +5268,11 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (saved.slot) $('mw-slot').value = saved.slot;
     if (saved.backup) $('mw-backup').value = saved.backup;
     if (saved.thick) $('mw-thick').value = saved.thick;
+    $('mw-learn').value = saved.learn === false ? '0' : '1';
     if (Array.isArray(saved.extras)) EXTRAS.forEach(function(k) { $('mw-x-' + k).checked = saved.extras.indexOf(k) >= 0; });
     wireCut();
     wireUnitFields();
     $('mw-store-stock').addEventListener('click', storeThickness);
-    $('mw-stock-fromz').addEventListener('click', stockFromZ0);
     ROOT.querySelectorAll('[data-probe-top]').forEach(function(b) { b.addEventListener('click', startProbeTop); });
     $('mw-mini-check').addEventListener('click', checkProbeTop);
     $('mw-mini-open').addEventListener('click', function() {
@@ -5226,7 +5287,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       ROOT.setAttribute('data-corner', pf.corner);
     });
     EXTRAS.forEach(function(k) { $('mw-x-' + k).addEventListener('change', render); });
-    ['mw-block', 'mw-feed', 'mw-travel', 'mw-retract', 'mw-stock', 'mw-wcs', 'mw-slot', 'mw-backup', 'mw-thick'].forEach(function(id) {
+    ['mw-block', 'mw-feed', 'mw-travel', 'mw-retract', 'mw-stock', 'mw-wcs', 'mw-slot', 'mw-backup', 'mw-thick', 'mw-learn'].forEach(function(id) {
       $(id).addEventListener('input', render);
       $(id).addEventListener('change', render);
     });
@@ -5579,12 +5640,21 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-stock-t').readOnly = !!on;
     if (on && !loading) autoThick(); else if (!on && holes.thickFrom === 'z0') holes.thickFrom = 'typed';
   }
+  // Follows the work offset picked in the menu (the one Set Z0 sets), and
+  // not Set Z0's own point height, a stock placed on a point, or a Z0 with
+  // no tool length offset in effect: the stored thickness then.
   function autoThick() {
-    if (!holes.thickAuto) return;
-    var ms = state.machine || {}, w = String(ms.workspace || '').toLowerCase();
-    var z0 = ms[w] ? parseFloat(String(ms[w]).split(',')[2]) : NaN;
-    var r = isFinite(z0) && state.spoilZ ? z0StockTop({ cur: z0, spoil: state.spoilZ }) : {};
+    var note = $('mw-stock-tnote');
+    if (!holes.thickAuto) { note.hidden = true; return; }
+    var ms = state.machine || {}, w = WCS_NAMES[holeWcs()] || '';
+    var z0 = ms[w.toLowerCase()] ? stateMm(ms[w.toLowerCase()])[2] : NaN;
+    var onPoint = holes.stockBy === 'zero' && holes.stockAnchor && holes.stockAnchor.zMm != null;
+    var tlo = state.tloMm == null || Math.abs(state.tloMm) > 0.0005;
+    var r = isFinite(z0) && state.spoilZ && !onPoint && tlo ? z0StockTop({ cur: z0, spoil: state.spoilZ, mark: state.markMm }) : {};
     var mm = r.hMm != null ? r.hMm : state.storedThickMm, from = r.hMm != null ? 'z0' : 'measured';
+    note.hidden = false;
+    note.textContent = from === 'z0' ? 'T is ' + w + ' Z0\u2019s height above the spoilboard. Only right for stock lying on the spoilboard, not a vise or fixture.'
+      : 'T is the stored thickness: ' + (w ? w + ' Z0' : 'Z0') + ' isn\u2019t a stock top here' + (!tlo ? ' (no tool length offset)' : onPoint ? ' (the stock is on a point)' : '') + '.';
     if (!(mm > 0)) return;
     holes.thickFrom = from;
     var el = $('mw-stock-t'), v = +(mm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
@@ -5593,6 +5663,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     el.classList.remove('mw-invalid');
     saveSettings();
   }
+  // T following Z0 that isn't yet the stored thickness: a vise or fixture
+  // height would pass every Z0 check, so cutting through needs Store for
+  // Macros (its checks, and a press that says it's this stock) first.
+  function thickFromZ0Unconfirmed(tMm) {
+    return holes.thickFrom === 'z0' && !(state.storedThickMm > 0 && Math.abs(state.storedThickMm - tMm) <= 0.002);
+  }
+  var Z0_T_CONFIRM = 'T follows Z0 (Follow Z0): press Store for Macros beside T to confirm it\u2019s this stock\u2019s thickness, lying on the spoilboard (not a vise or fixture), or type T';
   // Make Active beside the XY0 Picker's menu: shown when the picked work
   // offset isn't the active one. ncSender's state doesn't follow
   // G59.1-G59.3, so one just made active is remembered until it changes.
@@ -5641,12 +5718,17 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (!s || !(mm > 0)) return;
     btn.disabled = true;
     try {
-      await readMachineState();
-      var ms = state.machine || {};
-      if (!ms.connected) throw new Error('the controller isn\u2019t connected');
-      if (String(ms.status || '').indexOf('Idle') !== 0) throw new Error('the machine isn\u2019t idle');
-      var gc = parseGcState((await ask('$G', 500)).lines);
-      await sendHoleCommands(['G21', storeThicknessCommand(s.thick, mm)], gc ? gc.imperial : null);
+      await noJobRunning();
+      if (holes.thickFrom === 'z0') {
+        // T from Z0: the same checks as Probe Stock Top's Store.
+        var wP = holeWcs(), r = await readZ0StockTop(Object.assign({}, s, { wcs: wP }));
+        if (r.why) throw new Error(WCS_NAMES[wP] + ' Z0: ' + r.why);
+        await storeZ0Thickness(s, r, wP);
+        mm = r.hMm;
+      } else {
+        var gc = parseGcState((await ask('$G', 500)).lines);
+        await sendHoleCommands(['G21', storeThicknessCommand(s.thick, mm, s.wcs)], gc ? gc.imperial : null);
+      }
       state.storedThickMm = mm;
       if (!state.stockBoxTyped) $('mw-stock').value = $('mw-stock-t').value;
       status.setAttribute('data-state', 'ok');
@@ -6358,8 +6440,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // G54-G59 are in ncSender's state; G59.1-G59.3 show dashes when picked.
   function showPosition(fromNc) {
     if (fromNc) state.posAt = Date.now();
-    var ms = state.machine || {}, n = function(v) { return String(v || '').split(',').map(parseFloat); };
-    var m = n(ms.MPos), wco = n(ms.WCO), w = m.map(function(v, i) { return v - (wco[i] || 0); });
+    var ms = state.machine || {}, n = stateMm;
+    var m = n(ms.MPos), wco = n(ms.WCO), w = m.map(function(v, i) { return v - wco[i]; });
     var activeName = String(ms.workspace || '').toUpperCase(), name = activeName;
     var onPicker = !$('mw-pick-card').closest('[hidden]') && $('mw-hole-wcs').value;
     if (onPicker) {
@@ -6369,12 +6451,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         w = act.length >= 3 && pick.length >= 3 ? w.map(function(v, i) { return v + act[i] - pick[i]; }) : [NaN, NaN, NaN];
       }
     }
-    var ok = ms.connected && m.length >= 3 && m.slice(0, 3).every(isFinite);
+    var ok = ms.connected && m.length >= 3 && m.slice(0, 3).every(isFinite) && ms.WCO != null;
     var pos = $('mw-pos');
     if (ok) pos.removeAttribute('data-stale'); else pos.setAttribute('data-stale', '');
     $('mw-pos-wh').textContent = name || 'Work';
     $('mw-pos-wh').title = name && name !== activeName ? name + ' (picked in the XY0 Picker; ' + (activeName || 'another') + ' is active in ncSender)' : '';
     $('mw-pos-wh').classList.toggle('mw-pos-other', !!(name && name !== activeName));
+    $('mw-pos-note').hidden = !(name && activeName && name !== activeName);
+    $('mw-pos-note').textContent = name + ' isn\u2019t active (' + activeName + ' is)';
     ['x', 'y', 'z'].forEach(function(a, i) {
       $('mw-pos-w' + a).textContent = ok && isFinite(w[i]) ? shown(w[i]) : '\u2013';
       $('mw-pos-m' + a).textContent = ok ? shown(m[i]) : '\u2013';
@@ -6398,7 +6482,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     // When ncSender sends nothing for a while, read it here.
     var posTimer = setInterval(async function() {
       if (!rootAlive()) { clearInterval(posTimer); return; }
-      if (document.hidden || holes.polling || Date.now() - (state.posAt || 0) < 1500) return;
+      if (document.hidden || holes.polling || Date.now() - (state.posAt || 0) < 1500 || !(state.machine || {}).connected) return;
       holes.polling = true;
       try { await readMachineState(); } finally { holes.polling = false; }
       showPosition(false);
@@ -7281,11 +7365,11 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     // Already that zero: the work offset (G54-G59, as ncSender's state
     // has them) is within 0.005 mm of it.
     var wName = (WCS_NAMES[holeWcs()] || '').toLowerCase(), ms0 = state.machine || {};
-    var curXY = xyOf(ms0[wName]), curZ = ms0[wName] ? parseFloat(String(ms0[wName]).split(',')[2]) : NaN;
+    var cv = ms0[wName] ? stateMm(ms0[wName]) : [], curXY = isFinite(cv[0]) && isFinite(cv[1]) ? { x: cv[0], y: cv[1] } : null, curZ = cv[2];
     var xyDone = !!(aim && !problem && curXY && Math.abs(curXY.x - tg.x) < 0.005 && Math.abs(curXY.y - tg.y) < 0.005);
     $('mw-hole-set').classList.toggle('mw-already', xyDone);
     showMakeActive();
-    $('mw-hole-set').disabled = !aim || !!problem || holes.busy || xyDone;
+    $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto-text').textContent = aim ? 'Go to ' + targetShort(aim) : 'Go to Selected';
     $('mw-hole-set-at').textContent = aim ? ' \u00b7 ' + targetShort(aim) : '';
@@ -7299,7 +7383,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-hole-z').classList.toggle('mw-bad-text', !!zbad);
     var zDone = !!(zt && !zbad && state.spoilZ && isFinite(curZ) && Math.abs(curZ - (state.spoilZ + zt.hMm)) < 0.005);
     $('mw-hole-setz').classList.toggle('mw-already', zDone);
-    $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy || zDone;
+    $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy;
     if (!zt && hold.btn && hold.btn.id === 'mw-hole-setz') stopHold(false);
     var centerHeld = hold.btn && hold.btn.id === 'mw-stock-gocenter';
     if (centerHeld ? $('mw-stock-gocenter').disabled : !aim || problem || holes.busy) disarmGoto();
@@ -7599,7 +7683,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       if (top && !(t > 0)) return null;
       var under = base != null ? on : 'the spoilboard';
       var from = holes.thickFrom === 'z0' ? 'from Z0' : holes.thickFrom === 'measured' ? 'measured' : holes.thickFrom === 'typed' ? 'typed' : 'from last time';
-      return { hMm: (base || 0) + (top ? t : 0), what: top ? 'the stock top (' + shown(t) + ' ' + unitName() + ' ' + from + ', on ' + under + ')' : base != null ? 'the stock bottom (on ' + on + ')' : 'the spoilboard' };
+      return { hMm: (base || 0) + (top ? t : 0), stockT: top && base == null ? t : null, what: top ? 'the stock top (' + shown(t) + ' ' + unitName() + ' ' + from + ', on ' + under + ')' : base != null ? 'the stock bottom (on ' + on + ')' : 'the spoilboard' };
     }
     return base != null ? { hMm: base, what: 'the surface of ' + on } : null;
   }
@@ -7631,7 +7715,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         if (!tloInEffect(gc, hash)) throw new Error('no tool length offset is active, so Z0 wouldn\u2019t follow the tool. Measure the tool first');
         var wcsP = await resolveHoleWcs(gc);
         if ([s.slot, s.backup, s.thick].indexOf(wcsP) >= 0) throw new Error(WCS_NAMES[wcsP] + ' holds the Z0 macros\u2019 stored values; pick another work offset in the menu');
-        await sendHoleCommands(zAboveSpoilLines(s, wcsP, z.hMm), gc.imperial);
+        await sendHoleCommands(zAboveSpoilLines(s, wcsP, z.hMm, z.stockT), gc.imperial);
         status.setAttribute('data-state', 'ok');
         status.textContent = WCS_NAMES[wcsP] + ' Z0 is now on ' + z.what + ': the spoilboard + ' + shown(z.hMm) + ' ' + unitName() + '.' +
           (wcsP === s.wcs ? ' A probed Z0 you had is kept for SBT: Z0 back to saved.' : ' (Only ' + WCS_NAMES[s.wcs] + ', the Z0 macros\u2019 offset, keeps its previous Z0 for back to saved.)');
@@ -7789,6 +7873,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (o.plateOn) {
       if (!o.plate) out.push('Stock on top: place the stock in the XY0 Picker\u2019s Stock mode (Against Pins, or Corner on X0 Y0) and give its width and length');
       if (!(o.plateThickMm > 0)) out.push('Stock on top: give the stock a thickness (T) in the XY0 Picker, so nothing cuts deeper than the stock');
+      else if (thickFromZ0Unconfirmed(o.plateThickMm)) out.push('Stock on top: ' + Z0_T_CONFIRM);
       // Z0 must be on the plate's top, checked against the recorded spoilboard height.
       else if (o.zWcs != null && state.spoilZ) {
         // Z0 is checked against the recorded spoilboard height: it must be
@@ -8514,8 +8599,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         '. The holes are cut down from Z0, so check it\u2019s on this stock\u2019s top: touch the bit to the top and ncSender\u2019s Z should read 0. If it does, something ' + shown(above - thick) + ' ' + unitName() +
         ' thick is under the stock, or the recorded spoilboard height is out of date (record it again in Z0 macros before using SBT: Z0 on spoilboard).';
     }
-    if (thick > 0 && holes.thickFrom === 'z0' && !res.warn && state.spoilZ) res.warn = 'T follows Z0: ' + shown(thick) + ' ' + unitName() + ', ' + o.wcsName + ' Z0\u2019s height above the spoilboard. That\u2019s only the stock\u2019s thickness with the stock lying on the spoilboard: on a vise, a fixture or a riser, the through holes would go that deep. Turn Follow Z0 off and type T then.';
-    else if (thick > 0 && !(o.zWcs != null && state.spoilZ)) res.warn = 'Z0 can’t be checked: no spoilboard height is recorded yet (Z0 macros). Make sure ' + o.wcsName + ' Z0 is on the stock’s top: on the spoilboard, the holes would go a stock’s thickness too deep.';
+    if (thick > 0 && !blind && thickFromZ0Unconfirmed(thick)) probs.push(Z0_T_CONFIRM + ': through holes go T deep plus Break Through');
+    if (thick > 0 && !(o.zWcs != null && state.spoilZ)) res.warn = 'Z0 can’t be checked: no spoilboard height is recorded yet (Z0 macros). Make sure ' + o.wcsName + ' Z0 is on the stock’s top: on the spoilboard, the holes would go a stock’s thickness too deep.';
     // Blank or 0: no counterbore, and its depth doesn't matter.
     var hasCb = !pins && String($('mw-sh-cb').value).trim() !== '' && cb !== 0;
     res.hasCb = hasCb;
@@ -9266,7 +9351,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Two ways to start.</strong> <strong>No holes yet:</strong> home the machine, surface the board, describe the grid you want in Setup (or load a preset), cut a fit test in scrap to choose the hole size (X0 Y0 and Z0 on the scrap), put Z0 on the board&rsquo;s top, then Cut Board &rsaquo; Dog holes &rsaquo; Generate; the board and the map come from the same numbers, so they agree. <strong>Holes already there:</strong> type the grid&rsquo;s size and spacing in Setup, pick a hole, jog over its real center and press <strong>Grab First Hole Center</strong> (it names the hole you picked, e.g. Grab B3 Center); then Measure Holes on the three it suggests and <strong>Apply to Setup</strong>, suppress missing holes with Edit Holes, and check with Go to Selected over a far hole. Save Setup as a profile either way.',
       '<strong>Your spoilboard&rsquo;s holes are a precision fixture; this turns them into work zero.</strong> Jog roughly near a hole, tap <strong>Pick Nearest Hole</strong>, hold <strong>Set</strong>, and X0 Y0 is exactly on its center or edge: no edge finder, no XY probe, nothing typed, and the same zero next time. Or switch to <strong>Stock</strong>, tap the holes your pins are in, and zero on the stock pushed against them: its corner, an edge or its center, worked out from the pins. <strong>Measure Holes</strong> fits the grid to your real board, with a 3D probe or a pin centered by eye. Missing holes, T-tracks, several grids, custom pins and a profile per board each have a Help page of their own.',
       '<strong>For example:</strong> push the stock against pins in B4, B6 (its front edge) and C3 (its left edge). In <strong>Stock</strong>, tap those three holes: the stock\u2019s front left corner is a pin radius right of column 3 and behind row B, and the line beside Set says so with the numbers. Hold <strong>Set</strong>: no edge finder, no XY probe, nothing typed. Pick its center (or any other dot) and it also needs the stock&rsquo;s size: type it, or jog over the far corner and press <strong>Far Corner Here</strong>.',
-      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sets the work offset there, without moving (G10 L2). The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. Picking one doesn&rsquo;t switch ncSender to it; when it isn&rsquo;t the active one, <strong>Make G55 Active</strong> (say) appears under the menu and does, while the machine is idle. The machine has to be homed and idle, since the holes are machine positions.',
+      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sets the work offset there, without moving (G10 L2). The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. Picking one doesn&rsquo;t switch ncSender to it; when it isn&rsquo;t the active one, <strong>Make G55 Active</strong> (say) appears under the menu and does, while the machine is idle. When the work offset already has the zero Set would put down, the button reads <strong>already set</strong>. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       '<p><strong>Measure Holes</strong> (Setup unlocked) fits Setup&rsquo;s spacing, insets and Turn to your real holes. Measure two or more far apart, then <strong>Apply to Setup</strong>.</p>' +
         '<p><strong>Measure with</strong> picks how; only that way&rsquo;s buttons show, and it opens on by eye, so a pin is never sent probing.</p><ul>' +
@@ -9300,7 +9385,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         '<li><strong>Against Pins:</strong> push it against pins in dog holes, two along one edge and one along the other (an L), and tap those holes. Each edge is a pin radius off its pins&rsquo; row or column (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Two pins on a diagonal can hold it either way: it asks. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
         '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is.</li>' +
         '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Here</strong>. The pinned corner needs no size; every other point does, and the line beside Set says so.</li>' +
-        '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> beside T if you probe Z0 on the stock&rsquo;s top: T follows Z0&rsquo;s height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness with Z0 on the spoilboard. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, T would be that height, so turn Follow Z0 off and type T. Typing T doesn&rsquo;t change the thickness the Z0 macros use: when they differ, <strong>Store for Macros</strong> appears beside it and stores T for SBT: Z0 on stock top.</li></ul>' +
+        '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> beside T if you probe Z0 on the stock&rsquo;s top: T follows the Z0 of the work offset picked in the menu, as its height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness otherwise; the line under T says which. It&rsquo;s off each time Spoilboard Toolbox opens, and programs that cut through the stock wait for <strong>Store for Macros</strong> to confirm the thickness. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, T would be that height, so turn Follow Z0 off and type T. Typing T doesn&rsquo;t change the thickness the Z0 macros use: when they differ, <strong>Store for Macros</strong> appears beside it and stores T for SBT: Z0 on stock top.</li></ul>' +
         '<p>It stays where it is when you close and reopen the plugin, and Stock Holes and Cut Board&rsquo;s Into the stock on top option use it. The keyboard macros always use a hole.</p>',
       '<strong>Zoom</strong> for a big bed, with <strong>Map view</strong> under the map: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
@@ -9367,10 +9452,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       'Record the spoilboard height once with a probe block and a measured tool; then the <strong>SBT:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
       '<strong>Run checks</strong> confirms the controller supports the parameters and expressions the macros use. Run it once, and again after a firmware change.',
       'The values are kept in spare work offsets (G59.1&ndash;G59.3 Z by default); pick ones you don&rsquo;t use. Re-record the spoilboard height after surfacing it.',
-      'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, a value it needs isn&rsquo;t stored, or another work offset is active (the macros are made for one, Work Offset to Set); ncSender&rsquo;s terminal shows <code>error:72</code>.',
+      'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, a value it needs isn&rsquo;t stored, or another work offset is active (the macros are made for one, Work Offset to Set: select it, or change Work Offset to Set and press Create macros); ncSender&rsquo;s terminal shows <code>error:72</code>.',
       '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.',
       HELP_KEYS, HELP_NEEDS, HELP_UNITS,
-      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10): run <strong>SBT: Z0 on stock top</strong> right after, with the same tool. When the current Z0 isn&rsquo;t one the macros put down and is more than 1 mm (0.04&quot;) above the spoilboard, it takes that Z0 as the stock&rsquo;s top: it stores its height above the spoilboard as the new thickness and leaves Z0 where it is, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before. With this open, <strong>From Z0</strong> (beside Store) does the same but shows the height first and stores it on a second press. Or press <strong>Probe Stock Top</strong> (beside From Z0, and under Set Z0 in the XY0 Picker&rsquo;s Stock mode, for the work offset picked there): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender&rsquo;s Probe dialog; probe Z on the stock&rsquo;s top, and when Z0 changes the card shows its height above the spoilboard and stores it as the thickness on <strong>Store</strong>. If the Probe dialog doesn&rsquo;t open, press ncSender&rsquo;s Probe button yourself, then <strong>Check Z0</strong>.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from). A thickness typed with Store or measured stays until Z0 on stock top is run with a Z0 set some other way.<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Pressing Z0 on stock top then keeps your Z0 but stores that height as the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. Don&rsquo;t put Z0 on stock top on a key you might press by habit after zeroing on a vise.<br>It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the tool already measured.' ] }
+      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10) doesn&rsquo;t tell the macros the new thickness. Press <strong>Probe Stock Top</strong> (here, or under Set Z0 in the XY0 Picker&rsquo;s Stock mode for the work offset picked there): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender&rsquo;s Probe dialog; probe Z on the stock&rsquo;s top, and the card shows that Z0&rsquo;s height above the spoilboard and stores it as the thickness on <strong>Store</strong>. Already probed? Press <strong>Check Z0</strong> on the card. If the Probe dialog doesn&rsquo;t open, press ncSender&rsquo;s Probe button yourself.<br><strong>Or let Z0 on stock top learn it:</strong> run <strong>SBT: Z0 on stock top</strong> right after probing, with the same tool. When Z0 was set some other way since the thickness was last stored, and is more than 1 mm (0.04&quot;) above the spoilboard, it keeps that Z0 and stores its height as the new thickness, so every tool after gets the same Z0; otherwise it uses the stored thickness. A Z0 left from an earlier stock never replaces a thickness measured or stored since. <strong>Stock Top Learns New Stock</strong> (Settings) turns learning off; press Create macros after changing it.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from).<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Storing it, or Z0 on stock top learning it, makes that height the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. If you zero on a vise, turn learning off, or don&rsquo;t put Z0 on stock top on a key you might press by habit.<br>The tool length offset is checked when you store or run it, not when Z0 was probed: probe with the tool already measured.' ] }
   };
   var HELP_DOCS = 'https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox#readme';
   // The help's index: each tab's notes (by their place in its notes list)
@@ -9456,7 +9541,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         { id: 'checks', icon: 'gear', title: 'Run checks and Create', short: 'Check the controller, then write the macros.', notes: [2, 5] },
         { id: 'keys', icon: 'keys', title: 'Put them on keys', short: 'One keypress at the machine for each.', notes: [6] },
         { id: 'stops', icon: 'shield', title: 'Safety stops', short: 'They stop rather than set a wrong Z0.', notes: [4] },
-        { id: 'elsewhere', icon: 'refresh', title: 'A Z0 probed elsewhere', short: 'From Z0 or Z0 on stock top learn a new stock; not after a vise.', notes: [9] },
+        { id: 'elsewhere', icon: 'refresh', title: 'A Z0 probed elsewhere', short: 'Probe Stock Top, or let Z0 on stock top learn it; not after a vise.', notes: [9] },
         { id: 'slots', icon: 'layers', title: 'Where values are kept', short: 'Spare work offsets hold the heights.', notes: [3] },
         { id: 'units', icon: 'units', title: 'Typing units', short: 'mm or inches, fractions too.', notes: [8] } ] } ] }
   };
