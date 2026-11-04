@@ -258,6 +258,15 @@ Re-record after surfacing the spoilboard.
 - **Zeroing from the bottom** (set the job's Z origin to the bottom of the stock in your CAM): run
   **Z0 on spoilboard**. No stock probing at all, and through-cuts come out exact.
 
+**Probed the stock some other way?** When the Z0 macros' work offset gets a Z0 they didn't put down
+(ncSender's Probe dialog, its Z0 button, a typed G10), Spoilboard Toolbox asks where it is, the next
+time it's open (or right away while it is): **Stock Top** stores its height above the spoilboard as the
+stock thickness, so **Z0 on stock top** gives that same Z0 for every tool after; **Spoilboard** stores it
+as the spoilboard height (after surfacing, say; it asks twice when that's more than 3 mm from the
+recorded one); **Neither** changes nothing and doesn't ask about that Z0 again. It only asks with the
+spoilboard height recorded, the machine homed and idle, and a tool length offset in effect. Turn it off
+with **Ask When Z0 Changes** in the Z0 macros' Settings.
+
 So you probe once per new stock, not once per tool.
 
 Every length and feed box takes mm or inches, whichever you have to hand, and converts it to the
@@ -700,7 +709,7 @@ With a tool length offset active, grblHAL works out work Z as
 work Z = machine Z - work offset Z - tool length offset
 ```
 
-The record macro selects the work offset, probes, and stores
+With the work offset active (it stops otherwise), the record macro probes and stores
 
 ```
 G10 L2 P9 Z[#5063 + #5223 - <block> - #5403]
@@ -739,11 +748,14 @@ anything, when:
 
 - the machine isn't homed (the stored heights are machine positions, which only mean something
   once homed),
-- no tool length offset is active, or
-- the spoilboard height (or, for the stock top, the thickness) hasn't been stored yet.
+- no tool length offset is active,
+- the spoilboard height (or, for the stock top, the thickness) hasn't been stored yet, or
+- another work offset is active (`#5220`, 1 for G54): the macros are made for one, **Work Offset to
+  Set**, and would otherwise set Z0 in an offset the job doesn't use. **Back to saved** and the
+  Save / restore X/Y extras stop then too. Nothing switches work offsets for you.
 
 The midpoint moves stop too when the machine isn't homed, since their Safe Z lift is a machine
-position. **Back to saved** needs none of these.
+position. **Back to saved** needs none of these, except the active work offset.
 
 The three macros that set Z0 (spoilboard, stock top, back to saved) also stop while a **G92 Z offset**
 is active: grblHAL adds it on top of the work offset, so Z0 would land that far above or below where
@@ -756,7 +768,7 @@ grblHAL macros have no if/else here, so a stop is a deliberate division by zero,
 second line of defense, every line that sets an offset or moves is divided by the same checks too
 (homed, tool length offset, stored values, no G92 offset, and for the nearest-hole macros the keepout
 and travel checks), so even if a stop line were skipped, nothing is set or moved. The wizard's check
-confirms your grblHAL reads `#<_homed_state>` and `#<_tool_offset>`.
+confirms your grblHAL reads `#<_homed_state>`, `#<_tool_offset>` and `#5220`.
 
 ### When to re-record
 

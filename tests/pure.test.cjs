@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, z0Question, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, z0Question, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -44,6 +44,8 @@ function evalExpr(expr, params) {
 // #n=[...] lines. Like ncSender, it stops at the first rejected line and
 // notes it in params._error.
 function run(body, params) {
+  // G54 is active unless a test says otherwise, as after a controller starts.
+  if (params[5220] == null) params[5220] = 1;
   for (const line of code(body)) {
     try { step(line, params); } catch (e) {
       if (e.unknown) throw e;
@@ -55,6 +57,7 @@ function run(body, params) {
 // ncSender before 2.0.161: a rejected line is skipped and the rest still
 // sent. Returns the params and how many lines were rejected.
 function runAll(body, params) {
+  if (params[5220] == null) params[5220] = 1;
   let rejected = 0;
   for (const line of code(body)) {
     try { step(line, params); } catch (e) { if (e.unknown) throw e; rejected++; }
@@ -117,11 +120,11 @@ test('record macro probes, then stores trigger + offset - block - TLO in the slo
   assert.deepEqual(code(buildMacros(base).record.body), [
     '#1=[1 / #<_homed_state>]',
     '#1=[1 / [#<_tool_offset> OR [ABS[#5403] GT 0.0005]]]',
+    '#1=[1 / [#5220 EQ 1]]',
     'G21',
-    'G54',
     'G91 G38.2 Z-30.000 F100.000',
     'G90',
-    'G10 L2 P9 Z[[#5063 + #5223 - 15.000 - #5403] / [#<_homed_state> AND [#<_tool_offset> OR [ABS[#5403] GT 0.0005]]]]',
+    'G10 L2 P9 Z[[#5063 + #5223 - 15.000 - #5403] / [#<_homed_state> AND [#<_tool_offset> OR [ABS[#5403] GT 0.0005]] AND [#5220 EQ 1]]]',
     'G91 G0 Z5.000',
     'G90'
   ]);
@@ -153,7 +156,7 @@ test('macros: the core five always, extras only when ticked', () => {
 
 test('measure stores stock top minus the spoilboard in the thickness slot', () => {
   const m = buildMacros(base);
-  assert.match(m.measure.body, /^G10 L2 P7 Z\[\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\] \/ \[#<_homed_state> AND \[#<_tool_offset> OR \[ABS\[#5403\] GT 0\.0005\]\] AND \[#5383 NE 0\]\]\]$/m);
+  assert.match(m.measure.body, /^G10 L2 P7 Z\[\[#5063 \+ #5223 - 15\.000 - #5403 - #5383\] \/ \[#<_homed_state> AND \[#<_tool_offset> OR \[ABS\[#5403\] GT 0\.0005\]\] AND \[#5383 NE 0\] AND \[#5220 EQ 1\]\]\]$/m);
   // G54 Z -77.5; tool with TLO 12; block (15) on 18 mm stock on a spoilboard at -95
   // (zero-length tool): the tip touches the block at machine -95 + 18 + 15 + 12 = -50,
   // which is -50 - (-77.5) = 27.5 in G54.
@@ -210,7 +213,7 @@ test('midpoint moves and center origin use the current work position', () => {
 
 test('save and restore X/Y: kept in the saved-Z0 slot, Z untouched, nothing saved = no change', () => {
   const m = buildMacros(Object.assign({}, base, { extras: { fixture: true } }));
-  assert.match(m.saveXY.body, /^G10 L2 P8 X\[#5221\] Y\[#5222\]$/m);
+  assert.match(m.saveXY.body, /^G10 L2 P8 X\[#5221 \/ \[#5220 EQ 1\]\] Y\[#5222 \/ \[#5220 EQ 1\]\]$/m);
   const p = { 5221: 100, 5222: 50, 5223: -80, 5361: 0, 5362: 0, 5363: -77.5 };
   run(m.restoreXY.body, p);
   assert.deepEqual([p[5221], p[5222]], [100, 50], 'nothing saved yet');
@@ -233,12 +236,13 @@ test('restore with nothing saved leaves Z0 alone', () => {
 
 test('other work offset and slots', () => {
   const m = buildMacros(Object.assign({}, base, { wcs: 2, slot: 8, backup: 7, thick: 9 }));
-  assert.match(m.record.body, /^G55$/m);
+  assert.match(m.record.body, /^#1=\[1 \/ \[#5220 EQ 2\]\] \(SBT stop: G55 isn't active; select it first\)$/m);
+  assert.ok(!/^G5[4-9]/m.test(m.record.body), 'record doesn\'t switch work offsets');
   assert.match(m.record.body, /G10 L2 P8 Z\[\[#5063 \+ #5243 - 15\.000 - #5403\]/);
-  assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND \[#<_tool_offset> OR \[ABS\[#5403\] GT 0\.0005\]\] AND \[#5363 NE 0\] AND \[ABS\[#5213\] LT 0\.0005\]\]\]$/m);
-  assert.match(m.set.body, /^G10 L2 P7 Z\[#5343 \+ \[#5243 - #5343\]/m);
+  assert.match(m.set.body, /^G10 L2 P2 Z\[#5363 \/ \[#<_homed_state> AND \[#<_tool_offset> OR \[ABS\[#5403\] GT 0\.0005\]\] AND \[#5363 NE 0\] AND \[ABS\[#5213\] LT 0\.0005\] AND \[#5220 EQ 2\]\]\]$/m);
+  assert.match(m.set.body, /^G10 L2 P7 Z\[\[#5343 \+ \[#5243 - #5343\]/m);
   assert.equal(m.set.name, 'SBT: G55 Z0 on spoilboard');
-  const p = Object.assign({ 5363: -90, 5243: -70, 5343: 0 }, ready);
+  const p = Object.assign({ 5363: -90, 5243: -70, 5343: 0, 5220: 2 }, ready);
   run(m.set.body, p);
   assert.deepEqual([p[5243], p[5343]], [-90, -70]);
 });
@@ -310,13 +314,28 @@ test('guards: nothing changes unless homed, an offset is active and the values e
   assert.ok(m.stock.body.includes(p._error + ' (SBT stop: store a stock thickness first)'));
   assert.deepEqual([p[5223], p[5363]], [-77.5, 0]);
   // Back to saved needs none of it, only no G92 Z.
-  assert.deepEqual(m.restore.body.match(/SBT stop: [^)]*/g), ['SBT stop: a G92 Z offset is active; G92.1 clears it']);
+  assert.deepEqual(m.restore.body.match(/SBT stop: [^)]*/g), ['SBT stop: a G92 Z offset is active; G92.1 clears it', 'SBT stop: G54 isn\'t active; select it first']);
   // A G92 Z offset stops the three that set Z0, changing nothing.
   for (const k of ['set', 'stock', 'restore']) {
     const q = run(m[k].body, Object.assign({}, start, ready, { 5213: 3, 5363: -50 }));
     assert.ok(m[k].body.includes(q._error + ' (SBT stop: a G92 Z offset is active; G92.1 clears it)'), k);
     assert.deepEqual([q[5223], q[5363]], [-77.5, -50], k + ' changes nothing with G92 Z');
   }
+});
+
+test('another work offset active: every macro that uses G54 stops and changes nothing', () => {
+  const m = buildMacros(Object.assign({}, base, { extras: allExtras }));
+  const start = Object.assign({ 5223: -77.5, 5383: -95, 5343: 18, 5363: -60, 5361: 10, 5362: 20, 5221: 100, 5222: 50, 5403: 12, 5063: 27.5, 5220: 2 }, ready);
+  for (const k of ['record', 'measure', 'set', 'stock', 'restore', 'saveXY', 'restoreXY']) {
+    const p = run(m[k].body, Object.assign({}, start));
+    assert.ok(m[k].body.includes(p._error + ' (SBT stop: G54 isn\'t active; select it first)'), k + ' stops');
+    for (const n of [5223, 5383, 5343, 5363, 5361, 5362, 5221, 5222]) assert.equal(p[n], start[n], k + ' leaves #' + n);
+    // Even if the stop line were skipped, the stored value is rejected.
+    const q = runAll(m[k].body, Object.assign({}, start));
+    for (const n of [5223, 5383, 5343, 5363, 5361, 5362, 5221, 5222]) assert.equal(q[n], start[n], k + ' (stop skipped) leaves #' + n);
+  }
+  // Midpoints and Set XY0 to Midpoint use whichever offset is active.
+  for (const k of ['midX', 'midY', 'midXY', 'center']) assert.ok(!m[k].body.includes('#5220'), k);
 });
 
 test('guards: the stored value itself is guarded too, if a stop line were skipped', () => {
@@ -1998,4 +2017,24 @@ test('thread sizes: tap drills between the minor and major diameters', () => {
     const minor = t.major - 1.0825 * t.pitch;
     assert.ok(t.drill > minor - 0.1 && t.drill < t.major - 0.4 * t.pitch, t.id);
   }
+});
+
+test('a Z0 set elsewhere: asked about unless the macros or Set Z0 put it down, or it was answered', () => {
+  const base = { spoil: -95, thick: 18, mark: 0, answered: undefined, zTravelMm: 120 };
+  // Probed on a 19.5 mm stock: 19.5 above the spoilboard, a stock top.
+  assert.deepEqual(z0Question(Object.assign({}, base, { cur: -75.5 })), { hMm: 19.5, stock: true, far: true });
+  // The macros' own: on the spoilboard, on the stored stock top, Set Z0's last height.
+  assert.equal(z0Question(Object.assign({}, base, { cur: -95 })), null);
+  assert.equal(z0Question(Object.assign({}, base, { cur: -77 })), null);
+  assert.equal(z0Question(Object.assign({}, base, { cur: -90, mark: 5 })), null);
+  // Answered "neither" already; a new Z0 is asked about again.
+  assert.equal(z0Question(Object.assign({}, base, { cur: -60, answered: -60 })), null);
+  assert.ok(z0Question(Object.assign({}, base, { cur: -61, answered: -60 })));
+  // Nothing to ask without a spoilboard height, or with an offset never set.
+  assert.equal(z0Question(Object.assign({}, base, { cur: -60, spoil: 0 })), null);
+  assert.equal(z0Question(Object.assign({}, base, { cur: 0 })), null);
+  // Just under the recorded spoilboard (surfaced 0.4 mm): not a stock top, not far.
+  assert.deepEqual(z0Question(Object.assign({}, base, { cur: -95.4 })), { hMm: -0.4, stock: false, far: false });
+  // More than the Z travel above it can't be a stock top.
+  assert.equal(z0Question(Object.assign({}, base, { cur: 30 })).stock, false);
 });
