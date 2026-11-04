@@ -502,6 +502,10 @@
   .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-hole-goto,
   .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-stock-gocenter { grid-column: 1 / -1; }
   .mw-pick-card.mw-tall.mw-goto-one .mw-holebar-actions > #mw-hole-goto { grid-column: 1 / -1; }
+  /* Set XY0 / Set Z0 when the work offset already has that zero. */
+  .mw-set-done { display: none; }
+  .mw-already .mw-set-done { display: inline; }
+  .mw-already .mw-set-verb, .mw-already .mw-set-at, .mw-already .mw-hold-hint { display: none !important; }
   .mw-hold-hint { display: block; font-size: 0.7rem; font-weight: 500; line-height: 1; color: var(--mw-accent-text); pointer-events: none; }
   .mw-holding .mw-hold-hint { color: #fff; }
   @keyframes mw-blink-border {
@@ -726,7 +730,7 @@
               <option value="back-left">Its back left corner</option><option value="back-right">Its back right corner</option>
             </select>
             <span class="mw-dots-wrap"><span class="mw-dots-cap">New X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
-            <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><span class="mw-stock-which" id="mw-stock-which"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" data-probe-top title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top, and the card offers to store its height above the spoilboard as the stock thickness (T follows it). Only for stock lying on the spoilboard.">Probe Stock Top</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear</button></span>
+            <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><span class="mw-stock-which" id="mw-stock-which"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear</button></span>
             <span class="mw-stock-prog" id="mw-stock-prog" hidden><span class="mw-hint" id="mw-stock-prog-text" role="status"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fit" hidden title="Make the stock's width and length the loaded program's cuts, the bit's width and the clamp margin on every side, rounded up: the stock to cut a QuickCut or Gears part from.">Size to Program</button></span>
           </div>
           <div class="mw-dots-wrap mw-only-hole"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
@@ -749,8 +753,9 @@
               <option value="4">G57</option><option value="5">G58</option><option value="6">G59</option>
               <option value="7">G59.1</option><option value="8">G59.2</option><option value="9">G59.3</option>
             </select>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label">Set <span data-hole-wcs>G54</span> XY<span id="mw-hole-set-at"></span></span><span class="mw-hold-hint">Hold</span></button>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset in the menu on the surface shown above it: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label">Set <span data-hole-wcs>G54</span> Z0</span><span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> XY0<span class="mw-set-at" id="mw-hole-set-at"></span><span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset in the menu on the surface shown above it: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> Z0<span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button>
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-only-stock" data-probe-top="picker" style="width: 100%" title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top in the work offset picked in the menu, and the card offers to store its height above the spoilboard as the stock thickness (T follows it). Only for stock lying on the spoilboard.">Probe Stock Top</button>
           </div>
           <div class="mw-maptools">
             <div class="mw-maptools-row">
@@ -1696,6 +1701,7 @@
     </div>
     <p class="mw-mini-text" id="mw-mini-text" role="status"></p>
     <div class="mw-mini-actions">
+      <button type="button" class="mw-btn mw-btn-small" id="mw-mini-switch" hidden>Switch</button>
       <button type="button" class="mw-btn mw-btn-small" id="mw-mini-store" hidden>Store</button>
       <button type="button" class="mw-btn mw-btn-small" id="mw-mini-check">Check Z0</button>
       <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-mini-open">Open Probe</button>
@@ -4550,7 +4556,7 @@
   // when Z0 changes, or Check Z0 is pressed, offer to store Z0's height
   // above the spoilboard as the thickness. Nothing is sent to the
   // controller until Store.
-  var pf = { on: false, step: '', base: null, r: null, busy: false, timer: null, corner: 'br' };
+  var pf = { on: false, step: '', base: null, r: null, busy: false, timer: null, corner: 'br', wcs: 1 };
   function activeZ0() {
     var ms = state.machine || {}, w = String(ms.workspace || '').toLowerCase();
     var z = ms[w] ? parseFloat(String(ms[w]).split(',')[2]) : NaN;
@@ -4572,7 +4578,8 @@
     t.textContent = text;
     if (tone) t.setAttribute('data-state', tone); else t.removeAttribute('data-state');
     $('mw-mini-store').hidden = step !== 'confirm';
-    $('mw-mini-check').hidden = step === 'confirm' || step === 'done';
+    $('mw-mini-check').hidden = step === 'confirm' || step === 'done' || step === 'switch';
+    $('mw-mini-switch').hidden = step !== 'switch';
     $('mw-mini-open').hidden = step === 'confirm' || step === 'done';
     $('mw-mini-back').textContent = step === 'done' ? 'Back to Spoilboard Toolbox' : 'Cancel';
   }
@@ -4580,17 +4587,45 @@
     ROOT.classList.toggle('mw-mini', on);
     ROOT.setAttribute('data-corner', pf.corner);
   }
-  function startProbeTop() {
+  // From the XY0 Picker: the work offset in its menu (Active: the one in
+  // use); from the Z0 macros: Work Offset to Set. ncSender's Probe dialog
+  // sets the active one, so a different one is switched to first, on Switch.
+  async function startProbeTop(evt) {
     var s = readSettings();
     if (!s) return;
     disarmFromZ();
+    var fromPicker = evt && evt.currentTarget && evt.currentTarget.getAttribute('data-probe-top') === 'picker';
     pf.on = true; pf.r = null; pf.base = activeZ0();
+    pf.wcs = fromPicker ? holeWcs() : s.wcs;
     setMini(true);
-    var w = WCS_NAMES[s.wcs], opened = openNcProbe();
-    showMini('probe', (opened ? 'In ncSender\u2019s Probe dialog, probe Z on the stock\u2019s top' : 'Press Probe in ncSender (the button on the 3D view), probe Z on the stock\u2019s top') +
-      ' with ' + w + ' active and the tool you\u2019ll cut with. This card checks Z0 when the probe finishes, or press Check Z0. Only for stock lying on the spoilboard, not a vise or fixture.');
     clearInterval(pf.timer);
     pf.timer = setInterval(function() { if (!rootAlive() || !pf.on) { clearInterval(pf.timer); return; } watchProbeTop(); }, 700);
+    var active = null;
+    try { var gc = parseGcState((await ask('$G', 500)).lines); active = gc && gc.wcs; } catch (e) { /* asked again on Check Z0 */ }
+    var w = WCS_NAMES[pf.wcs];
+    if (active && active !== w) {
+      $('mw-mini-switch').textContent = 'Switch to ' + w;
+      showMini('switch', w + ' is picked, but ncSender has ' + active + ' active, and its Probe dialog sets Z0 in the active one. Switch to ' + w + ' first?', 'warn');
+      return;
+    }
+    probeTopReady();
+  }
+  function probeTopReady() {
+    var w = WCS_NAMES[pf.wcs], opened = openNcProbe();
+    pf.base = activeZ0();
+    showMini('probe', (opened ? 'In ncSender\u2019s Probe dialog, probe Z on the stock\u2019s top' : 'Press Probe in ncSender (the button on the 3D view), probe Z on the stock\u2019s top') +
+      ' with ' + w + ' active and the tool you\u2019ll cut with. This card checks Z0 when the probe finishes, or press Check Z0. Only for stock lying on the spoilboard, not a vise or fixture.');
+  }
+  async function switchProbeTop() {
+    var w = WCS_NAMES[pf.wcs];
+    try {
+      var r = await sendCommand(w);
+      if (!r.ok) throw new Error('the controller rejected ' + w);
+      await readMachineState();
+      probeTopReady();
+    } catch (err) {
+      showMini('switch', 'Couldn\u2019t switch: ' + err.message + '. Select ' + w + ' in ncSender, then Switch again or Cancel.', 'bad');
+    }
   }
   async function watchProbeTop() {
     if (pf.step !== 'probe' || pf.busy || holes.polling) return;
@@ -4604,14 +4639,14 @@
   async function checkProbeTop() {
     var s = readSettings();
     if (!s || pf.busy) return;
-    var w = WCS_NAMES[s.wcs];
+    var w = WCS_NAMES[pf.wcs];
     pf.busy = true;
     showMini('checking', 'Reading ' + w + ' Z0\u2026');
     await numbersLock();
     try {
-      var active = String((state.machine || {}).workspace || '').toUpperCase();
-      if (active && active !== w) throw new Error(active + ' is active, but the Z0 macros and this check use ' + w + ' (Work Offset to Set): select ' + w + ' and probe again');
-      var r = await readZ0StockTop(s);
+      var gc = parseGcState((await ask('$G', 500)).lines), active = gc && gc.wcs;
+      if (active && active !== w) throw new Error(active + ' is active, not ' + w + ': ncSender\u2019s Probe dialog set ' + active + '\u2019s Z0. Select ' + w + ' and probe again');
+      var r = await readZ0StockTop(Object.assign({}, s, { wcs: pf.wcs }));
       pf.base = r.cur;
       if (r.why) throw new Error(r.why);
       var h = shown(r.hMm) + ' ' + unitName();
@@ -4632,7 +4667,7 @@
     $('mw-mini-store').disabled = true;
     await numbersLock();
     try {
-      var r = await readZ0StockTop(s);
+      var r = await readZ0StockTop(Object.assign({}, s, { wcs: pf.wcs }));
       if (r.why) throw new Error(r.why);
       if (Math.abs(r.cur - armed.cur) > 0.002 || Math.abs(r.spoil - armed.spoil) > 0.002) throw new Error('Z0 or the spoilboard height changed since; check again');
       await storeZ0Thickness(s, r);
@@ -5025,6 +5060,7 @@
       if (!openNcProbe()) showMini('probe', 'Couldn\u2019t open it from here' + (ncProbeButton() ? ' (the machine isn\u2019t ready to probe)' : '') + ': press Probe in ncSender (the button on the 3D view), probe Z on the stock\u2019s top, then Check Z0.', 'warn');
     });
     $('mw-mini-store').addEventListener('click', storeProbeTop);
+    $('mw-mini-switch').addEventListener('click', switchProbeTop);
     $('mw-mini-back').addEventListener('click', endProbeTop);
     $('mw-mini-move').addEventListener('click', function() {
       var order = ['br', 'bl', 'tl', 'tr'];
@@ -6998,7 +7034,13 @@
       : dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
     $('mw-hole-dist').classList.toggle('mw-bad-text', away != null);
     drawZeroInset(aim && !problem ? aim : null);
-    $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
+    // Already that zero: the work offset (G54-G59, as ncSender's state
+    // has them) is within 0.005 mm of it.
+    var wName = (WCS_NAMES[holeWcs()] || '').toLowerCase(), ms0 = state.machine || {};
+    var curXY = xyOf(ms0[wName]), curZ = ms0[wName] ? parseFloat(String(ms0[wName]).split(',')[2]) : NaN;
+    var xyDone = !!(aim && !problem && curXY && Math.abs(curXY.x - tg.x) < 0.005 && Math.abs(curXY.y - tg.y) < 0.005);
+    $('mw-hole-set').classList.toggle('mw-already', xyDone);
+    $('mw-hole-set').disabled = !aim || !!problem || holes.busy || xyDone;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto-text').textContent = aim ? 'Go to ' + targetShort(aim) : 'Go to Selected';
     $('mw-hole-set-at').textContent = aim ? ' \u00b7 ' + targetShort(aim) : '';
@@ -7010,7 +7052,9 @@
     var zbad = zt && zProblem(zt.hMm);
     $('mw-hole-z').textContent = zt ? 'Z0 option: ' + zt.what + ', spoilboard + ' + shown(zt.hMm) + ' ' + unitName() + (zbad ? ': ' + zbad : '') : '';
     $('mw-hole-z').classList.toggle('mw-bad-text', !!zbad);
-    $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy;
+    var zDone = !!(zt && !zbad && state.spoilZ && isFinite(curZ) && Math.abs(curZ - (state.spoilZ + zt.hMm)) < 0.005);
+    $('mw-hole-setz').classList.toggle('mw-already', zDone);
+    $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy || zDone;
     if (!zt && hold.btn && hold.btn.id === 'mw-hole-setz') stopHold(false);
     var centerHeld = hold.btn && hold.btn.id === 'mw-stock-gocenter';
     if (centerHeld ? $('mw-stock-gocenter').disabled : !aim || problem || holes.busy) disarmGoto();
@@ -9081,7 +9125,7 @@
       'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, a value it needs isn&rsquo;t stored, or another work offset is active (the macros are made for one, Work Offset to Set); ncSender&rsquo;s terminal shows <code>error:72</code>.',
       '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.',
       HELP_KEYS, HELP_NEEDS, HELP_UNITS,
-      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10): run <strong>SBT: Z0 on stock top</strong> right after, with the same tool. When the current Z0 isn&rsquo;t one the macros put down and is more than 1 mm (0.04&quot;) above the spoilboard, it takes that Z0 as the stock&rsquo;s top: it stores its height above the spoilboard as the new thickness and leaves Z0 where it is, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before. With this open, <strong>From Z0</strong> (beside Store) does the same but shows the height first and stores it on a second press. Or press <strong>Probe Stock Top</strong> (beside From Z0, and in the XY0 Picker&rsquo;s Stock mode): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender&rsquo;s Probe dialog; probe Z on the stock&rsquo;s top, and when Z0 changes the card shows its height above the spoilboard and stores it as the thickness on <strong>Store</strong>. If the Probe dialog doesn&rsquo;t open, press ncSender&rsquo;s Probe button yourself, then <strong>Check Z0</strong>.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from). A thickness typed with Store or measured stays until Z0 on stock top is run with a Z0 set some other way.<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Pressing Z0 on stock top then keeps your Z0 but stores that height as the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. Don&rsquo;t put Z0 on stock top on a key you might press by habit after zeroing on a vise.<br>It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the tool already measured.' ] }
+      '<strong>A Z0 probed some other way</strong> on a new stock (ncSender&rsquo;s Probe dialog, its Z0 button, a typed G10): run <strong>SBT: Z0 on stock top</strong> right after, with the same tool. When the current Z0 isn&rsquo;t one the macros put down and is more than 1 mm (0.04&quot;) above the spoilboard, it takes that Z0 as the stock&rsquo;s top: it stores its height above the spoilboard as the new thickness and leaves Z0 where it is, so every tool after gets the same Z0. Otherwise it uses the stored thickness, as before. With this open, <strong>From Z0</strong> (beside Store) does the same but shows the height first and stores it on a second press. Or press <strong>Probe Stock Top</strong> (beside From Z0, and under Set Z0 in the XY0 Picker&rsquo;s Stock mode, for the work offset picked there): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender&rsquo;s Probe dialog; probe Z on the stock&rsquo;s top, and when Z0 changes the card shows its height above the spoilboard and stores it as the thickness on <strong>Store</strong>. If the Probe dialog doesn&rsquo;t open, press ncSender&rsquo;s Probe button yourself, then <strong>Check Z0</strong>.<br><strong>Safe:</strong> a new sheet or board lying on the spoilboard, probed on its top; the same stock probed again; switching between the spoilboard and the stock top with the macros (their own Z0s are never learned from). A thickness typed with Store or measured stays until Z0 on stock top is run with a Z0 set some other way.<br><strong>Not safe:</strong> after zeroing on anything that isn&rsquo;t the top of stock lying on the spoilboard &mdash; a <strong>vise jaw</strong> or a part held in a vise, a fixture, a jig or a riser block, a step or pocket floor for a second operation, or Z0 set partway down a part. Pressing Z0 on stock top then keeps your Z0 but stores that height as the stock thickness, and later stock-top Z0s land there. To undo it, put the real thickness back with <strong>Store</strong> or <strong>Measure stock thickness</strong>. Don&rsquo;t put Z0 on stock top on a key you might press by habit after zeroing on a vise.<br>It checks the tool length offset is active when you run it, not when Z0 was probed: probe with the tool already measured.' ] }
   };
   var HELP_DOCS = 'https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox#readme';
   // The help's index: each tab's notes (by their place in its notes list)
