@@ -3,6 +3,25 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## 0.5.8: Feeds style and Tip Through
+
+### ✨ New
+- **Starting feeds style:** beside the material, **Conservative**, **Average** or **Aggressive**, as in QuickCut. Conservative, for a light machine, a long bit or a first try: Feed, Plunge, Depth per Pass and Stepover ×0.75 (on plastics and aluminum the feed stays, since a thinner chip melts or rubs). Aggressive, for a rigid machine: Feed and Plunge ×1.25 (up to the material's chip limit and the machine's max), Depth per Pass and Stepover ×1.2. RPM stays.
+- **Drill Depth** (Bit and depth card): **To the Tip**, or **Tip Through**, as QuickCut's Drill Tip Through and Fusion 360's *Drill tip through bottom*: a hole drilled at the bit's size is full size all the way down, and the point goes deeper by its tip. **Tip Angle** is filled in when you pick a drill from the tool table (118° when it doesn't say). Hole Depth plus the tip can't pass the Spoilboard Thickness, and on Stock Holes it stays inside the stock or the spoilboard holes.
+- **The picked tool's name** after the Bit and depth card's title, or **No tool change**; with a tool changer, tapping it opens the tool menu.
+
+### 🔧 Better
+- **No Fill In button:** picking a material, a style or the flutes puts the starting numbers in. A new Bit Diameter updates them too, unless you've typed your own (the note says when it kept them).
+- **Plunge** starts within your machine's Z max rate (`$112`).
+- **Tool menu:** **No tool change** is at the top, it opens on the picked tool, and **Esc** closes the menu instead of Spoilboard Toolbox.
+- **Flutes** is greyed out only when the tool table gives the picked tool's flute count; guessed from its name, you can change it.
+- The Bit Diameter label menu has a bigger tap area on a touchscreen, and no focus box over the field below.
+- **Number fields:** `1,000` is refused rather than read as 1 (it may be a thousands separator).
+
+### 🐛 Fixed
+- **Check the controller** said "G59.1 has X/Y values, pick another slot" after storing a stock thickness: since 0.5.7 the thickness slot's Y holds the Z0 it was stored with. It now shows it as Spoilboard Toolbox's own.
+- The starting feeds note repeated "Filled in:" and could show numbers from an earlier pick.
+
 ## 0.5.7: Probe Stock Top
 
 ### ✨ New
