@@ -1211,7 +1211,7 @@
         </div>
         <div class="mw-feeds-row" data-for="holes tracks fit stock">
           <span class="mw-hint">Starting feeds for</span>
-          <select class="mw-select" id="mw-cut-mat" aria-label="Material" title="What you're cutting. Fill In puts starting numbers for it in RPM, Feed, Plunge, Depth per Pass and Stepover, as ncCAM's: start there and adjust by ear and chip.">
+          <select class="mw-select" id="mw-cut-mat" aria-label="Material" title="What you're cutting. Picking it puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, as ncCAM's and QuickCut's: start there and adjust by ear and chip.">
             <option value="mdf" selected>MDF / Plywood</option>
             <option value="softwood">Softwood</option>
             <option value="hardwood">Hardwood</option>
@@ -1224,7 +1224,9 @@
           <select class="mw-select" id="mw-cut-flutes" aria-label="Flutes" title="How many cutting edges the bit has.">
             <option value="1">1 flute</option><option value="2" selected>2 flutes</option><option value="3">3 flutes</option><option value="4">4 flutes</option>
           </select>
-          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-cut-feeds-fill" title="Put the starting numbers for this material and bit in RPM, Feed, Plunge, Depth per Pass and Stepover.">Fill In</button>
+          <select class="mw-select" id="mw-cut-feeds-style" aria-label="How hard the starting feeds push" title="How hard the starting feeds push. Average: as they are. Conservative, for a light machine, a long bit or a first try: Feed and Plunge x0.75, Depth per Pass and Stepover x0.75; on plastics and aluminum the feed stays, since a thinner chip melts or rubs. Aggressive, for a rigid machine: Feed and Plunge x1.25 (up to the material's chip limit and the machine's max), Depth per Pass and Stepover x1.2. RPM stays.">
+            <option value="conservative">Conservative</option><option value="average" selected>Average</option><option value="aggressive">Aggressive</option>
+          </select>
           <span class="mw-hint" id="mw-cut-feeds-note"></span>
         </div>
         <p class="mw-status" id="mw-cut-bit-note" role="status" data-for="holes tracks fit stock"></p>
@@ -3052,24 +3054,33 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // for aluminum (a thin one rubs and welds to the edge):
   // the chip each tooth takes grows with the bit up to a cap; feed = RPM x
   // flutes x chip; plunge 30% of the feed; depth per pass and stepover a
-  // share of the bit. limits: the machine's max feed and spindle range.
+  // share of the bit. limits: the machine's max feed ($110/$111), max Z rate
+  // for the plunge ($112) and spindle range ($30/$31). As QuickCut's:
+  // style 'conservative' slows the feed x0.75, even when the machine's max
+  // holds it, except where a thin chip melts or rubs (keepChip);
+  // 'aggressive' speeds it x1.25, up to the material's chip limit and the
+  // machine's max. Depth per pass and stepover x0.75 / x1.2. RPM stays.
   var MATERIALS = {
     softwood: { rpm: 18000, chip: 0.012, maxChip: 0.25, stepdown: 0.5, stepover: 0.45 },
     hardwood: { rpm: 18000, chip: 0.009, maxChip: 0.2, stepdown: 0.35, stepover: 0.4 },
     mdf: { rpm: 18000, chip: 0.012, maxChip: 0.25, stepdown: 0.5, stepover: 0.45 },
-    hdpe: { rpm: 15000, chip: 0.02, maxChip: 0.25, stepdown: 0.3, stepover: 0.4 },
-    acrylic: { rpm: 16000, chip: 0.015, maxChip: 0.2, stepdown: 0.3, stepover: 0.4 },
-    polycarbonate: { rpm: 16000, chip: 0.018, maxChip: 0.22, stepdown: 0.3, stepover: 0.4 },
-    aluminum: { rpm: 18000, chip: 0.0045, maxChip: 0.06, stepdown: 0.1, stepover: 0.25 },
+    hdpe: { rpm: 15000, chip: 0.02, maxChip: 0.25, stepdown: 0.3, stepover: 0.4, keepChip: true },
+    acrylic: { rpm: 16000, chip: 0.015, maxChip: 0.2, stepdown: 0.3, stepover: 0.4, keepChip: true },
+    polycarbonate: { rpm: 16000, chip: 0.018, maxChip: 0.22, stepdown: 0.3, stepover: 0.4, keepChip: true },
+    aluminum: { rpm: 18000, chip: 0.0045, maxChip: 0.06, stepdown: 0.1, stepover: 0.25, keepChip: true },
     foam: { rpm: 12000, chip: 0.02, maxChip: 0.4, stepdown: 1, stepover: 0.6 }
   };
-  function startingFeeds(bitMm, flutes, material, limits) {
+  function startingFeeds(bitMm, flutes, material, limits, style) {
     var m = MATERIALS[material] || MATERIALS.mdf, L = limits || {};
+    var S = { conservative: { chip: 0.75, cut: 0.75 }, aggressive: { chip: 1.25, cut: 1.2 } }[style] || { chip: 1, cut: 1 };
     var rpm = Math.round(Math.min(L.maxRpm || 24000, Math.max(L.minRpm || 0, m.rpm)));
-    var chip = Math.min(m.maxChip, m.chip * bitMm), maxFeed = Math.min(L.maxFeed || 4000, 4000);
-    var raw = rpm * (flutes || 2) * chip, feed = Math.round(Math.min(maxFeed, Math.max(150, raw)));
-    return { rpm: rpm, chipMm: chip, feedMm: feed, capped: raw > maxFeed, plungeMm: Math.round(Math.max(60, feed * 0.3)),
-             stepMm: Math.max(0.05, bitMm * m.stepdown), stepoverPct: Math.round(Math.min(0.9, m.stepover) * 100) };
+    var maxFeed = Math.min(L.maxFeed || 4000, 4000), perRev = rpm * (flutes || 2);
+    var avg = Math.min(maxFeed, perRev * Math.min(m.maxChip, m.chip * bitMm));
+    var raw = S.chip < 1 ? avg * (m.keepChip ? 1 : S.chip) : perRev * Math.min(m.maxChip, m.chip * bitMm * S.chip);
+    var exact = Math.min(maxFeed, Math.max(150, raw)), feed = Math.round(exact);
+    return { rpm: rpm, chipMm: exact / perRev, feedMm: feed, capped: raw > maxFeed,
+             plungeMm: Math.round(Math.min(L.maxPlunge || Infinity, Math.max(60, feed * 0.3))),
+             stepMm: Math.max(0.05, bitMm * m.stepdown * S.cut), stepoverPct: Math.round(Math.min(0.9, m.stepover * S.cut) * 100) };
   }
 
   // The holes to cut: the XY0 Picker's, less suppressed, hidden and
@@ -6002,6 +6013,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       state.keepouts = keepoutZones(state.ncSettings, set);
       var rx = parseFloat(set['110'] && set['110'].value), ry = parseFloat(set['111'] && set['111'].value);
       state.rapidMmMin = rx > 0 && ry > 0 ? Math.min(rx, ry) : null;
+      var rz = parseFloat(set['112'] && set['112'].value);
+      state.zRateMm = rz > 0 ? rz : null;
       var smax = parseFloat(set['30'] && set['30'].value), smin = parseFloat(set['31'] && set['31'].value);
       // grblHAL's default $30 is 1000: not a router's real top speed.
       state.spindleMax = smax >= 5000 ? smax : null;
@@ -7800,26 +7813,39 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function feedsNow() {
     var bit = cutMm('mw-cut-bit');
     if (!(bit > 0)) return null;
-    return startingFeeds(bit, +$('mw-cut-flutes').value, $('mw-cut-mat').value, { maxFeed: state.rapidMmMin, maxRpm: state.spindleMax, minRpm: state.spindleMin });
+    return startingFeeds(bit, +$('mw-cut-flutes').value, $('mw-cut-mat').value,
+      { maxFeed: state.rapidMmMin, maxPlunge: state.zRateMm, maxRpm: state.spindleMax, minRpm: state.spindleMin }, $('mw-cut-feeds-style').value);
   }
+  // The fields the starting feeds fill, as they show for f.
+  var FEED_FIELDS = ['mw-cut-rpm', 'mw-cut-feed', 'mw-cut-plunge', 'mw-cut-step', 'mw-cut-stepover'];
+  function feedValues(f) {
+    var k = state.imperial ? MM_PER_INCH : 1, d = state.imperial ? 1 : 0;
+    return [f.rpm, +(f.feedMm / k).toFixed(d), +(f.plungeMm / k).toFixed(d), +(f.stepMm / k).toFixed(state.imperial ? 4 : 2), f.stepoverPct];
+  }
+  function feedsInFields() { return FEED_FIELDS.map(function(id) { return parseFloat($(id).value); }); }
+  function sameValues(a, b) { return !!a && !!b && a.every(function(v, i) { return v === b[i]; }); }
   function showStartingFeeds() {
     var f = feedsNow(), k = state.imperial ? MM_PER_INCH : 1, fu = state.imperial ? ' in/min' : ' mm/min';
     $('mw-cut-feeds-note').textContent = !f ? '' : f.rpm + ' RPM, ' + shown(f.chipMm) + ' ' + unitName() + ' a tooth: ' +
-      +(f.feedMm / k).toFixed(state.imperial ? 1 : 0) + fu + (f.capped ? ' (the machine\u2019s max)' : '') + ', plunge ' + +(f.plungeMm / k).toFixed(state.imperial ? 1 : 0) +
+      +(f.feedMm / k).toFixed(state.imperial ? 1 : 0) + fu + (f.capped ? (state.rapidMmMin && state.rapidMmMin < 4000 ? ' (the machine\u2019s max)' :
+        ' (the starting limit' + ($('mw-cut-feeds-style').value === 'aggressive' ? '; Aggressive still deepens the passes)' : ')')) : '') + ', plunge ' + +(f.plungeMm / k).toFixed(state.imperial ? 1 : 0) +
       ', ' + shown(f.stepMm) + ' ' + unitName() + ' a pass, stepover ' + f.stepoverPct + '%' +
       ($('mw-cut-mat').value === 'aluminum' ? '. Aluminum: a 1-flute bit, air or mist, and spiral in rather than plunge.' : '');
   }
+  // Picking a material, flutes or a style puts the starting numbers in.
+  // A new Bit Diameter does too, unless the numbers were typed over since.
   function fillStartingFeeds() {
-    var f = feedsNow(), k = state.imperial ? MM_PER_INCH : 1;
+    var f = feedsNow();
     if (!f) { $('mw-cut-feeds-note').textContent = 'Give the Bit Diameter first.'; return; }
-    var put = function(id, v) { $(id).value = v; $(id).classList.remove('mw-invalid'); };
-    put('mw-cut-rpm', f.rpm);
-    put('mw-cut-feed', +(f.feedMm / k).toFixed(state.imperial ? 1 : 0));
-    put('mw-cut-plunge', +(f.plungeMm / k).toFixed(state.imperial ? 1 : 0));
-    put('mw-cut-step', +(f.stepMm / k).toFixed(state.imperial ? 4 : 2));
-    put('mw-cut-stepover', f.stepoverPct);
+    var v = feedValues(f);
+    FEED_FIELDS.forEach(function(id, i) { $(id).value = v[i]; $(id).classList.remove('mw-invalid'); });
+    state.feedsFilled = v;
     renderCutTab(); renderStockHoles(); saveSettings();
     $('mw-cut-feeds-note').textContent = 'Filled in: ' + $('mw-cut-feeds-note').textContent + '. A start: listen, look at the chips, and adjust.';
+  }
+  function bitChangedFeeds() {
+    if (sameValues(state.feedsFilled, feedsInFields())) fillStartingFeeds();
+    else { state.feedsFilled = null; showStartingFeeds(); }
   }
   // A fixture plate: the XY0 Picker's stock, in from its edges by this.
   var PLATE_EDGE_MM = 3;
@@ -8020,7 +8046,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
@@ -8028,7 +8054,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-slot': 0.03, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
     'gl-depth': 0.012, 'gl-feed': 60, 'lt-fmin': 20, 'lt-fmax': 120 };
   function cutBody() {
-    var b = { 'cut-tool': state.cutTool || null };
+    var b = { 'cut-tool': state.cutTool || null, 'cut-feeds-filled': state.feedsFilled || null };
     CUT_SAVED.lengths.forEach(function(k) { b[k] = fieldVal('mw-' + k); });
     CUT_SAVED.plain.forEach(function(k) { b[k] = $('mw-' + k).value; });
     CUT_SAVED.checks.forEach(function(k) { b[k] = $('mw-' + k).checked; });
@@ -8038,6 +8064,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     c = c && typeof c === 'object' ? c : {};
     var tl = c['cut-tool'];
     state.cutTool = tl && tl.n > 0 && tl.mm > 0 ? { n: Math.round(tl.n), mm: +tl.mm } : null;
+    state.feedsFilled = Array.isArray(c['cut-feeds-filled']) ? c['cut-feeds-filled'] : null;
     CUT_SAVED.lengths.forEach(function(k) {
       var v = parseFloat(c[k]);
       if (isFinite(v)) $('mw-' + k).value = +(v * conv).toFixed(4);
@@ -8068,7 +8095,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       state.cutTool = null;
       note.setAttribute('data-state', 'ok');
       note.textContent = 'Bit Diameter from T' + n + (tool.name ? ' (' + tool.name + ')' : '') + (fl ? ', ' + fl + ' flute' + (fl === 1 ? '' : 's') : '') + '. No tool change: it\u2019s the bit in the spindle.';
-      showStartingFeeds();
+      bitChangedFeeds();
       saveSettings();
       renderCutTab();
     } catch (e) {
@@ -8215,7 +8242,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       note.textContent = 'No tool change: the programs cut with the bit in the spindle.';
     }
     showBitTool();
-    showStartingFeeds();
+    bitChangedFeeds();
     saveSettings();
     renderCutTab();
   }
@@ -8905,8 +8932,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     });
     // A typed size: the user loads the bit, so no tool change.
     $('mw-cut-bit').addEventListener('input', function() { state.cutTool = null; $('mw-cut-bit-note').textContent = ''; showBitTool(); }, true);
-    $('mw-cut-feeds-fill').addEventListener('click', fillStartingFeeds);
-    ['mw-cut-mat', 'mw-cut-flutes', 'mw-cut-bit'].forEach(function(id) { $(id).addEventListener('input', showStartingFeeds); $(id).addEventListener('change', showStartingFeeds); });
+    ['mw-cut-mat', 'mw-cut-flutes', 'mw-cut-feeds-style'].forEach(function(id) { $(id).addEventListener('change', fillStartingFeeds); });
+    $('mw-cut-bit').addEventListener('input', showStartingFeeds);
+    $('mw-cut-bit').addEventListener('change', bitChangedFeeds);
     showStartingFeeds();
     $('mw-cut-generate').addEventListener('click', generateCut);
     // A standard thread fills in its size (before the render the change makes).
@@ -9409,7 +9437,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       HELP_NEEDS, HELP_UNITS,
       '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all around, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
     cut: { name: 'Cut Board', notes: [
-      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong> a material and flute count, then <strong>Fill In</strong>, puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed and spindle range: a start, to adjust by ear and chip.',
+      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong>: picking a material, a flute count or how hard to push (<strong>Conservative</strong>, <strong>Average</strong>, <strong>Aggressive</strong>, as in QuickCut) puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed, Z rate and spindle range. A new Bit Diameter updates them too, unless you&rsquo;ve typed your own. A start, to adjust by ear and chip.',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',

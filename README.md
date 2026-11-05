@@ -559,10 +559,16 @@ the plugin reminds you to re-record the spoilboard height.
   the bit, else cleared in rings out from a spiral in its middle. Climb milling, as QuickCut does; the
   circle milling is QuickCut's.
 - **Starting feeds:** under Bit and depth, pick the material (MDF / plywood, softwood, hardwood, HDPE,
-  acrylic, polycarbonate, aluminum, foam) and the bit's flutes, and **Fill In** puts starting numbers in RPM, Feed,
-  Plunge, Depth per Pass and Stepover: [ncCAM](https://github.com/siganberg/ncsender-plugin-nccam)'s formula (the chip each tooth takes grows with the bit, up
-  to a cap), within your machine's max feed (`$110`/`$111`) and spindle range (`$30`/`$31`). A start:
-  listen, look at the chips, and adjust.
+  acrylic, polycarbonate, aluminum, foam), the bit's flutes and how hard to push, and the starting numbers go
+  straight into RPM, Feed, Plunge, Depth per Pass and Stepover: [ncCAM](https://github.com/siganberg/ncsender-plugin-nccam)'s formula (the chip each tooth takes grows with the bit, up
+  to a cap), within your machine's max feed (`$110`/`$111`), Z rate (`$112`, for Plunge) and spindle range (`$30`/`$31`).
+  - **Average** is the formula as it is. **Conservative**, for a light machine, a long bit or a first try: Feed and Plunge
+    ×0.75, Depth per Pass and Stepover ×0.75; on plastics and aluminum the feed stays, since a thinner chip melts or rubs.
+    **Aggressive**, for a rigid machine: Feed and Plunge ×1.25 (up to the material's chip limit and the machine's max),
+    Depth per Pass and Stepover ×1.2. The same as QuickCut's.
+  - A new Bit Diameter (typed, or from the tool table) updates them too, unless you've typed your own numbers since.
+  - Starting feeds stop at 4000 mm/min (157 in/min), or the machine's max if lower. A start: listen, look at the chips,
+    and adjust.
 - **The picture** under Holes shows one hole in the board (or the stock on top) with your numbers: how deep it
   goes, what's left under it, a step for every Depth per Pass, and how it'll be cut.
 - **Where:** the active work offset (G54–G59), with its X0 Y0 written into the program. It stops before
