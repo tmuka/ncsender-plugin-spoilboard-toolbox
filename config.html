@@ -2743,7 +2743,7 @@
 
   // Unit fields (type 1/4", 6.35mm, 8mm*2 in any length or feed field):
   // the shared ncsender-unit-input library, from QuickCut.
-// BEGIN ncsender-unit-input 0.1.3 (54e37bc): pasted by node .scripts/sync-unit-input.mjs; edit the library, not this.
+// BEGIN ncsender-unit-input 0.1.4 (cf09fa9): pasted by node .scripts/sync-unit-input.mjs; edit the library, not this.
 // Generated from src/unit-input.js by build.mjs: edit that, then npm run build.
 var NcUnitInput = (function () {
 /**
@@ -2780,6 +2780,15 @@ function parseUnitValue(text, isImperial, kind) {
   text = text.replace(/,/g, '.');
   var one = parseUnitQuantity(text, isImperial, kind);
   return one !== null ? one : parseUnitMath(text, isImperial, kind);
+}
+// Why parseUnitValue can't read text, when it's a comma before exactly three
+// digits: a message to show the operator, e.g. "1,000 could be 1000 or
+// 1.000: write 1000, or 1,0 for a decimal". null otherwise.
+function unitValueProblem(text) {
+  var m = /(\d+),(\d{3})(?!\d)/.exec(String(text == null ? '' : text));
+  if (!m) return null;
+  return m[0] + ' could be ' + m[1] + m[2] + ' or ' + m[1] + '.' + m[2] + ': write ' + m[1] + m[2] + ', or ' +
+    m[1] + ',' + (m[2].replace(/0+$/, '') || '0') + ' for a decimal';
 }
 // mm per unit (per minute for feeds) of the units a field takes.
 function unitMmPer(kind) {
@@ -3011,7 +3020,7 @@ function wireUnitFields(root, opts) {
   };
 }
 
-return { MM_PER_INCH: MM_PER_INCH, parseUnitValue: parseUnitValue, unitMmPer: unitMmPer, parseUnitMath: parseUnitMath, parseUnitQuantity: parseUnitQuantity, roundDisplay: roundDisplay, mmToDisplay: mmToDisplay, displayToMm: displayToMm, formatMm: formatMm, textToMm: textToMm, roundInches: roundInches, wireUnitFields: wireUnitFields };
+return { MM_PER_INCH: MM_PER_INCH, parseUnitValue: parseUnitValue, unitValueProblem: unitValueProblem, unitMmPer: unitMmPer, parseUnitMath: parseUnitMath, parseUnitQuantity: parseUnitQuantity, roundDisplay: roundDisplay, mmToDisplay: mmToDisplay, displayToMm: displayToMm, formatMm: formatMm, textToMm: textToMm, roundInches: roundInches, wireUnitFields: wireUnitFields };
 })();
 if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
 // END ncsender-unit-input
@@ -4687,7 +4696,23 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     ROOT.addEventListener('focusout', function(evt) {
       var el = unitField(evt.target);
       if (el && before != null && el.value !== before) el.dispatchEvent(new Event('change', { bubbles: true }));
+      // 1,000 is refused (it may be a thousands separator): red, and its tooltip says why.
+      if (!el) return;
+      var why = NcUnitInput.unitValueProblem(el.value);
+      if (el.dataset.tip == null) el.dataset.tip = el.title;
+      if (why) { el.classList.add('mw-invalid'); el.dataset.comma = '1'; }
+      else if (el.dataset.comma) { el.classList.remove('mw-invalid'); delete el.dataset.comma; }
+      el.title = why ? why + '. ' + el.dataset.tip : el.dataset.tip;
     });
+  }
+  // The unit fields showing under root that hold a refused comma (1,000), as
+  // "Label: why" lines for a problem list.
+  function commaProblems(root) {
+    return Array.prototype.filter.call(root.querySelectorAll('input[data-unit]'), function(el) { return el.offsetParent && NcUnitInput.unitValueProblem(el.value); })
+      .map(function(el) {
+        var lab = (el.id && ROOT.querySelector('label[for="' + el.id + '"]')) || $(el.getAttribute('aria-labelledby')), name = lab ? lab.textContent.replace(/\s*\(.*\)\s*$/, '').trim() : 'A field';
+        return name + ': ' + NcUnitInput.unitValueProblem(el.value);
+      });
   }
 
   function fieldVal(id) { var v = unitVal($(id)); return isFinite(v) ? String(v) : $(id).value; }
@@ -7966,7 +7991,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     return out;
   }
-  function cutProblems(o) { return placeProblems(o).concat(holeCutProblems(o)); }
+  function cutProblems(o) { return commaProblems(ROOT.querySelector('.mw-tab[data-tab="cut"]') || ROOT).concat(placeProblems(o), holeCutProblems(o)); }
   // Dog holes also need the board's thickness, so Hole Depth can't go
   // through it (it has no default: boards differ).
   function dogHoleProblems(o) {
