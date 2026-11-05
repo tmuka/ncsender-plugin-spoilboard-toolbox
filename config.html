@@ -4606,7 +4606,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     function val(id) {
       var el = $(id), v = unitVal(el);
       var good = isFinite(v) && v > 0;
-      el.classList.toggle('mw-invalid', !good);
+      flagField(el, !good, fieldName(el) + ' must be more than 0');
       if (!good) ok = false;
       return v;
     }
@@ -4630,7 +4630,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var ids = { 'mw-slot': s.slot, 'mw-backup': s.backup, 'mw-thick': s.thick };
     Object.keys(ids).forEach(function(id) {
       var clash = Object.keys(ids).some(function(o2) { return o2 !== id && ids[o2] === ids[id]; });
-      $(id).classList.toggle('mw-invalid', clash);
+      flagField($(id), clash, WCS_NAMES[ids[id]] + ' Z is picked for more than one of these: give each its own slot');
       if (clash) ok = false;
     });
     return ok ? s : null;
@@ -4700,9 +4700,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       // error bubble says why.
       if (!el) return;
       var why = NcUnitInput.unitValueProblem(el.value);
-      if (why) { el.classList.add('mw-invalid'); el.dataset.comma = '1'; }
-      else if (el.dataset.comma) { el.classList.remove('mw-invalid'); delete el.dataset.comma; }
-      setFieldError(el, why ? why : null);
+      if (why) { el.classList.add('mw-invalid'); el.dataset.comma = '1'; delete el.dataset.pending; setFieldError(el, why); }
+      else if (el.dataset.comma) { el.classList.remove('mw-invalid'); delete el.dataset.comma; setFieldError(el, null); }
     });
     // While typing, a flagged field clears the moment it's fixed; a refused
     // 1,000 (more typing can't fix it) shows after a second's pause.
@@ -4729,6 +4728,23 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // another field; hidden while that field is scrolled out of view. As
   // QuickCut's. On the host page's body, since the dialog may be transformed.
   var errBubble = null, errLeft = null;
+  // A field's name, from its label (without the units in brackets).
+  function fieldName(el) {
+    var lab = (el.id && ROOT.querySelector('label[for="' + el.id + '"]')) || $(el.getAttribute('aria-labelledby'));
+    var t = lab ? lab.textContent : el.getAttribute('aria-label') || '';
+    return t.replace(/\s*\(.*\)\s*$/, '').trim() || 'This field';
+  }
+  // Marks a field red with its problem (or clears it). A refused 1,000 says
+  // that instead, whatever the check. While the field is being typed in, a
+  // new problem waits until it's left (0. on the way to 0.25 never flags);
+  // one already showing updates, and clears the moment it's fixed.
+  function flagField(el, bad, message) {
+    var why = bad ? NcUnitInput.unitValueProblem(el.value) || message : null;
+    if (why && el === document.activeElement && !el.classList.contains('mw-invalid')) { el.dataset.pending = why; return; }
+    delete el.dataset.pending;
+    el.classList.toggle('mw-invalid', !!why);
+    setFieldError(el, why);
+  }
   function setFieldError(el, message) {
     if (message) el.dataset.error = message;
     else delete el.dataset.error;
@@ -4769,7 +4785,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function wireErrorBubble() {
     ROOT.addEventListener('focusin', updateErrorBubble);
     ROOT.addEventListener('focusout', function(ev) {
-      if (ev.target.dataset && ev.target.dataset.error) errLeft = ev.target;
+      var el = ev.target;
+      // A problem held while it was typed in shows now it's left.
+      if (el.dataset && el.dataset.pending) { var why = el.dataset.pending; delete el.dataset.pending; el.classList.add('mw-invalid'); setFieldError(el, why); }
+      if (el.dataset && el.dataset.error) errLeft = el;
       setTimeout(updateErrorBubble, 0);
     });
     ROOT.addEventListener('scroll', updateErrorBubble, true);
@@ -4785,8 +4804,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function commaProblems(root) {
     return Array.prototype.filter.call(root.querySelectorAll('input[data-unit]'), function(el) { return el.offsetParent && NcUnitInput.unitValueProblem(el.value); })
       .map(function(el) {
-        var lab = (el.id && ROOT.querySelector('label[for="' + el.id + '"]')) || $(el.getAttribute('aria-labelledby')), name = lab ? lab.textContent.replace(/\s*\(.*\)\s*$/, '').trim() : 'A field';
-        return name + ': ' + NcUnitInput.unitValueProblem(el.value);
+        return fieldName(el) + ': ' + NcUnitInput.unitValueProblem(el.value);
       });
   }
 
@@ -4845,7 +4863,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var status = $('mw-store-status'), btn = $('mw-store-stock');
     var s = readSettings(), el = $('mw-stock'), v = unitVal(el);
     var good = isFinite(v) && v > 0;
-    el.classList.toggle('mw-invalid', !good);
+    flagField(el, !good, 'Enter a thickness above 0');
     if (!s || !good) { status.setAttribute('data-state', 'bad'); status.textContent = 'Enter a thickness above 0 (and three different slots) first.'; return; }
     var mm = v * (state.imperial ? MM_PER_INCH : 1);
     btn.disabled = true;
@@ -5788,7 +5806,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     holes.thickFrom = 'measured';
     if (unitVal(el) === v) return;
     el.value = v;
-    el.classList.remove('mw-invalid');
+    flagField(el, false);
     saveSettings();
   }
   // Follow Z0 (T): the active work offset's Z0 height above the recorded
@@ -5821,7 +5839,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var el = $('mw-stock-t'), v = +(mm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
     if (unitVal(el) === v) return;
     el.value = v;
-    el.classList.remove('mw-invalid');
+    flagField(el, false);
     saveSettings();
   }
   // T following Z0 that isn't yet the stored thickness: a vise or fixture
@@ -5919,7 +5937,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var k = state.imperial ? MM_PER_INCH : 1, d = state.imperial ? 4 : 3;
     $('mw-stock-w').value = +(Math.abs(dx) / k).toFixed(d);
     $('mw-stock-l').value = +(Math.abs(dy) / k).toFixed(d);
-    ['mw-stock-w', 'mw-stock-l'].forEach(function(id) { $(id).classList.remove('mw-invalid'); });
+    ['mw-stock-w', 'mw-stock-l'].forEach(function(id) { flagField($(id), false); });
     status.setAttribute('data-state', 'ok');
     status.textContent = 'Stock size from the spindle: ' + shown(Math.abs(dx)) + ' × ' + shown(Math.abs(dy)) + ' ' + unitName() + ', from its ' + stockPointName(corner) + '.';
   }
@@ -5937,7 +5955,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var d = state.imperial ? 4 : 3;
     $('mw-stock-w').value = +(w / k).toFixed(d);
     $('mw-stock-l').value = +(l / k).toFixed(d);
-    ['mw-stock-w', 'mw-stock-l'].forEach(function(id) { $(id).classList.remove('mw-invalid'); });
+    ['mw-stock-w', 'mw-stock-l'].forEach(function(id) { flagField($(id), false); });
     // Its X0 Y0 from the stock's front left corner, the cuts centered on it.
     var x0 = (w - (b.maxX - b.minX)) / 2 - b.minX, y0 = (l - (b.maxY - b.minY)) / 2 - b.minY, u = ' ' + unitName();
     var mid = Math.abs(x0 - w / 2) < 0.05 * w && Math.abs(y0 - l / 2) < 0.05 * l;
@@ -6277,7 +6295,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     line.hidden = holes.zeroMode !== 'stock' || !(p || prog.partLost);
     txt.classList.remove('mw-warn-text');
     var k = state.imperial ? MM_PER_INCH : 1, mt = String($('mw-stock-m').value).trim(), mv = mt === '' ? 0 : unitVal($('mw-stock-m')) * k;
-    $('mw-stock-m').classList.toggle('mw-invalid', !(mv >= 0));
+    flagField($('mw-stock-m'), !(mv >= 0), fieldName($('mw-stock-m')) + ' must be 0 or more');
     $('mw-stock-fit').hidden = true;
     if (!p) {
       if (prog.partLost) txt.textContent = 'The loaded program is Spoilboard Toolbox\u2019s own: load ' + programName(prog.partSaved) + ' again to check it against the stock.';
@@ -6711,14 +6729,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // is more than 10 (a typo, not a spoilboard).
   function parseTurn(v, mark) {
     var t = String(v == null ? '' : v).trim(), n = t === '' ? 0 : /^[+-]?(\d+\.?\d*|\.\d+)$/.test(t) ? Number(t) : NaN, good = isFinite(n) && Math.abs(n) <= 10;
-    if (mark) $('mw-hole-turn').classList.toggle('mw-invalid', !good);
+    if (mark) flagField($('mw-hole-turn'), !good, 'Turn must be a number of degrees from -10 to 10 (blank: 0)');
     return good ? n : null;
   }
   function parseGrid(r, mark) {
     var k = state.imperial ? MM_PER_INCH : 1, ok = true;
     function num(key, min) {
       var v = parseUnitValue(r[key], state.imperial, 'length'), good = v != null && isFinite(v) && v >= min;
-      if (mark) $(GRID_FIELDS[key]).classList.toggle('mw-invalid', !good);
+      if (mark) flagField($(GRID_FIELDS[key]), !good, fieldName($(GRID_FIELDS[key])) + (min > 0 ? ' must be more than 0' : ' must be 0 or more'));
       if (!good) ok = false;
       return v * k;
     }
@@ -6726,17 +6744,17 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     // Pin Ø: blank is the hole's.
     var pinText = String(r.pin == null ? '' : r.pin).trim(), pinV = pinText === '' ? null : parseUnitValue(pinText, state.imperial, 'length');
     var pinGood = pinText === '' || (pinV != null && pinV > 0);
-    if (mark) $(GRID_FIELDS.pin).classList.toggle('mw-invalid', !pinGood);
+    if (mark) flagField($(GRID_FIELDS.pin), !pinGood, fieldName($(GRID_FIELDS.pin)) + ' must be more than 0, or blank for the hole\u2019s size');
     if (!pinGood) ok = false;
     h.pinMm = pinText === '' ? null : pinV * k;
     h.trackAxis = r.track || null;
     var n = parseInt(r.pn, 10), pnGood = !h.trackAxis || (n >= 1 && String(n) === String(r.pn).trim());
-    if (mark) $('mw-hole-pn').classList.toggle('mw-invalid', !pnGood);
+    if (mark) flagField($('mw-hole-pn'), !pnGood, fieldName($('mw-hole-pn')) + ' must be a whole number, 1 or more');
     // A pitch must clear the panel's own holes, or the panels overlap.
     var panelSpan = (n - 1) * (h.trackAxis === 'x' ? h.syMm : h.sxMm);
     var ppv = String(r.pp || '').trim() === '' ? 0 : parseUnitValue(r.pp, state.imperial, 'length');
     var pp = ppv == null ? NaN : ppv * k, ppGood = !h.trackAxis || pp === 0 || pp > panelSpan + 1e-9;
-    if (mark) $('mw-hole-pp').classList.toggle('mw-invalid', !ppGood);
+    if (mark) flagField($('mw-hole-pp'), !ppGood, fieldName($('mw-hole-pp')) + ' must be more than the panel\u2019s own holes span (' + +shown(panelSpan) + ' ' + unitName() + '), or 0');
     if (!pnGood || !ppGood) ok = false;
     h.panelHoles = h.trackAxis ? n : 0;
     h.panelPitchMm = h.trackAxis ? pp : 0;
@@ -6827,7 +6845,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     syncGrid();
     var note = $('mw-ins-note'), dia = unitVal($('mw-ins-dia'));
     note.setAttribute('data-state', 'bad');
-    $('mw-ins-dia').classList.toggle('mw-invalid', !(dia > 0));
+    flagField($('mw-ins-dia'), !(dia > 0), 'Give the insert\u2019s hole size');
     if (!(dia > 0)) { note.textContent = 'Give the insert\u2019s hole size.'; $('mw-ins-dia').focus(); return; }
     var src = holes.gridRaw[holes.activeGrid], axis = $('mw-ins-axis').value;
     var r = insertGridRaw(src, axis, String(fieldVal('mw-ins-dia')), state.imperial, state.travel);
@@ -7064,7 +7082,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var ok = true;
       var val = function(key, min) {
         var v = parseUnitValue(r0[key], state.imperial, 'length'), good = v != null && isFinite(v) && v >= min;
-        $(GRID_FIELDS[key]).classList.toggle('mw-invalid', !good);
+        flagField($(GRID_FIELDS[key]), !good, fieldName($(GRID_FIELDS[key])) + (min > 0 ? ' must be more than 0' : min === 0 ? ' must be 0 or more' : ' must be a number'));
         if (!good) ok = false;
         return v * k;
       };
@@ -7982,7 +8000,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var f = feedsNow();
     if (!f) { $('mw-cut-feeds-note').textContent = 'Give the Bit Diameter first.'; return; }
     var v = feedValues(f);
-    FEED_FIELDS.forEach(function(id, i) { $(id).value = v[i]; $(id).classList.remove('mw-invalid'); });
+    FEED_FIELDS.forEach(function(id, i) { $(id).value = v[i]; flagField($(id), false); });
     state.feedsFilled = v;
     renderCutTab(); renderStockHoles(); saveSettings();
     showStartingFeeds();
@@ -8076,8 +8094,24 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     return out;
   }
   // What's cut (how many of each size, and how) and what's left out.
+  // Cut Board's own numbers, flagged by the field as holeCutProblems lists
+  // them beside Generate (a blank Spoilboard Thickness only there).
+  function flagCutFields(o) {
+    var u = ' ' + unitName(), drilled = o.bitMm > 0 && o.holes.some(function(h) { return holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm) === 'drill'; });
+    var rings = o.bitMm > 0 && o.holes.some(function(h) { return holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm) === 'clear'; });
+    var deep = o.thickMm > 0 && o.depthMm > o.thickMm + 1e-9, tipDeep = !deep && drilled && o.thickMm > 0 && o.tipMm > 0 && o.depthMm + o.tipMm > o.thickMm + 1e-9;
+    flagField($('mw-cut-bit'), !(o.bitMm > 0), 'Bit Diameter must be more than 0');
+    flagField($('mw-cut-depth'), !(o.depthMm > 0) || deep || tipDeep, !(o.depthMm > 0) ? 'Hole Depth must be more than 0'
+      : 'Hole Depth' + (tipDeep ? ' plus the drill\u2019s tip (' + +shown(o.tipMm) + u + ')' : '') + ' is more than the ' + (o.plateOn ? 'stock' : 'Spoilboard Thickness') + ' (' + +shown(o.thickMm) + u + '): it would cut into what\u2019s under it');
+    flagField($('mw-cut-step'), !(o.stepMm > 0), 'Depth per Pass must be more than 0');
+    flagField($('mw-cut-feed'), !(o.feed > 0), 'Feed must be more than 0');
+    flagField($('mw-cut-plunge'), !(o.plunge > 0), 'Plunge must be more than 0');
+    flagField($('mw-cut-stepover'), rings && !(o.stepoverPct > 0 && o.stepoverPct <= 90), 'Stepover must be 1 to 90% (holes more than twice the bit are cleared in rings)');
+    flagField($('mw-cut-tip-angle'), o.tipAngle != null && !(o.tipAngle >= 60 && o.tipAngle <= 180), 'Tip Angle must be 60 to 180\u00b0');
+  }
   function renderCut() {
     var o = cutSettings(), probs = dogHoleProblems(o), g = holes.grid;
+    flagCutFields(o);
     var sizes = {};
     o.holes.forEach(function(q) {
       var key = shown(q.diaMm) + ' ' + unitName() + ' (' + (o.bitMm > 0 ? CUT_METHODS[holeCutMethod(q.diaMm, o.bitMm)] : '?') + ')';
