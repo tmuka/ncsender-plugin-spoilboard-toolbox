@@ -4704,7 +4704,23 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       else if (el.dataset.comma) { el.classList.remove('mw-invalid'); delete el.dataset.comma; }
       setFieldError(el, why ? why : null);
     });
+    // While typing, a flagged field clears the moment it's fixed; a refused
+    // 1,000 (more typing can't fix it) shows after a second's pause.
+    var pause = null;
+    ROOT.addEventListener('input', function(evt) {
+      var el = unitField(evt.target);
+      if (!el) return;
+      clearTimeout(pause);
+      var why = NcUnitInput.unitValueProblem(el.value);
+      if (!why && el.dataset.comma) { el.classList.remove('mw-invalid'); delete el.dataset.comma; setFieldError(el, null); }
+      if (why) pause = setTimeout(function() {
+        if (document.activeElement !== el || NcUnitInput.unitValueProblem(el.value) !== why) return;
+        el.classList.add('mw-invalid'); el.dataset.comma = '1'; setFieldError(el, why);
+      }, TYPING_PAUSE_MS);
+    });
   }
+  // How long a pause in typing counts as done, for an error typing more can't fix.
+  var TYPING_PAUSE_MS = 1000;
 
   // A field's problem: its red border, and its words in one red bubble
   // floating over the dialog, on the flagged field the cursor is in, else
