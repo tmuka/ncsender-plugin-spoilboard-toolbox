@@ -4718,7 +4718,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       }, TYPING_PAUSE_MS);
     });
   }
-  // How long a pause in typing counts as done, for an error typing more can't fix.
+  // How long a pause in typing counts as done: then a field's problem shows.
   var TYPING_PAUSE_MS = 1000;
 
   // A field's problem: its red border, and its words in one red bubble
@@ -4784,6 +4784,16 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function wireErrorBubble() {
     ROOT.addEventListener('focusin', updateErrorBubble);
+    // A problem held while a field is typed in shows after a second's pause.
+    var pause = null;
+    ROOT.addEventListener('input', function(ev) {
+      var el = ev.target;
+      clearTimeout(pause);
+      pause = setTimeout(function() {
+        if (document.activeElement !== el || !el.dataset || !el.dataset.pending) return;
+        var why = el.dataset.pending; delete el.dataset.pending; el.classList.add('mw-invalid'); setFieldError(el, why);
+      }, TYPING_PAUSE_MS);
+    });
     ROOT.addEventListener('focusout', function(ev) {
       var el = ev.target;
       // A problem held while it was typed in shows now it's left.
@@ -8281,7 +8291,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       state.cutTool = null;
       note.setAttribute('data-state', 'ok');
       note.textContent = 'Bit Diameter from T' + n + (tool.name ? ' (' + tool.name + ')' : '') + (fl ? ', ' + fl + ' flute' + (fl === 1 ? '' : 's') : '') + '. No tool change: it\u2019s the bit in the spindle.';
-      bitChangedFeeds();
+      fillStartingFeeds();
       saveSettings();
       renderCutTab();
     } catch (e) {
@@ -8486,7 +8496,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       note.textContent = 'No tool change: the programs cut with the bit in the spindle.';
     }
     showBitTool();
-    bitChangedFeeds();
+    // A bit picked from the tool table gets its own starting feeds, even
+    // over ones typed by hand; No tool change leaves them.
+    if (t) fillStartingFeeds(); else bitChangedFeeds();
     saveSettings();
     renderCutTab();
   }
