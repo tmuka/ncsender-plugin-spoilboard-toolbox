@@ -1199,17 +1199,6 @@
               <option value="none">None</option>
             </select>
           </div>
-          <div class="mw-field" data-for="holes fit stock">
-            <label for="mw-cut-tip">Drill Depth</label>
-            <select class="mw-select" id="mw-cut-tip" title="For holes the bit's size, drilled straight down. To the Tip: the depth is how deep the bit's point goes. Drill Tip Through: for a hole right through at full size; the hole is its full diameter all the way down, and the point goes deeper by the length of its tip. Fusion 360 calls it Drill tip through bottom.">
-              <option value="tip" selected>To the Tip</option>
-              <option value="full">Drill Tip Through</option>
-            </select>
-          </div>
-          <div class="mw-field" data-for="holes fit stock" id="mw-cut-tip-angle-field" style="display: none">
-            <label for="mw-cut-tip-angle">Tip Angle (°)</label>
-            <input class="mw-input" type="number" id="mw-cut-tip-angle" min="60" max="180" step="1" value="118" title="The angle of the bit's point: 118 for most drills, 135 for some. 90 for a ball nose; 180 for a flat end mill, which adds nothing. Picking a tool in the Bit Diameter menu fills it from the tool table.">
-          </div>
           <div class="mw-field" data-for="holes tracks fit stock">
             <label for="mw-cut-stepover">Stepover (%)</label>
             <input class="mw-input" type="number" id="mw-cut-stepover" min="1" max="90" step="1" value="40" title="For holes cleared in rings: how far apart the rings are, as a % of the bit diameter.">
@@ -1230,6 +1219,17 @@
             <label for="mw-cut-delay">Spindle Delay (s)</label>
             <input class="mw-input" type="number" id="mw-cut-delay" min="0" step="1" value="3" title="Seconds to wait after starting the spindle, so it's up to speed.">
           </div>
+          <div class="mw-field" data-for="holes fit stock">
+            <label for="mw-cut-tip">Drill Depth</label>
+            <select class="mw-select" id="mw-cut-tip" title="For holes the bit's size, drilled straight down. To the Tip: the depth is how deep the bit's point goes. Tip Through: for a hole right through at full size; the hole is its full diameter all the way down, and the point goes deeper by the length of its tip. Fusion 360 calls it Drill tip through bottom.">
+              <option value="tip" selected>To the Tip</option>
+              <option value="full">Tip Through</option>
+            </select>
+          </div>
+          <div class="mw-field" data-for="holes fit stock" id="mw-cut-tip-angle-field" style="display: none">
+            <label for="mw-cut-tip-angle">Tip Angle (°)</label>
+            <input class="mw-input" type="number" id="mw-cut-tip-angle" min="60" max="180" step="1" value="118" title="The angle of the bit's point: 118 for most drills, 135 for some. 90 for a ball nose; 180 for a flat end mill, which adds nothing. Picking a tool in the Bit Diameter menu fills it from the tool table.">
+          </div>
           <div class="mw-field mw-coolant">
             <label class="mw-extra"><input type="checkbox" id="mw-cut-mist"><span>Mist (M7)</span></label>
             <label class="mw-extra"><input type="checkbox" id="mw-cut-flood"><span>Flood (M8)</span></label>
@@ -1247,7 +1247,7 @@
             <option value="aluminum">Aluminum</option>
             <option value="foam">Foam / tooling board</option>
           </select>
-          <select class="mw-select" id="mw-cut-feeds-style" aria-label="How hard the starting feeds push" title="How hard the starting feeds push. Average: as they are. Conservative, for a light machine, a long bit or a first try: Feed and Plunge x0.75, Depth per Pass and Stepover x0.75; on plastics and aluminum the feed stays, since a thinner chip melts or rubs. Aggressive, for a rigid machine: Feed and Plunge x1.25 (up to the material's chip limit and the machine's max), Depth per Pass and Stepover x1.2. RPM stays.">
+          <select class="mw-select" id="mw-cut-feeds-style" aria-label="How hard the starting feeds push" title="How hard the starting feeds push. Conservative, for a light machine or a first try: everything x0.75 (on plastics and aluminum the feed stays). Aggressive, for a rigid machine: Feed and Plunge x1.25, Depth per Pass and Stepover x1.2. RPM stays.">
             <option value="conservative">Conservative</option><option value="average" selected>Average</option><option value="aggressive">Aggressive</option>
           </select>
           <select class="mw-select" id="mw-cut-flutes" aria-label="Flutes" title="How many cutting edges the bit has.">
@@ -3189,7 +3189,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     else if (o.thickMm > 0 && o.depthMm > o.thickMm + 1e-9) out.push('Hole Depth is more than the ' + (o.plateOn ? 'stock' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
     else if (o.thickMm > 0 && o.tipMm > 0 && o.bitMm > 0 && o.depthMm + o.tipMm > o.thickMm + 1e-9 &&
              o.holes.some(function(h) { return holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm) === 'drill' && !(h.slotMm > 0); }))
-      out.push('Hole Depth plus the drill’s tip (' + fmt(o.tipMm) + ' mm, Drill Tip Through) is more than the ' + (o.plateOn ? 'stock' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
+      out.push('Hole Depth plus the drill’s tip (' + (o.imperial ? +(o.tipMm / 25.4).toFixed(3) + ' in' : fmt(o.tipMm) + ' mm') + ', Drill Tip Through) is more than the ' + (o.plateOn ? 'stock' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
     if (o.tipAngle != null && !(o.tipAngle >= 60 && o.tipAngle <= 180)) out.push('Tip Angle must be 60 to 180°');
     if (!(o.stepMm > 0)) out.push('Depth per Pass must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) out.push('Feed and Plunge must be more than 0');
@@ -4572,7 +4572,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         if (!v) addCheck(list, 'warn', 'Couldn\'t read ' + name, 'Its current value is unknown.');
         else if (xyIsOurs && Math.abs(v[0]) + Math.abs(v[1]) + Math.abs(v[2]) > 1e-6) {
           addCheck(list, 'ok', name + ': X ' + fmt(v[0]) + ', Y ' + fmt(v[1]) + ', Z ' + fmt(v[2]) + ' mm', 'Holds ' + pair[1] + ' from an earlier run, as long as you don\'t use ' + name + ' for work.');
-        } else if (yIsOurs && Math.abs(v[0]) < 1e-6 && Math.abs(v[1]) + Math.abs(v[2]) > 1e-6) {
+        } else if (yIsOurs && Math.abs(v[0]) < 1e-6 && v[2] > 1e-6) {
           addCheck(list, 'ok', name + ' Z: ' + fmt(v[2]) + ' mm' + (Math.abs(v[1]) > 1e-6 ? ', Y ' + fmt(v[1]) : ''), 'Holds ' + pair[1] + ' from an earlier run' +
             (Math.abs(v[1]) > 1e-6 ? ' (Y: the Z0 it was stored with, so Z0 on stock top knows a newer one)' : '') + ', as long as you don\'t use ' + name + ' for work.');
         } else if (Math.abs(v[0]) + Math.abs(v[1]) > 1e-6) {
@@ -7885,11 +7885,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     state.feedsFilled = v;
     renderCutTab(); renderStockHoles(); saveSettings();
     showStartingFeeds();
-    $('mw-cut-feeds-note').textContent = 'Filled in: ' + $('mw-cut-feeds-note').textContent + '. A start: listen, look at the chips, and adjust.';
+    $('mw-cut-feeds-note').textContent = 'Filled in: ' + $('mw-cut-feeds-note').textContent.replace(/\.$/, '') + '. A start: listen, look at the chips, and adjust.';
   }
   function bitChangedFeeds() {
     if (sameValues(state.feedsFilled, feedsInFields())) fillStartingFeeds();
-    else { state.feedsFilled = null; showStartingFeeds(); }
+    else {
+      state.feedsFilled = null; showStartingFeeds();
+      if ($('mw-cut-feeds-note').textContent) $('mw-cut-feeds-note').textContent += ' Not filled in: your numbers are kept (pick the material again to fill them).';
+    }
   }
   // A fixture plate: the XY0 Picker's stock, in from its edges by this.
   var PLATE_EDGE_MM = 3;
@@ -8215,8 +8218,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     nameEl.classList.add('mw-tool-name-link');
     nameEl.setAttribute('role', 'button');
     nameEl.tabIndex = 0;
-    nameEl.addEventListener('click', function() { if (toolPop.open) closeToolPop(); else openToolPop(); });
-    nameEl.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); openToolPop(); } });
+    nameEl.addEventListener('click', function() { if (toolPop.open) closeToolPop(); else { openToolPop(); toolPop.from = nameEl; } });
+    nameEl.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); openToolPop(); toolPop.from = nameEl; } });
     var filter = $('mw-tool-filter');
     filter.addEventListener('input', function(e) {
       e.stopPropagation(); toolPop.active = firstToolActive(); renderToolList();
@@ -8233,7 +8236,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       if (!rootAlive()) { window.removeEventListener('keydown', onEsc, true); return; }
       if (e.key !== 'Escape' || !toolPop.open) return;
       e.preventDefault(); e.stopPropagation();
-      closeToolPop(); btn.focus();
+      closeToolPop(); (toolPop.from || btn).focus();
     }, true);
     document.addEventListener('pointerdown', function onDown(e) {
       if (!rootAlive()) { document.removeEventListener('pointerdown', onDown, true); return; }
@@ -8246,9 +8249,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // The first tool in the list (past No tool change), for the highlight, so
   // Enter doesn't pick No tool change by accident.
   function firstToolActive() { return bitToolNumber() && (state.tools || []).length ? 1 : 0; }
+  // Opened, the picked tool (after No tool change), else the first.
+  function pickedToolActive() {
+    var n = bitToolNumber(), i = n ? (state.tools || []).map(function(t) { return t.n; }).indexOf(n) : -1;
+    return i >= 0 ? i + 1 : firstToolActive();
+  }
   function openToolPop() {
     var btn = $('mw-cut-bit-tool'), pop = $('mw-tool-pop');
-    toolPop.open = true; toolPop.active = firstToolActive();
+    toolPop.open = true; toolPop.active = pickedToolActive(); toolPop.from = btn;
     $('mw-tool-filter').value = '';
     pop.hidden = false;
     btn.setAttribute('aria-expanded', 'true');
@@ -8716,12 +8724,15 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (fix && !(pinSize > 0)) probs.push('Pin Hole Ø must be more than 0');
     if (!(slot >= 0) || slot > 10) probs.push('Slot + must be 0 to ' + shown(10) + ' ' + unitName() + ' (0: both pin holes round)');
     if (!(margin >= 0)) probs.push('Edge Margin must be 0 or more');
+    // Drill Tip Through: a hole drilled at the bit's size goes deeper by the tip.
+    var tip = o.tipMm > 0 && [size, pinSize].some(function(d) { return d > 0 && holeCutMethod(d, o.bitMm, o.drillTolMm) === 'drill'; }) ? o.tipMm : 0;
+    var plusTip = tip ? ' plus the drill\u2019s tip (' + shown(tip) + ' ' + unitName() + ', Drill Tip Through)' : '';
     if (blind && !(blindMm > 0)) probs.push('Depth must be more than 0, or blank to drill through');
-    else if (blind && thick > 0 && blindMm >= thick) probs.push('Depth must be less than the stock\u2019s thickness (T ' + shown(thick) + ' ' + unitName() + ') for blind holes: leave it blank to drill through');
+    else if (blind && thick > 0 && blindMm + tip >= thick) probs.push('Depth' + plusTip + ' must be less than the stock\u2019s thickness (T ' + shown(thick) + ' ' + unitName() + ') for blind holes: leave it blank to drill through');
     if (blind) { /* Break Through doesn't apply */ }
     else if (!(brk >= 0)) probs.push('Break Through must be 0 or more');
     else if (!(o.depthMm > 0)) probs.push('Set Hole Depth on Cut Board \u203a Dog holes (how deep the spoilboard holes are): Break Through must be less');
-    else if (brk >= o.depthMm || (o.thickMm > 0 && brk >= o.thickMm)) probs.push('Break Through must be less than Hole Depth and Spoilboard Thickness on Cut Board \u203a Dog holes (how deep the spoilboard holes are)');
+    else if (brk + tip >= o.depthMm || (o.thickMm > 0 && brk + tip >= o.thickMm)) probs.push('Break Through' + plusTip + ' must be less than Hole Depth and Spoilboard Thickness on Cut Board \u203a Dog holes (how deep the spoilboard holes are)');
     // Z0 must be on the stock's top: the hops between holes and the depth
     // are from it. Checked against the spoilboard height the Z0 macros
     // recorded, when it's known.
@@ -9544,7 +9555,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
-      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge; <strong>Drill Depth</strong> picks <strong>To the Tip</strong> or <strong>Drill Tip Through</strong>, as Fusion 360&rsquo;s <em>Drill tip through bottom</em>, where the point goes deeper by its tip, from the <strong>Tip Angle</strong>, so the hole is full size all the way down, never past the Spoilboard Thickness), <strong>spiraled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
+      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge), <strong>spiraled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it. ' +
+        '<strong>Drill Depth</strong>, for drilled holes: <strong>To the Tip</strong> (the depth is how deep the point goes) or <strong>Tip Through</strong> (Fusion 360&rsquo;s <em>Drill tip through bottom</em>): the hole is full size all the way down, and the point goes deeper by its tip, from the <strong>Tip Angle</strong>. Picking a drill in the Bit Diameter menu fills the angle in. Hole Depth plus the tip can&rsquo;t pass the Spoilboard Thickness.',
       '<p><strong>Where to zero:</strong></p><ul>' +
         '<li><strong>Dog holes, T-tracks, Grid lines, Chamfers, Labels:</strong> Z0 on the spoilboard&rsquo;s top (the stock&rsquo;s, with Into the stock on top). X0 Y0 can be anywhere: the holes go at their machine positions. Don&rsquo;t move it after Generate.</li>' +
         '<li><strong>Fit test, Laser test:</strong> X0 Y0 on the scrap&rsquo;s front left corner, Z0 on its top (the laser focused on it).</li>' +
@@ -9800,7 +9812,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     });
     var shown = $('mw-cut-common').querySelectorAll('.mw-field[data-for]:not([hidden])').length;
     $('mw-cut-title').firstChild.textContent = shown ? 'Bit and depth' : 'Coolant';
-    $('mw-tool-name').hidden = !shown;
+    $('mw-tool-name').hidden = !shown || $('mw-cut-bit').closest('.mw-field').hidden;
   }
   // Spoilboard's sections: one at a time, picked with the chips.
   function showCutSection(name) {
