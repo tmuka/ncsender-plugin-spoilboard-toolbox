@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1120,6 +1120,23 @@ test('cut holes: stop lines before anything moves, and the work offset must not 
   assert.throws(() => evalExpr(check, { 5221: 10.01, 5222: -20.5 }), /error:72/);
   assert.match(stops[2][0], /#5222 \+ 20\.500/);
   for (const l of L) assert.ok(l.length < 190, l);
+});
+
+test('Drill Tip Through: drilled holes go deeper by the tip, the others and slots don\'t, within the board', () => {
+  const tip = drillTipMm(6.35, 118);
+  assert.ok(Math.abs(tip - 1.9077) < 1e-4);
+  assert.equal(drillTipMm(6.35, 180), 0);
+  const holes = [{ x: 100, y: 100, diaMm: 6.35, label: 'A1' }, { x: 150, y: 100, diaMm: 10, label: 'A2' }];
+  const L = holeCutProgram(cutBase({ holes, depthMm: 15, tipMm: tip }));
+  const z = (i) => { const a = L.findIndex(l => l.includes('hole ' + i + '/2')), b = L.findIndex((l, k) => k > a && /hole \d\/2|^M5/.test(l));
+    return Math.min(...L.slice(a, b).map(l => /Z(-?[\d.]+)/.exec(l)).filter(Boolean).map(m => +m[1])); };
+  assert.equal(z(1), -16.908, 'drilled: the point past the depth');
+  assert.equal(z(2), -15, 'spiraled: as before');
+  assert.ok(L.some(l => /drill tip through: the point to Z-16\.908\)$/.test(l)));
+  const o = cutBase({ holes, depthMm: 17, tipMm: tip, tipAngle: 118, thickMm: 18 });
+  assert.ok(holeCutProblems(o).some(p => /plus the drill.s tip/.test(p)), 'past the board');
+  assert.ok(!holeCutProblems(Object.assign({}, o, { depthMm: 16 })).some(p => /tip/.test(p)));
+  assert.ok(holeCutProblems(Object.assign({}, o, { depthMm: 10, tipAngle: 18 })).some(p => /Tip Angle/.test(p)));
 });
 
 test('cut holes: the bit stays inside each hole and reaches its edge and depth', () => {

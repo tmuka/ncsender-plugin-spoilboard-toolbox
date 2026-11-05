@@ -438,6 +438,21 @@
     text-align: left; cursor: pointer;
     background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2393a2b4' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 1px center / 9px 6px !important; }
   button#mw-cut-bit-tool:hover, button#mw-cut-bit-tool[aria-expanded="true"] { color: var(--color-text-primary) !important; }
+  /* A taller tap area on a touchscreen, without moving the layout; no focus
+     box (the browser's ring drew round the whole tap area, over the field
+     below): focused, the label takes the accent colour instead. */
+  button#mw-cut-bit-tool { padding-top: 9px !important; padding-bottom: 9px !important; margin: -9px 0 !important; }
+  button#mw-cut-bit-tool:focus, button#mw-cut-bit-tool:focus-visible { outline: none !important; }
+  button#mw-cut-bit-tool:focus-visible { color: color-mix(in srgb, var(--color-accent) 55%, var(--color-text-primary)) !important; }
+  /* The tool picked from the tool table, after the card's title: as named, on
+     one line; with the tool menu it opens it, and reads No tool change when
+     none is picked. */
+  #mw-cut-title { display: flex; align-items: baseline; min-width: 0; }
+  .mw-tool-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .mw-tool-name:not(:empty)::before { content: '\00b7'; padding: 0 0.45em; color: var(--color-text-secondary); }
+  .mw-tool-name.mw-tool-none { color: var(--color-text-secondary); }
+  .mw-tool-name-link { cursor: pointer; border-radius: 4px; outline: none; }
+  .mw-tool-name-link:hover, .mw-tool-name-link:focus-visible { color: color-mix(in srgb, var(--color-accent) 55%, var(--color-text-primary)); }
   .mw-tool-pop { position: absolute; z-index: 30; width: 420px; max-width: calc(100% - 16px); display: flex; flex-direction: column; gap: 6px; padding: 8px;
     background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38); }
   .mw-tool-pop[hidden] { display: none !important; }
@@ -1158,7 +1173,7 @@
       </div>
       <div id="mw-cut-common-slot">
       <section class="mw-card" id="mw-cut-common">
-        <h3 class="mw-card-title">Bit and depth</h3>
+        <h3 class="mw-card-title" id="mw-cut-title">Bit and depth<span class="mw-tool-name" id="mw-tool-name"></span></h3>
         <div class="mw-row mw-row-5">
           <div class="mw-field" data-for="holes tracks fit stock">
             <label for="mw-cut-bit" id="mw-cut-bit-label" class="mw-label-link" tabindex="0" role="button" title="Click to use the loaded tool's diameter from ncSender's tool table">Bit Diameter (<span class="mw-unit">mm</span>)</label>
@@ -1183,6 +1198,17 @@
               <option value="break">Break chips</option>
               <option value="none">None</option>
             </select>
+          </div>
+          <div class="mw-field" data-for="holes fit stock">
+            <label for="mw-cut-tip">Drill Depth</label>
+            <select class="mw-select" id="mw-cut-tip" title="For holes the bit's size, drilled straight down. To the Tip: the depth is how deep the bit's point goes. Drill Tip Through: for a hole right through at full size; the hole is its full diameter all the way down, and the point goes deeper by the length of its tip. Fusion 360 calls it Drill tip through bottom.">
+              <option value="tip" selected>To the Tip</option>
+              <option value="full">Drill Tip Through</option>
+            </select>
+          </div>
+          <div class="mw-field" data-for="holes fit stock" id="mw-cut-tip-angle-field" style="display: none">
+            <label for="mw-cut-tip-angle">Tip Angle (°)</label>
+            <input class="mw-input" type="number" id="mw-cut-tip-angle" min="60" max="180" step="1" value="118" title="The angle of the bit's point: 118 for most drills, 135 for some. 90 for a ball nose; 180 for a flat end mill, which adds nothing. Picking a tool in the Bit Diameter menu fills it from the tool table.">
           </div>
           <div class="mw-field" data-for="holes tracks fit stock">
             <label for="mw-cut-stepover">Stepover (%)</label>
@@ -3150,11 +3176,21 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   // What stops a cut, as messages; none when it's good to go. o as
   // holeCutProgram's, plus thickMm (the spoilboard's thickness).
+  // Drill Tip Through (Fusion 360's "Drill tip through bottom"): the bit's
+  // full width reaches the depth, so its point goes deeper by the length of
+  // its tip (0 for a flat bit, 180°).
+  function drillTipMm(bitMm, tipAngle) {
+    return tipAngle > 0 && tipAngle < 180 ? bitMm / 2 / Math.tan(tipAngle * Math.PI / 360) : 0;
+  }
   function holeCutProblems(o) {
     var out = [];
     if (!(o.bitMm > 0)) out.push('Bit Diameter must be more than 0');
     if (!(o.depthMm > 0)) out.push((o.depthName || 'Hole Depth') + ' must be more than 0');
     else if (o.thickMm > 0 && o.depthMm > o.thickMm + 1e-9) out.push('Hole Depth is more than the ' + (o.plateOn ? 'stock' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
+    else if (o.thickMm > 0 && o.tipMm > 0 && o.bitMm > 0 && o.depthMm + o.tipMm > o.thickMm + 1e-9 &&
+             o.holes.some(function(h) { return holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm) === 'drill' && !(h.slotMm > 0); }))
+      out.push('Hole Depth plus the drill’s tip (' + fmt(o.tipMm) + ' mm, Drill Tip Through) is more than the ' + (o.plateOn ? 'stock' : 'spoilboard') + '’s thickness: it would cut into what’s under it');
+    if (o.tipAngle != null && !(o.tipAngle >= 60 && o.tipAngle <= 180)) out.push('Tip Angle must be 60 to 180°');
     if (!(o.stepMm > 0)) out.push('Depth per Pass must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) out.push('Feed and Plunge must be more than 0');
     // Stepover only sets the rings of holes cleared out; drilling and
@@ -3268,8 +3304,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     };
     var at = null, lastC = null;
     o.holes.forEach(function(h, i) {
-      var levels = levelsTo(h.depthMm || o.depthMm);
       var method = holeCutMethod(h.diaMm, o.bitMm, o.drillTolMm), cx = h.x - o.wcs.x, cy = h.y - o.wcs.y, pr = h.diaMm / 2 - r;
+      // Drilled with Drill Tip Through, the point goes deeper by its tip.
+      var levels = levelsTo((h.depthMm || o.depthMm) + (method === 'drill' && !(h.slotMm > 0) ? o.tipMm || 0 : 0));
       // A slot: h.diaMm wide, h.slotMm longer along (ux, uy), its ends'
       // centers A and B. Rings around A-B, innermost first (a line when
       // the bit is the slot's width).
@@ -3284,7 +3321,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         slot.p1 = function(rr) { return { x: slot.ax + rr * slot.uy, y: slot.ay - rr * slot.ux }; };
       }
       var helixR = Math.min(r * 0.6, pr - 0.001), start = method === 'drill' ? { x: cx, y: cy } : slot ? slot.p1(slot.rings[0]) : { x: cx + (method === 'helix' ? pr : helixR), y: cy };
-      L.push(c('SBT hole ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40) + ', ' + fmt(h.diaMm) + ' mm, ' + method));
+      L.push(c('SBT hole ' + (i + 1) + '/' + n + ': ' + String(h.label).slice(0, 40) + ', ' + fmt(h.diaMm) + ' mm, ' + method +
+        (method === 'drill' && o.tipMm > 0 ? ', drill tip through: the point to Z-' + f3(levels[levels.length - 1]) : '')));
       var to = { x: start.x + o.wcs.x, y: start.y + o.wcs.y };
       // safeEach: to Safe Z between holes (over clamps on the stock), not
       // between a counterbore and the hole through it.
@@ -7841,6 +7879,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     FEED_FIELDS.forEach(function(id, i) { $(id).value = v[i]; $(id).classList.remove('mw-invalid'); });
     state.feedsFilled = v;
     renderCutTab(); renderStockHoles(); saveSettings();
+    showStartingFeeds();
     $('mw-cut-feeds-note').textContent = 'Filled in: ' + $('mw-cut-feeds-note').textContent + '. A start: listen, look at the chips, and adjust.';
   }
   function bitChangedFeeds() {
@@ -7877,6 +7916,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       // A plate is clamped like stock: Safe Z between holes, and a stop if
       // Z0 has moved since Generate (its depth is from that Z0).
       safeEach: plateOn || undefined, zStop: plateOn && zero && ms[w.toLowerCase()] ? parseFloat(String(ms[w.toLowerCase()]).split(',')[2]) : undefined,
+      tipMm: $('mw-cut-tip').value === 'full' ? drillTipMm(bit, parseFloat($('mw-cut-tip-angle').value)) : 0,
+      tipAngle: $('mw-cut-tip').value === 'full' ? parseFloat($('mw-cut-tip-angle').value) : null,
       peck: $('mw-cut-peck').value, stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
       rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
@@ -8038,6 +8079,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var m = holeCutMethod(dia, bit);
       say(m === 'drill' ? 'Drilled: the bit is the hole\u2019s size' : m === 'helix' ? 'Spiraled down: the bit is ' + num(bit) : m === 'clear' ? 'Cleared in rings: more than twice the bit' : 'The bit is bigger than the hole!', m === 'too-small' ? 'mw-d-warn' : 'mw-d-note');
       if (m === 'drill') say('Pecks: ' + $('mw-cut-peck').selectedOptions[0].textContent.toLowerCase(), 'mw-d-note');
+      if (m === 'drill' && o.tipMm > 0) say('Tip through: the point ' + num(o.tipMm) + ' deeper', thick > 0 && depth + o.tipMm > thick + 1e-9 ? 'mw-d-warn' : 'mw-d-note');
     }
     $('mw-cut-diagram').innerHTML = out.join('');
   }
@@ -8046,7 +8088,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-peck', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
@@ -8075,6 +8117,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     // A grid menu's options come later: it keeps the wanted value till then.
     CUT_SAVED.plain.forEach(function(k) { if (c[k] != null && c[k] !== '') { $('mw-' + k).value = c[k]; $('mw-' + k).setAttribute('data-want', c[k]); } });
     CUT_SAVED.checks.forEach(function(k) { if (typeof c[k] === 'boolean') $('mw-' + k).checked = c[k]; });
+    showTipAngle();
   }
   // Bit Diameter's label: the loaded tool's diameter from ncSender's tool
   // table, as QuickCut's (the loaded T<n> is a slot or a Tool ID, by
@@ -8135,7 +8178,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var loaded = Number((state.machine || {}).tool);
     state.loadedTool = loaded > 0 ? loaded : 0;
     state.tools = (tools || []).filter(function(t) { return t.type !== 'probe'; })
-      .map(function(t) { return { n: byId ? t.toolId : t.toolNumber, mm: t.diameter, name: t.name || '', notes: (t.metadata && t.metadata.notes) || '', flutes: (t.metadata && t.metadata.flutes) || 0 }; })
+      .map(function(t) { return { n: byId ? t.toolId : t.toolNumber, mm: t.diameter, name: t.name || '', notes: (t.metadata && t.metadata.notes) || '', flutes: (t.metadata && t.metadata.flutes) || 0, type: t.type, dimensions: t.dimensions }; })
       .filter(function(t) { return t.n > 0 && t.mm > 0; })
       // The tool in the spindle first, then the rest by number.
       .sort(function(a, b) { return (b.n === state.loadedTool) - (a.n === state.loadedTool) || a.n - b.n; });
@@ -8162,6 +8205,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     ROOT.appendChild(pop);
     btn.addEventListener('keydown', function(e) { if (e.key === 'ArrowDown') { e.preventDefault(); openToolPop(); } });
     btn.addEventListener('click', function() { if (toolPop.open) closeToolPop(); else openToolPop(); });
+    // The tool's name after the card's title opens the same menu.
+    var nameEl = $('mw-tool-name');
+    nameEl.classList.add('mw-tool-name-link');
+    nameEl.setAttribute('role', 'button');
+    nameEl.tabIndex = 0;
+    nameEl.addEventListener('click', function() { if (toolPop.open) closeToolPop(); else openToolPop(); });
+    nameEl.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); openToolPop(); } });
     var filter = $('mw-tool-filter');
     filter.addEventListener('input', function(e) {
       e.stopPropagation(); toolPop.active = firstToolActive(); renderToolList();
@@ -8182,7 +8232,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }, true);
     document.addEventListener('pointerdown', function onDown(e) {
       if (!rootAlive()) { document.removeEventListener('pointerdown', onDown, true); return; }
-      if (toolPop.open && !pop.contains(e.target) && e.target !== btn) closeToolPop();
+      if (toolPop.open && !pop.contains(e.target) && e.target !== btn && !nameEl.contains(e.target)) closeToolPop();
     }, true);
     showBitTool();
     try { await readTools(); } catch (e) { state.tools = []; }
@@ -8243,11 +8293,32 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     // A tool whose tool table entry gives its flutes fixes them; guessed from
     // its name (or 2 when nothing says), they stay yours to change.
     var t = n ? (state.tools || []).filter(function(x) { return x.n === n; })[0] : null, flutes = $('mw-cut-flutes'), fixed = !!(t && t.flutes > 0);
+    // The tool's name after the card's title; with the tool menu and no tool
+    // picked, No tool change, to click.
+    var name = $('mw-tool-name'), link = name.classList.contains('mw-tool-name-link'), none = !n && link;
+    name.classList.toggle('mw-tool-none', none);
+    name.textContent = none ? 'No tool change' : t ? (t.name || 'T' + n) : '';
+    name.title = none ? 'No tool change: the programs cut with the bit in the spindle. Click to pick a tool from the tool table.'
+      : t ? 'T' + n + (t.name ? ': ' + t.name : '') + (link ? '. Click to pick another tool.' : '') : '';
     if (flutes.dataset.tip == null) flutes.dataset.tip = flutes.title;
     flutes.disabled = fixed;
     flutes.title = fixed ? 'From T' + n + '\u2019s flutes in the tool table. Pick No tool change, or type a diameter, to set them yourself.' : flutes.dataset.tip;
     if (toolPop.open) renderToolList();
   }
+  // A drill's point from the tool table: its taper angle (half the angle,
+  // as for a V-bit) or an angle in its name, else the usual 118°. A ball
+  // nose is full width half its diameter up, as a 90° point; a flat bit
+  // 180°. Anything else (a V-bit for chamfers) leaves Tip Angle alone.
+  function drillTipAngle(t) {
+    if (t.type === 'drill' || (!t.type && /\bdrill\b/i.test(t.name))) {
+      var half = t.dimensions && t.dimensions.taper_angle, m = /(\d{1,3}(?:\.\d+)?)\s*(?:\u00b0|-?\s*deg(?:rees?)?\b)/i.exec(t.name || '');
+      var a = half > 0 && half < 90 ? Math.round(half * 200) / 100 : m ? +m[1] : 0;
+      return a >= 60 && a <= 180 ? a : 118;
+    }
+    if (t.type === 'ball') return 90;
+    return t.type === 'flat' || t.type === 'surfacing' ? 180 : null;
+  }
+  function showTipAngle() { $('mw-cut-tip-angle-field').style.display = $('mw-cut-tip').value === 'full' ? '' : 'none'; }
   function pickBitTool(v) {
     closeToolPop();
     if (!v) return;
@@ -8257,7 +8328,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       $('mw-cut-bit').value = +(t.mm / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
       state.cutTool = { n: t.n, mm: +t.mm };
       note.setAttribute('data-state', 'ok');
-      note.textContent = 'T' + t.n + (t.name ? ' (' + t.name + ')' : '') + (fl ? ', ' + fl + ' flute' + (fl === 1 ? '' : 's') : '') + ': the programs start with a tool change to it (M6 T' + t.n + ').';
+      var tip = drillTipAngle(t);
+      if (tip) $('mw-cut-tip-angle').value = String(tip);
+      note.textContent = 'T' + t.n + (t.name ? ' (' + t.name + ')' : '') + (fl ? ', ' + fl + ' flute' + (fl === 1 ? '' : 's') : '') + ': the programs start with a tool change to it (M6 T' + t.n + ').' +
+        (tip && $('mw-cut-tip').value === 'full' ? ' Tip Angle ' + tip + '\u00b0.' : '');
     } else {
       state.cutTool = null;
       note.setAttribute('data-state', 'ok');
@@ -8957,6 +9031,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     ['mw-cut-mat', 'mw-cut-flutes', 'mw-cut-feeds-style'].forEach(function(id) { $(id).addEventListener('change', fillStartingFeeds); });
     $('mw-cut-bit').addEventListener('input', showStartingFeeds);
     $('mw-cut-bit').addEventListener('change', bitChangedFeeds);
+    $('mw-cut-tip').addEventListener('change', showTipAngle);
+    showTipAngle();
     showStartingFeeds();
     $('mw-cut-generate').addEventListener('click', generateCut);
     // A standard thread fills in its size (before the render the change makes).
@@ -9463,7 +9539,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
-      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge), <strong>spiraled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
+      'Each hole is <strong>drilled</strong> when the bit is its size (pecking a Depth per Pass at a time; <strong>Drill Pecks</strong> picks clearing the chips, breaking them, or one plunge; <strong>Drill Depth</strong> picks <strong>To the Tip</strong> or <strong>Drill Tip Through</strong>, as Fusion 360&rsquo;s <em>Drill tip through bottom</em>, where the point goes deeper by its tip, from the <strong>Tip Angle</strong>, so the hole is full size all the way down, never past the Spoilboard Thickness), <strong>spiraled down</strong> when it&rsquo;s up to twice the bit, and otherwise <strong>cleared in rings</strong> out from a spiral in its middle. Climb milling, as QuickCut does it.',
       '<p><strong>Where to zero:</strong></p><ul>' +
         '<li><strong>Dog holes, T-tracks, Grid lines, Chamfers, Labels:</strong> Z0 on the spoilboard&rsquo;s top (the stock&rsquo;s, with Into the stock on top). X0 Y0 can be anywhere: the holes go at their machine positions. Don&rsquo;t move it after Generate.</li>' +
         '<li><strong>Fit test, Laser test:</strong> X0 Y0 on the scrap&rsquo;s front left corner, Z0 on its top (the laser focused on it).</li>' +
@@ -9718,7 +9794,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       el.hidden = el.getAttribute('data-for').split(' ').indexOf(sec) < 0 || (el.contains($('mw-cut-thick')) && $('mw-cut-plate').checked);
     });
     var shown = $('mw-cut-common').querySelectorAll('.mw-field[data-for]:not([hidden])').length;
-    $('mw-cut-common').querySelector('.mw-card-title').textContent = shown ? 'Bit and depth' : 'Coolant';
+    $('mw-cut-title').firstChild.textContent = shown ? 'Bit and depth' : 'Coolant';
+    $('mw-tool-name').hidden = !shown;
   }
   // Spoilboard's sections: one at a time, picked with the chips.
   function showCutSection(name) {

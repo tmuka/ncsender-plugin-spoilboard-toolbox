@@ -558,6 +558,12 @@ the plugin reminds you to re-record the spoilboard height.
   0.5 mm to snap the chip, as QuickCut's Drill) or **None** (one plunge). Spiraled down when the hole is up to twice
   the bit, else cleared in rings out from a spiral in its middle. Climb milling, as QuickCut does; the
   circle milling is QuickCut's.
+- **Drill Depth:** for drilled holes, **To the Tip** (the depth is how deep the bit's point goes) or **Drill Tip
+  Through**, as QuickCut's and Fusion 360's *Drill tip through bottom*: the hole is its full diameter all the way down,
+  and the point goes deeper by the length of its tip (a 6.35 mm, 118° drill goes 1.91 mm deeper). **Tip Angle**
+  (60° to 180°) shows with it; picking a tool in the Bit Diameter menu fills it in: a drill's angle from the tool table
+  or its name, else 118°; 90° for a ball nose; 180° for a flat end mill. Hole Depth plus the tip can't be more than the
+  Spoilboard Thickness, so the point never reaches what's under the board.
 - **Starting feeds:** under Bit and depth, pick the material (MDF / plywood, softwood, hardwood, HDPE,
   acrylic, polycarbonate, aluminum, foam), the bit's flutes and how hard to push, and the starting numbers go
   straight into RPM, Feed, Plunge, Depth per Pass and Stepover: [ncCAM](https://github.com/siganberg/ncsender-plugin-nccam)'s formula (the chip each tooth takes grows with the bit, up
