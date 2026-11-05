@@ -8163,12 +8163,23 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     btn.addEventListener('keydown', function(e) { if (e.key === 'ArrowDown') { e.preventDefault(); openToolPop(); } });
     btn.addEventListener('click', function() { if (toolPop.open) closeToolPop(); else openToolPop(); });
     var filter = $('mw-tool-filter');
-    filter.addEventListener('input', function(e) { e.stopPropagation(); toolPop.active = 0; renderToolList(); });
+    filter.addEventListener('input', function(e) {
+      e.stopPropagation(); toolPop.active = firstToolActive(); renderToolList();
+      if (toolPop.active >= toolPop.items.length) { toolPop.active = 0; renderToolList(); }
+    });
     filter.addEventListener('keydown', function(e) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); moveToolActive(e.key === 'ArrowDown' ? 1 : -1); }
       else if (e.key === 'Enter') { e.preventDefault(); var it = toolPop.items[toolPop.active]; if (it) pickBitTool(it.value); }
-      else if (e.key === 'Escape') { e.preventDefault(); closeToolPop(); btn.focus(); }
     });
+    // Esc closes the menu, not the plugin: ncSender closes the dialog from a
+    // window keydown listener (bubble phase), so this one runs first in the
+    // capture phase and stops it. Page-wide, so it goes once the dialog has.
+    window.addEventListener('keydown', function onEsc(e) {
+      if (!rootAlive()) { window.removeEventListener('keydown', onEsc, true); return; }
+      if (e.key !== 'Escape' || !toolPop.open) return;
+      e.preventDefault(); e.stopPropagation();
+      closeToolPop(); btn.focus();
+    }, true);
     document.addEventListener('pointerdown', function onDown(e) {
       if (!rootAlive()) { document.removeEventListener('pointerdown', onDown, true); return; }
       if (toolPop.open && !pop.contains(e.target) && e.target !== btn) closeToolPop();
@@ -8177,9 +8188,12 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     try { await readTools(); } catch (e) { state.tools = []; }
     showBitTool();
   }
+  // The first tool in the list (past No tool change), for the highlight, so
+  // Enter doesn't pick No tool change by accident.
+  function firstToolActive() { return bitToolNumber() && (state.tools || []).length ? 1 : 0; }
   function openToolPop() {
     var btn = $('mw-cut-bit-tool'), pop = $('mw-tool-pop');
-    toolPop.open = true; toolPop.active = 0;
+    toolPop.open = true; toolPop.active = firstToolActive();
     $('mw-tool-filter').value = '';
     pop.hidden = false;
     btn.setAttribute('aria-expanded', 'true');
@@ -8209,12 +8223,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       return words.every(function(w) { return hay.indexOf(w) >= 0; });
     });
     toolPop.items = tools.map(function(t) { return { value: String(t.n), t: t }; });
-    if (n) toolPop.items.push({ value: 'none' });
+    // No tool change first, above the tools (only while one is picked).
+    if (n) toolPop.items.unshift({ value: 'none' });
     var html = !state.tools ? '<div class="mw-tool-empty">Reading the tool table…</div>' : !state.tools.length ? '<div class="mw-tool-empty">No tools with a diameter in the tool table.</div>'
-      : !tools.length ? '<div class="mw-tool-empty">No tool matches “' + esc(f) + '”.</div>' : '<div class="mw-tool-head">Tool change to</div>';
+      : !tools.length ? '<div class="mw-tool-empty">No tool matches “' + esc(f) + '”.</div>' : '';
+    var head = tools.length ? '<div class="mw-tool-head">Tool change to</div>' : '';
     html += toolPop.items.map(function(it, i) {
       var t = it.t, text = t ? (t.n === n ? '✓ ' : '') + 'T' + t.n + (t.name ? ' ' + esc(t.name) : '') + ' <span class="mw-tool-size">' + shown(t.mm) + u + (t.n === state.loadedTool ? ', in the spindle' : '') + '</span>' : 'No tool change';
-      return '<button type="button" class="mw-tool-item' + (i === toolPop.active ? ' mw-active' : '') + '" role="option" aria-selected="' + !!(t && t.n === n) + '" data-v="' + it.value + '">' + text + '</button>';
+      return (t && (i === 0 || !toolPop.items[i - 1].t) ? head : '') + '<button type="button" class="mw-tool-item' + (i === toolPop.active ? ' mw-active' : '') + '" role="option" aria-selected="' + !!(t && t.n === n) + '" data-v="' + it.value + '">' + text + '</button>';
     }).join('');
     list.innerHTML = html;
     list.querySelectorAll('.mw-tool-item').forEach(function(b) { b.addEventListener('click', function() { pickBitTool(b.getAttribute('data-v')); }); });
@@ -8224,6 +8240,12 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (!btn) return;
     var n = bitToolNumber();
     btn.textContent = (n ? 'Bit · T' + n : 'Bit Diameter') + ' (' + unitName() + ')';
+    // A tool whose tool table entry gives its flutes fixes them; guessed from
+    // its name (or 2 when nothing says), they stay yours to change.
+    var t = n ? (state.tools || []).filter(function(x) { return x.n === n; })[0] : null, flutes = $('mw-cut-flutes'), fixed = !!(t && t.flutes > 0);
+    if (flutes.dataset.tip == null) flutes.dataset.tip = flutes.title;
+    flutes.disabled = fixed;
+    flutes.title = fixed ? 'From T' + n + '\u2019s flutes in the tool table. Pick No tool change, or type a diameter, to set them yourself.' : flutes.dataset.tip;
     if (toolPop.open) renderToolList();
   }
   function pickBitTool(v) {
