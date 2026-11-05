@@ -2147,3 +2147,10 @@ test('the ncsender-unit-input copy in config.html matches the library', (t) => {
   const pasted = html.slice(html.indexOf('\n', begin) + 1, end);
   assert.equal(pasted, fs.readFileSync(libFile, 'utf8'), 'run node .scripts/sync-unit-input.mjs');
 });
+
+test("the controller's spindle delay ($394) replaces the G4 wait", () => {
+  assert.ok(holeCutProgram(cutBase()).includes('G4 P3'));
+  const L = holeCutProgram(cutBase({ fwDelayS: 2 }));
+  assert.ok(!L.some(l => /^G4/.test(l)));
+  assert.equal(L[L.indexOf('M3 S18000') + 1], '(The controller waits 2 s: $394)');
+});

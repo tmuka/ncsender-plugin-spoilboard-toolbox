@@ -3222,7 +3222,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // The program, as lines. o: holes (in cutting order, machine mm, each
   // with diaMm, a label and optionally its own depthMm), bitMm, depthMm, stepMm (depth per pass),
   // stepoverPct (between clearing rings), feed and plunge (mm/min), rpm,
-  // delayS, mist, flood, wcs { p, x, y } (the work offset and its X0 Y0
+  // delayS (fwDelayS: the controller's own, $394, in its place), mist, flood, wcs { p, x, y } (the work offset and its X0 Y0
   // in machine mm), safeZMm (machine; null: machine Z0), zones (keepouts
   // and Exclude Picks areas, machine mm: crossing one lifts to Safe Z
   // instead of a 5 mm hop), imperial (G20 at the end).
@@ -3269,7 +3269,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (o.flood) L.push('M8');
     if (o.rpm > 0 && !o.laser) {
       L.push('M3 S' + Math.round(o.rpm));
-      if (o.delayS > 0) L.push('G4 P' + o.delayS);
+      if (o.fwDelayS > 0) L.push('(The controller waits ' + o.fwDelayS + ' s: $394)');
+      else if (o.delayS > 0) L.push('G4 P' + o.delayS);
     }
     return L;
   }
@@ -6191,6 +6192,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       // grblHAL's default $30 is 1000: not a router's real top speed.
       state.spindleMax = smax >= 5000 ? smax : null;
       state.spindleMin = smin > 0 ? smin : null;
+      // grblHAL's $394: the controller itself waits after M3, so Spindle Delay hides.
+      var sdelay = parseFloat(set['394'] && set['394'].value);
+      state.spindleOnDelayS = sdelay > 0 ? sdelay : 0;
+      if (state.spindleOnDelayS) commonFields();
       state.laserMode = set['32'] ? String(set['32'].value).trim() === '1' : null;
       // grblHAL's laser offset from the spindle (its spindle offset plugin).
       state.laserOffset = set['770'] ? { x: parseFloat(set['770'].value) || 0, y: parseFloat(set['771'] && set['771'].value) || 0,
@@ -8056,7 +8061,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       tipMm: $('mw-cut-tip').value === 'full' ? drillTipMm(bit, parseFloat($('mw-cut-tip-angle').value)) : 0,
       tipAngle: $('mw-cut-tip').value === 'full' ? parseFloat($('mw-cut-tip-angle').value) : null,
       peck: $('mw-cut-peck').value, stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
-      rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0,
+      rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0, fwDelayS: state.spindleOnDelayS || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
       wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial, laserOffset: state.laserOffset || null,
       zMacro: { spoil: offsetZParam(+$('mw-slot').value), thick: offsetZParam(+$('mw-thick').value) }, tloMm: state.tloMm
@@ -9972,7 +9977,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (sec === 'lines') sec += $('mw-gl-tool').value === 'laser' ? '-laser' : '-vbit';
     if (sec === 'labels') sec += $('mw-lab-tool').value === 'laser' ? '-laser' : '-vbit';
     $('mw-cut-common').querySelectorAll('[data-for]').forEach(function(el) {
-      el.hidden = el.getAttribute('data-for').split(' ').indexOf(sec) < 0 || (el.contains($('mw-cut-thick')) && $('mw-cut-plate').checked);
+      el.hidden = el.getAttribute('data-for').split(' ').indexOf(sec) < 0 || (el.contains($('mw-cut-thick')) && $('mw-cut-plate').checked) ||
+        (el.contains($('mw-cut-delay')) && state.spindleOnDelayS > 0);
     });
     var shown = $('mw-cut-common').querySelectorAll('.mw-field[data-for]:not([hidden])').length;
     $('mw-cut-title').firstChild.textContent = shown ? 'Bit and depth' : 'Coolant';
