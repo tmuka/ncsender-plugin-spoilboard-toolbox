@@ -8095,7 +8095,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     return out;
   }
-  function cutProblems(o) { return commaProblems(ROOT.querySelector('.mw-tab[data-tab="cut"]') || ROOT).concat(placeProblems(o), holeCutProblems(o)); }
+  function cutProblems(o) {
+    var lim = machineLimitProblems(o);
+    return commaProblems(ROOT.querySelector('.mw-tab[data-tab="cut"]') || ROOT).concat(Object.keys(lim).map(function(id) { return lim[id]; }), placeProblems(o), holeCutProblems(o));
+  }
   // Dog holes also need the board's thickness, so Hole Depth can't go
   // through it (it has no default: boards differ).
   function dogHoleProblems(o) {
@@ -8104,6 +8107,17 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     return out;
   }
   // What's cut (how many of each size, and how) and what's left out.
+  // Feed, Plunge and RPM past the machine's own limits, when the controller
+  // reports them ($110/$111, $112, $30/$31; RPM 0 starts no spindle), by field.
+  function machineLimitProblems(o) {
+    var out = {}, u = ' ' + unitName(), k = state.imperial ? MM_PER_INCH : 1;
+    var rate = function(mm) { return +(mm / k).toFixed(state.imperial ? 1 : 0) + u + '/min'; };
+    if (state.rapidMmMin > 0 && o.feed > state.rapidMmMin + 0.5) out['mw-cut-feed'] = 'Feed is more than the machine\u2019s max feed ($110/$111), ' + rate(state.rapidMmMin);
+    if (state.zRateMm > 0 && o.plunge > state.zRateMm + 0.5) out['mw-cut-plunge'] = 'Plunge is more than the machine\u2019s max Z rate ($112), ' + rate(state.zRateMm);
+    if (o.rpm > 0 && state.spindleMax > 0 && o.rpm > state.spindleMax) out['mw-cut-rpm'] = 'Spindle RPM is more than the spindle\u2019s max ($30), ' + state.spindleMax;
+    else if (o.rpm > 0 && state.spindleMin > 0 && o.rpm < state.spindleMin) out['mw-cut-rpm'] = 'Spindle RPM is less than the spindle\u2019s min ($31), ' + state.spindleMin + ' (0: no spindle)';
+    return out;
+  }
   // Cut Board's own numbers, flagged by the field as holeCutProblems lists
   // them beside Generate (a blank Spoilboard Thickness only there).
   function flagCutFields(o) {
@@ -8114,8 +8128,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     flagField($('mw-cut-depth'), !(o.depthMm > 0) || deep || tipDeep, !(o.depthMm > 0) ? 'Hole Depth must be more than 0'
       : 'Hole Depth' + (tipDeep ? ' plus the drill\u2019s tip (' + +shown(o.tipMm) + u + ')' : '') + ' is more than the ' + (o.plateOn ? 'stock' : 'Spoilboard Thickness') + ' (' + +shown(o.thickMm) + u + '): it would cut into what\u2019s under it');
     flagField($('mw-cut-step'), !(o.stepMm > 0), 'Depth per Pass must be more than 0');
-    flagField($('mw-cut-feed'), !(o.feed > 0), 'Feed must be more than 0');
-    flagField($('mw-cut-plunge'), !(o.plunge > 0), 'Plunge must be more than 0');
+    var lim = machineLimitProblems(o);
+    flagField($('mw-cut-feed'), !(o.feed > 0) || !!lim['mw-cut-feed'], lim['mw-cut-feed'] || 'Feed must be more than 0');
+    flagField($('mw-cut-plunge'), !(o.plunge > 0) || !!lim['mw-cut-plunge'], lim['mw-cut-plunge'] || 'Plunge must be more than 0');
+    flagField($('mw-cut-rpm'), !!lim['mw-cut-rpm'], lim['mw-cut-rpm']);
     flagField($('mw-cut-stepover'), rings && !(o.stepoverPct > 0 && o.stepoverPct <= 90), 'Stepover must be 1 to 90% (holes more than twice the bit are cleared in rings)');
     flagField($('mw-cut-tip-angle'), o.tipAngle != null && !(o.tipAngle >= 60 && o.tipAngle <= 180), 'Tip Angle must be 60 to 180\u00b0');
   }
@@ -8970,7 +8986,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     Object.assign(o, { depthMm: depth, thickMm: 0, zWhat: fix ? 'the plate’s top' : 'the stock’s top', safeEach: true, zStop: o.zWcs,
       title: fix ? 'plate: 2 locating pin holes' + (slot > 0 ? ' (one slotted)' : '') + ', ' + n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '')
         : (pins ? 'flip pin holes' : n + ' bolt hole' + (n === 1 ? '' : 's') + (hasCb ? ', counterbored' : '')) + (blind ? ', blind' : ' through the stock') });
-    if (!probs.length) res.probs = probs.concat(holeCutProblems(o));
+    var lim = machineLimitProblems(o);
+    if (!probs.length) res.probs = probs.concat(Object.keys(lim).map(function(id) { return lim[id]; }), holeCutProblems(o));
     return res;
   }
   // Locating Pins + Bolts' grid menus: every grid, keeping the pick (or
