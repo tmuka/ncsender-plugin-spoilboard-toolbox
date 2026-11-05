@@ -4696,14 +4696,73 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     ROOT.addEventListener('focusout', function(evt) {
       var el = unitField(evt.target);
       if (el && before != null && el.value !== before) el.dispatchEvent(new Event('change', { bubbles: true }));
-      // 1,000 is refused (it may be a thousands separator): red, and its tooltip says why.
+      // 1,000 is refused (it may be a thousands separator): red, and the
+      // error bubble says why.
       if (!el) return;
       var why = NcUnitInput.unitValueProblem(el.value);
-      if (el.dataset.tip == null) el.dataset.tip = el.title;
       if (why) { el.classList.add('mw-invalid'); el.dataset.comma = '1'; }
       else if (el.dataset.comma) { el.classList.remove('mw-invalid'); delete el.dataset.comma; }
-      el.title = why ? why + '. ' + el.dataset.tip : el.dataset.tip;
+      setFieldError(el, why ? why : null);
     });
+  }
+
+  // A field's problem: its red border, and its words in one red bubble
+  // floating over the dialog, on the flagged field the cursor is in, else
+  // the flagged field just left, so it shows where you're looking and the
+  // cards never move. It goes when the field is fixed or the cursor moves to
+  // another field; hidden while that field is scrolled out of view. As
+  // QuickCut's. On the host page's body, since the dialog may be transformed.
+  var errBubble = null, errLeft = null;
+  function setFieldError(el, message) {
+    if (message) el.dataset.error = message;
+    else delete el.dataset.error;
+    updateErrorBubble();
+  }
+  function errorBubbleTarget() {
+    var ok = function(el) { return el && ROOT.contains(el) && el.dataset.error && el.offsetParent !== null; };
+    var a = document.activeElement;
+    return ok(a) ? a : ok(errLeft) ? errLeft : null;
+  }
+  function updateErrorBubble() {
+    var el = rootAlive() ? errorBubbleTarget() : null;
+    if (!el) { if (errBubble) { errBubble.remove(); errBubble = null; } return; }
+    if (!errBubble) {
+      errBubble = document.createElement('div');
+      errBubble.className = 'mw-error-bubble';
+      errBubble.setAttribute('role', 'alert');
+      errBubble.style.cssText = 'position:fixed;background:#d32f2f;color:#fff;padding:6px 10px;border-radius:4px;' +
+        'font-family:inherit;font-size:0.82rem;font-weight:500;line-height:1.3;z-index:10000;pointer-events:none;' +
+        'box-shadow:0 2px 8px rgba(0,0,0,0.25);width:max-content;max-width:min(320px,90vw);';
+      document.body.appendChild(errBubble);
+    }
+    errBubble.textContent = el.dataset.error;
+    var r = el.getBoundingClientRect(), below = r.top < 60;
+    var arrow = document.createElement('div');
+    arrow.style.cssText = 'position:absolute;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;' +
+      (below ? 'border-bottom:6px solid #d32f2f;top:-6px;' : 'border-top:6px solid #d32f2f;bottom:-6px;');
+    errBubble.appendChild(arrow);
+    // Centred on the field, kept on screen; the arrow stays on the field.
+    var w = errBubble.offsetWidth, h = errBubble.offsetHeight;
+    var cx = r.left + r.width / 2, left = Math.max(4, Math.min(cx - w / 2, window.innerWidth - w - 4));
+    arrow.style.left = Math.max(8, Math.min(cx - left - 6, w - 20)) + 'px';
+    errBubble.style.left = left + 'px';
+    errBubble.style.top = (below ? r.bottom + 8 : r.top - 8 - h) + 'px';
+    var pr = ROOT.getBoundingClientRect();
+    errBubble.style.visibility = r.bottom < pr.top || r.top > pr.bottom ? 'hidden' : 'visible';
+  }
+  function wireErrorBubble() {
+    ROOT.addEventListener('focusin', updateErrorBubble);
+    ROOT.addEventListener('focusout', function(ev) {
+      if (ev.target.dataset && ev.target.dataset.error) errLeft = ev.target;
+      setTimeout(updateErrorBubble, 0);
+    });
+    ROOT.addEventListener('scroll', updateErrorBubble, true);
+    window.addEventListener('resize', function onResize() { if (!rootAlive()) { window.removeEventListener('resize', onResize); return; } updateErrorBubble(); });
+    // Gone with the dialog, and when its tab or section is switched away.
+    var watch = setInterval(function() {
+      if (!rootAlive()) { if (errBubble) errBubble.remove(); errBubble = null; clearInterval(watch); return; }
+      if (errBubble) updateErrorBubble();
+    }, 500);
   }
   // The unit fields showing under root that hold a refused comma (1,000), as
   // "Label: why" lines for a problem list.
@@ -5357,6 +5416,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (Array.isArray(saved.extras)) EXTRAS.forEach(function(k) { $('mw-x-' + k).checked = saved.extras.indexOf(k) >= 0; });
     wireCut();
     wireUnitFields();
+    wireErrorBubble();
     $('mw-store-stock').addEventListener('click', storeThickness);
     ROOT.querySelectorAll('[data-probe-top]').forEach(function(b) { b.addEventListener('click', startProbeTop); });
     $('mw-mini-check').addEventListener('click', checkProbeTop);
