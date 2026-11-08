@@ -2088,6 +2088,9 @@ test('Set Z0 on the top of stock lying on the spoilboard stores T as the thickne
   const p = Object.assign({ 5383: -95, 5343: 12, 5223: -60, 5213: 0 }, ready);
   for (const l of zAboveSpoilLines(s, 1, 19, 19)) if (!/^#1=/.test(l)) step(l, p);
   assert.deepEqual([p[5223], p[5343], p[5341], p[5342]], [-76, 19, 0, -76]);
+  for (const P of [1, 2]) assert.ok(code(zAboveSpoilLines(s, P, 19, 19).join('\n')).every((l) => l.length < 200), 'lines fit grblHAL\'s buffer');
+  const off = runAll(zAboveSpoilLines(s, 1, 19, 19).join('\n'), Object.assign({}, p, { 5213: 1.5, 5343: 12 }));
+  assert.equal(off[5343], 12, 'a G92 Z offset stops the thickness too');
   // Z0 on stock top keeps it for any tool.
   run(buildMacros(base).stock.body, p);
   assert.deepEqual([p[5223], p[5343]], [-76, 19]);

@@ -2641,7 +2641,12 @@
       'G10 L2 P' + o.backup + ' Z[[' + saved + ' + [' + cur + ' - ' + saved + '] * #2] / ' + ok + ']'
     ] : [], [
       'G10 L2 P' + P + ' Z[[' + spoil + ' + ' + fmt(hMm) + '] / ' + ok + ']'
-    ], stockT > 0 ? ['G10 L2 P' + o.thick + ' X[0 / ' + ok + '] Y[' + (save ? '[' + spoil + ' + ' + fmt(hMm) + ']' : markY) + ' / ' + ok + '] Z[' + fmt(stockT) + ' / ' + ok + ']']
+    ], stockT > 0 ? [
+      // The checks once in #3: three times over, the line would pass
+      // grblHAL's line length.
+      '#3=' + ok,
+      'G10 L2 P' + o.thick + ' X[0 / #3] Y[' + (save ? '[' + spoil + ' + ' + fmt(hMm) + ']' : markY) + ' / #3] Z[' + fmt(stockT) + ' / #3]'
+    ]
       : save ? ['G10 L2 P' + o.thick + ' X[' + fmt(hMm) + ' / ' + ok + '] Y[' + markY + ']'] : []);
   }
 
