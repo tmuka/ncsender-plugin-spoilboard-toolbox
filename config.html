@@ -1415,11 +1415,11 @@
           </div>
           <div class="mw-field" hidden>
             <label for="mw-gl-pen">Pen</label>
-            <select class="mw-select" id="mw-gl-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its flute length. The spindle stays off."></select>
+            <select class="mw-select" id="mw-gl-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its Max plunge (the tool table's flute length) below Z0. The spindle stays off."></select>
           </div>
           <div class="mw-field mw-gl-vbit" hidden>
             <label for="mw-gl-depth">Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-gl-depth" value="0.3" title="How deep the V-bit cuts the lines. A pen or drag knife goes no deeper than its flute length in the tool table.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-gl-depth" value="0.3" title="How deep the V-bit cuts the lines. A pen or drag knife goes no deeper than its Max plunge in the tool table.">
           </div>
           <div class="mw-field mw-gl-laser">
             <label for="mw-gl-power">Laser Power (S)</label>
@@ -1490,7 +1490,7 @@
           </div>
           <div class="mw-field" hidden>
             <label for="mw-lab-pen">Pen</label>
-            <select class="mw-select" id="mw-lab-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its flute length. The spindle stays off."></select>
+            <select class="mw-select" id="mw-lab-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its Max plunge (the tool table's flute length) below Z0. The spindle stays off."></select>
           </div>
           <div class="mw-field">
             <label for="mw-lab-height">Text Height (<span class="mw-unit">mm</span>)</label>
@@ -1498,7 +1498,7 @@
           </div>
           <div class="mw-field mw-lab-vbit">
             <label for="mw-lab-depth">Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-depth" value="0.4" title="How deep the V-bit cuts the letters. A pen or drag knife goes no deeper than its flute length in the tool table.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-depth" value="0.4" title="How deep the V-bit cuts the letters. A pen or drag knife goes no deeper than its Max plunge in the tool table.">
           </div>
           <div class="mw-field mw-lab-laser" hidden>
             <label for="mw-lab-power">Laser Power (S)</label>
@@ -3329,8 +3329,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // Labels and grid lines with a pen or drag knife (pen: { n, name, type,
   // fluteMm } from the tool table, or null for the loaded tool): no
   // spindle, a tool change to it when there's a tool changer, and no deeper
-  // than its flute length (set it small, 0.002", and every program stops
-  // there: as deep as the pen's spring gives).
+  // below Z0 than its flute length, which ncSender calls Max plunge for
+  // these types (a spring-loaded pen's travel, 0.01", say).
   function withPen(o, pen, atc) {
     var flute = pen && pen.fluteMm > 0 ? pen.fluteMm : 0;
     return Object.assign({}, o, {
@@ -8773,7 +8773,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     return grids;
   }
   // The tool table's pens and drag knives, for Labels' and Grid lines' Pen
-  // menus (with or without a tool changer: the flute length caps the depth).
+  // menus (with or without a tool changer: the Max plunge caps the depth).
   async function readPens() {
     try {
       var byId = state.ncSettings && state.ncSettings.tool && state.ncSettings.tool.numbering === 'toolId';
@@ -8795,7 +8795,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       (state.pens || []).forEach(function(t) {
         var o = document.createElement('option');
         o.value = String(t.n);
-        o.textContent = 'T' + t.n + (t.name ? ' ' + t.name : '') + (t.fluteMm > 0 ? ', ' + shown(t.fluteMm) + ' ' + unitName() + ' deep' : '');
+        o.textContent = 'T' + t.n + (t.name ? ' ' + t.name : '') + (t.fluteMm > 0 ? ', max plunge ' + shown(t.fluteMm) + ' ' + unitName() : '');
         sel.appendChild(o);
       });
       var o = document.createElement('option');
@@ -8813,7 +8813,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function penText(o) {
     if (!o.pen) return '';
     var who = o.pen.n ? 'T' + o.pen.n + (o.pen.name ? ' (' + o.pen.name + ')' : '') : 'the loaded ' + o.pen.kind;
-    return ' With ' + who + ': no spindle, ' + shown(o.depthMm) + ' ' + unitName() + ' deep' + (o.pen.capped ? ' (its flute length)' : '') +
+    return ' With ' + who + ': no spindle, ' + shown(o.depthMm) + ' ' + unitName() + ' deep' + (o.pen.capped ? ' (its Max plunge)' : '') +
       (o.tool ? ', after a tool change to it (M6).' : '; load it yourself, no tool change.');
   }
   // Grid lines: Setup's grids (shown ones), with a laser or a V-bit.
