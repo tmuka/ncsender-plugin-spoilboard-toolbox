@@ -1221,7 +1221,7 @@
             <label for="mw-cut-feed">Feed (<span class="mw-unit">mm</span>/min)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-feed" value="1500" title="How fast the bit moves while cutting, spiral included.">
           </div>
-          <div class="mw-field" data-for="holes tracks fit chamfer threads stock lines-vbit labels-vbit">
+          <div class="mw-field" data-for="holes tracks fit chamfer threads stock lines-vbit labels-vbit lines-pen labels-pen">
             <label for="mw-cut-plunge">Plunge (<span class="mw-unit">mm</span>/min)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="feed" id="mw-cut-plunge" value="500" title="How fast the bit goes down when drilling or ramping into a cleared hole.">
           </div>
@@ -1400,21 +1400,26 @@
       </section>
       <section class="mw-card" data-sec="lines">
         <h3 class="mw-card-title">Grid lines</h3>
-        <p class="mw-hint">No holes, just lines: a line along every row and column of Setup&rsquo;s grids, crossing where the holes would be, with a laser or a V-bit.
+        <p class="mw-hint">No holes, just lines: a line along every row and column of Setup&rsquo;s grids, crossing where the holes would be, with a laser, a V-bit or a pen.
           They stop short of keepout zones and break at T-tracks (Track Width from the T-tracks section).
           Then set Hole Diameter to the line&rsquo;s width and zero on the crossings. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).
           Not sure of the laser&rsquo;s power and speed? Run the <strong>Laser test</strong> first.</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-gl-tool">With</label>
-            <select class="mw-select" id="mw-gl-tool" title="A V-bit in the spindle, or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
+            <select class="mw-select" id="mw-gl-tool" title="A V-bit in the spindle, a pen or drag knife (no spindle), or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
               <option value="laser" selected>Laser</option>
               <option value="vbit">V-bit</option>
+              <option value="pen">Pen or drag knife</option>
             </select>
+          </div>
+          <div class="mw-field" hidden>
+            <label for="mw-gl-pen">Pen</label>
+            <select class="mw-select" id="mw-gl-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its flute length. The spindle stays off."></select>
           </div>
           <div class="mw-field mw-gl-vbit" hidden>
             <label for="mw-gl-depth">Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-gl-depth" value="0.3" title="How deep the V-bit cuts the lines.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-gl-depth" value="0.3" title="How deep the V-bit cuts the lines. A pen or drag knife goes no deeper than its flute length in the tool table.">
           </div>
           <div class="mw-field mw-gl-laser">
             <label for="mw-gl-power">Laser Power (S)</label>
@@ -1466,7 +1471,7 @@
       </section>
       <section class="mw-card" data-sec="labels">
         <h3 class="mw-card-title">Engrave the labels</h3>
-        <p class="mw-hint">The fixture table&rsquo;s names beside the holes, with a V-bit or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).</p>
+        <p class="mw-hint">The fixture table&rsquo;s names beside the holes, with a V-bit, a pen or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-lab-mode">Labels</label>
@@ -1477,10 +1482,15 @@
           </div>
           <div class="mw-field">
             <label for="mw-lab-tool">With</label>
-            <select class="mw-select" id="mw-lab-tool" title="A V-bit in the spindle, or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
+            <select class="mw-select" id="mw-lab-tool" title="A V-bit in the spindle, a pen or drag knife (no spindle), or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
               <option value="vbit" selected>V-bit</option>
+              <option value="pen">Pen or drag knife</option>
               <option value="laser">Laser</option>
             </select>
+          </div>
+          <div class="mw-field" hidden>
+            <label for="mw-lab-pen">Pen</label>
+            <select class="mw-select" id="mw-lab-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its flute length. The spindle stays off."></select>
           </div>
           <div class="mw-field">
             <label for="mw-lab-height">Text Height (<span class="mw-unit">mm</span>)</label>
@@ -1488,7 +1498,7 @@
           </div>
           <div class="mw-field mw-lab-vbit">
             <label for="mw-lab-depth">Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-depth" value="0.4" title="How deep the V-bit cuts the letters.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-depth" value="0.4" title="How deep the V-bit cuts the letters. A pen or drag knife goes no deeper than its flute length in the tool table.">
           </div>
           <div class="mw-field mw-lab-laser" hidden>
             <label for="mw-lab-power">Laser Power (S)</label>
@@ -3312,6 +3322,23 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function laserOffsetProblem(lo) {
     return lo && (lo.x || lo.y) && !lo.updateG92 ? 'Set grblHAL\u2019s $772=1 (Update G92 on spindle change) first: with 0, the laser lands off by its offset ($770/$771)' : null;
   }
+  // A pen or a drag knife (ncSender's Tool Library types): it marks and
+  // never spins, and ncSender refuses M3/M4 while one is loaded (the job
+  // stops), so its programs leave the spindle alone.
+  function noSpinType(type) { return /^(pen|drag[-_ ]?knife)$/i.test(String(type || '').trim()); }
+  // Labels and grid lines with a pen or drag knife (pen: { n, name, type,
+  // fluteMm } from the tool table, or null for the loaded tool): no
+  // spindle, a tool change to it when there's a tool changer, and no deeper
+  // than its flute length (set it small, 0.002", and every program stops
+  // there: as deep as the pen's spring gives).
+  function withPen(o, pen, atc) {
+    var flute = pen && pen.fluteMm > 0 ? pen.fluteMm : 0;
+    return Object.assign({}, o, {
+      pen: { kind: pen && /knife/i.test(pen.type || '') ? 'drag knife' : 'pen', n: pen ? pen.n : 0, name: pen ? pen.name : '', capped: !!flute && o.depthMm > flute },
+      rpm: 0, delayS: 0, fwDelayS: 0, tool: atc && pen && pen.n > 0 ? pen.n : null,
+      depthMm: flute && !(o.depthMm <= flute) ? flute : o.depthMm
+    });
+  }
   function cutSafe(o) { return 'G53 G0 Z' + fmt(o.safeZMm != null ? o.safeZMm : 0); }
   function cutEnd(o, L) {
     if (!o.laser) L.push(cutSafe(o));
@@ -3757,7 +3784,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function engraveProgram(o) {
     var n = o.labels.length, c = gComment, f3 = function(v) { return gf(v, 3); };
     var L = cutStart(o, 'engrave ' + n + ' fixture table label' + (n === 1 ? '' : 's') + ', ' + fmt(o.textMm) + ' mm tall, ' +
-      (o.laser ? 'laser at S' + o.power : fmt(o.depthMm) + ' mm deep with a V-bit'));
+      (o.laser ? 'laser at S' + o.power : fmt(o.depthMm) + ' mm deep with a ' + (o.pen ? o.pen.kind : 'V-bit')));
     if (o.laser) L.push('M4 S' + Math.round(o.power));
     var at = null;
     o.labels.forEach(function(lb, i) {
@@ -8306,7 +8333,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'lab-pen', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-pen', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
@@ -8745,15 +8772,60 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     });
     return grids;
   }
+  // The tool table's pens and drag knives, for Labels' and Grid lines' Pen
+  // menus (with or without a tool changer: the flute length caps the depth).
+  async function readPens() {
+    try {
+      var byId = state.ncSettings && state.ncSettings.tool && state.ncSettings.tool.numbering === 'toolId';
+      var tools = await (await fetch(BASE_URL + '/api/tools/active')).json();
+      state.pens = (tools || []).filter(function(t) { return noSpinType(t.type); })
+        .map(function(t) { return { n: byId ? t.toolId : t.toolNumber, name: t.name || '', type: t.type, fluteMm: Number(t.dimensions && t.dimensions.flute_length) || 0 }; })
+        .filter(function(t) { return t.n > 0; });
+    } catch (e) { state.pens = []; }
+    fillPenMenus();
+  }
+  // Each pen, then the loaded tool (no tool change, Depth as typed): older
+  // ncSender has no pen type, and a pen needn't be in the table.
+  function fillPenMenus() {
+    ['mw-lab-pen', 'mw-gl-pen'].forEach(function(id) {
+      // The saved pick, else the first pen (not the placeholder 'loaded' the
+      // menu holds till the tool table comes).
+      var sel = $(id), want = sel.getAttribute('data-want') || (sel.value !== 'loaded' ? sel.value : '');
+      sel.innerHTML = '';
+      (state.pens || []).forEach(function(t) {
+        var o = document.createElement('option');
+        o.value = String(t.n);
+        o.textContent = 'T' + t.n + (t.name ? ' ' + t.name : '') + (t.fluteMm > 0 ? ', ' + shown(t.fluteMm) + ' ' + unitName() + ' deep' : '');
+        sel.appendChild(o);
+      });
+      var o = document.createElement('option');
+      o.value = 'loaded';
+      o.textContent = 'The loaded tool';
+      sel.appendChild(o);
+      if ([].some.call(sel.options, function(x) { return x.value === want; })) { sel.value = want; if (state.pens) sel.removeAttribute('data-want'); }
+    });
+  }
+  function penPicked(id) {
+    var n = Number($(id).value);
+    return (state.pens || []).filter(function(t) { return t.n === n; })[0] || null;
+  }
+  // What a pen program does, after the summary.
+  function penText(o) {
+    if (!o.pen) return '';
+    var who = o.pen.n ? 'T' + o.pen.n + (o.pen.name ? ' (' + o.pen.name + ')' : '') : 'the loaded ' + o.pen.kind;
+    return ' With ' + who + ': no spindle, ' + shown(o.depthMm) + ' ' + unitName() + ' deep' + (o.pen.capped ? ' (its flute length)' : '') +
+      (o.tool ? ', after a tool change to it (M6).' : '; load it yourself, no tool change.');
+  }
   // Grid lines: Setup's grids (shown ones), with a laser or a V-bit.
   function gridLineSettings() {
     var o = cutSettings();
     o.tool = null;
-    var laser = $('mw-gl-tool').value === 'laser', probs = placeProblems(o), hh = readHoles();
+    var laser = $('mw-gl-tool').value === 'laser', pen = $('mw-gl-tool').value === 'pen', probs = placeProblems(o), hh = readHoles();
     var usable = holes.grid.filter(function(q) { return q.col != null && !q.hidden && !q.suppressed && !q.blocked; });
     var segs = state.travel && hh ? gridLineSegments(usable, state.travel, o.zones, laser ? 0.5 : VBIT_R, labelTracks(hh)) : [];
     if (o.plateOn) segs = o.plate ? clipToPlate(segs, o.plate, (laser ? 0.5 : VBIT_R) + PLATE_EDGE_MM) : [];
     Object.assign(o, { laser: laser, power: parseFloat($('mw-gl-power').value), depthMm: cutMm('mw-gl-depth'), feed: Math.round(cutMm('mw-gl-feed')), segs: segs });
+    if (pen) o = withPen(o, penPicked('mw-gl-pen'), state.atc);
     if (!hh) probs.push('Setup’s grid has a field that can’t be read: fix it in the XY0 Picker');
     else if (hh.layout === 'list') probs.push('Grid lines need a grid: set Setup’s layout to Grid or Grid + List');
     else if (!segs.length) probs.push(o.plateOn ? 'No grid line crosses the stock' : 'No grid line fits inside the travel, clear of the zones');
@@ -8768,17 +8840,18 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function gridLineProgram(o) {
     var rows = o.segs.filter(function(g) { return g.kind === 'row'; }).length;
     return strokesProgram(o, 'grid lines, ' + rows + ' along rows and ' + (o.segs.length - rows) + ' along columns, ' +
-      (o.laser ? 'laser at S' + Math.round(o.power) : fmt(o.depthMm) + ' mm deep with a V-bit'),
+      (o.laser ? 'laser at S' + Math.round(o.power) : fmt(o.depthMm) + ' mm deep with a ' + (o.pen ? o.pen.kind : 'V-bit')),
       o.segs.map(function(g, i) { return { comment: i === 0 || g.kind !== o.segs[i - 1].kind ? 'SBT grid lines along ' + (g.kind === 'row' ? 'the rows' : 'the columns') : '', strokes: [[g.a, g.b]] }; }));
   }
   function renderGridLines() {
     var l = gridLineSettings(), laser = l.o.laser;
     $('mw-gl-depth').closest('.mw-field').hidden = laser;
     $('mw-gl-power').closest('.mw-field').hidden = !laser;
+    $('mw-gl-pen').closest('.mw-field').hidden = !l.o.pen;
     var total = l.o.segs.reduce(function(t, g) { return t + Math.hypot(g.b.x - g.a.x, g.b.y - g.a.y); }, 0);
     var lines = l.probs.length ? null : gridLineProgram(l.o);
     $('mw-gl-summary').textContent = l.o.segs.length + ' line' + (l.o.segs.length === 1 ? '' : 's') + ', ' + shown(total) + ' ' + unitName() + ' in all' +
-      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.');
+      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.') + penText(l.o);
     showProblems($('mw-gl-note'), l.probs);
     $('mw-gl-generate').disabled = !!l.probs.length;
   }
@@ -8787,7 +8860,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if ($('mw-gl-tool').value === 'laser') await readLaserMode();
     var l = gridLineSettings();
     if (l.probs.length) { renderGridLines(); return; }
-    await loadProgram('SBT-GridLines_' + l.o.segs.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '.nc', gridLineProgram(l.o), $('mw-gl-note'), $('mw-gl-generate'));
+    await loadProgram('SBT-GridLines_' + l.o.segs.length + 'x_' + (l.o.laser ? 'Laser' : l.o.pen ? 'Pen' : 'Vbit') + '.nc', gridLineProgram(l.o), $('mw-gl-note'), $('mw-gl-generate'));
   }
   // The laser test, from X0 Y0 on the scrap's front left corner.
   var LT_CELL_MM = 12, LT_EDGE_MM = 5, LT_TEXT_MM = 3;
@@ -8839,7 +8912,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function labelSettings() {
     var o = cutSettings();
     o.tool = null;
-    var laser = $('mw-lab-tool').value === 'laser', hh = readHoles(), textMm = cutMm('mw-lab-height'), probs = placeProblems(o);
+    var laser = $('mw-lab-tool').value === 'laser', pen = $('mw-lab-tool').value === 'pen', hh = readHoles(), textMm = cutMm('mw-lab-height'), probs = placeProblems(o);
     var pl = { labels: [], skipped: [] };
     if (state.travel && hh && textMm > 0) {
       // On a fixture plate, only its own holes get a label.
@@ -8852,6 +8925,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     Object.assign(o, { labels: pl.labels, textMm: textMm, laser: laser, power: parseFloat($('mw-lab-power').value), depthMm: cutMm('mw-lab-depth'),
       feed: Math.round(cutMm('mw-lab-feed')) });
+    if (pen) o = withPen(o, penPicked('mw-lab-pen'), state.atc);
     if (!(textMm > 0)) probs.push('Text Height must be more than 0');
     else if (!pl.labels.length) probs.push('No labels fit: try a smaller Text Height');
     if (!(o.feed > 0)) probs.push('Feed must be more than 0');
@@ -8866,12 +8940,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var l = labelSettings(), laser = l.o.laser;
     $('mw-lab-depth').closest('.mw-field').hidden = laser;
     $('mw-lab-power').closest('.mw-field').hidden = !laser;
+    $('mw-lab-pen').closest('.mw-field').hidden = !l.o.pen;
     var why = {};
     l.skipped.forEach(function(x) { why[x.why] = (why[x.why] || 0) + 1; });
     var lines = l.probs.length ? null : engraveProgram(l.o);
     $('mw-lab-summary').textContent = l.o.labels.length + ' label' + (l.o.labels.length === 1 ? '' : 's') +
       (l.skipped.length ? '; left out: ' + Object.keys(why).map(function(k) { return why[k] + ' ' + k; }).join(', ') : '') +
-      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.');
+      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.') + penText(l.o);
     showProblems($('mw-lab-note'), l.probs);
     $('mw-lab-generate').disabled = !!l.probs.length;
   }
@@ -8889,7 +8964,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if ($('mw-lab-tool').value === 'laser') await readLaserMode();
     var l = labelSettings();
     if (l.probs.length) { renderLabels(); return; }
-    await loadProgram('SBT-Labels_' + l.o.labels.length + 'x_' + (l.o.laser ? 'Laser' : 'Vbit') + '_H-' + shown(l.o.textMm) + '_' + unitName() + '.nc',
+    await loadProgram('SBT-Labels_' + l.o.labels.length + 'x_' + (l.o.laser ? 'Laser' : l.o.pen ? 'Pen' : 'Vbit') + '_H-' + shown(l.o.textMm) + '_' + unitName() + '.nc',
       engraveProgram(l.o), $('mw-lab-note'), $('mw-lab-generate'));
   }
   // Holes through the stock, over the spoilboard holes of the grid picked
@@ -9252,6 +9327,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     });
     if (state.atc) wireToolMenu();
     else $('mw-cut-bit-label').addEventListener('click', function(evt) { evt.preventDefault(); cutLoadedBit(); });
+    fillPenMenus();
+    readPens().then(renderCutTab);
     if (!state.atc) $('mw-cut-bit-label').addEventListener('keydown', function(evt) {
       if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); cutLoadedBit(); }
     });
@@ -10018,8 +10095,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // on top, whose T is used).
   function commonFields() {
     var sec = help.tab === 'stock' ? 'stock' : holes.cutSec || 'holes';
-    if (sec === 'lines') sec += $('mw-gl-tool').value === 'laser' ? '-laser' : '-vbit';
-    if (sec === 'labels') sec += $('mw-lab-tool').value === 'laser' ? '-laser' : '-vbit';
+    var kind = function(v) { return v === 'laser' || v === 'pen' ? '-' + v : '-vbit'; };
+    if (sec === 'lines') sec += kind($('mw-gl-tool').value);
+    if (sec === 'labels') sec += kind($('mw-lab-tool').value);
     $('mw-cut-common').querySelectorAll('[data-for]').forEach(function(el) {
       el.hidden = el.getAttribute('data-for').split(' ').indexOf(sec) < 0 || (el.contains($('mw-cut-thick')) && $('mw-cut-plate').checked) ||
         (el.contains($('mw-cut-delay')) && state.spindleOnDelayS > 0);
