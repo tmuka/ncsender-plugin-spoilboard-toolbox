@@ -602,6 +602,18 @@
     min-width: 0 !important; padding-left: 6px !important; padding-right: 6px !important; white-space: normal; line-height: 1.15;
   }
   .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
+  /* Wide screens: the side splits in two, the hole or stock on the left,
+     the picked point and Go to / Set on the right, so Set sits near the
+     top instead of under the stock's fields. */
+  .mw-holebar-side { display: contents; }
+  .mw-pick-card.mw-tall .mw-holebar-side > * { min-width: 0; max-width: 100%; }
+  .mw-pick-card.mw-tall.mw-side-two .mw-holebar {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 10px 16px; align-items: start;
+  }
+  .mw-pick-card.mw-side-two .mw-holebar > .mw-zmode { grid-column: 1; grid-row: 1; }
+  .mw-pick-card.mw-side-two .mw-holebar > .mw-stock, .mw-pick-card.mw-side-two .mw-holebar > .mw-dots-wrap { grid-column: 1; grid-row: 2; }
+  .mw-pick-card.mw-side-two .mw-holebar-side { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 10px; }
+  .mw-pick-card.mw-side-two .mw-zero-inset { align-self: center; }
   .mw-hole-map .mw-h-area { fill: color-mix(in srgb, var(--color-text-secondary) 6%, transparent); stroke: var(--mw-line); }
   .mw-hole-map .mw-h-spot { cursor: pointer; }
   .mw-hole-map .mw-h-tick { stroke: var(--mw-accent-text); stroke-width: 1.5; }
@@ -752,6 +764,7 @@
             <span class="mw-stock-prog" id="mw-stock-prog" hidden><span class="mw-hint" id="mw-stock-prog-text" role="status"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fit" hidden title="Make the stock's width and length the loaded program's cuts, the bit's width and the clamp margin on every side, rounded up: the stock to cut a QuickCut or Gears part from.">Size to Program</button></span>
           </div>
           <div class="mw-dots-wrap mw-only-hole"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
+          <div class="mw-holebar-side">
           <div class="mw-holebar-info">
             <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" aria-label="Favorite" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
             <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Pick Nearest Hole.</span>
@@ -782,6 +795,7 @@
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-clear" hidden title="Remove every excluded area.">Clear Exclusions</button>
               <span class="mw-favs" id="mw-favs"></span>
             </div>
+          </div>
           </div>
         </div>
         <p class="mw-status" id="mw-hole-status" role="status"></p>
@@ -5794,6 +5808,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // A tap in Stock mode (Against Pins) puts a pin in that hole or takes it
   // out. The first time the pins place the stock, X0 Y0 goes on the
   // pinned corner: the one point that doesn't hang on the typed size.
+  // With three or more pins down, a hole that doesn't fit their L starts
+  // a new set: the stock has moved.
   function togglePin(i) {
     var p = holes.grid[i], status = $('mw-hole-status');
     status.textContent = '';
@@ -5802,11 +5818,18 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (p.col == null) { status.setAttribute('data-state', 'bad'); status.textContent = 'Listed holes can’t be pins: tap grid holes, or use Corner on X0 Y0.'; return; }
     if (p.suppressed) { status.setAttribute('data-state', 'bad'); status.textContent = holeName(p) + ' is suppressed (it isn’t there): restore it in Setup to put a pin in it.'; return; }
     var key = holeKey(p), at = holes.pins.indexOf(key);
+    var before = holes.pins.length;
     if (at >= 0) holes.pins.splice(at, 1); else holes.pins.push(key);
     // A side picked for other pins doesn't carry over.
     holes.pinSide = '';
     $('mw-stock-on').checked = true;
     var s = stockPlacement();
+    if (at < 0 && before >= 3 && s && s.problem && s.problem !== 'which') {
+      holes.pins = [key];
+      s = stockPlacement();
+      status.setAttribute('data-state', 'ok');
+      status.textContent = 'New pins from ' + holeName(p) + ': it didn\u2019t fit the last ones\u2019 L. Tap the other pin holes.';
+    }
     if (s && s.fit && !holes.stockDotSet) setStockZero(s.cornerName);
     renderHoles(); saveSettings();
   }
@@ -7128,7 +7151,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var card = $('mw-pick-card'), svg = $('mw-hole-map'), panel = ROOT.querySelector('.mw-panel');
     var tall = t.yMm > t.xMm && panel.clientWidth > panel.clientHeight * 0.8;
     card.classList.toggle('mw-tall', tall);
-    card.style.setProperty('--mw-side', panel.clientWidth >= 1300 ? '300px' : '230px');
+    var two = tall && panel.clientWidth >= 1400;
+    card.classList.toggle('mw-side-two', two);
+    card.style.setProperty('--mw-side', two ? '616px' : panel.clientWidth >= 1300 ? '300px' : '230px');
     card.classList.toggle('mw-side-narrow', panel.clientWidth < 1300);
     card.style.gridTemplateColumns = '';
     card.style.alignSelf = '';

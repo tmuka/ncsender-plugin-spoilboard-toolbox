@@ -511,7 +511,8 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   a diagonal can hold the stock either way, so it asks which. A pin at the corner itself touches nothing
   and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused. The first time
   the pins place it, X0 Y0 goes on the pinned corner: the one point that doesn't hang on the size you
-  typed.
+  typed. With three or more pins down, tapping a hole that doesn't fit their L starts a new set of pins
+  there, for stock moved somewhere else.
 - **Stock, Corner on X0 Y0:** zero on a corner by touch or probe, press **Use Current X0 Y0**, and pick
   which corner it is. It stays put when X0 Y0 changes.
 - **Stock size:** type its width (X) and length (Y), or jog over the far corner and press **Far Corner
