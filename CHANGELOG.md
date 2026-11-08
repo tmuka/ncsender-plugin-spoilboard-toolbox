@@ -3,6 +3,11 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## 0.5.10: Favorites place the stock
+
+### 🔧 Better
+- **Favorites in Stock mode:** tapping a favorite hole (★) moves the stock there instead of switching to Hole mode. The stock's corner goes on the hole's point (the hole's back right takes the stock's front left; from the hole's center, the corner already picked), the map redraws, and **Set XY0** aims at the stock. The line beside Set names the hole.
+
 ## 0.5.9: Set in view
 
 ### 🔧 Better
