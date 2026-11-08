@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -2156,4 +2156,39 @@ test("the controller's spindle delay ($394) replaces the G4 wait", () => {
   const L = holeCutProgram(cutBase({ fwDelayS: 2 }));
   assert.ok(!L.some(l => /^G4/.test(l)));
   assert.equal(L[L.indexOf('M3 S18000') + 1], '(The controller waits 2 s: $394)');
+});
+
+// ncSender refuses M3/M4 while a pen or drag knife is loaded (the job
+// stops): labels and grid lines with one leave the spindle alone, and go
+// no deeper than its flute length.
+test('labels and grid lines with a pen or drag knife: no spindle, depth capped at the flute length', () => {
+  assert.deepEqual(['pen', 'drag-knife', 'Drag_Knife', 'drag knife', 'flat', 'v-bit', '', undefined].map(noSpinType), [true, true, true, true, false, false, false, false]);
+  const base = { labels: [{ text: 'A1', x: 20, y: 30 }], textMm: 6, depthMm: 0.4, feed: 800, plunge: 300, rpm: 18000, delayS: 2, fwDelayS: 0, tool: null,
+    wcs: { p: 1, x: 10, y: 10 }, safeZMm: -5, zones: [], imperial: false };
+  const pen = { n: 5, name: 'Fine marker', type: 'pen', fluteMm: 0.0508 };
+  const spindle = (L) => L.filter(l => /^(M[345]\b|G4 )/.test(l) || /\bS\d/.test(l.replace(/\(.*\)/, '')));
+  // With a tool changer: a tool change to the pen, no spindle, 0.002" deep
+  const a = withPen(base, pen, true);
+  const L = engraveProgram(a);
+  assert.deepEqual(spindle(L), []);
+  assert.ok(L.includes('M6 T5'));
+  assert.ok(L.includes('G1 Z-0.051 F300') && !L.some(l => /Z-0\.4/.test(l)));
+  assert.match(L[0], /with a pen/);
+  assert.equal(a.pen.capped, true);
+  assert.equal(L[L.length - 1], 'M30');
+  // A shallower Depth than the flutes is kept; no changer: no tool change
+  const b = withPen(Object.assign({}, base, { depthMm: 0.03 }), pen, false);
+  assert.ok(engraveProgram(b).includes('G1 Z-0.030 F300') && !engraveProgram(b).some(l => /^M6/.test(l)) && !b.pen.capped);
+  // The loaded tool (not in the table, or older ncSender): Depth as typed
+  const c = engraveProgram(withPen(base, null, true));
+  assert.deepEqual(spindle(c), []);
+  assert.ok(c.includes('G1 Z-0.400 F300') && !c.some(l => /^M6/.test(l)));
+  // A drag knife says so; grid lines (strokesProgram) too
+  const k = withPen(base, { n: 6, name: 'Knife', type: 'drag-knife', fluteMm: 0 }, true);
+  assert.match(engraveProgram(k)[0], /with a drag knife/);
+  const g = strokesProgram(k, 'grid lines', [{ strokes: [[{ x: 20, y: 20 }, { x: 60, y: 20 }]] }]);
+  assert.deepEqual(spindle(g), []);
+  assert.ok(g.includes('G1 Z-0.400 F300') && g.includes('M6 T6'));
+  // A V-bit is as before
+  assert.ok(engraveProgram(base).some(l => /^M3 S18000/.test(l)));
 });
