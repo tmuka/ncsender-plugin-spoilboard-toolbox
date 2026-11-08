@@ -5460,7 +5460,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     holes.pinSide = typeof saved.stockPinSide === 'string' ? saved.stockPinSide : '';
     holes.stockDotSet = !!saved.stockDotSet;
     var an = saved.stockAnchor;
-    holes.stockAnchor = an && isFinite(an.x) && isFinite(an.y) ? { x: +an.x, y: +an.y, wcs: String(an.wcs || 'G54'), zMm: isFinite(an.zMm) && an.zMm !== null ? +an.zMm : null } : null;
+    holes.stockAnchor = an && isFinite(an.x) && isFinite(an.y) ? { x: +an.x, y: +an.y, wcs: String(an.wcs || 'G54'), zMm: isFinite(an.zMm) && an.zMm !== null ? +an.zMm : null, at: typeof an.at === 'string' ? an.at : '' } : null;
     holes.migrate = null;
     if (saved.zeroMode == null && saved.stockOn) { holes.zeroMode = 'stock'; holes.migrate = { stockPoint: saved.stockPoint, stockCorner: saved.stockCorner, holeOrigin: saved.holeOrigin }; }
     holes.profiles = Array.isArray(saved.holeProfiles) ? saved.holeProfiles.filter(function(x) { return x && typeof x.name === 'string' && x.name.trim(); }) : [];
@@ -6102,7 +6102,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (sp.by === 'pins') {
       var f = sp.fit, pinsD = f.rpRow === f.rpCol ? shown(2 * f.rpRow) + u : shown(2 * f.rpCol) + ' and ' + shown(2 * f.rpRow) + u;
       how = moveWords(sp.corner.x - f.H.x, sp.corner.y - f.H.y) + ' from where ' + lineName(f.colPins[0], 'col') + ' and ' + lineName(f.rowPins[0], 'row') + ' cross (pins Ø ' + pinsD + ')';
-    } else how = 'where ' + holes.stockAnchor.wcs + ' X0 Y0 was when the stock was placed';
+    } else how = holes.stockAnchor.at ? 'on ' + holes.stockAnchor.at : 'where ' + holes.stockAnchor.wcs + ' X0 Y0 was when the stock was placed';
     return at ? 'X0 Y0 → the stock’s ' + stockPointName(sp.cornerName) + ', ' + how + '.'
       : 'X0 Y0 → the stock’s ' + stockPointName(holes.stockZero) + ', from its ' + stockPointName(sp.cornerName) + size + '. That corner is ' + how + '.';
   }
@@ -6625,6 +6625,20 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (prof) prof.holeFavorites = holes.favorites.slice();
     saveSettings(); renderHoles();
   }
+  // A favorite in Stock mode moves the stock there (Corner on X0 Y0): its
+  // corner on the hole's point, the one beyond the hole's dot (a hole's
+  // back right takes the stock's front left); from the hole's center, the
+  // corner already picked.
+  function stockOnFavorite(p) {
+    var pt = holePoint(p), o = holes.origin;
+    var corner = /^(front|back)-(left|right)$/.test(o) ? stockCornerFor(o) : $('mw-stock-corner').value;
+    setStockBy('zero');
+    var at = holeName(p) + (o && o !== 'center' ? '\u2019s ' + o.replace('-', ' ') : '');
+    holes.stockAnchor = { x: pt.x, y: pt.y, wcs: WCS_NAMES[holeWcs()], zMm: p.zMm != null ? p.zMm : null, at: at };
+    $('mw-stock-corner').value = corner;
+    if (!holes.stockDotSet) setStockZero(corner);
+    renderHoles(); saveSettings();
+  }
   function renderFavs() {
     var box = $('mw-favs');
     box.textContent = '';
@@ -6634,8 +6648,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       c.className = 'mw-fav-chip';
       c.setAttribute('role', 'button'); c.tabIndex = 0;
       c.textContent = p.col == null ? holeLabel(p) : (holes.gridRaw.length > 1 ? gridName(p.layer || 0) + ' ' : '') + holeLabel(p);
-      c.title = 'Pick ' + holeName(p);
-      c.addEventListener('click', function() { if (p.blocked) return; if (holes.zeroMode === 'stock') { setZeroMode('hole'); saveSettings(); } pickHole(i); });
+      c.title = holes.zeroMode === 'stock' ? 'Put the stock\u2019s corner on ' + holeName(p) : 'Pick ' + holeName(p);
+      c.addEventListener('click', function() { if (p.blocked) return; if (holes.zeroMode === 'stock') stockOnFavorite(p); else pickHole(i); });
       c.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); c.click(); } });
       box.appendChild(c);
     });
@@ -7630,7 +7644,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     } else if (sp.problem === 'few' && sp.pins.length === 1) msg = 'One pin so far: tap the holes of the others (two along one edge, one along the other).';
     else if (sp.problem === 'sides') msg = 'Pins ' + sp.pins.map(holeName).join(', ') + ' sit on both sides of the corner along one edge: the stock touches one side only. Take out the one on the wrong side.';
     else if (sp.problem) msg = PIN_PROBLEMS[sp.problem] || '';
-    else if (sp.by === 'zero') msg = 'Its ' + stockPointName(sp.cornerName) + ' is where ' + holes.stockAnchor.wcs + ' X0 Y0 was when the stock was placed (machine X ' + shown(sp.corner.x) + ', Y ' + shown(sp.corner.y) + ' ' + unitName() + '); it stays put when X0 Y0 changes.';
+    else if (sp.by === 'zero') msg = 'Its ' + stockPointName(sp.cornerName) + ' is ' + (holes.stockAnchor.at ? 'on ' + holes.stockAnchor.at : 'where ' + holes.stockAnchor.wcs + ' X0 Y0 was when the stock was placed') + ' (machine X ' + shown(sp.corner.x) + ', Y ' + shown(sp.corner.y) + ' ' + unitName() + '); it stays put when X0 Y0 changes.';
     else msg = 'Against ' + sp.fit.rowPins.concat(sp.fit.colPins).map(holeName).join(', ') + '; the stock is ' + sp.fit.side.replace('-', ' ') + ' of them.';
     if (sp && sp.notes.length && sp.problem !== 'which') msg += ' ' + sp.notes.join(' ');
     note.textContent = msg;

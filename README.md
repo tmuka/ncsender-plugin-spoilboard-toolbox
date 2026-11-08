@@ -514,7 +514,8 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   typed. With three or more pins down, tapping a hole that doesn't fit their L starts a new set of pins
   there, for stock moved somewhere else.
 - **Stock, Corner on X0 Y0:** zero on a corner by touch or probe, press **Use Current X0 Y0**, and pick
-  which corner it is. It stays put when X0 Y0 changes.
+  which corner it is. It stays put when X0 Y0 changes. Or tap a favorite hole (★) in Stock mode: the
+  stock's corner goes on that hole's point (the hole's back right takes the stock's front left).
 - **Stock size:** type its width (X) and length (Y), or jog over the far corner and press **Far Corner
   Here**; its thickness fills in from **SBT: Measure stock thickness** until you type one.
 - **Before you Set:** one line says where X0 Y0 goes, with the numbers; the next how far Set moves the
