@@ -3,6 +3,19 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## 0.5.9: Set in view
+
+### 🔧 Better
+- **XY0 Picker on wide screens** (1400 px or wider): the side splits in two, Hole/Stock and the stock's fields on the left, the picked point, Go to and **Set XY0** / **Set Z0** on the right, so Set is in view without scrolling.
+- **Against Pins:** with three or more pins down, tapping a hole that doesn't fit their L starts a new set of pins there (stock moved somewhere else), instead of leaving the stock unplaced until pins are tapped out.
+- **Field problems by the field:** a red outline now says why in a bubble next to the field, shown after a second's pause in typing or when you leave it. This includes `1,000`, which is refused because it could be 1000 or 1.000.
+- **Cut Board** flags a Feed, Plunge or Spindle RPM past your machine's limits (`$110`/`$111`, `$112`, `$30`/`$31`), by the field and in the list beside Generate.
+- Picking a tool in the Bit Diameter menu fills in its starting feeds, even over ones typed by hand; typing a diameter still keeps yours.
+- **Spindle Delay** hides when the controller already waits after M3 (`$394`), so the program doesn't wait twice.
+
+### 🐛 Fixed
+- **Set Z0 on the stock top** (Stock mode, Z0: stock top) failed with `error:11`: the line storing the stock thickness was too long for grblHAL. The Z0 was set, but the thickness slot wasn't updated.
+
 ## 0.5.8: Feeds style and Tip Through
 
 ### ✨ New
