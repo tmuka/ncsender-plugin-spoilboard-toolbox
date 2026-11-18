@@ -4,7 +4,7 @@
 and turns every one into a work zero you can hit again tomorrow.**
 
 - **Cut your spoilboard:** dog holes, T-tracks, threaded insert grids, chamfers and labels. Or laser / V-bit
-  engrave the grid lines.
+  engrave the grid lines, or draw them with a pen.
 - **Measure Holes:** a pin by eye or a 3D probe finds where your holes really are, even on a turned board.
 - **XY0 Picker:** zero on a hole's center, side or corner, or on **stock pushed against pins** in the dog holes.
 - **Stock Holes:** drill bolt holes through the stock right over your spoilboard holes, keeping the bolts clear
@@ -30,7 +30,7 @@ and turns every one into a work zero you can hit again tomorrow.**
   and flags a move that's exactly a hole or pin radius: the usual sign of the wrong dot.
 - **A whole spoilboard from one Generate.** Every dog hole drilled, spiraled or cleared at its own
   size, in one program you check in ncSender's 3D visualizer before it cuts. Then chamfer every hole and
-  engrave fixture-table labels (A1, B3…) with a V-bit or a laser. The board and the map come from the
+  engrave fixture-table labels (A1, B3…) with a V-bit or a laser, or draw them with a pen. The board and the map come from the
   same numbers, so they agree.
 - **Fit the grid to the real board, probe or no probe.** **Measure Holes** finds a few hole centers
   with a 3D probe, or by eye: center a pin in each, jogging with the keyboard, a gamepad or the
@@ -132,6 +132,7 @@ Put Z0 on the spoilboard (or the stock) any way you like for these: paper, a tou
 | **A touch plate** (ncSender's Standard Block, on the probe input), with measured tool lengths | **Record spoilboard height** and **Measure stock thickness**, which the Z0 macros need once |
 | **Tools in ncSender's tool table** | With a tool changer, pick the tool from **Bit Diameter**'s menu, and the programs start with a tool change (`M6`) to it; without one, click **Bit Diameter** for the loaded tool's size |
 | **A 3D touch probe** | **Probe This Hole** and **Probe Suggested Holes** in Measure Holes; with its tool length offset measured, **Also record the spoilboard height**. *Feedback wanted: not yet tried on a real probe.* |
+| **A pen or drag knife** in ncSender's tool table (tool type Pen or Drag Knife) | **Grid lines** and the hole labels drawn with it: no spindle start, a tool change to it with a tool changer, and never deeper than its Max plunge (the tool table's flute length) |
 | **A laser** with grblHAL's laser mode on (`$32=1`) | **Grid lines** and the hole labels lasered instead of cut with a V-bit, and the **Laser test** to find its power and speed |
 | **Keepout zones** (ncSender's, or the ATCi tool rack's `$684`–`$687`) | The map shows them, picks avoid them, and the programs lift over them |
 | **The [QuickCut](https://github.com/siganberg/ncsender-plugin-quickcut) plugin** | Spoilboard surfacing (left to QuickCut on purpose), and a reminder to re-record the height after it |
@@ -608,7 +609,7 @@ stale T is caught), and the program stops if Z0 moves after Generate; it lifts t
 holes, over the clamps. For through holes, put a sacrificial sheet under the stock, or line its holes
 up over the spoilboard's and keep them no bigger.
 
-**No holes, just lines:** **Grid lines** lasers (grblHAL's laser mode, `$32=1`) or V-bit engraves a line
+**No holes, just lines:** **Grid lines** lasers (grblHAL's laser mode, `$32=1`), V-bit engraves or pen draws a line
 along every row and column of Setup's grids, crossing exactly where the holes would be, half a spacing past
 the end ones. They stop short of the travel's edges and keepout zones, break at T-tracks, and run back and
 forth (every other line runs back) so most moves between them are short. A laser moves between lines at
@@ -622,7 +623,17 @@ crossings. Not sure of the power and speed? The **Laser test** marks a small cro
 - **Chamfer the holes:** after cutting, a V-bit puts a small bevel around each hole's top edge, so dowels
   start easily and the edge doesn't crumble.
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
-  V-bit or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
+  V-bit, a pen or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
+
+**With a pen or drag knife:** Labels and Grid lines both have **Pen or drag knife** in their **With** menu.
+The **Pen** menu lists the tool table's tools of type Pen or Drag Knife, then **The loaded tool** (for one
+that isn't in the table, or ncSender before 2.0.228, which has no such types). The program runs the same
+strokes as a V-bit, plunging at the Plunge rate, but never starts the spindle: no `M3`, `S`, wait or `M5`
+(ncSender stops a job that starts the spindle with one of these loaded). **Depth** is held to the tool's
+**Max plunge**, its flute length in the tool table, below Z0: set a spring-loaded pen's to a few
+thousandths of an inch and every line is that deep or shallower. With no Max plunge, Depth is used as
+typed. With a tool changer, the program first changes to the picked tool (`M6`). Spindle RPM and Delay
+are hidden, and the summary says what the pen will do.
 
 **Cut the T-tracks (a two-layer spoilboard):** install the T-tracks and threaded inserts once, in a lower
 layer of MDF, and lay a thinner sacrificial layer over it. **Cut the T-tracks** cuts just the slots, along
