@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.5.11: Pen and drag knife
 
 ### ✨ New
 - **Labels and Grid lines with a pen or drag knife:** a third choice in **With**, beside V-bit and Laser. A **Pen** menu lists the tool table's Pen and Drag Knife tools (ncSender 2.0.228 or later), then **The loaded tool**. The program never starts the spindle (no `M3`, `S`, wait or `M5`), and stays no deeper than the tool's **Max plunge** (its flute length in the tool table) below Z0; with no Max plunge, Depth is used as typed. With a tool changer it first changes to the pen (`M6`). Plunge shows; Spindle RPM and Delay hide.
