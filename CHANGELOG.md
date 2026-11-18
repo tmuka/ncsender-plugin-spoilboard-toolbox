@@ -10,6 +10,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ### 🐛 Fixed
 - On narrower screens (a portrait monitor, say), the **With** and **Pen** menus of Labels and Grid lines cut off their choices.
+- Unit fields read **0,125** as a decimal (0.125), as QuickCut does; only a comma that could be a thousands separator, as in 1,000, is still refused, and its note now suggests **1.125** where the comma can't be shortened.
 
 ## 0.5.11: Pen and drag knife
 
