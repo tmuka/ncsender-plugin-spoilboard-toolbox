@@ -3336,7 +3336,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     return Object.assign({}, o, {
       pen: { kind: pen && /knife/i.test(pen.type || '') ? 'drag knife' : 'pen', n: pen ? pen.n : 0, name: pen ? pen.name : '', capped: !!flute && o.depthMm > flute },
       rpm: 0, delayS: 0, fwDelayS: 0, tool: atc && pen && pen.n > 0 ? pen.n : null,
-      depthMm: flute && !(o.depthMm <= flute) ? flute : o.depthMm
+      depthMm: flute && o.depthMm > flute ? flute : o.depthMm
     });
   }
   function cutSafe(o) { return 'G53 G0 Z' + fmt(o.safeZMm != null ? o.safeZMm : 0); }
@@ -8343,7 +8343,11 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function cutBody() {
     var b = { 'cut-tool': state.cutTool || null, 'cut-feeds-filled': state.feedsFilled || null };
     CUT_SAVED.lengths.forEach(function(k) { b[k] = fieldVal('mw-' + k); });
-    CUT_SAVED.plain.forEach(function(k) { b[k] = $('mw-' + k).value; });
+    CUT_SAVED.plain.forEach(function(k) {
+      var el = $('mw-' + k);
+      // A Pen menu still waiting for the tool table keeps the saved pick.
+      b[k] = /-pen$/.test(k) && !state.pens && el.getAttribute('data-want') ? el.getAttribute('data-want') : el.value;
+    });
     CUT_SAVED.checks.forEach(function(k) { b[k] = $('mw-' + k).checked; });
     return b;
   }
@@ -8802,16 +8806,27 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       o.value = 'loaded';
       o.textContent = 'The loaded tool';
       sel.appendChild(o);
+      sel.removeAttribute('data-gone');
       if ([].some.call(sel.options, function(x) { return x.value === want; })) { sel.value = want; if (state.pens) sel.removeAttribute('data-want'); }
+      // A saved pen that's no longer in the table: nothing picked, so a
+      // tool changer isn't sent to another tool (penProblem flags it).
+      else if (state.pens && want) { sel.value = ''; sel.selectedIndex = -1; sel.setAttribute('data-gone', want); sel.removeAttribute('data-want'); }
     });
+  }
+  // Why a pen program can't be made yet, or null.
+  function penProblem(id) {
+    var sel = $(id);
+    if (!state.pens) return 'Reading the tool table\u2019s pens';
+    if (sel.selectedIndex < 0) return (sel.getAttribute('data-gone') ? 'T' + sel.getAttribute('data-gone') + ' is no longer a pen or drag knife in the tool table: ' : '') + 'pick one in Pen';
+    return null;
   }
   function penPicked(id) {
     var n = Number($(id).value);
     return (state.pens || []).filter(function(t) { return t.n === n; })[0] || null;
   }
   // What a pen program does, after the summary.
-  function penText(o) {
-    if (!o.pen) return '';
+  function penText(o, id) {
+    if (!o.pen || penProblem(id)) return '';
     var who = o.pen.n ? 'T' + o.pen.n + (o.pen.name ? ' (' + o.pen.name + ')' : '') : 'the loaded ' + o.pen.kind;
     return ' With ' + who + ': no spindle, ' + shown(o.depthMm) + ' ' + unitName() + ' deep' + (o.pen.capped ? ' (its Max plunge)' : '') +
       (o.tool ? ', after a tool change to it (M6).' : '; load it yourself, no tool change.');
@@ -8825,7 +8840,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var segs = state.travel && hh ? gridLineSegments(usable, state.travel, o.zones, laser ? 0.5 : VBIT_R, labelTracks(hh)) : [];
     if (o.plateOn) segs = o.plate ? clipToPlate(segs, o.plate, (laser ? 0.5 : VBIT_R) + PLATE_EDGE_MM) : [];
     Object.assign(o, { laser: laser, power: parseFloat($('mw-gl-power').value), depthMm: cutMm('mw-gl-depth'), feed: Math.round(cutMm('mw-gl-feed')), segs: segs });
-    if (pen) o = withPen(o, penPicked('mw-gl-pen'), state.atc);
+    if (pen) { o = withPen(o, penPicked('mw-gl-pen'), state.atc); if (penProblem('mw-gl-pen')) probs.push(penProblem('mw-gl-pen')); }
     if (!hh) probs.push('Setup’s grid has a field that can’t be read: fix it in the XY0 Picker');
     else if (hh.layout === 'list') probs.push('Grid lines need a grid: set Setup’s layout to Grid or Grid + List');
     else if (!segs.length) probs.push(o.plateOn ? 'No grid line crosses the stock' : 'No grid line fits inside the travel, clear of the zones');
@@ -8851,7 +8866,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var total = l.o.segs.reduce(function(t, g) { return t + Math.hypot(g.b.x - g.a.x, g.b.y - g.a.y); }, 0);
     var lines = l.probs.length ? null : gridLineProgram(l.o);
     $('mw-gl-summary').textContent = l.o.segs.length + ' line' + (l.o.segs.length === 1 ? '' : 's') + ', ' + shown(total) + ' ' + unitName() + ' in all' +
-      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.') + penText(l.o);
+      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.') + penText(l.o, 'mw-gl-pen');
     showProblems($('mw-gl-note'), l.probs);
     $('mw-gl-generate').disabled = !!l.probs.length;
   }
@@ -8925,7 +8940,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     Object.assign(o, { labels: pl.labels, textMm: textMm, laser: laser, power: parseFloat($('mw-lab-power').value), depthMm: cutMm('mw-lab-depth'),
       feed: Math.round(cutMm('mw-lab-feed')) });
-    if (pen) o = withPen(o, penPicked('mw-lab-pen'), state.atc);
+    if (pen) { o = withPen(o, penPicked('mw-lab-pen'), state.atc); if (penProblem('mw-lab-pen')) probs.push(penProblem('mw-lab-pen')); }
     if (!(textMm > 0)) probs.push('Text Height must be more than 0');
     else if (!pl.labels.length) probs.push('No labels fit: try a smaller Text Height');
     if (!(o.feed > 0)) probs.push('Feed must be more than 0');
@@ -8946,7 +8961,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var lines = l.probs.length ? null : engraveProgram(l.o);
     $('mw-lab-summary').textContent = l.o.labels.length + ' label' + (l.o.labels.length === 1 ? '' : 's') +
       (l.skipped.length ? '; left out: ' + Object.keys(why).map(function(k) { return why[k] + ' ' + k; }).join(', ') : '') +
-      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.') + penText(l.o);
+      (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.') + penText(l.o, 'mw-lab-pen');
     showProblems($('mw-lab-note'), l.probs);
     $('mw-lab-generate').disabled = !!l.probs.length;
   }

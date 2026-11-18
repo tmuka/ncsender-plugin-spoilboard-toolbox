@@ -2189,6 +2189,8 @@ test('labels and grid lines with a pen or drag knife: no spindle, depth capped a
   const g = strokesProgram(k, 'grid lines', [{ strokes: [[{ x: 20, y: 20 }, { x: 60, y: 20 }]] }]);
   assert.deepEqual(spindle(g), []);
   assert.ok(g.includes('G1 Z-0.400 F300') && g.includes('M6 T6'));
+  // A blank or unreadable Depth stays unreadable (flagged), not the Max plunge
+  assert.ok(Number.isNaN(withPen(Object.assign({}, base, { depthMm: NaN }), pen, true).depthMm));
   // A V-bit is as before
   assert.ok(engraveProgram(base).some(l => /^M3 S18000/.test(l)));
 });
