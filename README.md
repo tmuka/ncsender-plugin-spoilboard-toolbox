@@ -625,7 +625,8 @@ crossings. Not sure of the power and speed? The **Laser test** marks a small cro
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
   V-bit, a pen or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
 
-**With a pen or drag knife:** Labels and Grid lines both have **Pen or drag knife** in their **With** menu.
+**With a pen or drag knife:** for Labels and Grid lines, the card above the section starts with **With**:
+**V-bit**, **Laser** or **Pen or drag knife** (the card is **Bit and depth** for a V-bit, **Tool** otherwise).
 The **Pen** menu lists the tool table's tools of type Pen or Drag Knife, then **The loaded tool** (for one
 that isn't in the table, or ncSender before 2.0.228, which has no such types). The program runs the same
 strokes as a V-bit, plunging at the Plunge rate, but never starts the spindle: no `M3`, `S`, wait or `M5`

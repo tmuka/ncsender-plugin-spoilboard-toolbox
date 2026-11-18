@@ -396,6 +396,7 @@
   .mw-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mw-gap); }
   @media (max-width: 640px) { .mw-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .mw-row-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; }
+  .mw-row-5 > .mw-span-2 { grid-column: span 2; }
   .mw-coolant { gap: 0; }
   @media (max-width: 760px) { .mw-row-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 640px) { .mw-row-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1189,6 +1190,30 @@
       <section class="mw-card" id="mw-cut-common">
         <h3 class="mw-card-title" id="mw-cut-title">Bit and depth<span class="mw-tool-name" id="mw-tool-name"></span></h3>
         <div class="mw-row mw-row-5">
+          <div class="mw-field" data-for="lines-vbit lines-pen lines-laser">
+            <label for="mw-gl-tool">With</label>
+            <select class="mw-select" id="mw-gl-tool" title="A V-bit in the spindle, a pen or drag knife (no spindle), or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
+              <option value="laser" selected>Laser</option>
+              <option value="vbit">V-bit</option>
+              <option value="pen">Pen or drag knife</option>
+            </select>
+          </div>
+          <div class="mw-field mw-span-2" data-for="lines-pen">
+            <label for="mw-gl-pen">Pen</label>
+            <select class="mw-select" id="mw-gl-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its Max plunge (the tool table's flute length) below Z0. The spindle stays off."></select>
+          </div>
+          <div class="mw-field" data-for="labels-vbit labels-pen labels-laser">
+            <label for="mw-lab-tool">With</label>
+            <select class="mw-select" id="mw-lab-tool" title="A V-bit in the spindle, a pen or drag knife (no spindle), or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
+              <option value="vbit" selected>V-bit</option>
+              <option value="pen">Pen or drag knife</option>
+              <option value="laser">Laser</option>
+            </select>
+          </div>
+          <div class="mw-field mw-span-2" data-for="labels-pen">
+            <label for="mw-lab-pen">Pen</label>
+            <select class="mw-select" id="mw-lab-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its Max plunge (the tool table's flute length) below Z0. The spindle stays off."></select>
+          </div>
           <div class="mw-field" data-for="holes tracks fit stock">
             <label for="mw-cut-bit" id="mw-cut-bit-label" class="mw-label-link" tabindex="0" role="button" title="Click to use the loaded tool's diameter from ncSender's tool table">Bit Diameter (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-bit" value="6.35" title="The bit that's loaded. Each hole is drilled when the bit is its size, spiraled down when it's up to twice the bit, else cleared in rings.">
@@ -1405,18 +1430,6 @@
           Then set Hole Diameter to the line&rsquo;s width and zero on the crossings. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).
           Not sure of the laser&rsquo;s power and speed? Run the <strong>Laser test</strong> first.</p>
         <div class="mw-row">
-          <div class="mw-field">
-            <label for="mw-gl-tool">With</label>
-            <select class="mw-select" id="mw-gl-tool" title="A V-bit in the spindle, a pen or drag knife (no spindle), or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
-              <option value="laser" selected>Laser</option>
-              <option value="vbit">V-bit</option>
-              <option value="pen">Pen or drag knife</option>
-            </select>
-          </div>
-          <div class="mw-field" hidden>
-            <label for="mw-gl-pen">Pen</label>
-            <select class="mw-select" id="mw-gl-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its Max plunge (the tool table's flute length) below Z0. The spindle stays off."></select>
-          </div>
           <div class="mw-field mw-gl-vbit" hidden>
             <label for="mw-gl-depth">Depth (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-gl-depth" value="0.3" title="How deep the V-bit cuts the lines. A pen or drag knife goes no deeper than its Max plunge in the tool table.">
@@ -1479,18 +1492,6 @@
               <option value="every" selected>Every hole</option>
               <option value="edges">First row and column</option>
             </select>
-          </div>
-          <div class="mw-field">
-            <label for="mw-lab-tool">With</label>
-            <select class="mw-select" id="mw-lab-tool" title="A V-bit in the spindle, a pen or drag knife (no spindle), or a laser (grblHAL's laser mode, $32=1, so it's off on rapids).">
-              <option value="vbit" selected>V-bit</option>
-              <option value="pen">Pen or drag knife</option>
-              <option value="laser">Laser</option>
-            </select>
-          </div>
-          <div class="mw-field" hidden>
-            <label for="mw-lab-pen">Pen</label>
-            <select class="mw-select" id="mw-lab-pen" title="The pen or drag knife from ncSender's tool table: with a tool changer the program changes to it, and it never goes deeper than its Max plunge (the tool table's flute length) below Z0. The spindle stays off."></select>
           </div>
           <div class="mw-field">
             <label for="mw-lab-height">Text Height (<span class="mw-unit">mm</span>)</label>
@@ -8862,7 +8863,6 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var l = gridLineSettings(), laser = l.o.laser;
     $('mw-gl-depth').closest('.mw-field').hidden = laser;
     $('mw-gl-power').closest('.mw-field').hidden = !laser;
-    $('mw-gl-pen').closest('.mw-field').hidden = !l.o.pen;
     var total = l.o.segs.reduce(function(t, g) { return t + Math.hypot(g.b.x - g.a.x, g.b.y - g.a.y); }, 0);
     var lines = l.probs.length ? null : gridLineProgram(l.o);
     $('mw-gl-summary').textContent = l.o.segs.length + ' line' + (l.o.segs.length === 1 ? '' : 's') + ', ' + shown(total) + ' ' + unitName() + ' in all' +
@@ -8955,7 +8955,6 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var l = labelSettings(), laser = l.o.laser;
     $('mw-lab-depth').closest('.mw-field').hidden = laser;
     $('mw-lab-power').closest('.mw-field').hidden = !laser;
-    $('mw-lab-pen').closest('.mw-field').hidden = !l.o.pen;
     var why = {};
     l.skipped.forEach(function(x) { why[x.why] = (why[x.why] || 0) + 1; });
     var lines = l.probs.length ? null : engraveProgram(l.o);
@@ -10118,7 +10117,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         (el.contains($('mw-cut-delay')) && state.spindleOnDelayS > 0);
     });
     var shown = $('mw-cut-common').querySelectorAll('.mw-field[data-for]:not([hidden])').length;
-    $('mw-cut-title').firstChild.textContent = shown ? 'Bit and depth' : 'Coolant';
+    // Labels and Grid lines start with what they're made with; a pen or a
+    // laser has no bit.
+    $('mw-cut-title').firstChild.textContent = /-(pen|laser)$/.test(sec) ? 'Tool' : shown ? 'Bit and depth' : 'Coolant';
     $('mw-tool-name').hidden = !shown || $('mw-cut-bit').closest('.mw-field').hidden;
   }
   // Spoilboard's sections: one at a time, picked with the chips.
