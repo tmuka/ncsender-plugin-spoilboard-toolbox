@@ -3,6 +3,14 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### 🔧 Better
+- **Engrave the labels** fits its fields on one row: Labels, Text Height, Depth (or Laser Power) and Feed.
+
+### 🐛 Fixed
+- On narrower screens (a portrait monitor, say), the **With** and **Pen** menus of Labels and Grid lines cut off their choices.
+
 ## 0.5.11: Pen and drag knife
 
 ### ✨ New

@@ -397,6 +397,7 @@
   @media (max-width: 640px) { .mw-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .mw-row-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; }
   .mw-row-5 > .mw-span-2 { grid-column: span 2; }
+  @media (max-width: 1200px) { .mw-row-5 { grid-template-columns: repeat(4, minmax(0, 1fr)); } #mw-cut-common .mw-row-5 > .mw-span-2 { grid-column: 1 / -1; } }
   .mw-coolant { gap: 0; }
   @media (max-width: 760px) { .mw-row-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 640px) { .mw-row-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1485,8 +1486,8 @@
       <section class="mw-card" data-sec="labels">
         <h3 class="mw-card-title">Engrave the labels</h3>
         <p class="mw-hint">The fixture table&rsquo;s names beside the holes, with a V-bit, a pen or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).</p>
-        <div class="mw-row">
-          <div class="mw-field">
+        <div class="mw-row mw-row-5">
+          <div class="mw-field mw-span-2">
             <label for="mw-lab-mode">Labels</label>
             <select class="mw-select" id="mw-lab-mode" title="Every hole: each one's name (B3). Edges: the first row's column numbers and the first column's row letters.">
               <option value="every" selected>Every hole</option>
