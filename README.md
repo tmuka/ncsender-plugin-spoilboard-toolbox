@@ -5,6 +5,7 @@ and turns every one into a work zero you can hit again tomorrow.**
 
 - **Cut your spoilboard:** dog holes, T-tracks, threaded insert grids, chamfers and labels. Or laser / V-bit
   engrave the grid lines, or draw them with a pen.
+- **Export for CAD:** the board as a DXF (true circles, a layer per grid) or a solid STL, to model fixtures on it in Fusion.
 - **Measure Holes:** a pin by eye or a 3D probe finds where your holes really are, even on a turned board.
 - **XY0 Picker:** zero on a hole's center, side or corner, or on **stock pushed against pins** in the dog holes.
 - **Stock Holes:** drill bolt holes through the stock right over your spoilboard holes, keeping the bolts clear
@@ -539,7 +540,7 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 
 The **Cut Board** tab (Spoilboard before 0.5) writes the programs that make (or remake) the spoilboard from the XY0 Picker's
 holes, so the board and the map come from the same numbers. Pick what to cut with the chips at its top
-(**Dog holes**, **T-tracks**, **Grid lines**, **Fit test**, **Laser test**, **Chamfers**, **Labels**). Load the bit, put Z0 on the
+(**Dog holes**, **T-tracks**, **Grid lines**, **Fit test**, **Laser test**, **Chamfers**, **Labels**, and **Export** for CAD). Load the bit, put Z0 on the
 spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the depth and feeds in the shared
 **Bit and depth** card, and press **Generate**: the program opens in ncSender's visualizer to check and
 run.
@@ -655,6 +656,27 @@ once and never cut](docs/two-layer.png)
 [8 mm wooden dowel pins](https://www.amazon.com/dp/B0DJ5GZR9H) as dogs: cheap, and a bit that clips
 one is unharmed. [Flanged 1/4-20 threaded inserts](https://www.amazon.com/dp/B091L3Y6VJ) installed from the back, behind the holes, give clamps
 something to screw into.
+
+## Export for CAD: the board in Fusion
+
+**Cut Board › Export** saves the spoilboard as files a CAD program opens, so you can draw fixtures, jigs
+and clamps on it in Fusion (or another CAD), or show the board in a setup's simulation. It's the same
+board the programs cut: the holes **Dog holes** would cut (suppressed, hidden and blocked holes left out;
+listed holes when that box is ticked) and the slots **T-tracks** would. The board is the machine's
+travel, its top at Z0. The files are always in mm, whatever ncSender's units.
+- **Download DXF:** the board's outline (layer BOARD), every hole as a true circle (HOLES for grid 1,
+  HOLES-G2 and on for further grids, HOLES-LIST for listed holes), each T-track slot's outline (TRACKS)
+  and the keepout zones and Exclude Picks areas (ZONES). An R12 DXF, which every CAD program reads. In
+  Fusion: **Insert › Insert DXF** onto a sketch plane, units mm, then extrude the board and cut the holes.
+- **Download STL:** the board as a closed solid mesh, **Spoilboard Thickness** thick, the holes **Hole
+  Depth** deep (through when it's the thickness) and the slots the T-tracks' **Depth** (through when
+  blank). Circles are many-sided polygons, within 0.05 mm of round. Fusion inserts it as a mesh body (Insert ›
+  Insert Mesh), and Mesh › Convert Mesh makes it a solid body. A hole or slot that overlaps another or reaches the board's edge is only in
+  the DXF, since its faces would cross; the summary counts them.
+- **Origin:** **Machine X0 Y0** keeps everything where the programs put it (negative X and Y on a
+  machine that homes to the back right); **Front left of the travel** moves it so that corner is 0, 0.
+- A very large grid makes a large STL: 15,700 quarter-inch holes come to about 90 MB, more on a turned
+  grid. The DXF stays small, and is the exact one.
 
 ## Stock Holes: bolts, locating pins and flip pins
 

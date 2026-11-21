@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -2193,4 +2193,154 @@ test('labels and grid lines with a pen or drag knife: no spindle, depth capped a
   assert.ok(Number.isNaN(withPen(Object.assign({}, base, { depthMm: NaN }), pen, true).depthMm));
   // A V-bit is as before
   assert.ok(engraveProgram(base).some(l => /^M3 S18000/.test(l)));
+});
+
+// ---------- CAD export ----------
+// A closed, outward-facing mesh's volume (divergence theorem), and the
+// area of its faces facing straight up at a height.
+function meshVolume(t) {
+  let v = 0;
+  for (let i = 0; i < t.length; i += 9) {
+    const [ax, ay, az, bx, by, bz, cx, cy, cz] = t.slice(i, i + 9);
+    v += ax * (by * cz - bz * cy) - ay * (bx * cz - bz * cx) + az * (bx * cy - by * cx);
+  }
+  return v / 6;
+}
+function upArea(t, z, sign) {
+  let a = 0;
+  for (let i = 0; i < t.length; i += 9) {
+    if ([2, 5, 8].some(k => Math.abs(t[i + k] - z) > 1e-6)) continue;
+    const s = ((t[i + 3] - t[i]) * (t[i + 7] - t[i + 1]) - (t[i + 4] - t[i + 1]) * (t[i + 6] - t[i])) / 2;
+    if (Math.sign(s) === sign) a += Math.abs(s);
+  }
+  return a;
+}
+// Closed with no cracks: every edge of every triangle is used once each
+// way (by the triangle on its other side), and no triangle has no area.
+function closedMesh(t) {
+  const k = (i) => t[i] + ',' + t[i + 1] + ',' + t[i + 2], edges = new Map();
+  let flat = 0;
+  for (let i = 0; i < t.length; i += 9) {
+    const v = [k(i), k(i + 3), k(i + 6)];
+    const ux = t[i + 3] - t[i], uy = t[i + 4] - t[i + 1], uz = t[i + 5] - t[i + 2], wx = t[i + 6] - t[i], wy = t[i + 7] - t[i + 1], wz = t[i + 8] - t[i + 2];
+    if (Math.hypot(uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx) < 1e-12) flat++;
+    for (let e = 0; e < 3; e++) { const id = v[e] + '>' + v[(e + 1) % 3]; edges.set(id, (edges.get(id) || 0) + 1); }
+  }
+  let bad = 0;
+  for (const [id, n] of edges) { const [a, b] = id.split('>'); if (n !== 1 || edges.get(b + '>' + a) !== 1) bad++; }
+  return { bad, flat };
+}
+const polyArea = (pts) => pts.reduce((a, p, i) => { const q = pts[(i + 1) % pts.length]; return a + (p.x * q.y - q.x * p.y) / 2; }, 0);
+// A board: the travel 600 x 400 running negative from machine X0 Y0, a
+// 4 x 3 grid of 8 mm holes, one T-track slot along X, a zone.
+const cadBase = () => {
+  const holes = [];
+  for (let c = 0; c < 4; c++) for (let r = 0; r < 3; r++) holes.push({ x: -50 - 100 * c, y: -50 - 100 * r, diaMm: 8, col: c + 1, row: r + 1 });
+  return { rect: { minX: -600, maxX: 0, minY: -400, maxY: 0 }, holes, slots: [{ a: { x: -590, y: -200 }, b: { x: -10, y: -200 }, halfMm: 9.525 }],
+           zones: [{ minX: -600, maxX: -550, minY: -400, maxY: -350 }], thickMm: 12, holeDepthMm: 12, slotDepthMm: 0 };
+};
+
+test('cadParts: holes and slots as polygons, overlaps and edge holes marked out', () => {
+  const o = cadBase();
+  o.holes.push({ x: -54, y: -50, diaMm: 8, col: 9, row: 9 });     // overlaps the first hole
+  o.holes.push({ x: -300, y: -202, diaMm: 6, col: 9, row: 8 });   // in the slot
+  o.holes.push({ x: -2, y: -200, diaMm: 8, col: 9, row: 7 });     // past the board's edge
+  o.holes.push({ x: -500, y: -390, diaMm: 6 });                    // a listed hole
+  const p = cadParts(o);
+  assert.equal(p.holes.length, 16);
+  assert.deepEqual(p.holes.slice(12).map(h => h.out), ['overlap', 'slot', 'edge', undefined]);
+  assert.ok(p.holes.slice(0, 12).every(h => !h.out && h.depthMm === 12 && h.pts.length === circleSides(4)));
+  assert.equal(p.holes[15].list, true);
+  // The slot's outline, counterclockwise, 19.05 wide
+  assert.ok(polyArea(p.slots[0].pts) > 0);
+  assert.ok(Math.abs(polyArea(p.slots[0].pts) - 580 * 19.05) < 1e-6);
+  assert.equal(p.slots[0].depthMm, 12);
+  // Shifted to the front left of the travel
+  const q = cadParts(Object.assign(cadBase(), { origin: { x: -600, y: -400 } }));
+  assert.deepEqual(q.rect, { minX: 0, maxX: 600, minY: 0, maxY: 400 });
+  assert.equal(q.holes[0].x, 550);
+  // Depths never past the thickness; a dado depth for the slots
+  const d = cadParts(Object.assign(cadBase(), { holeDepthMm: 30, slotDepthMm: 3 }));
+  assert.equal(d.holes[0].depthMm, 12);
+  assert.equal(d.slots[0].depthMm, 3);
+  // Crossing slots: the second is left out
+  const x = cadParts(Object.assign(cadBase(), { holes: [], slots: cadBase().slots.concat([{ a: { x: -300, y: -390 }, b: { x: -300, y: -10 }, halfMm: 9.525 }]) }));
+  assert.deepEqual(x.slots.map(s => s.out), [undefined, 'overlap']);
+});
+
+test('circleSides: within 0.05 mm, a multiple of 4, 12 to 64', () => {
+  [0.5, 3, 4, 10, 50, 500].forEach(r => {
+    const n = circleSides(r);
+    assert.equal(n % 4, 0);
+    assert.ok(n >= 12 && n <= 64);
+    if (n < 64) assert.ok(r * (1 - Math.cos(Math.PI / n)) <= 0.05 + 1e-9);
+  });
+});
+
+test('boardMesh: a closed solid, through and blind cutouts', () => {
+  [[12, 0], [5, 3]].forEach(([hd, sd]) => {
+    const p = cadParts(Object.assign(cadBase(), { holeDepthMm: hd, slotDepthMm: sd }));
+    const t = boardMesh(p);
+    assert.equal(t.length % 9, 0);
+    assert.ok(t.every(Number.isFinite));
+    const cut = p.holes.concat(p.slots).reduce((a, c) => a + polyArea(c.pts) * c.depthMm, 0);
+    assert.ok(Math.abs(meshVolume(t) - (600 * 400 * 12 - cut)) < 1e-3, 'volume');
+    // The top is the board less every cutout; the bottom less the through ones
+    const open = p.holes.concat(p.slots).reduce((a, c) => a + polyArea(c.pts), 0);
+    const thru = p.holes.concat(p.slots).filter(c => c.depthMm >= 12).reduce((a, c) => a + polyArea(c.pts), 0);
+    assert.ok(Math.abs(upArea(t, 0, 1) - (240000 - open)) < 1e-3, 'top');
+    assert.ok(Math.abs(upArea(t, -12, -1) - (240000 - thru)) < 1e-3, 'bottom');
+    assert.deepEqual(closedMesh(t), { bad: 0, flat: 0 });
+  });
+});
+
+test('boardMesh: a turned grid and many holes stay closed', () => {
+  const holes = [];
+  for (let c = 0; c < 40; c++) for (let r = 0; r < 25; r++) {
+    const x = 20 + 30 * c, y = 20 + 30 * r, a = 0.02;
+    holes.push({ x: x * Math.cos(a) - y * Math.sin(a) + 20, y: x * Math.sin(a) + y * Math.cos(a), diaMm: 20 * (1 + (c % 3) / 10) / 2, col: c + 1, row: r + 1 });
+  }
+  const p = cadParts({ rect: { minX: 0, maxX: 1250, minY: 0, maxY: 800 }, holes, slots: [], zones: [], thickMm: 18, holeDepthMm: 10 });
+  const used = p.holes.filter(h => !h.out);
+  assert.ok(used.length > 900);
+  const t = boardMesh(p);
+  const cut = used.reduce((a, c) => a + polyArea(c.pts) * c.depthMm, 0);
+  assert.ok(Math.abs(meshVolume(t) - (1250 * 800 * 18 - cut)) < 0.05);
+  assert.deepEqual(closedMesh(t), { bad: 0, flat: 0 });
+});
+
+test('stlBytes: binary STL with normals', () => {
+  const t = boardMesh(cadParts(cadBase()));
+  const buf = stlBytes(t, 'SBT test');
+  const dv = new DataView(buf);
+  const n = dv.getUint32(80, true);
+  assert.equal(n, t.length / 9);
+  assert.equal(buf.byteLength, 84 + 50 * n);
+  assert.equal(String.fromCharCode(...new Uint8Array(buf, 0, 8)), 'SBT test');
+  // The first triangle's corners and a unit normal
+  for (let k = 0; k < 9; k++) assert.ok(Math.abs(dv.getFloat32(84 + 12 + 4 * k, true) - t[k]) < 1e-3);
+  const nn = [0, 1, 2].map(k => dv.getFloat32(84 + 4 * k, true));
+  assert.ok(Math.abs(Math.hypot(...nn) - 1) < 1e-5);
+});
+
+test('boardDxf: R12 with the board, circles, slots and zones on layers', () => {
+  const o = cadBase();
+  o.holes.push({ x: -54, y: -50, diaMm: 8, col: 9, row: 9 });
+  o.holes.push({ x: -500, y: -390, diaMm: 6 });
+  o.holes.push({ x: -150, y: -150, diaMm: 6, col: 1, row: 1, layer: 1 });
+  const dxf = boardDxf(cadParts(o));
+  const lines = dxf.split('\r\n').slice(0, -1);
+  assert.equal(lines.length % 2, 0);
+  const pairs = [];
+  for (let i = 0; i < lines.length; i += 2) pairs.push([lines[i].trim(), lines[i + 1]]);
+  const ents = pairs.filter(p => p[0] === '0').map(p => p[1]);
+  // Every hole is in the DXF, the overlapping one too
+  assert.equal(ents.filter(e => e === 'CIRCLE').length, 15);
+  assert.equal(ents.filter(e => e === 'POLYLINE').length, 3);   // board, slot, zone
+  assert.equal(ents[ents.length - 1], 'EOF');
+  assert.ok(dxf.includes('AC1009'));
+  ['BOARD', 'HOLES', 'HOLES-G2', 'HOLES-LIST', 'TRACKS', 'ZONES'].forEach(l => assert.ok(pairs.some(p => p[0] === '2' && p[1] === l), l));
+  // A circle's center and radius
+  const i = pairs.findIndex(p => p[0] === '0' && p[1] === 'CIRCLE');
+  assert.deepEqual(pairs.slice(i + 1, i + 6), [['8', 'HOLES'], ['10', '-50.000'], ['20', '-50.000'], ['30', '0.000'], ['40', '4.000']]);
 });

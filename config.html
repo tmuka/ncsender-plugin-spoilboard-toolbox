@@ -392,6 +392,7 @@
     background: color-mix(in srgb, var(--color-accent) 18%, transparent);
     color: var(--mw-accent-text);
   }
+  .mw-cad-btns { display: flex; gap: 8px; flex-wrap: wrap; }
   .mw-hint { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--color-text-secondary); }
   .mw-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mw-gap); }
   @media (max-width: 640px) { .mw-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1186,6 +1187,7 @@
         <button type="button" class="mw-sec" role="tab" data-sec="chamfer" aria-selected="false">Chamfers</button>
         <button type="button" class="mw-sec" role="tab" data-sec="threads" aria-selected="false" hidden>Threads</button>
         <button type="button" class="mw-sec" role="tab" data-sec="labels" aria-selected="false">Labels</button>
+        <button type="button" class="mw-sec" role="tab" data-sec="export" aria-selected="false">Export</button>
       </div>
       <div id="mw-cut-common-slot">
       <section class="mw-card" id="mw-cut-common">
@@ -1219,11 +1221,11 @@
             <label for="mw-cut-bit" id="mw-cut-bit-label" class="mw-label-link" tabindex="0" role="button" title="Click to use the loaded tool's diameter from ncSender's tool table">Bit Diameter (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-bit" value="6.35" title="The bit that's loaded. Each hole is drilled when the bit is its size, spiraled down when it's up to twice the bit, else cleared in rings.">
           </div>
-          <div class="mw-field mw-cut-only" data-for="holes tracks">
+          <div class="mw-field mw-cut-only" data-for="holes tracks export">
             <label for="mw-cut-thick">Spoilboard Thickness (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-thick" value="" placeholder="measure it" title="How thick the spoilboard is: measure it. Hole Depth can't be more, so the bit never cuts into what's under it.">
           </div>
-          <div class="mw-field mw-cut-only" data-for="holes">
+          <div class="mw-field mw-cut-only" data-for="holes export">
             <label for="mw-cut-depth">Hole Depth (<span class="mw-unit">mm</span>)</label>
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-cut-depth" value="18.05" title="How deep each hole goes below Z0 (the spoilboard's top, or the stock's with Into the stock on top ticked). Leave a little under it unless there's a sacrificial layer below.">
           </div>
@@ -1514,6 +1516,29 @@
         <p class="mw-hint" id="mw-lab-summary"></p>
         <p class="mw-status" id="mw-lab-note" role="status"></p>
         <div><button type="button" class="mw-btn" id="mw-lab-generate">Generate Labels</button></div>
+      </section>
+      <section class="mw-card" data-sec="export">
+        <h3 class="mw-card-title">Export for CAD</h3>
+        <div class="mw-hint">The spoilboard as files for Fusion or another CAD program, to model fixtures on it or show it in a
+          setup&rsquo;s simulation. The same holes and slots Dog holes and T-tracks would cut: the board is the machine&rsquo;s
+          travel, with its top at Z0, in mm.</div>
+        <div class="mw-hint"><strong>DXF:</strong> the outline, every hole as a true circle (a layer per grid), the T-track slots and the zones.
+          In Fusion: Insert &rsaquo; Insert DXF onto a sketch plane, in mm, then extrude.</div>
+        <div class="mw-hint"><strong>STL:</strong> the board as a solid, Spoilboard Thickness thick, holes Hole Depth deep and slots the T-tracks&rsquo; Depth,
+          for a mesh body or a fixture. Circles become many-sided polygons.</div>
+        <div class="mw-row">
+          <div class="mw-field">
+            <label for="mw-cad-origin">Origin</label>
+            <select class="mw-select" id="mw-cad-origin" title="Where the files' 0, 0 is. Machine X0 Y0: the holes at their machine positions, as the programs place them. Front left of the travel: everything moved so the board's front left corner is 0, 0, all positive.">
+              <option value="machine" selected>Machine X0 Y0</option>
+              <option value="corner">Front left of the travel</option>
+            </select>
+          </div>
+        </div>
+        <p class="mw-hint" id="mw-cad-summary"></p>
+        <p class="mw-status" id="mw-cad-note" role="status"></p>
+        <div class="mw-cad-btns"><button type="button" class="mw-btn" id="mw-cad-dxf">Download DXF</button>
+          <button type="button" class="mw-btn" id="mw-cad-stl">Download STL</button></div>
       </section>
     </div>
     <div class="mw-tab" data-tab="stock" hidden>
@@ -4509,6 +4534,319 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       }
       return best <= lim ? best - t.r - br : null;
     });
+  }
+
+  // ---------- CAD export ----------
+  //
+  // The spoilboard as files a CAD program (Fusion, say) opens: a DXF of
+  // the board's outline (the travel), every hole as a circle, the T-track
+  // slots and the zones, and an STL of the board as a solid with the holes
+  // and slots cut in. In mm, from machine X0 Y0 or shifted by origin.
+
+  // The parts. o: { rect (the travel, machine mm), holes [{ x, y, diaMm,
+  // layer, col }], slots [{ a, b, halfMm }] (centerlines), zones,
+  // origin { x, y } (subtracted), thickMm, holeDepthMm, slotDepthMm }.
+  // Each hole and slot carries its outline as a convex polygon (pts,
+  // counterclockwise) and its depth. A hole or slot that overlaps another,
+  // or isn't 0.5 mm inside the board, is marked out: the STL leaves it
+  // out (its faces would cross), the DXF keeps it.
+  function cadParts(o) {
+    var ox = o.origin ? o.origin.x : 0, oy = o.origin ? o.origin.y : 0, T = o.thickMm;
+    var rect = { minX: o.rect.minX - ox, maxX: o.rect.maxX - ox, minY: o.rect.minY - oy, maxY: o.rect.maxY - oy };
+    var inside = function(pts, m) { return pts.every(function(p) { return p.x >= rect.minX + m && p.x <= rect.maxX - m && p.y >= rect.minY + m && p.y <= rect.maxY - m; }); };
+    var slots = (o.slots || []).map(function(s) {
+      var a = { x: s.a.x - ox, y: s.a.y - oy }, b = { x: s.b.x - ox, y: s.b.y - oy }, len = Math.hypot(b.x - a.x, b.y - a.y);
+      var nx = -(b.y - a.y) / len * s.halfMm, ny = (b.x - a.x) / len * s.halfMm;
+      return { a: a, b: b, halfMm: s.halfMm, depthMm: Math.min(T, o.slotDepthMm > 0 ? o.slotDepthMm : T),
+               pts: [{ x: snap(a.x - nx), y: snap(a.y - ny) }, { x: snap(b.x - nx), y: snap(b.y - ny) }, { x: snap(b.x + nx), y: snap(b.y + ny) }, { x: snap(a.x + nx), y: snap(a.y + ny) }] };
+    }).filter(function(s) { return isFinite(s.pts[0].x); });
+    slots.forEach(function(s, i) {
+      if (!inside(s.pts, 0.5)) { s.out = 'edge'; return; }
+      for (var j = 0; j < i; j++) {
+        if (!slots[j].out && segDist(s.a, s.b, slots[j].a, slots[j].b) < s.halfMm + slots[j].halfMm + 0.2) { s.out = 'overlap'; return; }
+      }
+    });
+    var holes = (o.holes || []).map(function(h) {
+      var r = h.diaMm / 2, n = circleSides(r), pts = [];
+      for (var k = 0; k < n; k++) pts.push({ x: snap(h.x - ox + r * Math.cos(2 * Math.PI * k / n)), y: snap(h.y - oy + r * Math.sin(2 * Math.PI * k / n)) });
+      return { x: h.x - ox, y: h.y - oy, r: r, layer: h.layer || 0, list: h.col == null, pts: pts,
+               depthMm: Math.min(T, o.holeDepthMm > 0 ? o.holeDepthMm : T) };
+    }).filter(function(h) { return h.r > 0; });
+    // Overlaps between holes through cells of the largest diameter, so
+    // thousands of holes stay quick.
+    var maxR = 0, cells = {};
+    holes.forEach(function(h) { maxR = Math.max(maxR, h.r); });
+    var cell = 2 * maxR + 1;
+    holes.forEach(function(h) {
+      if (!inside(h.pts, 0.5)) { h.out = 'edge'; return; }
+      if (slots.some(function(s) { return !s.out && segDist(h, h, s.a, s.b) < h.r + s.halfMm + 0.2; })) { h.out = 'slot'; return; }
+      var cx = Math.floor(h.x / cell), cy = Math.floor(h.y / cell);
+      for (var dx = -1; dx <= 1 && !h.out; dx++) {
+        for (var dy = -1; dy <= 1 && !h.out; dy++) {
+          (cells[(cx + dx) + ',' + (cy + dy)] || []).forEach(function(g) { if (!h.out && Math.hypot(h.x - g.x, h.y - g.y) < h.r + g.r + 0.2) h.out = 'overlap'; });
+        }
+      }
+      if (!h.out) (cells[cx + ',' + cy] = cells[cx + ',' + cy] || []).push(h);
+    });
+    var zones = (o.zones || []).map(function(z) { return { minX: z.minX - ox, maxX: z.maxX - ox, minY: z.minY - oy, maxY: z.maxY - oy }; });
+    return { rect: rect, holes: holes, slots: slots, zones: zones, thickMm: T };
+  }
+  // Corners to the nearest nanometre, so a row of holes shares its corners'
+  // heights exactly (sin and cos leave 1e-16 either way).
+  function snap(v) { return Math.round(v * 1e9) / 1e9; }
+  // Sides of the polygon standing in for a circle: within 0.05 mm of it,
+  // a multiple of 4 (so a grid's holes share their rows of corners), 12 to 64.
+  function circleSides(r) {
+    var n = r > 0.05 ? Math.ceil(Math.PI / Math.acos(1 - 0.05 / r)) : 12;
+    return Math.max(12, Math.min(64, Math.ceil(n / 4) * 4));
+  }
+  // The shortest distance between segments ab and cd (a point when a = b).
+  function segDist(a, b, c, d) {
+    var pt = function(p, s, e) {
+      var dx = e.x - s.x, dy = e.y - s.y, l2 = dx * dx + dy * dy, t = l2 > 0 ? Math.max(0, Math.min(1, ((p.x - s.x) * dx + (p.y - s.y) * dy) / l2)) : 0;
+      return Math.hypot(p.x - s.x - t * dx, p.y - s.y - t * dy);
+    };
+    var cr = function(p, q, r) { return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x); };
+    var d1 = cr(a, b, c), d2 = cr(a, b, d), d3 = cr(c, d, a), d4 = cr(c, d, b);
+    if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return 0;
+    return Math.min(pt(a, c, d), pt(b, c, d), pt(c, a, b), pt(d, a, b));
+  }
+
+  // An R12 ASCII DXF (the oldest, which every CAD program reads) of the
+  // parts, in mm: layers BOARD (the travel), HOLES (grid 1), HOLES-G2...,
+  // HOLES-LIST, TRACKS (each slot's outline) and ZONES.
+  function boardDxf(p) {
+    var out = [], g = function(code, v) { out.push(String(code), typeof v === 'number' ? fmt(v) : String(v)); };
+    var holeLayer = function(h) { return h.list ? 'HOLES-LIST' : h.layer ? 'HOLES-G' + (h.layer + 1) : 'HOLES'; };
+    var layers = [['BOARD', 7], ['HOLES', 1]];
+    p.holes.forEach(function(h) {
+      var n = holeLayer(h);
+      if (!layers.some(function(l) { return l[0] === n; })) layers.push([n, h.list ? 6 : 1 + (h.layer % 5) + 1]);
+    });
+    layers.push(['TRACKS', 5], ['ZONES', 8]);
+    g(0, 'SECTION'); g(2, 'HEADER'); g(9, '$ACADVER'); g(1, 'AC1009'); g(0, 'ENDSEC');
+    g(0, 'SECTION'); g(2, 'TABLES');
+    g(0, 'TABLE'); g(2, 'LTYPE'); g(70, 1); g(0, 'LTYPE'); g(2, 'CONTINUOUS'); g(70, 0); g(3, 'Solid line'); g(72, 65); g(73, 0); g(40, 0); g(0, 'ENDTAB');
+    g(0, 'TABLE'); g(2, 'LAYER'); g(70, layers.length);
+    layers.forEach(function(l) { g(0, 'LAYER'); g(2, l[0]); g(70, 0); g(62, l[1]); g(6, 'CONTINUOUS'); });
+    g(0, 'ENDTAB'); g(0, 'ENDSEC');
+    g(0, 'SECTION'); g(2, 'ENTITIES');
+    var poly = function(layer, pts) {
+      g(0, 'POLYLINE'); g(8, layer); g(66, 1); g(10, 0); g(20, 0); g(30, 0); g(70, 1);
+      pts.forEach(function(q) { g(0, 'VERTEX'); g(8, layer); g(10, q.x); g(20, q.y); g(30, 0); });
+      g(0, 'SEQEND'); g(8, layer);
+    };
+    var box = function(layer, r) { poly(layer, [{ x: r.minX, y: r.minY }, { x: r.maxX, y: r.minY }, { x: r.maxX, y: r.maxY }, { x: r.minX, y: r.maxY }]); };
+    box('BOARD', p.rect);
+    p.holes.forEach(function(h) { g(0, 'CIRCLE'); g(8, holeLayer(h)); g(10, h.x); g(20, h.y); g(30, 0); g(40, h.r); });
+    p.slots.forEach(function(s) { poly('TRACKS', s.pts); });
+    p.zones.forEach(function(z) { box('ZONES', z); });
+    g(0, 'ENDSEC'); g(0, 'EOF');
+    return out.join('\r\n') + '\r\n';
+  }
+
+  // The board as a closed triangle mesh: a slab Thickness thick, its top
+  // at Z0, with every hole and slot not marked out cut down its depth (a
+  // floor when it doesn't go through). Returns the triangles as a flat
+  // array of corners (9 numbers each, counterclockwise seen from outside).
+  // The top and bottom faces are the board less the cutouts, split into
+  // square tiles and each tile into bands between the cutouts' corners, so
+  // a band is trapezoids between the cutouts crossing it. Every face is a
+  // convex polygon; a corner of one that lies on another's edge is added
+  // to that edge too, so faces meet corner to corner (no cracks, which a
+  // CAD program's mesh-to-solid needs).
+  function boardMesh(p) {
+    var T = p.thickMm, R = p.rect, faces = [];
+    var cuts = p.holes.concat(p.slots).filter(function(c) { return !c.out && c.depthMm > 0; });
+    var through = cuts.filter(function(c) { return c.depthMm >= T - 1e-6; });
+    var w = R.maxX - R.minX, h = R.maxY - R.minY;
+    // A face at height z with these cutouts, facing up (or down).
+    var face = function(list, z, up) {
+      var size = Math.max(20, Math.sqrt(w * h / Math.max(1, list.length / 2)));
+      var nx = Math.max(1, Math.round(w / size)), ny = Math.max(1, Math.round(h / size)), tiles = {};
+      var tx = function(i) { return i >= nx ? R.maxX : R.minX + w * i / nx; }, ty = function(j) { return j >= ny ? R.maxY : R.minY + h * j / ny; };
+      list.forEach(function(c) {
+        var b = bounds(c.pts);
+        var i0 = Math.max(0, Math.floor((b.minX - R.minX) / w * nx)), i1 = Math.min(nx - 1, Math.floor((b.maxX - R.minX) / w * nx));
+        var j0 = Math.max(0, Math.floor((b.minY - R.minY) / h * ny)), j1 = Math.min(ny - 1, Math.floor((b.maxY - R.minY) / h * ny));
+        for (var i = i0; i <= i1; i++) for (var j = j0; j <= j1; j++) (tiles[i + ',' + j] = tiles[i + ',' + j] || []).push(c);
+      });
+      for (var i = 0; i < nx; i++) {
+        for (var j = 0; j < ny; j++) {
+          var t = { minX: tx(i), maxX: tx(i + 1), minY: ty(j), maxY: ty(j + 1) };
+          var polys = (tiles[i + ',' + j] || []).map(function(c) { return clipPoly(c.pts, t); }).filter(function(q) { return q.length >= 3; });
+          var ys = [t.minY, t.maxY];
+          polys.forEach(function(q) { q.b = bounds(q); q.forEach(function(v) { ys.push(v.y); }); });
+          ys.sort(function(a, b) { return a - b; });
+          var band = [ys[0]];
+          ys.forEach(function(y) { if (y - band[band.length - 1] > 5e-10) band.push(y); });
+          band[band.length - 1] = t.maxY;
+          for (var k = 0; k + 1 < band.length; k++) {
+            var y0 = band[k], y1 = band[k + 1], ym = (y0 + y1) / 2;
+            var spans = polys.filter(function(q) { return q.b.minY <= ym && q.b.maxY >= ym; }).map(function(q) {
+              var s0 = xSpan(q, y0), s1 = xSpan(q, y1);
+              return [s0[0], s0[1], s1[0], s1[1]];
+            }).sort(function(a, b) { return a[0] + a[2] - b[0] - b[2]; });
+            var l0 = t.minX, l1 = t.minX;
+            spans.concat([[t.maxX, t.maxX, t.maxX, t.maxX]]).forEach(function(s) {
+              var r0 = s[0], r1 = s[2];
+              if (r0 - l0 > 1e-9 || r1 - l1 > 1e-9) {
+                var f = [[l0, y0, z], [r0, y0, z], [r1, y1, z], [l1, y1, z]];
+                faces.push(up ? f : f.reverse());
+              }
+              l0 = s[1]; l1 = s[3];
+            });
+          }
+        }
+      }
+    };
+    face(cuts, 0, true);
+    face(through, -T, false);
+    // The board's four sides, facing out.
+    var c = [[R.minX, R.minY], [R.maxX, R.minY], [R.maxX, R.maxY], [R.minX, R.maxY]];
+    for (var s = 0; s < 4; s++) {
+      var a = c[s], b = c[(s + 1) % 4];
+      faces.push([[a[0], a[1], -T], [b[0], b[1], -T], [b[0], b[1], 0], [a[0], a[1], 0]]);
+    }
+    // Each cutout's walls, facing into it, and a floor facing up when it
+    // stops short of the bottom.
+    cuts.forEach(function(cu) {
+      var zb = cu.depthMm >= T - 1e-6 ? -T : -cu.depthMm, q = cu.pts;
+      for (var k = 0; k < q.length; k++) {
+        var a = q[k], b = q[(k + 1) % q.length];
+        faces.push([[a.x, a.y, 0], [b.x, b.y, 0], [b.x, b.y, zb], [a.x, a.y, zb]]);
+      }
+      if (zb > -T) faces.push(q.map(function(v) { return [v.x, v.y, zb]; }));
+    });
+    return meshFaces(faces);
+  }
+  // Triangles from convex faces (lists of [x, y, z] corners, counter-
+  // clockwise seen from outside): each face's edges first take every
+  // other face's corner that lies on them, found through 4 mm cells. A
+  // corner within 1e-6 mm of a cell's side is filed in both cells, so an
+  // edge need only look in the cells it crosses. Vertical edges are
+  // skipped: corners are only ever at the top, the bottom and a floor,
+  // which are a wall's own ends.
+  function meshFaces(faces) {
+    var cell = 4, grid = new Map(), tris = [], E = 1e-6;
+    var key = function(ix, iy) { return (ix + 50000) * 100000 + iy + 50000; };
+    faces.forEach(function(f) {
+      f.forEach(function(v) {
+        var x0 = Math.floor((v[0] - E) / cell), x1 = Math.floor((v[0] + E) / cell), y0 = Math.floor((v[1] - E) / cell), y1 = Math.floor((v[1] + E) / cell);
+        for (var ix = x0; ix <= x1; ix++) for (var iy = y0; iy <= y1; iy++) {
+          var k = key(ix, iy), l = grid.get(k);
+          if (!l) grid.set(k, l = []);
+          l.push(v);
+        }
+      });
+    });
+    // The cells segment p q crosses (Amanatides and Woo's walk).
+    var cellsOn = function(p, q) {
+      var ix = Math.floor(p[0] / cell), iy = Math.floor(p[1] / cell), jx = Math.floor(q[0] / cell), jy = Math.floor(q[1] / cell), out = [key(ix, iy)];
+      var dx = q[0] - p[0], dy = q[1] - p[1], sx = dx > 0 ? 1 : -1, sy = dy > 0 ? 1 : -1;
+      var tdx = dx ? Math.abs(cell / dx) : Infinity, tdy = dy ? Math.abs(cell / dy) : Infinity;
+      var tmx = dx ? ((sx > 0 ? (ix + 1) * cell : ix * cell) - p[0]) / dx : Infinity, tmy = dy ? ((sy > 0 ? (iy + 1) * cell : iy * cell) - p[1]) / dy : Infinity;
+      for (var guard = 0; (ix !== jx || iy !== jy) && guard < 100000; guard++) {
+        if (tmx < tmy) { ix += sx; tmx += tdx; } else { iy += sy; tmy += tdy; }
+        out.push(key(ix, iy));
+      }
+      return out;
+    };
+    faces.forEach(function(f) {
+      // Drop repeated corners (a band's side of no width).
+      var g = f.filter(function(v, i) { var u = f[(i + 1) % f.length]; return Math.abs(v[0] - u[0]) + Math.abs(v[1] - u[1]) + Math.abs(v[2] - u[2]) > 1e-9; });
+      if (g.length < 3) return;
+      var poly = [], added = false;
+      g.forEach(function(p, i) {
+        var q = g[(i + 1) % g.length], dx = q[0] - p[0], dy = q[1] - p[1], dz = q[2] - p[2], l2 = dx * dx + dy * dy + dz * dz;
+        poly.push(p);
+        if (Math.abs(dx) + Math.abs(dy) < 1e-9) return;
+        var on = [], len = Math.sqrt(l2), zl = Math.min(p[2], q[2]) - E, zh = Math.max(p[2], q[2]) + E;
+        cellsOn(p, q).forEach(function(k) {
+          var l = grid.get(k);
+          if (l) for (var n = 0; n < l.length; n++) {
+            var v = l[n];
+            if (v[2] < zl || v[2] > zh || v === p || v === q) continue;
+            var vx = v[0] - p[0], vy = v[1] - p[1], vz = v[2] - p[2], t = (vx * dx + vy * dy + vz * dz) / l2;
+            if (t * len < E || (1 - t) * len < E) continue;
+            var ox = vx - t * dx, oy = vy - t * dy, oz = vz - t * dz;
+            if (ox * ox + oy * oy + oz * oz > 1e-12) continue;
+            on.push({ t: t, v: v });
+          }
+        });
+        on.sort(function(a, b) { return a.t - b.t; });
+        on.forEach(function(o, n) { if (!n || o.t - on[n - 1].t > 1e-9) { poly.push(o.v); added = true; } });
+      });
+      var push = function(a, b, c) { tris.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); };
+      if (!added) { for (var m = 1; m + 1 < poly.length; m++) push(poly[0], poly[m], poly[m + 1]); return; }
+      // With corners on its edges, a fan from its middle keeps every
+      // triangle's area above zero.
+      var mid = [0, 0, 0];
+      g.forEach(function(v) { mid[0] += v[0] / g.length; mid[1] += v[1] / g.length; mid[2] += v[2] / g.length; });
+      for (var n = 0; n < poly.length; n++) push(mid, poly[n], poly[(n + 1) % poly.length]);
+    });
+    return tris;
+  }
+  function bounds(pts) {
+    var b = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+    pts.forEach(function(v) { b.minX = Math.min(b.minX, v.x); b.maxX = Math.max(b.maxX, v.x); b.minY = Math.min(b.minY, v.y); b.maxY = Math.max(b.maxY, v.y); });
+    return b;
+  }
+  // A convex polygon's part inside rect r (Sutherland-Hodgman). Each
+  // corner keeps the edge leaving it (one of the polygon's own, or a side
+  // of r), and a crossing is worked out from that edge's original ends,
+  // in the same order whichever way it runs: the tiles either side of a
+  // line then get the very same point.
+  function clipPoly(pts, r) {
+    var out = pts.map(function(v, i) { return { x: v.x, y: v.y, e: { a: v, b: pts[(i + 1) % pts.length] } }; });
+    var cross = function(e, ax, L) {
+      var p = {};
+      if (e.line) { p[e.line] = e.at; p[ax] = L; return p; }
+      var s0 = e.a.x < e.b.x || (e.a.x === e.b.x && e.a.y < e.b.y) ? e.a : e.b, s1 = s0 === e.a ? e.b : e.a, o = ax === 'x' ? 'y' : 'x';
+      p[ax] = L;
+      p[o] = s0[o] + (s1[o] - s0[o]) * (L - s0[ax]) / (s1[ax] - s0[ax]);
+      return p;
+    };
+    [['x', r.minX, 1], ['x', r.maxX, -1], ['y', r.minY, 1], ['y', r.maxY, -1]].forEach(function(c) {
+      var ax = c[0], L = c[1], f = function(v) { return c[2] * (v[ax] - L); }, src = out;
+      out = [];
+      for (var i = 0; i < src.length; i++) {
+        var a = src[i], b = src[(i + 1) % src.length], fa = f(a), fb = f(b);
+        if (fa >= 0) out.push(a);
+        if ((fa >= 0) !== (fb >= 0)) {
+          var q = cross(a.e, ax, L);
+          q.e = fa >= 0 ? { line: ax, at: L } : a.e;
+          out.push(q);
+        }
+      }
+    });
+    return out;
+  }
+  // Where a convex polygon crosses height y: [left x, right x].
+  function xSpan(q, y) {
+    var lo = Infinity, hi = -Infinity, add = function(x) { lo = Math.min(lo, x); hi = Math.max(hi, x); };
+    for (var i = 0; i < q.length; i++) {
+      var a = q[i], b = q[(i + 1) % q.length];
+      if (Math.min(a.y, b.y) > y + 1e-6 || Math.max(a.y, b.y) < y - 1e-6) continue;
+      // A corner at this height gives its own x, not one worked out.
+      if (a.y === y || b.y === y || Math.abs(b.y - a.y) < 1e-9) { if (a.y === y || Math.abs(b.y - a.y) < 1e-9) add(a.x); if (b.y === y || Math.abs(b.y - a.y) < 1e-9) add(b.x); }
+      else add(a.x + (b.x - a.x) * Math.max(0, Math.min(1, (y - a.y) / (b.y - a.y))));
+    }
+    return [lo, hi];
+  }
+  // A binary STL of triangles from boardMesh: 80-byte header, count, then
+  // each triangle's normal and corners as 32-bit floats.
+  function stlBytes(tris, name) {
+    var n = tris.length / 9, buf = new ArrayBuffer(84 + 50 * n), dv = new DataView(buf), head = String(name || 'Spoilboard Toolbox').slice(0, 80);
+    for (var i = 0; i < head.length; i++) dv.setUint8(i, head.charCodeAt(i) & 0x7f);
+    dv.setUint32(80, n, true);
+    for (var t = 0; t < n; t++) {
+      var o = 84 + 50 * t, v = tris.slice(t * 9, t * 9 + 9);
+      var ux = v[3] - v[0], uy = v[4] - v[1], uz = v[5] - v[2], wx = v[6] - v[0], wy = v[7] - v[1], wz = v[8] - v[2];
+      var nx = uy * wz - uz * wy, ny = uz * wx - ux * wz, nz = ux * wy - uy * wx, l = Math.hypot(nx, ny, nz) || 1;
+      [nx / l, ny / l, nz / l].concat(v).forEach(function(f, k) { dv.setFloat32(o + 4 * k, f, true); });
+    }
+    return buf;
   }
   // END pure
 
@@ -8341,7 +8679,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'lab-pen', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-pen', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'lab-pen', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-pen', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn', 'cad-origin'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
@@ -9325,6 +9663,84 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     await loadProgram('SBT-Tracks_' + tr.o.slots.length + 'x_W-' + shown(tr.o.widthMm) + '_D-' + shown(tr.o.depthMm) + '_' + unitName() + '.nc',
       trackProgram(tr.o), $('mw-trk-note'), $('mw-trk-generate'));
   }
+  // Export for CAD: the holes Dog holes would cut and the slots T-tracks
+  // would (whatever the plate tick says), on the travel, in mm.
+  function cadSettings() {
+    var hh = readHoles(), t = state.travel, probs = [];
+    if (!t) return { probs: ['Couldn\u2019t read the machine\u2019s travel ($130/$131, $22/$23): connect to the controller'] };
+    if (!hh) probs.push('Setup\u2019s grid has a field that can\u2019t be read: fix it in the XY0 Picker');
+    var rect = { minX: t.dirX > 0 ? 0 : -t.xMm, minY: t.dirY > 0 ? 0 : -t.yMm };
+    rect.maxX = rect.minX + t.xMm; rect.maxY = rect.minY + t.yMm;
+    var w = cutMm('mw-trk-width'), half = (w > 0 ? w : 19.05) / 2, zones = uiZones();
+    var typed = String($('mw-trk-depth').value).trim() !== '';
+    var o = {
+      rect: rect, zones: zones, origin: $('mw-cad-origin').value === 'corner' ? { x: rect.minX, y: rect.minY } : null,
+      holes: hh ? holesToCut(holes.grid, $('mw-cut-list').checked).map(function(q) { return { x: q.x, y: q.y, diaMm: 2 * holeR(q, hh), layer: q.layer, col: q.col }; }) : [],
+      slots: hh ? trackSlots(trackGrids(hh, t), half, 1, zones).map(function(sl) { return { a: sl.a, b: sl.b, halfMm: half }; }) : [],
+      thickMm: cutMm('mw-cut-thick'), holeDepthMm: cutMm('mw-cut-depth'), slotDepthMm: typed ? cutMm('mw-trk-depth') : 0
+    };
+    if (hh && !o.holes.length && !o.slots.length) probs.push('No holes or T-tracks to export: set them up in the XY0 Picker');
+    return { o: o, parts: cadParts(Object.assign({}, o, { thickMm: o.thickMm > 0 ? o.thickMm : 1 })), probs: probs };
+  }
+  function renderCad() {
+    var c = cadSettings(), u = ' ' + unitName(), text = '';
+    var stlProbs = c.probs.slice();
+    if (c.o && !(c.o.thickMm > 0)) stlProbs.push('Set the Spoilboard Thickness above for the STL');
+    if (c.parts) {
+      var p = c.parts, out = p.holes.filter(function(h) { return h.out; }).length + p.slots.filter(function(s) { return s.out; }).length;
+      var sizes = [];
+      p.holes.forEach(function(h) { var d = shown(2 * h.r); if (sizes.indexOf(d) < 0) sizes.push(d); });
+      text = 'Board ' + shown(p.rect.maxX - p.rect.minX) + ' \u00d7 ' + shown(p.rect.maxY - p.rect.minY) + u + ' (the travel), its front left corner at ' +
+        shown(p.rect.minX) + ', ' + shown(p.rect.minY) + u + '; ' + p.holes.length + ' hole' + (p.holes.length === 1 ? '' : 's') +
+        (sizes.length ? ' (' + sizes.slice(0, 4).join(', ') + (sizes.length > 4 ? '\u2026' : '') + u + ')' : '') + ', ' + p.slots.length + ' T-track slot' + (p.slots.length === 1 ? '' : 's') +
+        (p.zones.length ? ', ' + p.zones.length + ' zone' + (p.zones.length === 1 ? '' : 's') : '') + '.' +
+        (c.o.thickMm > 0 ? ' STL: ' + shown(c.o.thickMm) + u + ' thick, holes ' + shown(Math.min(c.o.thickMm, c.o.holeDepthMm > 0 ? c.o.holeDepthMm : c.o.thickMm)) + u + ' deep.' : '') +
+        (out ? ' ' + out + ' hole' + (out === 1 ? '' : 's') + ' or slot' + (out === 1 ? '' : 's') + ' that overlap another or reach the board\u2019s edge are only in the DXF.' : '') +
+        ' The files are always in mm.' + ($('mw-cut-plate').checked ? ' Into the stock on top doesn\u2019t apply: this is the spoilboard.' : '');
+    }
+    $('mw-cad-summary').textContent = text;
+    var probs = c.probs.length ? c.probs : stlProbs, note = $('mw-cad-note');
+    // A download's line stays until there's a problem to show.
+    if (probs.length || note.getAttribute('data-state') === 'bad') showProblems(note, probs);
+    $('mw-cad-dxf').disabled = !!c.probs.length;
+    $('mw-cad-stl').disabled = !!stlProbs.length;
+  }
+  // Hands the browser a file to save.
+  function downloadFile(name, data, type) {
+    var url = URL.createObjectURL(new Blob([data], { type: type })), a = document.createElement('a');
+    a.href = url; a.download = name; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function() { URL.revokeObjectURL(url); a.remove(); }, 2000);
+  }
+  // Builds the file after the note has had a moment to show, since a
+  // big grid's STL takes a few seconds on a Pi.
+  function exportCad(kind) {
+    var c = cadSettings(), note = $('mw-cad-note'), btns = [$('mw-cad-dxf'), $('mw-cad-stl')];
+    if (c.probs.length || (kind === 'stl' && !(c.o.thickMm > 0))) { renderCad(); return; }
+    note.removeAttribute('data-state');
+    note.textContent = 'Building the ' + kind.toUpperCase() + '\u2026';
+    btns.forEach(function(b) { b.disabled = true; });
+    setTimeout(function() {
+      try {
+        var p = cadParts(c.o), name = 'SBT-Spoilboard_' + p.holes.length + 'holes_' + p.slots.length + 'slots_mm.' + kind, data, tris;
+        if (kind === 'dxf') data = boardDxf(p);
+        else { tris = boardMesh(p); data = stlBytes(tris, 'Spoilboard Toolbox: spoilboard, mm'); }
+        downloadFile(name, data, kind === 'dxf' ? 'application/dxf' : 'model/stl');
+        var bytes = kind === 'dxf' ? data.length : data.byteLength;
+        note.setAttribute('data-state', 'ok');
+        note.textContent = 'Downloaded ' + name + ' (' + (bytes < 1e6 ? Math.max(1, Math.round(bytes / 1e3)) + ' KB' : (bytes / 1e6).toFixed(1) + ' MB') +
+          (tris ? ', ' + Math.round(tris.length / 9).toLocaleString() + ' triangles' : '') + ').';
+      } catch (e) {
+        note.setAttribute('data-state', 'bad');
+        note.textContent = 'Couldn\u2019t build the ' + kind.toUpperCase() + ': ' + e.message + '.';
+      } finally {
+        // The buttons as the settings have them, keeping this note.
+        var text = note.textContent, st = note.getAttribute('data-state');
+        renderCad();
+        if (!note.textContent) { note.textContent = text; note.setAttribute('data-state', st); }
+      }
+    }, 30);
+  }
   // The plate tick's line: the plate's size and where, or why not.
   function renderPlate() {
     var on = $('mw-cut-plate').checked, note = $('mw-cut-plate-note');
@@ -9337,7 +9753,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         ' wholly on it, ' + shown(PLATE_EDGE_MM) + u + ' from its edges; depth never past its thickness; Z0 on its top.' +
         (state.spoilZ ? '' : ' Couldn\u2019t check that Z0 is on its top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.');
   }
-  function renderCutTab() { commonFields(); renderPlate(); renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderThreads(); renderLabels(); renderGridLines(); renderLaserTest(); }
+  function renderCutTab() { commonFields(); renderPlate(); renderCut(); renderTracks(); renderStockHoles(); renderFit(); renderChamfer(); renderThreads(); renderLabels(); renderGridLines(); renderLaserTest(); renderCad(); }
   function wireCut() {
     CUT_SAVED.lengths.concat(CUT_SAVED.plain).forEach(function(k) {
       $('mw-' + k).addEventListener('input', renderCutTab);
@@ -9395,6 +9811,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-fit-generate').addEventListener('click', generateFit);
     $('mw-chm-generate').addEventListener('click', generateChamfer);
     $('mw-lab-generate').addEventListener('click', generateLabels);
+    $('mw-cad-dxf').addEventListener('click', function() { exportCad('dxf'); });
+    $('mw-cad-stl').addEventListener('click', function() { exportCad('stl'); });
     $('mw-gl-generate').addEventListener('click', generateGridLines);
     $('mw-lt-generate').addEventListener('click', generateLaserTest);
     wireCal();
@@ -9862,7 +10280,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       HELP_NEEDS, HELP_UNITS,
       '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all around, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
     cut: { name: 'Cut Board', notes: [
-      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong>: picking a material, a flute count or how hard to push (<strong>Conservative</strong>, <strong>Average</strong>, <strong>Aggressive</strong>, as in QuickCut) puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed, Z rate and spindle range. A new Bit Diameter updates them too, unless you&rsquo;ve typed your own. A start, to adjust by ear and chip.',
+      'Pick what to cut with the chips at the top: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>, or <strong>Export</strong> the board for CAD. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong>: picking a material, a flute count or how hard to push (<strong>Conservative</strong>, <strong>Average</strong>, <strong>Aggressive</strong>, as in QuickCut) puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed, Z rate and spindle range. A new Bit Diameter updates them too, unless you&rsquo;ve typed your own. A start, to adjust by ear and chip.',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
       '<strong>Surfacing isn&rsquo;t here, on purpose:</strong> flattening the spoilboard is left to the QuickCut plugin&rsquo;s Wasteboard Surfacing, which already does it well. Surface first, then cut the holes; when a surfacing job finishes, a note says to re-record the spoilboard height.',
       'The holes are the XY0 Picker&rsquo;s: every grid, each hole its own size, cut row by row, back and forth. Suppressed holes, hidden grids, and holes in a keepout zone or an Exclude Picks area are left out. Listed holes are cut only when ticked; points with a height (a vise, a fixture) never are.',
@@ -9896,7 +10314,11 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         '<li>In each hole the thread mill goes down the middle to Thread Depth, curves out onto the thread, climbs one pitch a turn to the top, and curves back to the middle. Passes go a little deeper into the wall each time; the last is repeated (a spring pass).</li>' +
         '<li>Right-hand threads are cut counterclockwise (climb milling); left-hand ones clockwise.</li>' +
         '<li>Thread Feed is at the tooth; the program slows the center to match. Thread mills are fragile: start slow, and check it reaches Thread Depth below its holder.</li>' +
-        '<li>Threads hold well in aluminum and plastics; in MDF or plywood they wear quickly, so threaded inserts usually last longer.</li></ul>' ] },
+        '<li>Threads hold well in aluminum and plastics; in MDF or plywood they wear quickly, so threaded inserts usually last longer.</li></ul>',
+      '<p><strong>Export for CAD:</strong> the spoilboard as files for Fusion or another CAD program, to draw fixtures on it or show it in a setup&rsquo;s simulation. The holes are the ones Dog holes would cut and the slots the T-tracks&rsquo;; the board is the machine&rsquo;s travel, its top at Z0, always in mm.</p><ul>' +
+        '<li><strong>DXF:</strong> the outline, every hole as a true circle (a layer per grid, HOLES-LIST for listed holes), the T-track slots (TRACKS) and the zones (ZONES). In Fusion, Insert &rsaquo; Insert DXF onto a sketch, in mm, then extrude the board and cut the holes.</li>' +
+        '<li><strong>STL:</strong> the board as a solid, Spoilboard Thickness thick, the holes Hole Depth deep and the slots the T-tracks&rsquo; Depth (through when blank). Circles are many-sided polygons, within 0.05 mm. A hole or slot that overlaps another or reaches the board&rsquo;s edge is left out of it.</li>' +
+        '<li><strong>Origin:</strong> machine X0 Y0, so everything is where the programs put it, or the travel&rsquo;s front left corner, so everything is positive.</li></ul>' ] },
     stock: { name: 'Stock Holes', notes: [
       '<p><strong>Stock that bolts down, locates and flips true.</strong> Clamp the stock some other way, put Z0 on its top, and drill it right over spoilboard holes:</p><ul>' +
         '<li><strong>Bolts:</strong> a clearance hole over the hole nearest each corner, or every hole under it, with an optional counterbore, to bolt into the threaded inserts. <strong>Bolt</strong> fills the sizes for M6, M8 or 1/4-20.</li>' +
@@ -9988,7 +10410,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         { id: 'lines', icon: 'map', title: 'Grid lines', short: 'Laser or engrave the grid instead of drilling it.', notes: [12] },
         { id: 'lasertest', icon: 'laser', title: 'Laser test', short: 'Find the power and speed for crisp lines.', notes: [13] } ] },
       { title: 'Removable fixtures', pages: [
-        { id: 'plate', icon: 'box', title: 'Into the stock on top', short: 'The board’s grid copied into a sheet of stock that lifts off.', notes: [14] } ] } ] },
+        { id: 'plate', icon: 'box', title: 'Into the stock on top', short: 'The board’s grid copied into a sheet of stock that lifts off.', notes: [14] } ] },
+      { title: 'CAD', pages: [
+        { id: 'export', icon: 'layers', title: 'Export for CAD', short: 'The board as a DXF or STL for Fusion.', notes: [16] } ] } ] },
     stock: { intro: 'Drill the stock right over spoilboard holes: bolt it down, or flip it true.', groups: [
       { title: 'Stock holes', pages: [
         { id: 'holes', icon: 'box', title: 'Bolts, locating pins and flip pins', short: 'What each does, and what keeps the board safe.', notes: [0] },
@@ -10126,7 +10550,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var shown = $('mw-cut-common').querySelectorAll('.mw-field[data-for]:not([hidden])').length;
     // Labels and Grid lines start with what they're made with; a pen or a
     // laser has no bit.
-    $('mw-cut-title').firstChild.textContent = /-(pen|laser)$/.test(sec) ? 'Tool' : shown ? 'Bit and depth' : 'Coolant';
+    ROOT.querySelector('#mw-cut-common .mw-coolant').hidden = sec === 'export';
+    $('mw-cut-title').firstChild.textContent = /-(pen|laser)$/.test(sec) ? 'Tool' : sec === 'export' ? 'Board' : shown ? 'Bit and depth' : 'Coolant';
     $('mw-tool-name').hidden = !shown || $('mw-cut-bit').closest('.mw-field').hidden;
   }
   // Spoilboard's sections: one at a time, picked with the chips.
