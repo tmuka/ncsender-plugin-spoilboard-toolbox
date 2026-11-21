@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -2342,5 +2342,90 @@ test('boardDxf: R12 with the board, circles, slots and zones on layers', () => {
   ['BOARD', 'HOLES', 'HOLES-G2', 'HOLES-LIST', 'TRACKS', 'ZONES'].forEach(l => assert.ok(pairs.some(p => p[0] === '2' && p[1] === l), l));
   // A circle's center and radius
   const i = pairs.findIndex(p => p[0] === '0' && p[1] === 'CIRCLE');
-  assert.deepEqual(pairs.slice(i + 1, i + 6), [['8', 'HOLES'], ['10', '-50.000'], ['20', '-50.000'], ['30', '0.000'], ['40', '4.000']]);
+  assert.deepEqual(pairs.slice(i + 1, i + 6), [['8', 'HOLES'], ['10', '-50.000000'], ['20', '-50.000000'], ['30', '0.000000'], ['40', '4.000000']]);
+  // In inches (Fusion takes a DXF in the document's units): every length scaled, flags and colors kept
+  const inch = boardDxf(cadParts(o), 1 / 25.4).split('\r\n');
+  const j = inch.findIndex((l, n) => n % 2 && l === 'CIRCLE');
+  assert.deepEqual(inch.slice(j + 1, j + 11), ['  8', 'HOLES', ' 10', '-1.968504', ' 20', '-1.968504', ' 30', '0.000000', ' 40', '0.157480'].map((v) => v.trim()));
+  assert.ok(inch.join('\n').includes('\n62\n1\n'));
+});
+
+test('stlBytes: scaled to inches', () => {
+  const t = boardMesh(cadParts(cadBase()));
+  const dv = new DataView(stlBytes(t, 'x', 1 / 25.4));
+  for (let k = 0; k < 9; k++) assert.ok(Math.abs(dv.getFloat32(84 + 12 + 4 * k, true) - t[k] / 25.4) < 1e-4);
+});
+
+// A STEP file's entities: { id: { type, args } } (one per line, as boardStep writes them).
+function stepEntities(text) {
+  const out = {};
+  text.split('\n').forEach((l) => {
+    const m = /^#(\d+)=([A-Z_0-9]*)\((.*)\);$/.exec(l);
+    if (m) out[m[1]] = { type: m[2] || 'COMPLEX', args: m[3], raw: l };
+  });
+  return out;
+}
+// The solid's topology: every edge used once each way, every loop closed
+// end to end, references all defined, and Euler-Poincare's genus.
+function stepCheck(text) {
+  const E = stepEntities(text), problems = [];
+  Object.values(E).forEach((e) => (e.raw.split('=').slice(1).join('=').match(/#\d+/g) || []).forEach((r) => { if (!E[r.slice(1)]) problems.push('undefined ' + r); }));
+  const ref = (s) => s.match(/#\d+/g).map((r) => r.slice(1));
+  const edgeEnds = (id) => { const a = ref(E[id].args); return [a[0], a[1]]; };
+  const uses = {};
+  let V = 0, Ed = 0, F = 0, L = 0;
+  Object.entries(E).forEach(([id, e]) => {
+    if (e.type === 'VERTEX_POINT') V++;
+    if (e.type === 'EDGE_CURVE') Ed++;
+    if (e.type === 'ADVANCED_FACE') F++;
+    if (e.type === 'EDGE_LOOP') {
+      L++;
+      const oes = ref(e.args).map((o) => { const a = E[o].args; return { edge: ref(a)[0], fwd: /\.T\.\)?$/.test(a) }; });
+      oes.forEach((o) => { uses[o.edge] = (uses[o.edge] || '') + (o.fwd ? 'T' : 'F'); });
+      const ends = oes.map((o) => { const [a, b] = edgeEnds(o.edge); return o.fwd ? [a, b] : [b, a]; });
+      ends.forEach((en, i) => { if (en[1] !== ends[(i + 1) % ends.length][0]) problems.push('open loop #' + id); });
+    }
+  });
+  Object.entries(E).filter(([, e]) => e.type === 'EDGE_CURVE').forEach(([id]) => {
+    const u = (uses[id] || '').split('').sort().join('');
+    if (u !== 'FT') problems.push('edge #' + id + ' used ' + (u || 'never'));
+  });
+  // V - E + F - (L - F) = 2 (S - G), one shell
+  const genus = 1 - (V - Ed + F - (L - F)) / 2;
+  return { problems, genus, faces: F };
+}
+
+test('boardStep: an exact closed solid, through and blind cutouts', () => {
+  [[12, 0], [5, 3], [12, 5]].forEach(([hd, sd]) => {
+    const p = cadParts(Object.assign(cadBase(), { holeDepthMm: hd, slotDepthMm: sd }));
+    const step = boardStep(p, '2026-11-20T00:00:00');
+    assert.ok(step.startsWith('ISO-10303-21;\nHEADER;'));
+    assert.ok(step.endsWith('END-ISO-10303-21;\n'));
+    assert.ok(step.includes("FILE_SCHEMA(('AUTOMOTIVE_DESIGN"));
+    assert.ok(step.includes('SI_UNIT(.MILLI.,.METRE.)'));
+    const c = stepCheck(step);
+    assert.deepEqual(c.problems, []);
+    // Each through hole or slot is a handle through the board
+    const thru = p.holes.concat(p.slots).filter((q) => !q.out && q.depthMm >= 12).length;
+    assert.equal(c.genus, thru);
+    // 6 board faces, 2 per hole, 4 per slot, and a floor per blind one
+    const used = p.holes.concat(p.slots).filter((q) => !q.out);
+    assert.equal(c.faces, 6 + used.reduce((a, q) => a + (q.halfMm != null ? 4 : 2) + (q.depthMm < 12 ? 1 : 0), 0));
+  });
+  // Reals always have a point, and there's no -0.
+  const step = boardStep(cadParts(cadBase()));
+  assert.ok(!/[(,]-?\d+[,)]/.test(step.split('DATA;')[1].replace(/#\d+/g, '').replace(/LENGTH_MEASURE\(1\.E-06\)/, '').replace(/GEOMETRIC_REPRESENTATION_CONTEXT\(3\)/, '').replace(/,2000,/, ',')));
+  assert.ok(!step.includes('-0.,') && !step.includes('-0.)'));
+});
+
+test('boardStep: a turned grid with a turned slot stays closed', () => {
+  const holes = [];
+  for (let c = 0; c < 12; c++) for (let r = 0; r < 8; r++) {
+    const x = 20 + 30 * c, y = 20 + 30 * r, a = 0.02;
+    holes.push({ x: x * Math.cos(a) - y * Math.sin(a) + 20, y: x * Math.sin(a) + y * Math.cos(a), diaMm: 8, col: c + 1, row: r + 1 });
+  }
+  const p = cadParts({ rect: { minX: 0, maxX: 420, minY: 0, maxY: 300 }, holes, slots: [{ a: { x: 10, y: 140 }, b: { x: 410, y: 148 }, halfMm: 4 }], zones: [], thickMm: 18, holeDepthMm: 18 });
+  const c = stepCheck(boardStep(p));
+  assert.deepEqual(c.problems, []);
+  assert.equal(c.genus, p.holes.concat(p.slots).filter((q) => !q.out).length);
 });

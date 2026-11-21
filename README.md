@@ -5,7 +5,7 @@ and turns every one into a work zero you can hit again tomorrow.**
 
 - **Cut your spoilboard:** dog holes, T-tracks, threaded insert grids, chamfers and labels. Or laser / V-bit
   engrave the grid lines, or draw them with a pen.
-- **Export for CAD:** the board as a DXF (true circles, a layer per grid) or a solid STL, to model fixtures on it in Fusion.
+- **Export for CAD:** the board as a STEP solid, a DXF (true circles, a layer per grid) or an STL, to model fixtures on it in Fusion.
 - **Measure Holes:** a pin by eye or a 3D probe finds where your holes really are, even on a turned board.
 - **XY0 Picker:** zero on a hole's center, side or corner, or on **stock pushed against pins** in the dog holes.
 - **Stock Holes:** drill bolt holes through the stock right over your spoilboard holes, keeping the bolts clear
@@ -663,20 +663,28 @@ something to screw into.
 and clamps on it in Fusion (or another CAD), or show the board in a setup's simulation. It's the same
 board the programs cut: the holes **Dog holes** would cut (suppressed, hidden and blocked holes left out;
 listed holes when that box is ticked) and the slots **T-tracks** would. The board is the machine's
-travel, its top at Z0. The files are always in mm, whatever ncSender's units.
+travel, its top at Z0.
+- **Download STEP:** the board as an exact solid: flat top, bottom and sides, every hole round (two
+  half-cylinders) and every slot with flat walls, cut to **Hole Depth** and the T-tracks' **Depth**, in a
+  board **Spoilboard Thickness** thick. Faces you can sketch on, select and use as a fixture, with no mesh
+  to convert. Always in mm; the file says so, and Fusion converts it to your document's units. The best
+  of the three for Fusion.
 - **Download DXF:** the board's outline (layer BOARD), every hole as a true circle (HOLES for grid 1,
   HOLES-G2 and on for further grids, HOLES-LIST for listed holes), each T-track slot's outline (TRACKS)
   and the keepout zones and Exclude Picks areas (ZONES). An R12 DXF, which every CAD program reads. In
-  Fusion: **Insert › Insert DXF** onto a sketch plane, units mm, then extrude the board and cut the holes.
+  Fusion: **Insert › Insert DXF** onto a sketch plane, then extrude the board and cut the holes.
+- **DXF and STL units:** neither format carries units a CAD program trusts (Fusion assumes the
+  document's), so they're written in ncSender's units, inches or mm, and the file name ends `_in` or
+  `_mm`. Pick the same in Fusion's import dialog.
 - **Download STL:** the board as a closed solid mesh, **Spoilboard Thickness** thick, the holes **Hole
   Depth** deep (through when it's the thickness) and the slots the T-tracks' **Depth** (through when
   blank). Circles are many-sided polygons, within 0.05 mm of round. Fusion inserts it as a mesh body (Insert ›
   Insert Mesh), and Mesh › Convert Mesh makes it a solid body. A hole or slot that overlaps another or reaches the board's edge is only in
-  the DXF, since its faces would cross; the summary counts them.
+  the DXF (and out of the STEP), since its faces would cross; the summary counts them.
 - **Origin:** **Machine X0 Y0** keeps everything where the programs put it (negative X and Y on a
   machine that homes to the back right); **Front left of the travel** moves it so that corner is 0, 0.
-- A very large grid makes a large STL: 15,700 quarter-inch holes come to about 90 MB, more on a turned
-  grid. The DXF stays small, and is the exact one.
+- A very large grid makes large files: 15,700 quarter-inch holes come to about 34 MB of STEP and 90 MB
+  of STL, more STL on a turned grid. The DXF stays about 1 MB.
 
 ## Stock Holes: bolts, locating pins and flip pins
 
