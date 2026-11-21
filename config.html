@@ -136,6 +136,9 @@
     scrollbar-gutter: stable;
     padding: 20px;
   }
+  /* Until the machine's travel is read and the map drawn, the tab is laid
+     out but not shown, so it doesn't appear once empty and then jump. */
+  .mw-panel.mw-loading > * { visibility: hidden; }
   .mw-tab { display: flex; flex-direction: column; gap: var(--mw-gap); max-width: 1200px; }
   /* The XY0 Picker's map is held back by the panel's height, so it may use the width;
      the rest of the tab keeps to 1200 px. */
@@ -700,7 +703,7 @@
         <button type="button" class="mw-btn mw-close" id="mw-close">Close</button>
       </div>
     </aside>
-    <main class="mw-panel">
+    <main class="mw-panel mw-loading">
     <div class="mw-banner" id="mw-migrated" hidden>
       <span id="mw-migrated-text"></span>
       <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-migrated-ok">Got It</button>
@@ -5830,7 +5833,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // menu entry and no stale update badge. Its settings file stays on disk.
   // The whole keyboardBindings object is sent, since ncSender's page merges
   // a settings change shallowly and a partial one would hide the others.
-  async function migrateFromOldId(saved) {
+  // nc: ncSender's settings when init has just read them.
+  async function migrateFromOldId(saved, nc) {
     var notes = [], hasOwn = Object.keys(saved).length > 0, copied = false, keysDone = false;
     try {
       var list = await (await fetch(BASE_URL + '/api/plugins')).json();
@@ -5848,7 +5852,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       }
       // Its shortcuts move whenever any are left under the old ID, so a
       // first open that stopped part-way finishes the job on the next.
-      var nc = await (await fetch(BASE_URL + '/api/settings')).json();
+      if (!nc) nc = await (await fetch(BASE_URL + '/api/settings')).json();
       var kb = nc && nc.keyboardBindings, from = 'Plugin:' + OLD_PLUGIN_ID + ':', n = 0;
       if (kb && typeof kb === 'object') {
         var next = {};
@@ -5878,13 +5882,23 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     return { saved: saved, notes: notes };
   }
+  // The first firmware and machine-state reads, started with the settings
+  // read instead of after it, so the map can be drawn sooner (loadMachine).
+  var early = null;
+  function readJson(path) { return fetch(BASE_URL + path).then(function(r) { return r.json(); }); }
+  function revealPanel() { var p = ROOT.querySelector('.mw-panel'); if (p) p.classList.remove('mw-loading'); }
   async function init() {
+    early = { fw: readJson('/api/firmware'), st: readJson('/api/server-state') };
+    early.fw.catch(function() {}); early.st.catch(function() {});
+    // Never left blank, even if the controller's settings don't come back.
+    setTimeout(revealPanel, 2500);
     // The block thickness comes from ncSender's own probe screen (Standard
     // Block, Z Thickness), stored there in mm, so there's one place to set it.
-    var probeBlockMm = null;
+    var probeBlockMm = null, ncSettings = null;
     try {
       var res = await fetch(BASE_URL + '/api/settings');
       var s = res.ok ? await res.json() : {};
+      ncSettings = res.ok ? s : null;
       state.imperial = (s.unitsPreference || 'metric') === 'imperial';
       var sz = Number(s.safeZHeight);
       state.safeZMm = s.safeZHeight != null && s.safeZHeight !== '' && isFinite(sz) ? sz : null;
@@ -5897,7 +5911,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-safe-note').textContent = 'Midpoint moves first lift to ' + (state.safeZMm != null
       ? 'ncSender\'s Safe Z (machine Z ' + fmt(state.safeZMm) + ' mm)'
       : 'machine Z0, since no Safe Z is set in ncSender') + ', then move. They use the active work offset.';
-    var moved = await migrateFromOldId(initialConfig || {});
+    var moved = await migrateFromOldId(initialConfig || {}, ncSettings);
     var saved = moved.saved;
     if (moved.notes.length) {
       $('mw-moved-text').textContent = 'Spoilboard Toolbox has a new plugin ID: ' + moved.notes.join('; ') + '.';
@@ -6686,8 +6700,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     });
   }
   async function loadMachine() {
+    var pre = early;
+    early = null;
     try {
-      var fw = await (await fetch(BASE_URL + '/api/firmware')).json();
+      var fw = await (pre ? pre.fw : readJson('/api/firmware'));
       var set = fw && fw.settings || {};
       var tx = parseFloat(set['130'] && set['130'].value), ty = parseFloat(set['131'] && set['131'].value);
       var tz = parseFloat(set['132'] && set['132'].value);
@@ -6713,9 +6729,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         updateG92: !!set['772'] && String(set['772'].value).trim() === '1' } : null;
       state.reportInches = set['13'] ? String(set['13'].value).trim() === '1' : false;
     } catch (e) { state.travel = null; }
-    await readMachineState();
+    await readMachineState(pre && pre.st);
     renderHoles();
     restoreStock();
+    revealPanel();
   }
   // The active tool length offset (0 when none), for the Safe Z check: a
   // G53 move to Safe Z leaves the tip that much lower.
@@ -6729,9 +6746,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       state.tloMm = null;
     }
   }
-  async function readMachineState() {
+  // pending: a read already on its way (init's).
+  async function readMachineState(pending) {
     try {
-      var st = await (await fetch(BASE_URL + '/api/server-state')).json();
+      var st = await (pending || readJson('/api/server-state'));
       state.machine = st.machineState || {};
       readProgram(st.jobLoaded || null);
     } catch (e) { state.machine = {}; }
