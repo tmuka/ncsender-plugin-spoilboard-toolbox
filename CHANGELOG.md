@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.5.13: Export for CAD
 
 ### ✨ New
 - **Export for CAD** (Cut Board › Export): the spoilboard as a **STEP** solid (exact round holes and flat faces, holes and slots cut to their depths; in mm, which Fusion converts), a **DXF** (the outline, every hole as a true circle with a layer per grid, the T-track slots and the zones) or an **STL** mesh, from machine X0 Y0 or the travel's front left corner. DXF and STL are in ncSender's units, so Fusion's import dialog already matches. For modeling fixtures on the board in Fusion or another CAD program.
