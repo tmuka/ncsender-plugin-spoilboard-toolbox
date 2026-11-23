@@ -10,6 +10,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Grid lines at their own spacing, or along the holes' sides:** **Lines** picks **On the dog holes** (through their centers, or along a side with 9 dots like the XY0 Picker's, where stock against pins would sit) or **Own spacing** (lines every Spacing, in inches or mm, through the work offset's X0 Y0).
 - **Inch / mm marks** (Labels): the distance from X0 Y0 every Spacing, along its row and up its column like a ruler, with Offset X / Y to keep clear of the dog holes and grid lines.
 - **Each Cut Board page explains itself:** the paragraph at the top is about the section picked, not the whole tab.
+- **Toggles like ncSender's Probe dialog:** Hole / Stock and Against Pins / Corner on X0 Y0 have the sunken track with a sliding accent block of the Probe dialog's "Set zero for".
 - **Probe Stock Top in Hole mode too:** the XY0 Picker shows it under Set in Hole mode as well as Stock mode.
 
 ### 🐛 Fixed
