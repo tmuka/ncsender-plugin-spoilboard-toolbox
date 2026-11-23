@@ -210,6 +210,7 @@
   /* QuickCut's drill origin picker: the hole inside its dashed box, with
      a dot on each corner, edge middle and the center. Spans, not buttons,
      so ncSender's button styles don't reach them. */
+  .mw-gl-dots-field { align-items: flex-start; }
   .mw-hole-origin {
     position: relative; flex: none; width: 64px; height: 64px; margin: 8px;
     border: 1px dashed var(--color-text-secondary); border-radius: 6px;
@@ -319,6 +320,7 @@
   .mw-hole-map .mw-h-spot.mw-h-fav .mw-h-hole { stroke: var(--mw-warn); stroke-width: 2; }
   .mw-hole-map .mw-h-spot.mw-h-near .mw-h-halo { stroke: var(--mw-accent-text); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0.8; }
   .mw-intro { margin: 0; color: var(--color-text-secondary); line-height: 1.45; }
+  .mw-intro[hidden] { display: none; }
   .mw-diagram { width: 100%; height: auto; display: block; flex: none; }
   .mw-diagram text { font-family: inherit; font-size: 12px; fill: var(--color-text-primary); }
   .mw-diagram .mw-d-note { font-size: 10.5px; fill: var(--color-text-secondary); }
@@ -1191,11 +1193,31 @@
       </section>
     </div>
     <div class="mw-tab" data-tab="cut" hidden>
-      <p class="mw-intro"><strong>Cut the board&rsquo;s own pattern</strong>: its dog holes, T-tracks, grid lines and labels, into the
-        spoilboard, or copy it into stock laid on top. To drill holes in a workpiece so it bolts down, locates or flips, use
-        <strong>Stock Holes</strong>. The pattern is the XY0 Picker&rsquo;s Setup, so the board and the map come from the same numbers. Put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once its height is recorded), or on the stock&rsquo;s with Into the stock on top ticked, pick
-        what to cut, and <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run. It uses the active
-        work offset&rsquo;s X0 Y0. Surfacing is QuickCut&rsquo;s.</p>
+<!-- Each section's own intro; showCutSection shows the one picked. -->
+      <p class="mw-intro" data-intro="holes"><strong>Cut Setup&rsquo;s dog holes into the spoilboard</strong>, each at its own size, in one program, or into stock laid on top (tick Into the stock on top). The holes are the XY0 Picker&rsquo;s Setup, so the board and the map come from the same numbers. Put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once its height is recorded) and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run, from the active work offset&rsquo;s X0 Y0. Holes in a workpiece, to bolt it down or flip it, are <strong>Stock Holes</strong>&rsquo;; surfacing is QuickCut&rsquo;s.</p>
+      <p class="mw-intro" data-intro="tracks" hidden>Just the T-track slots, no holes: for a sacrificial layer laid over a lower one that keeps the tracks and
+          threaded inserts, so the top can be surfaced off and replaced without touching them. A slot along each of Setup&rsquo;s
+          T-tracks, through the top layer (Depth blank: the Spoilboard Thickness above, which must be the top layer&rsquo;s alone) so the
+          tracks below show, or a shallower dado to set new track in. Then cut the holes (Dog holes), through the same layer, over the inserts.
+          Z0 on the top layer&rsquo;s top; it uses the bit, feeds and spindle above.</p>
+      <p class="mw-intro" data-intro="fit" hidden>Before cutting them all, find the size your dowels fit: a row of test holes in scrap, smallest on the left.
+          Put X0 Y0 on the scrap&rsquo;s front left corner and Z0 on its top. It uses the bit, feeds and spindle below.</p>
+      <p class="mw-intro" data-intro="chamfer" hidden>With a V-bit, after cutting: a small bevel around each hole&rsquo;s top edge, so dowels start easily and the edge doesn&rsquo;t crumble. The same holes as Dog holes; Z0 on the spoilboard&rsquo;s top (or the stock&rsquo;s, ticked).</p>
+      <p class="mw-intro" data-intro="threads" hidden>With a single-point thread mill, after cutting: a thread inside each hole, for bolts and threaded clamps.
+          Cut the holes at the thread&rsquo;s tap size first (Setup&rsquo;s Hole Diameter), then load the thread mill and run this on the same holes.
+          Z0 on the spoilboard&rsquo;s top (or the stock&rsquo;s, ticked). Threads hold well in aluminum and plastics; in MDF or plywood they wear
+          quickly, so threaded inserts usually last longer there.</p>
+      <p class="mw-intro" data-intro="lines" hidden>No holes, just lines, with a laser, a V-bit or a pen: a line along every row and column of Setup&rsquo;s grids, through the holes&rsquo; centers or along a side (the dots), or at their own <strong>Spacing</strong> through the work offset&rsquo;s X0 Y0 for a grid in inches or mm of its own.
+          They stop short of keepout zones and break at T-tracks (Track Width from the T-tracks section).
+          Then set Hole Diameter to the line&rsquo;s width and zero on the crossings. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).
+          Not sure of the laser&rsquo;s power and speed? Run the <strong>Laser test</strong> first.</p>
+      <p class="mw-intro" data-intro="lasertest" hidden>Find the laser&rsquo;s power and speed for crisp lines: a small cross for every power and feed, on scrap of the same material.
+          X0 Y0 on the scrap&rsquo;s front left corner, the laser focused on its top. Each row is labeled with its feed, each column with its power;
+          use the best for Grid lines and Labels.</p>
+      <p class="mw-intro" data-intro="labels" hidden>The fixture table&rsquo;s names beside the holes, with a V-bit, a pen or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).</p>
+      <p class="mw-intro" data-intro="export" hidden>The spoilboard as files for Fusion or another CAD program, to model fixtures on it or show it in a
+          setup&rsquo;s simulation. The same holes and slots Dog holes and T-tracks would cut: the board is the machine&rsquo;s
+          travel, with its top at Z0, in mm.</p>
       <div class="mw-plate">
         <label class="mw-extra"><input type="checkbox" id="mw-cut-plate"><span><strong>Into the stock on top:</strong> the board&rsquo;s grid copied into stock laid on the
           spoilboard (a removable MDF sheet, say), only inside it, so its holes, slots or lines match the spoilboard&rsquo;s. Its size, place and thickness are the XY0 Picker&rsquo;s Stock; Z0 on its top.</span></label>
@@ -1337,11 +1359,6 @@
       </section>
       <section class="mw-card" data-sec="tracks">
         <h3 class="mw-card-title">Cut the T-tracks</h3>
-        <p class="mw-hint">Just the T-track slots, no holes: for a sacrificial layer laid over a lower one that keeps the tracks and
-          threaded inserts, so the top can be surfaced off and replaced without touching them. A slot along each of Setup&rsquo;s
-          T-tracks, through the top layer (Depth blank: the Spoilboard Thickness above, which must be the top layer&rsquo;s alone) so the
-          tracks below show, or a shallower dado to set new track in. Then cut the holes above, through the same layer, over the inserts.
-          Z0 on the top layer&rsquo;s top; it uses the bit, feeds and spindle above.</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-trk-width">Track Width (<span class="mw-unit">mm</span>)</label>
@@ -1358,8 +1375,6 @@
       </section>
       <section class="mw-card" data-sec="fit">
         <h3 class="mw-card-title">Dowel fit test</h3>
-        <p class="mw-hint">Before cutting them all, find the size your dowels fit: a row of test holes in scrap, smallest on the left.
-          Put X0 Y0 on the scrap&rsquo;s front left corner and Z0 on its top. It uses the bit, feeds and spindle above.</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-fit-size">Middle Size (<span class="mw-unit">mm</span>)</label>
@@ -1388,7 +1403,6 @@
       </section>
       <section class="mw-card" data-sec="chamfer">
         <h3 class="mw-card-title">Chamfer the holes</h3>
-        <p class="mw-hint">With a V-bit, after cutting: a small bevel around each hole&rsquo;s top edge, so dowels start easily and the edge doesn&rsquo;t crumble. The same holes as above; Z0 on the spoilboard&rsquo;s top (or the stock&rsquo;s, ticked).</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-chm-angle">V-bit Angle (&deg;)</label>
@@ -1404,10 +1418,6 @@
       </section>
       <section class="mw-card" data-sec="threads">
         <h3 class="mw-card-title">Thread the holes</h3>
-        <p class="mw-hint">With a single-point thread mill, after cutting: a thread inside each hole, for bolts and threaded clamps.
-          Cut the holes at the thread&rsquo;s tap size first (Setup&rsquo;s Hole Diameter), then load the thread mill and run this on the same holes.
-          Z0 on the spoilboard&rsquo;s top (or the stock&rsquo;s, ticked). Threads hold well in aluminum and plastics; in MDF or plywood they wear
-          quickly, so threaded inserts usually last longer there.</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-thr-size">Thread</label>
@@ -1452,10 +1462,24 @@
       </section>
       <section class="mw-card" data-sec="lines">
         <h3 class="mw-card-title">Grid lines</h3>
-        <p class="mw-hint">No holes, just lines: a line along every row and column of Setup&rsquo;s grids, crossing where the holes would be, with a laser, a V-bit or a pen.
-          They stop short of keepout zones and break at T-tracks (Track Width from the T-tracks section).
-          Then set Hole Diameter to the line&rsquo;s width and zero on the crossings. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).
-          Not sure of the laser&rsquo;s power and speed? Run the <strong>Laser test</strong> first.</p>
+        <div class="mw-row mw-gl-place">
+          <div class="mw-field">
+            <label for="mw-gl-on">Lines</label>
+            <select class="mw-select" id="mw-gl-on" title="On the dog holes: a line along every row and column of Setup's grids. Own spacing: lines every Spacing through the work offset's X0 Y0, over the whole travel, for a board whose holes don't follow a grid you want to draw.">
+              <option value="holes" selected>On the dog holes</option>
+              <option value="spacing">Own spacing</option>
+            </select>
+          </div>
+          <div class="mw-field" hidden>
+            <label for="mw-gl-space">Spacing (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-gl-space" value="25" title="How far apart the lines are, in X and Y, from the work offset's X0 Y0.">
+          </div>
+          <div class="mw-field mw-gl-dots-field">
+            <span class="mw-dots-cap">Where on the holes</span>
+            <input type="hidden" id="mw-gl-origin" value="center">
+            <div class="mw-hole-origin" id="mw-gl-dots" role="group" aria-label="Where the lines run on the holes"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="Along the holes’ −X and +Y sides (back left)" aria-pressed="false"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="Along their +Y sides (back), through their centers in X" aria-pressed="false"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="Along their +X and +Y sides (back right)" aria-pressed="false"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="Along their −X sides (left), through their centers in Y" aria-pressed="false"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Through the holes’ centers" aria-pressed="true"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="Along their +X sides (right), through their centers in Y" aria-pressed="false"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="Along their −X and −Y sides (front left)" aria-pressed="false"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="Along their −Y sides (front), through their centers in X" aria-pressed="false"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="Along their +X and −Y sides (front right)" aria-pressed="false"></span></div>
+          </div>
+        </div>
         <div class="mw-row">
           <div class="mw-field mw-gl-vbit" hidden>
             <label for="mw-gl-depth">Depth (<span class="mw-unit">mm</span>)</label>
@@ -1476,9 +1500,6 @@
       </section>
       <section class="mw-card" data-sec="lasertest">
         <h3 class="mw-card-title">Laser test</h3>
-        <p class="mw-hint">Find the laser&rsquo;s power and speed for crisp lines: a small cross for every power and feed, on scrap of the same material.
-          X0 Y0 on the scrap&rsquo;s front left corner, the laser focused on its top. Each row is labeled with its feed, each column with its power;
-          use the best for Grid lines and Labels.</p>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-lt-pmin">Power From (S)</label>
@@ -1511,7 +1532,6 @@
       </section>
       <section class="mw-card" data-sec="labels">
         <h3 class="mw-card-title">Engrave the labels</h3>
-        <p class="mw-hint">The fixture table&rsquo;s names beside the holes, with a V-bit, a pen or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).</p>
         <div class="mw-row mw-row-5">
           <div class="mw-field mw-span-2">
             <label for="mw-lab-mode">Labels</label>
@@ -1543,9 +1563,6 @@
       </section>
       <section class="mw-card" data-sec="export">
         <h3 class="mw-card-title">Export for CAD</h3>
-        <div class="mw-hint">The spoilboard as files for Fusion or another CAD program, to model fixtures on it or show it in a
-          setup&rsquo;s simulation. The same holes and slots Dog holes and T-tracks would cut: the board is the machine&rsquo;s
-          travel, with its top at Z0, in mm.</div>
         <div class="mw-hint"><strong>STEP:</strong> the board as an exact solid, Spoilboard Thickness thick, holes Hole Depth deep and slots
           the T-tracks&rsquo; Depth: round holes and flat faces to sketch on, in mm (Fusion converts). Best for Fusion: open it, or Insert &rsaquo; Insert Derive / upload it.</div>
         <div class="mw-hint"><strong>DXF:</strong> the outline, every hole as a true circle (a layer per grid), the T-track slots and the zones,
@@ -3740,6 +3757,30 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // ({ a, b, halfMm } centerlines, as labelTracks gives). holes: grid holes
   // (col != null). Returns [{ a, b, kind: 'row' | 'col', key }], every other
   // one reversed so the rapids between them stay short.
+  // Grid lines at their own spacing, not the dog holes': points every
+  // spacingMm through (x0, y0) (machine mm, the work offset's X0 Y0) over
+  // the whole travel and one step past it, as grid holes for
+  // gridLineSegments, whose clip then keeps the lines inside the travel.
+  function spacedLinePoints(travel, x0, y0, spacingMm) {
+    var out = [], s = spacingMm;
+    if (!(s > 0) || !travel) return out;
+    var minX = travel.dirX > 0 ? 0 : -travel.xMm, minY = travel.dirY > 0 ? 0 : -travel.yMm;
+    var c0 = Math.floor((minX - x0) / s) - 1, c1 = Math.ceil((minX + travel.xMm - x0) / s) + 1;
+    var r0 = Math.floor((minY - y0) / s) - 1, r1 = Math.ceil((minY + travel.yMm - y0) / s) + 1;
+    for (var r = r0; r <= r1; r++) for (var c = c0; c <= c1; c++) out.push({ col: c - c0 + 1, row: r - r0 + 1, x: x0 + c * s, y: y0 + r * s, layer: 0 });
+    return out;
+  }
+  // Grid holes moved to a point on each hole (HOLE_ORIGINS, as the XY0
+  // Picker's dots: one radius out in machine X / Y), so the lines run along
+  // the holes' edges where stock set against pins in them would sit.
+  // radius(q): the hole's radius in mm.
+  function holesAtOrigin(holes, origin, radius) {
+    if (!origin || origin === 'center') return holes;
+    return holes.map(function(q) {
+      var d = holeOriginOffset(origin, radius(q));
+      return Object.assign({}, q, { x: q.x + d.dx, y: q.y + d.dy });
+    });
+  }
   function gridLineSegments(holes, travel, zones, margin, tracks) {
     var groups = {}, out = [], lineNo = 0;
     holes.forEach(function(q) {
@@ -8861,14 +8902,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // units then (settings.units).
   var CUT_SAVED = {
     lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed',
-      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'lt-fmin', 'lt-fmax'],
-    plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'lab-pen', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-pen', 'gl-power', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn', 'cad-origin'],
+      'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'gl-space', 'lt-fmin', 'lt-fmax'],
+    plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'lab-pen', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-pen', 'gl-power', 'gl-on', 'gl-origin', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn', 'cad-origin'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
     'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'thr-major': 0.375, 'thr-pitch': 0.0625, 'thr-depth': 0.4, 'thr-mill': 0.157, 'thr-feed': 12, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
     'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-slot': 0.03, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
-    'gl-depth': 0.012, 'gl-feed': 60, 'lt-fmin': 20, 'lt-fmax': 120 };
+    'gl-depth': 0.012, 'gl-feed': 60, 'gl-space': 1, 'lt-fmin': 20, 'lt-fmax': 120 };
   function cutBody() {
     var b = { 'cut-tool': state.cutTool || null, 'cut-feeds-filled': state.feedsFilled || null };
     CUT_SAVED.lengths.forEach(function(k) { b[k] = fieldVal('mw-' + k); });
@@ -9366,12 +9407,19 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     o.tool = null;
     var laser = $('mw-gl-tool').value === 'laser', pen = $('mw-gl-tool').value === 'pen', probs = placeProblems(o), hh = readHoles();
     var usable = holes.grid.filter(function(q) { return q.col != null && !q.hidden && !q.suppressed && !q.blocked; });
-    var segs = state.travel && hh ? gridLineSegments(usable, state.travel, o.zones, laser ? 0.5 : VBIT_R, labelTracks(hh)) : [];
+    // On the dog holes (through a point on each, as the dots say), or at
+    // their own spacing through the work offset's X0 Y0.
+    var own = $('mw-gl-on').value === 'spacing', spaceMm = cutMm('mw-gl-space');
+    var pts = own ? (o.wcs && spaceMm >= 3 ? spacedLinePoints(state.travel, o.wcs.x, o.wcs.y, spaceMm) : [])
+      : hh ? holesAtOrigin(usable, $('mw-gl-origin').value, function(q) { return holeR(q, hh); }) : [];
+    var segs = state.travel && pts.length ? gridLineSegments(pts, state.travel, o.zones, laser ? 0.5 : VBIT_R, hh ? labelTracks(hh) : []) : [];
     if (o.plateOn) segs = o.plate ? clipToPlate(segs, o.plate, (laser ? 0.5 : VBIT_R) + PLATE_EDGE_MM) : [];
     Object.assign(o, { laser: laser, power: parseFloat($('mw-gl-power').value), depthMm: cutMm('mw-gl-depth'), feed: Math.round(cutMm('mw-gl-feed')), segs: segs });
     if (pen) { o = withPen(o, penPicked('mw-gl-pen'), state.atc); if (penProblem('mw-gl-pen')) probs.push(penProblem('mw-gl-pen')); }
-    if (!hh) probs.push('Setup’s grid has a field that can’t be read: fix it in the XY0 Picker');
-    else if (hh.layout === 'list') probs.push('Grid lines need a grid: set Setup’s layout to Grid or Grid + List');
+    if (own && !(spaceMm >= 3)) probs.push('Spacing must be at least ' + shown(3) + ' ' + unitName());
+    else if (own && !o.wcs) probs.push('The work offset’s X0 Y0 isn’t known yet: the lines go through it');
+    else if (!own && !hh) probs.push('Setup’s grid has a field that can’t be read: fix it in the XY0 Picker');
+    else if (!own && hh.layout === 'list') probs.push('Grid lines need a grid: set Setup’s layout to Grid or Grid + List, or pick Own spacing');
     else if (!segs.length) probs.push(o.plateOn ? 'No grid line crosses the stock' : 'No grid line fits inside the travel, clear of the zones');
     if (!(o.feed > 0)) probs.push('Feed must be more than 0');
     if (laser && !(o.power > 0)) probs.push('Laser Power must be more than 0');
@@ -9388,7 +9436,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       o.segs.map(function(g, i) { return { comment: i === 0 || g.kind !== o.segs[i - 1].kind ? 'SBT grid lines along ' + (g.kind === 'row' ? 'the rows' : 'the columns') : '', strokes: [[g.a, g.b]] }; }));
   }
   function renderGridLines() {
-    var l = gridLineSettings(), laser = l.o.laser;
+    var l = gridLineSettings(), laser = l.o.laser, own = $('mw-gl-on').value === 'spacing';
+    $('mw-gl-space').closest('.mw-field').hidden = !own;
+    ROOT.querySelector('.mw-gl-dots-field').hidden = own;
+    ROOT.querySelectorAll('#mw-gl-dots .mw-dot').forEach(function(d) { d.setAttribute('aria-pressed', d.getAttribute('data-origin') === $('mw-gl-origin').value ? 'true' : 'false'); });
     $('mw-gl-depth').closest('.mw-field').hidden = laser;
     $('mw-gl-power').closest('.mw-field').hidden = !laser;
     var total = l.o.segs.reduce(function(t, g) { return t + Math.hypot(g.b.x - g.a.x, g.b.y - g.a.y); }, 0);
@@ -10002,6 +10053,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-cad-stl').addEventListener('click', function() { exportCad('stl'); });
     $('mw-cad-step').addEventListener('click', function() { exportCad('step'); });
     $('mw-gl-generate').addEventListener('click', generateGridLines);
+    ROOT.querySelectorAll('#mw-gl-dots .mw-dot').forEach(function(d) {
+      d.addEventListener('click', function() { $('mw-gl-origin').value = d.getAttribute('data-origin'); $('mw-gl-origin').dispatchEvent(new Event('change')); });
+      d.addEventListener('keydown', function(evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); d.click(); } });
+    });
     $('mw-lt-generate').addEventListener('click', generateLaserTest);
     wireCal();
     $('mw-moved-ok').addEventListener('click', function() { $('mw-moved').hidden = true; });
@@ -10791,6 +10846,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     commonFields();
     ROOT.querySelectorAll('#mw-cut-secs .mw-sec').forEach(function(b) { b.setAttribute('aria-selected', b.getAttribute('data-sec') === name ? 'true' : 'false'); });
     ROOT.querySelectorAll('.mw-tab[data-tab="cut"] .mw-card[data-sec]').forEach(function(c) { c.hidden = c.getAttribute('data-sec') !== name; });
+    ROOT.querySelectorAll('.mw-tab[data-tab="cut"] .mw-intro[data-intro]').forEach(function(p) { p.hidden = p.getAttribute('data-intro') !== name; });
   }
 
   init().then(function() { if (!state.welcomed) showTab('welcome'); }).then(readNumbers);

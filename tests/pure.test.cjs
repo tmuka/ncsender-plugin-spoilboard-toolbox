@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -2441,4 +2441,35 @@ test('boardStep: a turned grid with a turned slot stays closed', () => {
   const c = stepCheck(boardStep(p));
   assert.deepEqual(c.problems, []);
   assert.equal(c.genus, p.holes.concat(p.slots).filter((q) => !q.out).length);
+});
+
+test('grid lines: their own spacing through X0 Y0 cover the travel', () => {
+  const travel = { xMm: 300, yMm: 200, dirX: 1, dirY: 1 };
+  const pts = spacedLinePoints(travel, 10, 20, 25.4);
+  const segs = gridLineSegments(pts, travel, [], 0.5);
+  const xs = [...new Set(segs.filter(s => s.kind === 'col').map(s => +s.a.x.toFixed(6)))].sort((a, b) => a - b);
+  const ys = [...new Set(segs.filter(s => s.kind === 'row').map(s => +s.a.y.toFixed(6)))].sort((a, b) => a - b);
+  // Columns at 10 + k * 25.4 inside 0.5..299.5, rows at 20 + k * 25.4 inside 0.5..199.5.
+  assert.deepEqual(xs, Array.from({ length: 12 }, (_, k) => +(10 + k * 25.4).toFixed(6)));
+  assert.deepEqual(ys, Array.from({ length: 8 }, (_, k) => +(20 + k * 25.4 - 0).toFixed(6)).filter(y => y <= 199.5));
+  // Every line runs the whole travel, less the margin.
+  for (const s of segs) {
+    const lo = s.kind === 'col' ? Math.min(s.a.y, s.b.y) : Math.min(s.a.x, s.b.x), hi = s.kind === 'col' ? Math.max(s.a.y, s.b.y) : Math.max(s.a.x, s.b.x);
+    assert.ok(Math.abs(lo - 0.5) < 1e-9 && Math.abs(hi - (s.kind === 'col' ? 199.5 : 299.5)) < 1e-9);
+  }
+  // Homing to the back right: the travel is negative.
+  const neg = gridLineSegments(spacedLinePoints({ xMm: 300, yMm: 200, dirX: -1, dirY: -1 }, -10, -20, 50), { xMm: 300, yMm: 200, dirX: -1, dirY: -1 }, [], 0.5);
+  assert.ok(neg.length && neg.every(s => [s.a, s.b].every(p => p.x <= 0 && p.x >= -300 && p.y <= 0 && p.y >= -200)));
+  assert.equal(spacedLinePoints(travel, 0, 0, 0).length, 0);
+});
+
+test('grid lines: on a point of each hole, one radius out', () => {
+  const g = [{ col: 1, row: 1, x: 50, y: 50 }, { col: 2, row: 1, x: 100, y: 50 }, { col: 1, row: 2, x: 50, y: 100 }, { col: 2, row: 2, x: 100, y: 100 }];
+  assert.equal(holesAtOrigin(g, 'center', () => 4), g);
+  const bl = holesAtOrigin(g, 'back-left', () => 4);
+  assert.deepEqual(bl.map(q => [q.x, q.y]), [[46, 54], [96, 54], [46, 104], [96, 104]]);
+  const segs = gridLineSegments(bl, { xMm: 300, yMm: 200, dirX: 1, dirY: 1 }, [], 0.5);
+  assert.deepEqual([...new Set(segs.filter(s => s.kind === 'col').map(s => s.a.x))].sort((a, b) => a - b), [46, 96]);
+  assert.deepEqual([...new Set(segs.filter(s => s.kind === 'row').map(s => s.a.y))].sort((a, b) => a - b), [54, 104]);
+  assert.equal(g[0].x, 50);
 });
