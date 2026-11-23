@@ -488,6 +488,19 @@ test('keepoutZones reads ncSender\'s zone and the ATCi one when on', () => {
   assert.deepEqual(keepoutZones({}, { 683: { name: 'Something else', value: '1' } }), []);
 });
 
+test('keepoutZones reads ncSender Pro\'s zone list, not the old single zone beside it', () => {
+  const settings = {
+    keepout: { zones: [
+      { id: 'a', name: 'RCATC', kind: 'keepout', enabled: true, minX: 625, maxX: 811.995, minY: 725, maxY: 1230 },
+      { id: 'b', name: 'Off', kind: 'keepout', enabled: false, minX: 0, maxX: 10, minY: 0, maxY: 10 },
+      { id: 'd', minX: 20, maxX: 5, minY: 30, maxY: 40 }] },
+    advanced: { keepoutZone: { enabled: true, min: { x: 690, y: 700 }, max: { x: 812, y: 1230 } } } };
+  assert.deepEqual(keepoutZones(settings, {}), [
+    { name: 'RCATC', minX: 625, maxX: 811.995, minY: 725, maxY: 1230 },
+    { name: 'ncSender', minX: 5, maxX: 20, minY: 30, maxY: 40 }]);
+  assert.deepEqual(keepoutZones({ keepout: { zones: [] }, advanced: settings.advanced }, {}), []);
+});
+
 test('holeKeepout catches holes reaching into a zone; nearestHole skips them', () => {
   const zones = [{ name: 'ATCi', minX: 0, maxX: 812, minY: 1100, maxY: 1230 }];
   assert.equal(holeKeepout(48, 1104, 10, zones).name, 'ATCi');
@@ -1223,7 +1236,7 @@ test('labels: the last column\'s label is left out when its other side would tou
   assert.deepEqual(tags, g.filter(p => tags.includes(p.tag)).map(p => p.tag));
 });
 
-test('engraving: V-bit strokes at depth, a laser without Z moves', () => {
+test('engraving: V-bit strokes at depth, a laser at its own height', () => {
   const base = { labels: [{ text: 'A1', x: 20, y: 30 }], textMm: 6, depthMm: 0.4, feed: 800, plunge: 300, rpm: 18000, delayS: 2,
     wcs: { p: 1, x: 10, y: 10 }, safeZMm: -5, zones: [], imperial: false };
   const v = engraveProgram(base);
@@ -1232,9 +1245,30 @@ test('engraving: V-bit strokes at depth, a laser without Z moves', () => {
   assert.ok(v.some(l => /^M3 S18000/.test(l)));
   const laser = engraveProgram(Object.assign({}, base, { laser: true, power: 600 }));
   assert.ok(laser.includes('M4 S600'));
-  assert.ok(!laser.some(l => /Z/.test(l.replace(/\(.*\)/, '')) && !/^#1=/.test(l)), 'no Z moves');
+  // Its only Z moves: up to Safe Z on the way to the first stroke, and back to the height it started at.
+  const zl = laser.filter(l => /Z/.test(l.replace(/\(.*\)/, '')) && !/^#1=/.test(l));
+  assert.deepEqual(zl, ['G53 G0 Z-5.000', 'G0 Z[#30]']);
+  assert.ok(laser.indexOf('#30=#<_z> (SBT: the laser height, to come back to after a lift)') < laser.indexOf('G53 G0 Z-5.000'));
+  assert.ok(laser.indexOf('G53 G0 Z-5.000') < laser.indexOf('G0 X10.000 Y20.000') && laser.indexOf('G0 Z[#30]') === laser.indexOf('G0 X10.000 Y20.000') + 1);
   assert.ok(!laser.some(l => /^M3 /.test(l)));
   assert.deepEqual(laser.slice(-2), ['M5', 'M30']);
+});
+
+test('engraving and grid lines: a laser lifts to Safe Z over a keepout zone and comes back down; not between strokes clear of it', () => {
+  const zones = [{ name: 'RCATC', minX: 100, maxX: 200, minY: 0, maxY: 300 }];
+  const base = { textMm: 6, feed: 800, power: 600, laser: true, wcs: { p: 1, x: 0, y: 0 }, safeZMm: -5, zones, imperial: false,
+    labels: [{ text: 'A1', x: 20, y: 30 }, { text: 'A2', x: 40, y: 30 }, { text: 'Z9', x: 300, y: 30 }] };
+  const L = engraveProgram(base);
+  // Once to start, once to pass over the zone between A2 and Z9.
+  assert.equal(L.filter(l => l === 'G53 G0 Z-5.000').length, 2);
+  assert.equal(L.filter(l => l === 'G0 Z[#30]').length, 2);
+  const over = L.lastIndexOf('G53 G0 Z-5.000');
+  assert.ok(over > L.findIndex(l => /label 2\/3/.test(l)) && over > L.findIndex(l => /label 3\/3/.test(l)));
+  assert.ok(/^G0 X300\.000/.test(L[over + 1]) && L[over + 2] === 'G0 Z[#30]');
+  // Grid lines, through strokesProgram: two lines either side of the zone.
+  const G = strokesProgram(Object.assign({}, base, { depthMm: 0 }), 'grid lines',
+    [{ comment: '', strokes: [[{ x: 50, y: 10 }, { x: 50, y: 290 }], [{ x: 250, y: 290 }, { x: 250, y: 10 }]] }]);
+  assert.equal(G.filter(l => l === 'G53 G0 Z-5.000').length, 2);
 });
 
 test('chamfer: the V-bit’s flank on each hole’s edge', () => {

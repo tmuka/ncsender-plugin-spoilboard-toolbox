@@ -14,6 +14,8 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Probe Stock Top in Hole mode too:** the XY0 Picker shows it under Set in Hole mode as well as Stock mode.
 
 ### 🐛 Fixed
+- **ncSender Pro's keepout zones were missed:** newer ncSender Pro keeps its keepout zones as a list, which Spoilboard Toolbox didn't read, so a zone such as a tool rack wasn't on the map, and dog holes, T-tracks, grid lines and labels could be cut into it. Every zone that's on is now read, as QuickCut's Wasteboard Surfacing does: the map shows it, the cuts stop short of it, moves lift to Safe Z to pass over it, and the DXF export has it on the ZONES layer.
+- **A laser passes over keepout zones at Safe Z:** grid lines, labels and the laser test used to move a laser at its focus height everywhere, over a tool rack too. It now lifts to Safe Z on the way to its first line and to pass over a keepout zone or Exclude Picks area, then comes back down to the height it started at.
 - **Labels:** the last column's label, when it doesn't fit inside the travel and goes on the hole's other side, is left out if it would land on the label already there (it used to be drawn on top of it). The summary counts it as left out.
 
 ## 0.5.13: Export for CAD

@@ -477,7 +477,7 @@ A map of your machine's travel then shows every hole, where the work offset's X0
 spindle, with machine-coordinate rulers along the bottom (X) and right (Y) in ncSender's units. Grid
 holes are named like a fixture table, a row letter and a column number (**B3**), counted from machine
 zero's corner: **A1** is the hole nearest machine X0 Y0 (front left on a machine that homes there). The column numbers
-run along the top and the row letters down the left. Keepout zones that are on (ncSender's in Settings › Advanced, and the ATCi tool rack's,
+run along the top and the row letters down the left. Keepout zones that are on (every one of ncSender Pro's that's on, and the ATCi tool rack's,
 `$684`–`$687`) show in red; holes that reach into one are dimmed and can't be picked. Click a hole,
 or jog roughly over one and press **Pick Nearest Hole** (it picks the hole closest
 to the spindle and says how far off it is, so you get the grid's exact position without centering
@@ -615,7 +615,8 @@ up over the spoilboard's and keep them no bigger.
 along every row and column of Setup's grids, crossing exactly where the holes would be, half a spacing past
 the end ones. They stop short of the travel's edges and keepout zones, break at T-tracks, and run back and
 forth (every other line runs back) so most moves between them are short. A laser moves between lines at
-its focus height, over zones too, so keep tall clamps off the bed. Then set Hole Diameter to the line's width and zero on the
+its focus height; on the way to the first line and over a keepout zone or Exclude Picks area it lifts to Safe Z
+and comes back down to that height, so mark a tall clamp with Exclude Picks. Then set Hole Diameter to the line's width and zero on the
 crossings.
 **Lines** picks where they go: **On the dog holes**, through the holes' centers or, with the 9 dots (as
 the XY0 Picker's), along a side of each, where stock set against pins in them would sit; or **Own spacing**,
