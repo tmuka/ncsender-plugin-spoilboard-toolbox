@@ -1558,12 +1558,20 @@
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-space" value="50" title="A mark every this far from the work offset's X0 Y0, labeled with its distance in your units (1, 2, 3 for inches; 50, 100 for mm).">
           </div>
           <div class="mw-field mw-lab-ruler" hidden>
-            <label for="mw-lab-offx">Offset X (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-offx" value="3" title="How far right of its mark each label starts (negative: left), and how far right of X0 the row marks run up, to keep clear of the dog holes' columns and the grid lines.">
+            <label for="mw-lab-offx">X Marks Offset X (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-offx" value="3" title="The marks along X0's row (the X distances): how far right of its line each starts (negative: left), to keep clear of the dog holes' columns and the grid lines.">
           </div>
           <div class="mw-field mw-lab-ruler" hidden>
-            <label for="mw-lab-offy">Offset Y (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-offy" value="3" title="How far above its mark each label sits (negative: below), and how far above Y0 the column marks run along, to keep clear of the dog holes' rows and the grid lines.">
+            <label for="mw-lab-offy">X Marks Offset Y (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-offy" value="3" title="The marks along X0's row (the X distances): how far above Y0 they run (negative: below), to keep clear of the dog holes' rows and the grid lines.">
+          </div>
+          <div class="mw-field mw-lab-ruler" hidden>
+            <label for="mw-lab-yoffx">Y Marks Offset X (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-yoffx" value="3" title="The marks up Y0's column (the Y distances): how far right of X0 they run (negative: left), to keep clear of the dog holes' columns and the grid lines.">
+          </div>
+          <div class="mw-field mw-lab-ruler" hidden>
+            <label for="mw-lab-yoffy">Y Marks Offset Y (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-yoffy" value="3" title="The marks up Y0's column (the Y distances): how far above its line each sits (negative: below), to keep clear of the dog holes' rows and the grid lines.">
           </div>
           <div class="mw-field">
             <label for="mw-lab-height">Text Height (<span class="mw-unit">mm</span>)</label>
@@ -1584,7 +1592,7 @@
         </div>
         <p class="mw-hint" id="mw-lab-summary"></p>
         <div class="mw-lab-fit" id="mw-lab-fit" hidden><span id="mw-lab-fit-text"></span>
-          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-lab-fit-use" title="Put these in Offset X and Offset Y.">Use These Offsets</button></div>
+          <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-lab-fit-use" title="Put these in the four offsets.">Use These Offsets</button></div>
         <p class="mw-status" id="mw-lab-note" role="status"></p>
         <div><button type="button" class="mw-btn" id="mw-lab-generate">Generate Labels</button></div>
       </section>
@@ -3736,10 +3744,12 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // Inch or mm marks: the distance from the work offset's X0 Y0 (x0, y0,
   // machine mm) every spacingMm, in the user's units (unitMm a unit: 25.4
   // or 1), as text: along the X0 Y0 row for X (each mark's left at its
-  // line) and up its column for Y (each mark's bottom at its line), both
-  // moved by offXMm, offYMm to keep clear of the dog holes' rows and
-  // columns. Marks that can't go there (labelBoxProblem) or would
-  // come within the gap of one already placed are left out.
+  // line) and up its column for Y (each mark's bottom at its line), the X
+  // marks moved by offXMm, offYMm and the Y marks by yOffXMm, yOffYMm (the
+  // X marks' when not given) to keep clear of the dog holes' rows and
+  // columns. o.only: 'X' or 'Y' for one axis's marks. Marks that can't go
+  // there (labelBoxProblem) or would come within the gap of one already
+  // placed are left out.
   // Returns { labels: [{ text, x, y, tag }], skipped: [{ tag, why }] }.
   function rulerPlacements(o) {
     var labels = [], skipped = [], h = o.textMm, gap = o.gapMm, s = o.spacingMm, t = o.travel;
@@ -3755,43 +3765,55 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       else labels.push({ text: tx, x: x, y: y, tag: tag });
     };
     var k, k0 = Math.ceil((minX - o.x0) / s), k1 = Math.floor((minX + t.xMm - o.x0) / s);
-    for (k = k0; k <= k1; k++) put('X' + text(k), text(k), o.x0 + k * s + o.offXMm, o.y0 + o.offYMm);
+    var yx = o.yOffXMm != null ? o.yOffXMm : o.offXMm, yy = o.yOffYMm != null ? o.yOffYMm : o.offYMm;
+    if (o.only !== 'Y') for (k = k0; k <= k1; k++) put('X' + text(k), text(k), o.x0 + k * s + o.offXMm, o.y0 + o.offYMm);
     k0 = Math.ceil((minY - o.y0) / s); k1 = Math.floor((minY + t.yMm - o.y0) / s);
-    for (k = k0; k <= k1; k++) if (k) put('Y' + text(k), text(k), o.x0 + o.offXMm, o.y0 + k * s + o.offYMm);
+    if (o.only !== 'X') for (k = k0; k <= k1; k++) if (k) put('Y' + text(k), text(k), o.x0 + yx, o.y0 + k * s + yy);
     return { labels: labels, skipped: skipped };
   }
-  // Offsets that place more ruler marks than o's own, or null: one offset
-  // tried from -reachMm to reachMm every stepMm with the other held, then
-  // the other, twice over, starting with Y and again starting with X (one
-  // order can get stuck where the other doesn't). The most marks wins;
-  // between equals, the offsets nearer those typed. Only the holes near the
-  // X0 row and column are checked, so each try stays quick on a big grid.
-  // Returns { offXMm, offYMm, count, more } (more: marks gained).
+  // Offsets that place more ruler marks than o's own, or null. Each axis's
+  // marks have their own pair (offXMm, offYMm for X; yOffXMm, yOffYMm for
+  // Y), so each pair is searched with only its own marks: one offset tried
+  // from -reachMm to reachMm every stepMm with the other held, then the
+  // other, twice over, starting with each (one order can get stuck where
+  // the other doesn't). The most marks wins; between equals, the offsets
+  // nearer those typed. Only the holes near the X0 row and column are
+  // checked, so each try stays quick on a big grid.
+  // Returns { offXMm, offYMm, yOffXMm, yOffYMm, count, more } (more: marks gained).
   function rulerFit(o, stepMm, reachMm) {
     var h = o.textMm, pad = reachMm + h + o.gapMm + 10, wide = pad + textWidth('00000', h);
     var near = (o.all || []).filter(function(q) {
       var r = o.holeR(q);
       return (q.y > o.y0 - pad - r && q.y < o.y0 + pad + r) || (q.x > o.x0 - pad - r && q.x < o.x0 + wide + r);
     });
-    var base = Object.assign({}, o, { all: near });
-    var count = function(ox, oy) { return rulerPlacements(Object.assign({}, base, { offXMm: ox, offYMm: oy })).labels.length; };
-    var start = count(o.offXMm, o.offYMm), n = Math.floor(reachMm / stepMm + 1e-9);
-    var far = function(b) { return Math.abs(b.offXMm - o.offXMm) + Math.abs(b.offYMm - o.offYMm); };
-    var better = function(a, b) { return a.count > b.count || (a.count === b.count && far(a) < far(b)); };
-    var search = function(order) {
-      var best = { offXMm: o.offXMm, offYMm: o.offYMm, count: start };
-      order.forEach(function(axis) {
-        var held = best;
-        for (var i = -n; i <= n; i++) {
-          var v = +(i * stepMm).toFixed(6), t = { offXMm: axis === 'x' ? v : held.offXMm, offYMm: axis === 'y' ? v : held.offYMm };
-          t.count = count(t.offXMm, t.offYMm);
-          if (better(t, best)) best = t;
-        }
-      });
-      return best;
+    var cur = Object.assign({}, o, { all: near, yOffXMm: o.yOffXMm != null ? o.yOffXMm : o.offXMm, yOffYMm: o.yOffYMm != null ? o.yOffYMm : o.offYMm });
+    var n = Math.floor(reachMm / stepMm + 1e-9);
+    var fitAxis = function(only, kx, ky) {
+      var count = function(t) { var q = {}; q[kx] = t.x; q[ky] = t.y; return rulerPlacements(Object.assign({}, cur, q, { only: only })).labels.length; };
+      var typed = { x: cur[kx], y: cur[ky] };
+      var far = function(b) { return Math.abs(b.x - typed.x) + Math.abs(b.y - typed.y); };
+      var better = function(a, b) { return a.c > b.c || (a.c === b.c && far(a) < far(b)); };
+      var start = { x: typed.x, y: typed.y }; start.c = count(start);
+      var search = function(order) {
+        var best = start;
+        order.forEach(function(ax) {
+          var held = best;
+          for (var i = -n; i <= n; i++) {
+            var v = +(i * stepMm).toFixed(6), t = { x: ax === 'x' ? v : held.x, y: ax === 'y' ? v : held.y };
+            t.c = count(t);
+            if (better(t, best)) best = t;
+          }
+        });
+        return best;
+      };
+      var a = search(['y', 'x', 'y', 'x']), b = search(['x', 'y', 'x', 'y']), best = better(b, a) ? b : a;
+      cur[kx] = best.x; cur[ky] = best.y;
     };
-    var a = search(['y', 'x', 'y', 'x']), b = search(['x', 'y', 'x', 'y']), best = better(b, a) ? b : a;
-    return best.count > start ? Object.assign(best, { more: best.count - start }) : null;
+    var start = rulerPlacements(cur).labels.length;
+    fitAxis('X', 'offXMm', 'offYMm');
+    fitAxis('Y', 'yOffXMm', 'yOffYMm');
+    var count = rulerPlacements(cur).labels.length;
+    return count > start ? { offXMm: cur.offXMm, offYMm: cur.offYMm, yOffXMm: cur.yOffXMm, yOffYMm: cur.yOffYMm, count: count, more: count - start } : null;
   }
   function labelPlacements(holes, mode, o) {
     var labels = [], skipped = [], h = o.textMm, gap = o.gapMm;
@@ -9019,13 +9041,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // The Cut Board tab's fields, saved by id (less "mw-") in the machine's
   // units then (settings.units).
   var CUT_SAVED = {
-    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed', 'lab-space', 'lab-offx', 'lab-offy',
+    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed', 'lab-space', 'lab-offx', 'lab-offy', 'lab-yoffx', 'lab-yoffy',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'gl-space', 'lt-fmin', 'lt-fmax'],
     plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'lab-pen', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-pen', 'gl-power', 'gl-on', 'gl-origin', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn', 'cad-origin'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
-    'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'thr-major': 0.375, 'thr-pitch': 0.0625, 'thr-depth': 0.4, 'thr-mill': 0.157, 'thr-feed': 12, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40, 'lab-space': 2, 'lab-offx': 0.12, 'lab-offy': 0.12,
+    'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'thr-major': 0.375, 'thr-pitch': 0.0625, 'thr-depth': 0.4, 'thr-mill': 0.157, 'thr-feed': 12, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40, 'lab-space': 2, 'lab-offx': 0.12, 'lab-offy': 0.12, 'lab-yoffx': 0.12, 'lab-yoffy': 0.12,
     'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-slot': 0.03, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
     'gl-depth': 0.012, 'gl-feed': 60, 'gl-space': 1, 'lt-fmin': 20, 'lt-fmax': 120 };
   function cutBody() {
@@ -9050,6 +9072,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       else if (state.imperial && CUT_INCH_DEFAULTS[k] != null) $('mw-' + k).value = CUT_INCH_DEFAULTS[k];
     });
     if (!isFinite(parseFloat(c['fit-size']))) $('mw-fit-size').value = $('mw-hole-dia').value;
+    // Before 0.5.14 one Offset X / Y moved both axes' marks: the Y marks start from it.
+    if (!isFinite(parseFloat(c['lab-yoffx']))) $('mw-lab-yoffx').value = $('mw-lab-offx').value;
+    if (!isFinite(parseFloat(c['lab-yoffy']))) $('mw-lab-yoffy').value = $('mw-lab-offy').value;
     if (!isFinite(parseFloat(c['sh-pin']))) $('mw-sh-pin').value = $('mw-hole-pin').value || $('mw-hole-dia').value;
     // A grid menu's options come later: it keeps the wanted value till then.
     CUT_SAVED.plain.forEach(function(k) { if (c[k] != null && c[k] !== '') { $('mw-' + k).value = c[k]; $('mw-' + k).setAttribute('data-want', c[k]); } });
@@ -9620,6 +9645,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     await loadProgram('SBT-LaserTest_' + l.o.pn + 'x' + l.o.fn + '.nc',
       strokesProgram(l.o, 'laser test, ' + l.o.pn + ' powers x ' + l.o.fn + ' feeds, X0 Y0 on the scrap’s front left corner', l.o.groups), $('mw-lt-note'), $('mw-lt-generate'));
   }
+  var rulerFitMemo = null;
   // The fixture table's labels, with a V-bit or a laser.
   function labelSettings() {
     var o = cutSettings();
@@ -9632,10 +9658,18 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var ro = { textMm: textMm, gapMm: Math.max(1, textMm * 0.4), travel: state.travel, zones: uiZones(),
         all: hh ? holes.grid.filter(function(q) { return !q.hidden && !q.suppressed; }) : [], holeR: function(q) { return holeR(q, hh); }, tracks: hh ? labelTracks(hh) : [],
         within: o.plateOn && o.plate ? (function(r, m) { return { minX: r.minX + m, maxX: r.maxX - m, minY: r.minY + m, maxY: r.maxY - m }; })(o.plate, PLATE_EDGE_MM + (laser ? 0 : 1)) : null,
-        x0: o.wcs.x, y0: o.wcs.y, spacingMm: spaceMm, unitMm: state.imperial ? MM_PER_INCH : 1, offXMm: offMm('mw-lab-offx'), offYMm: offMm('mw-lab-offy') };
+        x0: o.wcs.x, y0: o.wcs.y, spacingMm: spaceMm, unitMm: state.imperial ? MM_PER_INCH : 1, offXMm: offMm('mw-lab-offx'), offYMm: offMm('mw-lab-offy'),
+        yOffXMm: offMm('mw-lab-yoffx'), yOffYMm: offMm('mw-lab-yoffy') };
       pl = rulerPlacements(ro);
-      // Marks on dog holes: look for offsets that fit more (1 mm or 1/32 in steps, within 2 in).
-      if (pl.skipped.some(function(x) { return x.why === 'on a dog hole'; })) fit = rulerFit(ro, state.imperial ? MM_PER_INCH / 32 : 1, 2 * MM_PER_INCH);
+      // Marks on dog holes or T-tracks: look for offsets that fit more (1 mm or 1/32 in steps, within 2 in).
+      // The search takes ~0.1 s on a big grid, and every Cut Board field
+      // redraws this: it reruns only when what it reads has changed.
+      if (pl.skipped.some(function(x) { return x.why === 'on a dog hole' || x.why === 'over a T-track'; })) {
+        var key = JSON.stringify([textMm, spaceMm, ro.offXMm, ro.offYMm, ro.yOffXMm, ro.yOffYMm, ro.x0, ro.y0, ro.unitMm, ro.travel, ro.zones, ro.within,
+          ro.tracks, ro.all.length, ro.all.length && [ro.all[0].x, ro.all[0].y, ro.all[ro.all.length - 1].x, ro.all[ro.all.length - 1].y, ro.holeR(ro.all[0])]]);
+        if (!rulerFitMemo || rulerFitMemo.key !== key) rulerFitMemo = { key: key, fit: rulerFit(ro, state.imperial ? MM_PER_INCH / 32 : 1, 2 * MM_PER_INCH) };
+        fit = rulerFitMemo.fit;
+      }
     } else if (!ruler && state.travel && hh && textMm > 0) {
       // On a fixture plate, only its own holes get a label.
       pl = labelPlacements(holes.grid.filter(function(q) {
@@ -9671,15 +9705,15 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-lab-summary').textContent = l.o.labels.length + ' label' + (l.o.labels.length === 1 ? '' : 's') +
       (l.skipped.length ? '; left out: ' + Object.keys(why).map(function(k) { return why[k] + ' ' + k; }).join(', ') : '') +
       (lines ? '. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' : '.') + penText(l.o, 'mw-lab-pen');
-    // Marks on dog holes: say so, and offer offsets that fit more of them.
-    var holed = why['on a dog hole'] || 0, fit = l.fit;
+    // Marks on dog holes or T-tracks: offer offsets that fit more of them.
+    var ruler = $('mw-lab-mode').value === 'ruler', holed = ruler ? (why['on a dog hole'] || 0) + (why['over a T-track'] || 0) : 0, fit = l.fit;
     $('mw-lab-fit-text').textContent = !holed ? '' : fit
-      ? 'Offset X ' + +shown(fit.offXMm) + ' and Offset Y ' + +shown(fit.offYMm) + ' ' + unitName() + ' fit ' + fit.more + ' more, between the holes.'
-      : 'Move Offset X / Y so the marks run between the dog holes’ rows and columns, or make Text Height smaller.';
+      ? 'Offsets of X marks ' + +shown(fit.offXMm) + ', ' + +shown(fit.offYMm) + ' and Y marks ' + +shown(fit.yOffXMm) + ', ' + +shown(fit.yOffYMm) + ' ' + unitName() + ' (X, Y) fit ' + fit.more + ' more, clear of the holes and tracks.'
+      : 'No offsets within ' + (state.imperial ? '2 in' : '50 mm') + ' fit more of them (moving an axis’s marks moves them all): a smaller Text Height or another Spacing might.';
     $('mw-lab-fit').hidden = !holed;
     $('mw-lab-fit-use').hidden = !fit;
     $('mw-lab-fit-use').onclick = fit ? function() {
-      [['mw-lab-offx', fit.offXMm], ['mw-lab-offy', fit.offYMm]].forEach(function(f) {
+      [['mw-lab-offx', fit.offXMm], ['mw-lab-offy', fit.offYMm], ['mw-lab-yoffx', fit.yOffXMm], ['mw-lab-yoffy', fit.yOffYMm]].forEach(function(f) {
         $(f[0]).value = shown(f[1]); $(f[0]).dispatchEvent(new Event('change', { bubbles: true }));
       });
     } : null;
@@ -10682,7 +10716,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, Edge Distance in from its edges, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
-      '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one when that clears the label already there. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on; it stays at its height, lifting to Safe Z only to reach the first label and to pass over a zone). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many. For Inch / mm marks that land on dog holes it offers offsets that fit more between the holes: <strong>Use These Offsets</strong>.',
+      '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one when that clears the label already there. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on; it stays at its height, lifting to Safe Z only to reach the first label and to pass over a zone). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many. Inch / mm marks have their own Offset X / Y for the X marks and for the Y marks; when some land on dog holes or T-tracks it offers offsets that fit more of them: <strong>Use These Offsets</strong>.',
       '<p><strong>Grid lines</strong> instead of holes: a line along every row and column of Setup&rsquo;s shown grids, through where the holes would be (turned with a turned grid) and half a spacing past the end ones, so they cross at each hole&rsquo;s place; the dots move them to a side of each hole, where stock set against pins would sit. Or <strong>Own spacing</strong>: lines every Spacing through the work offset&rsquo;s X0 Y0, over the whole travel. With a laser (grblHAL&rsquo;s laser mode, <code>$32=1</code>) or a V-bit, Z0 on the board&rsquo;s top.</p><ul>' +
         '<li>Lines stop short of the travel&rsquo;s edges and keepout zones, and break at T-tracks.</li>' +
         '<li>Every other line runs back the other way, so most moves between them are short.</li>' +

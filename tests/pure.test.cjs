@@ -2539,11 +2539,15 @@ test('labels: rulerFit finds offsets that keep the marks between the dog holes',
   const before = rulerPlacements(o);
   assert.ok(before.skipped.some(s => s.why === 'on a dog hole'));
   const fit = rulerFit(o, 1, 50.8);
-  assert.ok(fit && fit.more > 0 && Number.isInteger(fit.offXMm) && Number.isInteger(fit.offYMm));
-  const after = rulerPlacements(Object.assign({}, o, { offXMm: fit.offXMm, offYMm: fit.offYMm }));
+  assert.ok(fit && fit.more > 0 && [fit.offXMm, fit.offYMm, fit.yOffXMm, fit.yOffYMm].every(Number.isInteger));
+  const after = rulerPlacements(Object.assign({}, o, { offXMm: fit.offXMm, offYMm: fit.offYMm, yOffXMm: fit.yOffXMm, yOffYMm: fit.yOffYMm }));
   assert.equal(after.labels.length, fit.count);
   assert.equal(fit.count - before.labels.length, fit.more);
   assert.ok(!after.skipped.some(s => s.why === 'on a dog hole'));
-  // Nothing better: null.
-  assert.equal(rulerFit(Object.assign({}, o, { all: [] }), 1, 50.8), null);
+  // The X and Y marks have their own offsets: moving the Y marks leaves the X marks where they were.
+  const split = rulerPlacements(Object.assign({}, o, { all: [], yOffXMm: 20, yOffYMm: -4 }));
+  assert.deepEqual([split.labels.find(l => l.tag === 'X100').x, split.labels.find(l => l.tag === 'X100').y], [103, 3]);
+  assert.deepEqual([split.labels.find(l => l.tag === 'Y100').x, split.labels.find(l => l.tag === 'Y100').y], [20, 96]);
+  // From the offsets it found, nothing better: null.
+  assert.equal(rulerFit(Object.assign({}, o, { offXMm: fit.offXMm, offYMm: fit.offYMm, yOffXMm: fit.yOffXMm, yOffYMm: fit.yOffYMm }), 1, 50.8), null);
 });
