@@ -92,7 +92,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
   - Profiles (`holeProfiles`, `holeProfile`): `setupBody` is what one holds (not the origin dot);
     `sameSetup` ignores favorites; `showProfile` draws the menu and the changes bar.
 - **Layout** follows QuickCut's: the dialog header is hidden, and a sidebar has the tabs (**XY0 Picker**, first;
-  **Z0 macros**), **Help** (notes in `HELP_TOPICS` plus the tab's tooltips) and **Close** (`close-plugin-dialog`).
+  **Z0 macros**; **Cut Board** opens like QuickCut's Shapes to list its sections, built from the chips by `buildCutNav`), **Help** (notes in `HELP_TOPICS` plus the tab's tooltips) and **Close** (`close-plugin-dialog`).
   Keep `HELP_TOPICS` in step with the README.
 - **Everything else** is the UI and its calls:
   - `runChecks`: the controller check.

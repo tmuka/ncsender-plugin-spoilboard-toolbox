@@ -5,6 +5,9 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ## Unreleased
 
+### 🔧 Better
+- **Cut Board's sections in the sidebar:** Cut Board opens like QuickCut's Shapes to list Dog holes, T-tracks, Grid lines, Fit test, Laser test, Chamfers, Labels and Export, so they're easier to find; the chips above the cards still work, and the two stay in step.
+
 ### 🐛 Fixed
 - **Labels:** the last column's label, when it doesn't fit inside the travel and goes on the hole's other side, is left out if it would land on the label already there (it used to be drawn on top of it). The summary counts it as left out.
 
