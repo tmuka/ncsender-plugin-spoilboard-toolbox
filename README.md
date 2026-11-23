@@ -270,7 +270,7 @@ Re-record after surfacing the spoilboard.
 **Probed the stock some other way?** ncSender's Probe dialog puts Z0 on the stock but doesn't tell the
 macros the new thickness. Two ways to give it to them:
 
-- **Probe Stock Top** (on the Z0 macros tab, and under **Set Z0** in the XY0 Picker's Stock mode, for the
+- **Probe Stock Top** (on the Z0 macros tab, and under **Set Z0** in the XY0 Picker, in Hole or Stock mode, for the
   work offset picked there): Spoilboard Toolbox shrinks to a card in a corner and opens ncSender's Probe
   dialog. Probe Z on the stock's top; the card shows that Z0's height above the spoilboard, and **Store**
   saves it as the thickness. Already probed? Press **Check Z0** on the card. (It opens the dialog by
