@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements };')();
+const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit } =
+  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -2521,7 +2521,7 @@ test('labels: inch marks from X0 Y0, offset clear of the holes, left out where t
   assert.deepEqual(rulerPlacements(Object.assign({}, base, { spacingMm: 50, unitMm: 1 })).labels.filter(l => l.tag[0] === 'X').map(l => l.text), ['0', '50', '100', '150', '200', '250']);
   // A hole where the 2 mark would go: left out; X0 Y0 in the middle: negative marks too.
   const hole = rulerPlacements(Object.assign({}, base, { all: [{ x: 2 * 25.4 + 5, y: 4 }] }));
-  assert.deepEqual(hole.skipped.map(s => s.tag + ' ' + s.why), ['X2 too big for the gap to the next hole']);
+  assert.deepEqual(hole.skipped.map(s => s.tag + ' ' + s.why), ['X2 on a dog hole']);
   const mid = rulerPlacements(Object.assign({}, base, { x0: 150, y0: 100 }));
   assert.ok(mid.labels.some(l => l.text === '-5') && mid.labels.some(l => l.text === '5'));
   // Marks too wide for their spacing: every other one is left out, none overlap.
@@ -2529,4 +2529,21 @@ test('labels: inch marks from X0 Y0, offset clear of the holes, left out where t
   assert.ok(tight.skipped.some(s => s.why === 'no room beside it'));
   const xs = tight.labels.filter(l => l.tag[0] === 'X').map(l => [l.x, l.x + textWidth(l.text, 6)]);
   xs.forEach((a, i) => xs.slice(i + 1).forEach(b => assert.ok(a[1] + 2 <= b[0] || b[1] + 2 <= a[0])));
+});
+
+test('labels: rulerFit finds offsets that keep the marks between the dog holes', () => {
+  // The Pi's case: holes every 48.8 mm from (6.6, 21.7), 4 mm radius; 12.7 mm marks every 50 mm at Offset 3, 3.
+  const travel = { xMm: 400, yMm: 400, dirX: 1, dirY: 1 }, all = [];
+  for (let c = 0; c < 8; c++) for (let r = 0; r < 8; r++) all.push({ x: 6.6 + c * 48.8, y: 21.7 + r * 48.8 });
+  const o = { textMm: 8, gapMm: 3.2, travel, zones: [], all, holeR: () => 4, x0: 0, y0: 0, spacingMm: 50, unitMm: 1, offXMm: 3, offYMm: 3 };
+  const before = rulerPlacements(o);
+  assert.ok(before.skipped.some(s => s.why === 'on a dog hole'));
+  const fit = rulerFit(o, 1, 50.8);
+  assert.ok(fit && fit.more > 0 && Number.isInteger(fit.offXMm) && Number.isInteger(fit.offYMm));
+  const after = rulerPlacements(Object.assign({}, o, { offXMm: fit.offXMm, offYMm: fit.offYMm }));
+  assert.equal(after.labels.length, fit.count);
+  assert.equal(fit.count - before.labels.length, fit.more);
+  assert.ok(!after.skipped.some(s => s.why === 'on a dog hole'));
+  // Nothing better: null.
+  assert.equal(rulerFit(Object.assign({}, o, { all: [] }), 1, 50.8), null);
 });

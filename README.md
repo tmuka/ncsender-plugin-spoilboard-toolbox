@@ -631,8 +631,11 @@ that doesn't follow the holes. Not sure of the power and speed? The **Laser test
   start easily and the edge doesn't crumble.
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), or
   **Inch / mm marks**: the distance from the work offset's X0 Y0 every **Spacing** along its row and up its
-  column, like a ruler, moved by **Offset X / Y** to keep clear of the dog holes and grid lines; with a
-  V-bit, a pen or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
+  column, like a ruler, moved by **Offset X / Y** to keep clear of the dog holes and grid lines. A mark that
+  would touch a dog hole is left out ("on a dog hole" in the summary), and the summary offers offsets that fit
+  more of them between the holes: **Use These Offsets** puts them in. With a V-bit, a pen or a laser (grblHAL's
+  laser mode, `$32=1`, on; it stays at its height, lifting to Safe Z only to reach the first label and to pass
+  over a zone), so the spoilboard reads like the map.
   Each goes toward the next column; the last column's goes on the hole's other side when the travel ends first,
   or is left out when it would touch the label already there (the summary counts what's left out).
 
