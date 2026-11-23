@@ -3625,7 +3625,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
 
   // Where each grid hole's label goes: beside the hole, toward the next
   // column (on its +X side when columns count up along +X), centered on it;
-  // on its other side when that doesn't fit (the last column).
+  // on its other side when that doesn't fit (the last column), unless it
+  // would come within the gap of the label there.
   // mode 'every': each hole's name (B3); 'edges': the first row's holes get
   // their column number and the first column's their row letter (A1 at the
   // corner). Labels that would touch another hole, leave the travel, or
@@ -3647,22 +3648,37 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function labelPlacements(holes, mode, o) {
     var labels = [], skipped = [], h = o.textMm, gap = o.gapMm;
     var minX = o.travel.dirX > 0 ? 0 : -o.travel.xMm, minY = o.travel.dirY > 0 ? 0 : -o.travel.yMm;
-    holes.forEach(function(p) {
+    // Every label on its usual side first, then the ones that didn't fit
+    // there on the other side, where they mustn't come within the gap of a
+    // label already placed (the last column's would land on the label
+    // between it and the column before).
+    var tries = [], flips = [];
+    holes.forEach(function(p, i) {
       if (!p.tag) return;
       var m = /^([A-Z]+)(\d+)$/.exec(p.tag);
       var text = mode === 'every' ? p.tag : p.row === 1 && p.col === 1 ? p.tag : p.row === 1 ? m[2] : p.col === 1 ? m[1] : '';
-      if (!text) return;
-      var w = textWidth(text, h), r = o.holeR(p), y0 = p.y - h / 2, x0, why, first;
-      [o.travel.dirX, -o.travel.dirX].some(function(side) {
-        x0 = side > 0 ? p.x + r + gap : p.x - r - gap - w;
-        why = problem(p, { minX: x0, maxX: x0 + w, minY: y0, maxY: y0 + h });
-        first = first || why;
-        return !why;
-      });
-      if (why) skipped.push({ tag: p.tag, why: first });
-      else labels.push({ text: text, x: x0, y: y0, tag: p.tag });
+      if (text) tries.push({ p: p, i: i, text: text });
     });
+    tries.forEach(function(t) {
+      var why = place(t, o.travel.dirX);
+      if (why) { t.why = why; flips.push(t); }
+    });
+    flips.forEach(function(t) {
+      if (place(t, -o.travel.dirX, true)) skipped.push({ tag: t.p.tag, why: t.why });
+    });
+    labels.sort(function(a, b) { return a.i - b.i; });
+    labels.forEach(function(l) { delete l.i; });
     return { labels: labels, skipped: skipped };
+    function place(t, side, other) {
+      var p = t.p, w = textWidth(t.text, h), r = o.holeR(p), y0 = p.y - h / 2;
+      var x0 = side > 0 ? p.x + r + gap : p.x - r - gap - w;
+      var box = { minX: x0, maxX: x0 + w, minY: y0, maxY: y0 + h };
+      var why = problem(p, box) || (other && labels.some(function(l) {
+        return l.x - gap < box.maxX && l.x + textWidth(l.text, h) + gap > box.minX && l.y - gap < box.maxY && l.y + h + gap > box.minY;
+      }) ? 'no room beside it' : null);
+      if (!why) labels.push({ text: t.text, x: x0, y: y0, tag: p.tag, i: t.i });
+      return why;
+    }
     function problem(p, box) {
       return box.minX < minX || box.maxX > minX + o.travel.xMm || box.minY < minY || box.maxY > minY + o.travel.yMm ? 'outside the travel'
         : o.within && (box.minX < o.within.minX || box.maxX > o.within.maxX || box.minY < o.within.minY || box.maxY > o.within.maxY) ? 'off the stock'
@@ -10429,7 +10445,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Cut the T-tracks:</strong> for a two-layer spoilboard, the T-tracks and threaded inserts installed once in a lower layer and a sacrificial layer over it. This cuts just the slots along Setup&rsquo;s T-tracks, Track Width wide, so the tracks below show; then cut the holes through the same layer over the inserts. Depth blank is the Spoilboard Thickness (the top layer&rsquo;s alone: it never goes deeper, so the lower layer and its inserts are safe); a smaller Depth cuts dados to set new track in. Wide slots are cut in passes side by side, and stop short of the travel&rsquo;s ends, keepout zones and Exclude Picks areas.',
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, Edge Distance in from its edges, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
-      '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.',
+      '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one when that clears the label already there. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.',
       '<p><strong>Grid lines</strong> instead of holes: a line along every row and column of Setup&rsquo;s shown grids, through where the holes would be (turned with a turned grid) and half a spacing past the end ones, so they cross at each hole&rsquo;s place. With a laser (grblHAL&rsquo;s laser mode, <code>$32=1</code>) or a V-bit, Z0 on the board&rsquo;s top.</p><ul>' +
         '<li>Lines stop short of the travel&rsquo;s edges and keepout zones, and break at T-tracks.</li>' +
         '<li>Every other line runs back the other way, so most moves between them are short.</li>' +

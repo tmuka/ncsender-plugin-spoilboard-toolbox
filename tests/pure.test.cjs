@@ -1210,6 +1210,19 @@ test('labels: too big for the gap, in a zone, or off the travel are left out', (
   assert.ok(last.x + textWidth('A7', 5) <= a7.x - 4 - 2 + 1e-9);
 });
 
+test('labels: the last column\'s label is left out when its other side would touch the label there', () => {
+  // 12 mm text (20 mm wide) fits beside A6, but A7 turned back would land on A6's label.
+  const g = labelGrid(), big = labelPlacements(g, 'every', labelOpts(g, { textMm: 12 }));
+  const tags = big.labels.map(l => l.tag);
+  assert.ok(tags.includes('A6') && !tags.includes('A7'));
+  assert.deepEqual(big.skipped.filter(s => s.tag.endsWith('7')).map(s => s.tag + ' ' + s.why).sort(),
+    ['A7 outside the travel', 'B7 outside the travel', 'C7 outside the travel', 'D7 outside the travel']);
+  // No two labels come within the gap of each other, and they keep the holes' order.
+  const boxes = big.labels.map(l => ({ x0: l.x, x1: l.x + textWidth(l.text, 12), y0: l.y, y1: l.y + 12 }));
+  boxes.forEach((a, i) => boxes.slice(i + 1).forEach(b => assert.ok(a.x1 + 2 <= b.x0 || b.x1 + 2 <= a.x0 || a.y1 + 2 <= b.y0 || b.y1 + 2 <= a.y0)));
+  assert.deepEqual(tags, g.filter(p => tags.includes(p.tag)).map(p => p.tag));
+});
+
 test('engraving: V-bit strokes at depth, a laser without Z moves', () => {
   const base = { labels: [{ text: 'A1', x: 20, y: 30 }], textMm: 6, depthMm: 0.4, feed: 800, plunge: 300, rpm: 18000, delayS: 2,
     wcs: { p: 1, x: 10, y: 10 }, safeZMm: -5, zones: [], imperial: false };

@@ -625,6 +625,8 @@ crossings. Not sure of the power and speed? The **Laser test** marks a small cro
   start easily and the edge doesn't crumble.
 - **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
   V-bit, a pen or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
+  Each goes toward the next column; the last column's goes on the hole's other side when the travel ends first,
+  or is left out when it would touch the label already there (the summary counts what's left out).
 
 **With a pen or drag knife:** for Labels and Grid lines, the card above the section starts with **With**:
 **V-bit**, **Laser** or **Pen or drag knife** (the card is **Bit and depth** for a V-bit, **Tool** otherwise).

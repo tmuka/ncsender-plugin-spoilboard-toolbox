@@ -3,6 +3,11 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### 🐛 Fixed
+- **Labels:** the last column's label, when it doesn't fit inside the travel and goes on the hole's other side, is left out if it would land on the label already there (it used to be drawn on top of it). The summary counts it as left out.
+
 ## 0.5.13: Export for CAD
 
 ### ✨ New
