@@ -539,13 +539,13 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 ## Cut Board: the dog holes, T-tracks, chamfers and labels
 
 The **Cut Board** tab (Spoilboard before 0.5) writes the programs that make (or remake) the spoilboard from the XY0 Picker's
-holes, so the board and the map come from the same numbers. Pick what to cut with the chips at its top
-(**Dog holes**, **T-tracks**, **Grid lines**, **Fit test**, **Laser test**, **Chamfers**, **Labels**, and **Export** for CAD). Load the bit, put Z0 on the
+holes, so the board and the map come from the same numbers. Pick what to cut in the sidebar, where Cut Board
+lists its sections (**Dog holes**, **T-tracks**, **Grid lines**, **Fit test**, **Laser test**, **Chamfers**, **Labels**, and **Export** for CAD). Load the bit, put Z0 on the
 spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the depth and feeds in the shared
 **Bit and depth** card, and press **Generate**: the program opens in ncSender's visualizer to check and
 run.
 
-![The Cut Board tab: chips for Dog holes, T-tracks, Grid lines, Fit test, Laser test, Chamfers and
+![The Cut Board tab (before 0.5.14, with chips for the sections): Dog holes, T-tracks, Grid lines, Fit test, Laser test, Chamfers and
 Labels, the Bit and depth card with starting feeds for MDF, a side view of one hole's depth and passes,
 and 425 holes ready to generate, starting with a tool change to T18](docs/spoilboard-tab.png)
 
