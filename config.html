@@ -96,8 +96,8 @@
   .mw-nav-icon { display: inline-flex; width: 20px; height: 20px; color: inherit; opacity: 0.8; }
   .mw-nav-btn.active .mw-nav-icon { color: var(--mw-accent-text); opacity: 1; }
   .mw-nav-icon svg { width: 18px; height: 18px; }
-  /* Cut Board opens like an accordion to list its sections, as QuickCut's
-     Shapes does, and folds away on another tab. */
+  /* Cut Board lists its sections like QuickCut's Shapes: open unless the
+     user folded it, which is remembered. */
   .mw-nav-label { flex: 1; }
   .mw-nav-chev { display: inline-flex; width: 16px; height: 16px; color: var(--color-text-secondary); transition: transform 0.25s ease; flex-shrink: 0; }
   .mw-nav-chev svg { width: 16px; height: 16px; }
@@ -5401,7 +5401,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
       stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
       stockPins: holes.pins.slice(), stockPinSide: holes.pinSide, stockDotSet: !!holes.stockDotSet, stockAnchor: holes.stockAnchor,
-      cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed, partProgram: prog.partSaved || null
+      cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed, cutNavFolded: !!state.cutNavFolded, partProgram: prog.partSaved || null
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
@@ -5998,6 +5998,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     holes.profiles = Array.isArray(saved.holeProfiles) ? saved.holeProfiles.filter(function(x) { return x && typeof x.name === 'string' && x.name.trim(); }) : [];
     holes.profile = holes.profiles.some(function(x) { return x.name === saved.holeProfile; }) ? saved.holeProfile : '';
     // The welcome opens first only on a fresh install: nothing set up yet.
+    state.cutNavFolded = !!saved.cutNavFolded;
+    setCutOpen(!state.cutNavFolded);
     state.welcomed = !!saved.welcomed || saved.holeSx != null || holes.profiles.length > 0;
     if (probeBlockMm != null) {
       $('mw-block').value = +(probeBlockMm / (state.imperial ? MM_PER_INCH : 1)).toFixed(4);
@@ -6178,9 +6180,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     });
     ROOT.querySelectorAll('.mw-sidebar-nav .mw-nav-btn[data-tab]').forEach(function(b) {
       b.addEventListener('click', function() {
-        // Cut Board showing: its arrow folds the sections away and back.
-        if (b.id === 'mw-cut-toggle' && help.tab === 'cut') setCutOpen(!$('mw-cut-sub').classList.contains('open'));
-        else showTab(b.getAttribute('data-tab'));
+        // Cut Board showing, or its list folded: it folds the sections
+        // away and back, and that's remembered.
+        if (b.id === 'mw-cut-toggle' && (help.tab === 'cut' || state.cutNavFolded)) {
+          state.cutNavFolded = !state.cutNavFolded;
+          setCutOpen(!state.cutNavFolded);
+          saveSettings();
+          if (help.tab !== 'cut') showTab('cut');
+        } else showTab(b.getAttribute('data-tab'));
       });
     });
     buildCutNav();
@@ -10703,7 +10710,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     help.tab = name;
     ROOT.querySelectorAll('.mw-panel > .mw-tab').forEach(function(t) { t.hidden = t.getAttribute('data-tab') !== name; });
     ROOT.querySelectorAll('.mw-sidebar-nav .mw-nav-btn[data-tab]').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-tab') === name); });
-    if (name !== 'help') setCutOpen(name === 'cut');
+    setCutOpen(!state.cutNavFolded);
     markCutNav();
     $('mw-help-btn').classList.toggle('active', name === 'help');
     ROOT.querySelector('.mw-panel').scrollTop = 0;
@@ -10761,6 +10768,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       b.addEventListener('click', function() { showCutSection(sec); if (help.tab !== 'cut') showTab('cut'); });
       inner.appendChild(b);
     });
+    setCutOpen(!state.cutNavFolded);
   }
   function setCutOpen(open) {
     $('mw-cut-sub').classList.toggle('open', open);
