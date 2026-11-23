@@ -1214,7 +1214,7 @@
       <p class="mw-intro" data-intro="lasertest" hidden>Find the laser&rsquo;s power and speed for crisp lines: a small cross for every power and feed, on scrap of the same material.
           X0 Y0 on the scrap&rsquo;s front left corner, the laser focused on its top. Each row is labeled with its feed, each column with its power;
           use the best for Grid lines and Labels.</p>
-      <p class="mw-intro" data-intro="labels" hidden>The fixture table&rsquo;s names beside the holes, with a V-bit, a pen or a laser, so the spoilboard reads like the map. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).</p>
+      <p class="mw-intro" data-intro="labels" hidden>The fixture table&rsquo;s names beside the holes, with a V-bit, a pen or a laser, so the spoilboard reads like the map; or <strong>Inch / mm marks</strong>, the distance from the work offset&rsquo;s X0 Y0 every Spacing along its row and up its column, moved by the Offsets to keep clear of the holes and the grid lines. Z0 on the spoilboard&rsquo;s top, or the stock&rsquo;s with Into the stock on top ticked (for a laser: focused on it).</p>
       <p class="mw-intro" data-intro="export" hidden>The spoilboard as files for Fusion or another CAD program, to model fixtures on it or show it in a
           setup&rsquo;s simulation. The same holes and slots Dog holes and T-tracks would cut: the board is the machine&rsquo;s
           travel, with its top at Z0, in mm.</p>
@@ -1535,10 +1535,23 @@
         <div class="mw-row mw-row-5">
           <div class="mw-field mw-span-2">
             <label for="mw-lab-mode">Labels</label>
-            <select class="mw-select" id="mw-lab-mode" title="Every hole: each one's name (B3). Edges: the first row's column numbers and the first column's row letters.">
+            <select class="mw-select" id="mw-lab-mode" title="Every hole: each one's name (B3). Edges: the first row's column numbers and the first column's row letters. Inch / mm marks: the distance from the work offset's X0 Y0 every Spacing, along its row and up its column, like a ruler.">
               <option value="every" selected>Every hole</option>
               <option value="edges">First row and column</option>
+              <option value="ruler">Inch / mm marks</option>
             </select>
+          </div>
+          <div class="mw-field mw-lab-ruler" hidden>
+            <label for="mw-lab-space">Spacing (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-space" value="50" title="A mark every this far from the work offset's X0 Y0, labeled with its distance in your units (1, 2, 3 for inches; 50, 100 for mm).">
+          </div>
+          <div class="mw-field mw-lab-ruler" hidden>
+            <label for="mw-lab-offx">Offset X (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-offx" value="3" title="How far right of its mark each label starts (negative: left), and how far right of X0 the row marks run up, to keep clear of the dog holes' columns and the grid lines.">
+          </div>
+          <div class="mw-field mw-lab-ruler" hidden>
+            <label for="mw-lab-offy">Offset Y (<span class="mw-unit">mm</span>)</label>
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-lab-offy" value="3" title="How far above its mark each label sits (negative: below), and how far above Y0 the column marks run along, to keep clear of the dog holes' rows and the grid lines.">
           </div>
           <div class="mw-field">
             <label for="mw-lab-height">Text Height (<span class="mw-unit">mm</span>)</label>
@@ -3683,9 +3696,50 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       return false;
     }) || mixed;
   }
+  // Why a label's box can't go there, or null: outside the travel (or the
+  // stock, o.within), in a zone, over a T-track, or within half the gap of
+  // a hole's edge other than p's (its own; null for none).
+  function labelBoxProblem(box, p, o) {
+    var gap = o.gapMm, minX = o.travel.dirX > 0 ? 0 : -o.travel.xMm, minY = o.travel.dirY > 0 ? 0 : -o.travel.yMm;
+    return box.minX < minX || box.maxX > minX + o.travel.xMm || box.minY < minY || box.maxY > minY + o.travel.yMm ? 'outside the travel'
+      : o.within && (box.minX < o.within.minX || box.maxX > o.within.maxX || box.minY < o.within.minY || box.maxY > o.within.maxY) ? 'off the stock'
+      : (o.zones || []).some(function(z) { return z.minX < box.maxX && z.maxX > box.minX && z.minY < box.maxY && z.maxY > box.minY; }) ? 'in a keepout zone or Exclude Picks area'
+      : (o.tracks || []).some(function(t) { return boxNearSegment(box, t.a, t.b, t.halfMm + gap / 2); }) ? 'over a T-track'
+      : (o.all || []).some(function(q) {
+          if (q === p) return false;
+          var dx = Math.max(box.minX - q.x, 0, q.x - box.maxX), dy = Math.max(box.minY - q.y, 0, q.y - box.maxY);
+          return Math.hypot(dx, dy) < o.holeR(q) + gap / 2;
+        }) ? 'too big for the gap to the next hole' : null;
+  }
+  // Inch or mm marks: the distance from the work offset's X0 Y0 (x0, y0,
+  // machine mm) every spacingMm, in the user's units (unitMm a unit: 25.4
+  // or 1), as text: along the X0 Y0 row for X (each mark's left at its
+  // line) and up its column for Y (each mark's bottom at its line), both
+  // moved by offXMm, offYMm to keep clear of the dog holes' rows and
+  // columns. Marks that can't go there (labelBoxProblem) or would
+  // come within the gap of one already placed are left out.
+  // Returns { labels: [{ text, x, y, tag }], skipped: [{ tag, why }] }.
+  function rulerPlacements(o) {
+    var labels = [], skipped = [], h = o.textMm, gap = o.gapMm, s = o.spacingMm, t = o.travel;
+    if (!(s > 0) || !(h > 0)) return { labels: labels, skipped: skipped };
+    var minX = t.dirX > 0 ? 0 : -t.xMm, minY = t.dirY > 0 ? 0 : -t.yMm;
+    var text = function(k) { return String(+(k * s / o.unitMm).toFixed(3)); };
+    var put = function(tag, tx, x, y) {
+      var w = textWidth(tx, h), box = { minX: x, maxX: x + w, minY: y, maxY: y + h };
+      var why = labelBoxProblem(box, null, o) || (labels.some(function(l) {
+        return l.x - gap < box.maxX && l.x + textWidth(l.text, h) + gap > box.minX && l.y - gap < box.maxY && l.y + h + gap > box.minY;
+      }) ? 'no room beside it' : null);
+      if (why) skipped.push({ tag: tag, why: why });
+      else labels.push({ text: tx, x: x, y: y, tag: tag });
+    };
+    var k, k0 = Math.ceil((minX - o.x0) / s), k1 = Math.floor((minX + t.xMm - o.x0) / s);
+    for (k = k0; k <= k1; k++) put('X' + text(k), text(k), o.x0 + k * s + o.offXMm, o.y0 + o.offYMm);
+    k0 = Math.ceil((minY - o.y0) / s); k1 = Math.floor((minY + t.yMm - o.y0) / s);
+    for (k = k0; k <= k1; k++) if (k) put('Y' + text(k), text(k), o.x0 + o.offXMm, o.y0 + k * s + o.offYMm);
+    return { labels: labels, skipped: skipped };
+  }
   function labelPlacements(holes, mode, o) {
     var labels = [], skipped = [], h = o.textMm, gap = o.gapMm;
-    var minX = o.travel.dirX > 0 ? 0 : -o.travel.xMm, minY = o.travel.dirY > 0 ? 0 : -o.travel.yMm;
     // Every label on its usual side first, then the ones that didn't fit
     // there on the other side, where they mustn't come within the gap of a
     // label already placed (the last column's would land on the label
@@ -3717,17 +3771,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       if (!why) labels.push({ text: t.text, x: x0, y: y0, tag: p.tag, i: t.i });
       return why;
     }
-    function problem(p, box) {
-      return box.minX < minX || box.maxX > minX + o.travel.xMm || box.minY < minY || box.maxY > minY + o.travel.yMm ? 'outside the travel'
-        : o.within && (box.minX < o.within.minX || box.maxX > o.within.maxX || box.minY < o.within.minY || box.maxY > o.within.maxY) ? 'off the stock'
-        : (o.zones || []).some(function(z) { return z.minX < box.maxX && z.maxX > box.minX && z.minY < box.maxY && z.maxY > box.minY; }) ? 'in a keepout zone or Exclude Picks area'
-        : (o.tracks || []).some(function(t) { return boxNearSegment(box, t.a, t.b, t.halfMm + gap / 2); }) ? 'over a T-track'
-        : o.all.some(function(q) {
-            if (q === p) return false;
-            var dx = Math.max(box.minX - q.x, 0, q.x - box.maxX), dy = Math.max(box.minY - q.y, 0, q.y - box.maxY);
-            return Math.hypot(dx, dy) < o.holeR(q) + gap / 2;
-          }) ? 'too big for the gap to the next hole' : null;
-    }
+    function problem(p, box) { return labelBoxProblem(box, p, o); }
   }
 
   // The labels engraved: a V-bit depthMm deep (hopping 2 mm between
@@ -8901,13 +8945,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // The Cut Board tab's fields, saved by id (less "mw-") in the machine's
   // units then (settings.units).
   var CUT_SAVED = {
-    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed',
+    lengths: ['cut-bit', 'cut-thick', 'cut-depth', 'cut-step', 'cut-feed', 'cut-plunge', 'fit-size', 'fit-step', 'fit-edge', 'fit-depth', 'chm-width', 'thr-major', 'thr-pitch', 'thr-depth', 'thr-mill', 'thr-feed', 'lab-height', 'lab-depth', 'lab-feed', 'lab-space', 'lab-offx', 'lab-offy',
       'sh-bolt', 'sh-cb', 'sh-cbd', 'sh-pin', 'sh-slot', 'sh-margin', 'sh-break', 'sh-depth', 'trk-width', 'trk-depth', 'gl-depth', 'gl-feed', 'gl-space', 'lt-fmin', 'lt-fmax'],
     plain: ['cut-stepover', 'cut-peck', 'cut-tip', 'cut-tip-angle', 'cut-mat', 'cut-feeds-style', 'cut-flutes', 'cut-rpm', 'cut-delay', 'fit-count', 'chm-angle', 'thr-size', 'thr-hand', 'thr-passes', 'lab-power', 'lab-mode', 'lab-tool', 'lab-pen', 'sh-mode', 'sh-which', 'sh-axis', 'sh-pingrid', 'sh-boltgrid', 'sh-boltsize', 'gl-tool', 'gl-pen', 'gl-power', 'gl-on', 'gl-origin', 'lt-pmin', 'lt-pmax', 'lt-pn', 'lt-fn', 'cad-origin'],
     checks: ['cut-list', 'cut-mist', 'cut-flood', 'cut-plate', 'sh-avoid']
   };
   var CUT_INCH_DEFAULTS = { 'cut-bit': 0.25, 'cut-depth': 0.71, 'cut-step': 0.12, 'cut-feed': 60, 'cut-plunge': 20,
-    'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'thr-major': 0.375, 'thr-pitch': 0.0625, 'thr-depth': 0.4, 'thr-mill': 0.157, 'thr-feed': 12, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40,
+    'fit-step': 0.002, 'fit-edge': 0.4, 'fit-depth': 0.4, 'chm-width': 0.03, 'thr-major': 0.375, 'thr-pitch': 0.0625, 'thr-depth': 0.4, 'thr-mill': 0.157, 'thr-feed': 12, 'lab-height': 0.2, 'lab-depth': 0.015, 'lab-feed': 40, 'lab-space': 2, 'lab-offx': 0.12, 'lab-offy': 0.12,
     'sh-bolt': 0.272, 'sh-cbd': 0.25, 'sh-slot': 0.03, 'sh-margin': 0.4, 'sh-break': 0.04, 'trk-width': 0.75,
     'gl-depth': 0.012, 'gl-feed': 60, 'gl-space': 1, 'lt-fmin': 20, 'lt-fmax': 120 };
   function cutBody() {
@@ -9507,8 +9551,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var o = cutSettings();
     o.tool = null;
     var laser = $('mw-lab-tool').value === 'laser', pen = $('mw-lab-tool').value === 'pen', hh = readHoles(), textMm = cutMm('mw-lab-height'), probs = placeProblems(o);
-    var pl = { labels: [], skipped: [] };
-    if (state.travel && hh && textMm > 0) {
+    var pl = { labels: [], skipped: [] }, ruler = $('mw-lab-mode').value === 'ruler', spaceMm = cutMm('mw-lab-space');
+    var offMm = function(id) { var v = cutMm(id); return isFinite(v) ? v : 0; };
+    if (ruler && state.travel && o.wcs && spaceMm > 0 && textMm > 0) {
+      pl = rulerPlacements({ textMm: textMm, gapMm: Math.max(1, textMm * 0.4), travel: state.travel, zones: uiZones(),
+        all: hh ? holes.grid.filter(function(q) { return !q.hidden && !q.suppressed; }) : [], holeR: function(q) { return holeR(q, hh); }, tracks: hh ? labelTracks(hh) : [],
+        within: o.plateOn && o.plate ? (function(r, m) { return { minX: r.minX + m, maxX: r.maxX - m, minY: r.minY + m, maxY: r.maxY - m }; })(o.plate, PLATE_EDGE_MM + (laser ? 0 : 1)) : null,
+        x0: o.wcs.x, y0: o.wcs.y, spacingMm: spaceMm, unitMm: state.imperial ? MM_PER_INCH : 1, offXMm: offMm('mw-lab-offx'), offYMm: offMm('mw-lab-offy') });
+    } else if (!ruler && state.travel && hh && textMm > 0) {
       // On a fixture plate, only its own holes get a label.
       pl = labelPlacements(holes.grid.filter(function(q) {
         return q.col != null && !q.suppressed && !q.hidden && !q.blocked && (!o.plateOn || (o.plate && stockHoleCandidates([q], o.plate, holeR(q, hh), PLATE_EDGE_MM).length > 0));
@@ -9520,7 +9570,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     Object.assign(o, { labels: pl.labels, textMm: textMm, laser: laser, power: parseFloat($('mw-lab-power').value), depthMm: cutMm('mw-lab-depth'),
       feed: Math.round(cutMm('mw-lab-feed')) });
     if (pen) { o = withPen(o, penPicked('mw-lab-pen'), state.atc); if (penProblem('mw-lab-pen')) probs.push(penProblem('mw-lab-pen')); }
-    if (!(textMm > 0)) probs.push('Text Height must be more than 0');
+    if (ruler && !(spaceMm > 0)) probs.push('Spacing must be more than 0');
+    else if (ruler && !o.wcs) probs.push('The work offset’s X0 Y0 isn’t known yet: the marks measure from it');
+    else if (!(textMm > 0)) probs.push('Text Height must be more than 0');
     else if (!pl.labels.length) probs.push('No labels fit: try a smaller Text Height');
     if (!(o.feed > 0)) probs.push('Feed must be more than 0');
     if (laser && !(o.power > 0)) probs.push('Laser Power must be more than 0');
@@ -9532,6 +9584,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function renderLabels() {
     var l = labelSettings(), laser = l.o.laser;
+    ROOT.querySelectorAll('.mw-lab-ruler').forEach(function(f) { f.hidden = $('mw-lab-mode').value !== 'ruler'; });
     $('mw-lab-depth').closest('.mw-field').hidden = laser;
     $('mw-lab-power').closest('.mw-field').hidden = !laser;
     var why = {};
@@ -10540,7 +10593,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Dowel fit test:</strong> before cutting them all, cut a row of test holes in scrap (X0 Y0 on its front left corner, Z0 on its top), smallest on the left, Edge Distance in from its edges, and see which size your dowels fit. Set Hole Diameter to that.',
       '<strong>Chamfer the holes:</strong> after cutting, with a V-bit: one lap per hole puts a bevel Chamfer Width wide round its top edge, the bit&rsquo;s tip down inside the hole. A hole too small for that gets a countersink.',
       '<strong>Engrave the labels:</strong> the fixture table&rsquo;s names beside the holes (every hole, or the first row&rsquo;s numbers and first column&rsquo;s letters), toward the next column, or on the other side for the last one when that clears the label already there. With a V-bit, or a laser (M4; grblHAL&rsquo;s laser mode, $32=1, must be on, and Z never moves). Labels that would touch a hole, leave the travel or reach a zone are left out; the summary says how many.',
-      '<p><strong>Grid lines</strong> instead of holes: a line along every row and column of Setup&rsquo;s shown grids, through where the holes would be (turned with a turned grid) and half a spacing past the end ones, so they cross at each hole&rsquo;s place. With a laser (grblHAL&rsquo;s laser mode, <code>$32=1</code>) or a V-bit, Z0 on the board&rsquo;s top.</p><ul>' +
+      '<p><strong>Grid lines</strong> instead of holes: a line along every row and column of Setup&rsquo;s shown grids, through where the holes would be (turned with a turned grid) and half a spacing past the end ones, so they cross at each hole&rsquo;s place; the dots move them to a side of each hole, where stock set against pins would sit. Or <strong>Own spacing</strong>: lines every Spacing through the work offset&rsquo;s X0 Y0, over the whole travel. With a laser (grblHAL&rsquo;s laser mode, <code>$32=1</code>) or a V-bit, Z0 on the board&rsquo;s top.</p><ul>' +
         '<li>Lines stop short of the travel&rsquo;s edges and keepout zones, and break at T-tracks.</li>' +
         '<li>Every other line runs back the other way, so most moves between them are short.</li>' +
         '<li>A laser moves between lines at its focus height, Z untouched, over zones too: keep tall clamps off the bed.</li>' +

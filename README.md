@@ -184,6 +184,7 @@ Either way, the Z0 macros are a separate, optional step for machines with measur
 | Job | X0 Y0 | Z0 |
 | --- | --- | --- |
 | Dog holes, T-tracks, Grid lines, Chamfers, Labels | Anywhere: the holes go at their machine positions. Don't move it after Generate. | The spoilboard's top |
+| Grid lines at **Own spacing**, Labels as **Inch / mm marks** | Where the grid should start: the lines run through it, and the marks measure from it | The spoilboard's top |
 | The same, with **Into the stock on top** ticked | Anywhere | The stock's top |
 | Fit test, Laser test | The scrap's front left corner | The scrap's top (a laser: focused on it) |
 | Stock Holes | Anywhere | The stock's top |
@@ -615,7 +616,11 @@ along every row and column of Setup's grids, crossing exactly where the holes wo
 the end ones. They stop short of the travel's edges and keepout zones, break at T-tracks, and run back and
 forth (every other line runs back) so most moves between them are short. A laser moves between lines at
 its focus height, over zones too, so keep tall clamps off the bed. Then set Hole Diameter to the line's width and zero on the
-crossings. Not sure of the power and speed? The **Laser test** marks a small cross for every power
+crossings.
+**Lines** picks where they go: **On the dog holes**, through the holes' centers or, with the 9 dots (as
+the XY0 Picker's), along a side of each, where stock set against pins in them would sit; or **Own spacing**,
+lines every **Spacing** (in your units) through the work offset's X0 Y0 over the whole travel, for a grid
+that doesn't follow the holes. Not sure of the power and speed? The **Laser test** marks a small cross for every power
 (columns) and feed (rows) on scrap, labeled, so you can pick the crispest before doing the whole bed.
 
 **Before and after:**
@@ -623,7 +628,9 @@ crossings. Not sure of the power and speed? The **Laser test** marks a small cro
   **Edge Distance** (10 mm) in from its edges so none breaks out of the side, smallest on the left, find the one your dowels fit, and set Hole Diameter to it.
 - **Chamfer the holes:** after cutting, a V-bit puts a small bevel around each hole's top edge, so dowels
   start easily and the edge doesn't crumble.
-- **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), with a
+- **Engrave the labels:** the fixture table's names beside the holes (every hole, or the edges), or
+  **Inch / mm marks**: the distance from the work offset's X0 Y0 every **Spacing** along its row and up its
+  column, like a ruler, moved by **Offset X / Y** to keep clear of the dog holes and grid lines; with a
   V-bit, a pen or a laser (grblHAL's laser mode, `$32=1`, on; Z never moves), so the spoilboard reads like the map.
   Each goes toward the next column; the last column's goes on the hole's other side when the travel ends first,
   or is left out when it would touch the label already there (the summary counts what's left out).
