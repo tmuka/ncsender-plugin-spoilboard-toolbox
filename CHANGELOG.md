@@ -6,6 +6,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### 🔧 Better
+- **Lifts use ncSender's `$SAFEZ`:** on ncSender 2.0.228 or ncSender Pro 2.0.326 and later, the programs and the Midpoint macros lift with `$SAFEZ`, so they follow Safe Z as it's set when they run, without generating them again. Older versions (and **Use controller macros**) keep the `G53` move to the Safe Z read when they were made.
 - **Cut Board's sections in the sidebar:** Cut Board opens like QuickCut's Shapes to list Dog holes, T-tracks, Grid lines, Fit test, Laser test, Chamfers, Labels and Export, so they're easier to find, in place of the chips that were above the cards. The list starts open; fold it with Cut Board's arrow and it stays folded next time.
 - **Grid lines at their own spacing, or along the holes' sides:** **Lines** picks **On the dog holes** (through their centers, or along a side with 9 dots like the XY0 Picker's, where stock against pins would sit) or **Own spacing** (lines every Spacing, in inches or mm, through the work offset's X0 Y0).
 - **Inch / mm marks** (Labels): the distance from X0 Y0 every Spacing, along its row and up its column like a ruler, with their own Offset X / Y for the X marks and for the Y marks to keep clear of the dog holes, T-tracks and grid lines. Marks that would touch a dog hole are left out and counted as "on a dog hole"; when marks are on dog holes or T-tracks, the summary offers offsets that fit more of them (**Use These Offsets**).

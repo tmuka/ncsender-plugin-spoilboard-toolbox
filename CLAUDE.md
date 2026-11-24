@@ -126,7 +126,8 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 - **Back to saved:** `G10 L2 P1 Z[#5223 + [#5363 - #5223] * [#5363 NE 0]]` (no-op if nothing saved).
 - **Extras:**
   - **Midpoint X / Y / XY** lift to ncSender's Safe Z with `G53 G0 Z<safe>` (machine Z0 if unset), then
-    move to `X[#<_x> / 2]` etc.
+    move to `X[#<_x> / 2]` etc. Where ncSender knows `$SAFEZ` (`safeZVersionOk`: 2.0.228 on, Pro
+    2.0.326 on; asked at start) and **Use controller macros** is off, the lift is `$SAFEZ` instead.
   - **Set XY0 to Midpoint** is `G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]` with no move.
   - **Save / restore X/Y** use the saved-Z0 slot's X/Y.
 - **Naming:**
@@ -162,7 +163,9 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
   straight down from where the user put the bit, then back off up.
 - **Lines stay short** for grblHAL, and comments aren't nested (a test checks both).
 - **Safe Z and block thickness are baked into the macros** when they're created, so changing either in
-  ncSender means pressing **Create macros** again (the README says so).
+  ncSender means pressing **Create macros** again (the README says so). With `$SAFEZ` the midpoint
+  lift follows Safe Z without that. Programs' lifts (`cutSafe`) are `$SAFEZ` there too, and
+  `programCuts` takes a `$SAFEZ` line as a lift out of the stock.
 
 ## ncSender APIs used
 

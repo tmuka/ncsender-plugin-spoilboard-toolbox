@@ -176,7 +176,8 @@ Either way, the Z0 macros are a separate, optional step for machines with measur
 **Before the first program**, whichever path:
 - Connect and home the machine. The holes are machine positions, so most buttons wait for it.
 - Set ncSender's **Safe Z Height** (Settings → General). The programs lift to it over keepout zones and
-  clamps, and Generate refuses when it's less than 5 mm above Z0.
+  clamps, and Generate refuses when it's less than 5 mm above Z0. On ncSender 2.0.228 or Pro 2.0.326
+  and later the lift is `$SAFEZ`, so a program follows Safe Z as it's set when it runs.
 - grblHAL must report positions in mm (`$13=0`), whatever units you work in.
 
 ## Where to zero
@@ -776,7 +777,8 @@ size and thickness; the holes come from the grid picked in Setup.
    - **Midpoint X** / **Midpoint Y**: lift to ncSender's Safe Z (machine Z0 if none is set), then move
      halfway back to X0 (or Y0) along that axis only. For round stock: touch one side and zero X, touch
      the other side, run Midpoint X. Safe Z is written into the macro, so re-run **Create macros**
-     after changing it.
+     after changing it. On ncSender 2.0.228 or Pro 2.0.326 and later (with **Use controller macros**
+     off), the macro lifts with `$SAFEZ` instead, which follows Safe Z as it's set when it runs.
    - **Midpoint XY**: the same lift, then move halfway to X0 Y0, e.g. from the opposite corner of square
      stock.
    - **Set XY0 to Midpoint**: put X0 Y0 halfway to the current spot without moving

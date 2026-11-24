@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit } =
-  new Function(block + '\nreturn { buildMacros, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit };')();
+const { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit } =
+  new Function(block + '\nreturn { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -2550,4 +2550,49 @@ test('labels: rulerFit finds offsets that keep the marks between the dog holes',
   assert.deepEqual([split.labels.find(l => l.tag === 'Y100').x, split.labels.find(l => l.tag === 'Y100').y], [20, 96]);
   // From the offsets it found, nothing better: null.
   assert.equal(rulerFit(Object.assign({}, o, { offXMm: fit.offXMm, offYMm: fit.offYMm, yOffXMm: fit.yOffXMm, yOffYMm: fit.yOffYMm }), 1, 50.8), null);
+});
+
+test('$SAFEZ: programs and Midpoint macros use it where ncSender knows it, else the G53 move as before', () => {
+  const o = cutBase({ safeZMm: -5, tool: 3 });
+  const old = holeCutProgram(o);
+  assert.deepEqual(holeCutProgram(Object.assign({}, o, { safeZCommand: false })), old);
+  assert.equal(old.filter(l => l === 'G53 G0 Z-5.000').length, 3);
+  const L = holeCutProgram(Object.assign({}, o, { safeZCommand: true }));
+  assert.ok(!L.some(l => /G53/.test(l)));
+  assert.deepEqual(L, old.map(l => (l === 'G53 G0 Z-5.000' ? '$SAFEZ' : l)));
+  assert.ok(L.indexOf('$SAFEZ') < L.indexOf('M6 T3') && L[L.indexOf('M6 T3') + 1] === '$SAFEZ');
+  assert.deepEqual(L.slice(-3), ['$SAFEZ', 'M5', 'M30']);
+
+  const s = Object.assign({}, base, { extras: allExtras, safeZMm: -5 });
+  const before = buildMacros(s);
+  assert.deepEqual(buildMacros(Object.assign({}, s, { safeZCommand: false })), before);
+  assert.match(before.midX.body, /^G53 G0 Z\[-5\.000 \/ /m);
+  const m = buildMacros(Object.assign({}, s, { safeZCommand: true }));
+  for (const k of ['midX', 'midY', 'midXY']) {
+    assert.match(m[k].body, /^\$SAFEZ \(Safe Z\)$/m);
+    assert.doesNotMatch(m[k].body, /G53/);
+  }
+  // Only the Midpoint macros change.
+  for (const k of Object.keys(before).filter(k => !/^mid/.test(k))) assert.equal(m[k].body, before[k].body);
+});
+
+test('programCuts: $SAFEZ lifts out of the stock like a G53 Z move', () => {
+  const prog = (lift) => programCuts(['G21 G90', 'G0 X10 Y10', 'G1 Z-3 F300', 'G1 X20', lift, 'G0 X50 Y50', 'G0 Z2', 'G1 Z-1', 'M30'].join('\n'));
+  assert.deepEqual(prog('$SAFEZ'), prog('G53 G0 Z-5'));
+  assert.deepEqual(prog('N40 $safez (Safe Z)'), prog('G53 G0 Z-5'));
+  assert.notDeepEqual(prog('$SAFEZ'), prog('(nothing)'));
+});
+
+test('safeZVersionOk: ncSender 2.0.228 on, Pro 2.0.326 on, dev builds; else no', () => {
+  assert.equal(safeZVersionOk('community', '2.0.227'), false);
+  assert.equal(safeZVersionOk('community', '2.0.228'), true);
+  assert.equal(safeZVersionOk(undefined, '2.0.230'), true);
+  assert.equal(safeZVersionOk('pro', '2.0.325'), false);
+  assert.equal(safeZVersionOk('pro', '2.0.326'), true);
+  assert.equal(safeZVersionOk('pro', 'v2.0.329'), true);
+  assert.equal(safeZVersionOk('pro', '2.0.326-beta.1'), false);
+  assert.equal(safeZVersionOk('community', '2.0.100-dev'), true);
+  assert.equal(safeZVersionOk('community', 'dev'), true);
+  assert.equal(safeZVersionOk('community', 'garbage'), false);
+  assert.equal(safeZVersionOk('community', null), false);
 });

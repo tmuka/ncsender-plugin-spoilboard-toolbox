@@ -2077,7 +2077,9 @@
       'G10 L2 P' + o.wcs + ' Z[[' + cur + ' + [' + saved + ' - ' + cur + '] * [' + saved + ' NE 0]] / [' + G92Z + ' AND ' + ACTIVE + ']]'
     ].concat(tail));
     var x = o.extras || {};
-    var safe = typeof o.safeZMm === 'number' && isFinite(o.safeZMm)
+    // safeZCommand: this ncSender runs $SAFEZ, so the macro lifts to Safe Z
+    // as it's set when the macro runs (ncSender refuses it unhomed).
+    var safe = o.safeZCommand ? '$SAFEZ (Safe Z)' : typeof o.safeZMm === 'number' && isFinite(o.safeZMm)
       ? 'G53 G0 Z[' + fmt(o.safeZMm) + ' / ' + HOMED + '] (Safe Z)' : 'G53 G0 Z[0 / ' + HOMED + '] (machine Z0)';
     // Safe Z is a machine Z, so the lift needs a homed machine; the lift
     // and the move are divided by the homed state too, in case the stop
@@ -3457,7 +3459,27 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       depthMm: flute && o.depthMm > flute ? flute : o.depthMm
     });
   }
-  function cutSafe(o) { return 'G53 G0 Z' + fmt(o.safeZMm != null ? o.safeZMm : 0); }
+  // ncSender's $SAFEZ raises Z to the Safe Z setting, in machine
+  // coordinates and in the program's own units. It arrived in ncSender
+  // 2.0.228 and ncSender Pro 2.0.326; older versions pass it on to the
+  // controller, which rejects it. edition: /api/app-info's; version: the
+  // running version (/api/updates/check's currentVersion). When in doubt,
+  // the answer is no.
+  function safeZVersionOk(edition, version) {
+    var v = String(version || '');
+    if (v === 'dev' || /-dev\b/.test(v)) return true;
+    var m = /^v?(\d+)\.(\d+)\.(\d+)(-.*)?$/.exec(v.trim());
+    if (!m) return false;
+    var min = edition === 'pro' ? [2, 0, 326] : [2, 0, 228];
+    for (var i = 0; i < 3; i++) {
+      var d = Number(m[i + 1]) - min[i];
+      if (d) return d > 0;
+    }
+    return !m[4]; // a beta of the first version that has it may not
+  }
+  // safeZCommand: this ncSender runs $SAFEZ, which lifts to its Safe Z
+  // setting when the line runs, in the program's units.
+  function cutSafe(o) { return o.safeZCommand ? '$SAFEZ' : 'G53 G0 Z' + fmt(o.safeZMm != null ? o.safeZMm : 0); }
   function cutEnd(o, L) {
     if (!o.laser) L.push(cutSafe(o));
     if (o.mist || o.flood) L.push('M9');
@@ -4535,7 +4557,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // straight piece [x0, y0, z0, x1, y1, z1] (arcs in any plane as short
   // chords; drilling cycles as their plunges). Lines with G53, G28, G30,
   // G92 or probing (G38.x) leave the position unknown until a later move
-  // gives it, with Z taken as high above the stock; a move longer than any
+  // gives it, with Z taken as high above the stock ($SAFEZ: Z only); a move longer than any
   // machine's travel is left out. The bit: the largest a header comment
   // gives, as "Bit Diameter: 6.35 mm" (QuickCut), "Bit 1/4 in" at a
   // comment's start (Gears) or a CAM's "D=6.35" (in the program's units).
@@ -4620,6 +4642,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         raw = raw.replace(/\([^)]*\)/g, ' ').replace(/;.*$/, '');
       }
       var line = raw.toUpperCase().replace(/\s+/g, '');
+      // ncSender's $SAFEZ: up to Safe Z, a machine Z, like a G53 Z move.
+      if (/^(N\d+)?\$SAFEZ$/.test(line)) { p.z = Infinity; continue; }
       if (!line || line.charAt(0) === '%' || line.charAt(0) === '$') continue;
       var w = {}, gs = [], hasM = false, m, re = /([A-Z])([-+]?\d*\.?\d+)/g;
       while ((m = re.exec(line))) {
@@ -5181,7 +5205,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   // END pure
 
-  var state = { imperial: false, capturing: null, safeZMm: null };
+  var state = { imperial: false, capturing: null, safeZMm: null, safeZCommand: false };
   var EXTRAS = ['midX', 'midY', 'midXY', 'center', 'fixture', 'holes'];
 
   // Controller output reaches plugin dialogs as 'cnc-data' messages.
@@ -5346,6 +5370,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       extras: {},
       learn: $('mw-learn').value !== '0',
       safeZMm: state.safeZMm,
+      // With Use controller macros on, the controller runs M98 itself and
+      // wouldn't know $SAFEZ.
+      safeZCommand: state.safeZCommand && !(state.ncSettings && state.ncSettings.useControllerMacros),
       imperial: state.imperial
     };
     EXTRAS.forEach(function(k2) { s.extras[k2] = $('mw-x-' + k2).checked; });
@@ -6105,7 +6132,37 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   var early = null;
   function readJson(path) { return fetch(BASE_URL + path).then(function(r) { return r.json(); }); }
   function revealPanel() { var p = ROOT.querySelector('.mw-panel'); if (p) p.classList.remove('mw-loading'); }
+  // Resolves true when this ncSender runs $SAFEZ (safeZVersionOk).
+  // /api/app-info (2.0.76 on) names the edition; /api/updates/check reports
+  // the running version even when it can't reach GitHub. Gives up after 5 s.
+  function ncSenderHasSafeZ(base) {
+    var get = function(path) {
+      return fetch((base || '') + path).then(function(r) {
+        if (!r.ok) throw new Error(path + ': ' + r.status);
+        return r.json();
+      });
+    };
+    var check = Promise.all([get('/api/app-info'), get('/api/updates/check')])
+      .then(function(r) { return safeZVersionOk(r[0] && r[0].edition, r[1] && r[1].currentVersion); })
+      .catch(function() { return false; });
+    var late = new Promise(function(resolve) { setTimeout(function() { resolve(false); }, 5000); });
+    return Promise.race([check, late]);
+  }
+  function showSafeNote() {
+    $('mw-safe-note').textContent = 'Midpoint moves first lift to ' + (state.safeZCommand && !(state.ncSettings && state.ncSettings.useControllerMacros)
+      ? 'ncSender\'s Safe Z, as it\'s set when they run'
+      : state.safeZMm != null
+      ? 'ncSender\'s Safe Z (machine Z ' + fmt(state.safeZMm) + ' mm)'
+      : 'machine Z0, since no Safe Z is set in ncSender') + ', then move. They use the active work offset.';
+  }
+
   async function init() {
+    ncSenderHasSafeZ(BASE_URL).then(function(yes) {
+      if (!yes || !rootAlive()) return;
+      state.safeZCommand = true;
+      showSafeNote();
+      checkMacrosCurrent();
+    });
     early = { fw: readJson('/api/firmware'), st: readJson('/api/server-state') };
     early.fw.catch(function() {}); early.st.catch(function() {});
     // Never left blank, even if the controller's settings don't come back.
@@ -6126,9 +6183,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       if (sb && typeof sb.zThickness === 'number' && sb.zThickness > 0) probeBlockMm = sb.zThickness;
     } catch (e) { /* metric */ }
     ROOT.querySelectorAll('.mw-unit').forEach(function(el) { el.textContent = state.imperial ? 'in' : 'mm'; });
-    $('mw-safe-note').textContent = 'Midpoint moves first lift to ' + (state.safeZMm != null
-      ? 'ncSender\'s Safe Z (machine Z ' + fmt(state.safeZMm) + ' mm)'
-      : 'machine Z0, since no Safe Z is set in ncSender') + ', then move. They use the active work offset.';
+    showSafeNote();
     var moved = await migrateFromOldId(initialConfig || {}, ncSettings);
     var saved = moved.saved;
     if (moved.notes.length) {
@@ -8844,7 +8899,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       peck: $('mw-cut-peck').value, stepoverPct: parseFloat($('mw-cut-stepover').value), feed: Math.round(cutMm('mw-cut-feed')), plunge: Math.round(cutMm('mw-cut-plunge')),
       rpm: parseFloat($('mw-cut-rpm').value) || 0, delayS: parseFloat($('mw-cut-delay').value) || 0, fwDelayS: state.spindleOnDelayS || 0,
       mist: $('mw-cut-mist').checked, flood: $('mw-cut-flood').checked,
-      wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, zones: uiZones(), imperial: state.imperial, laserOffset: state.laserOffset || null,
+      wcs: zero ? { p: p, x: zero.x, y: zero.y } : null, wcsName: w, safeZMm: state.safeZMm, safeZCommand: state.safeZCommand, zones: uiZones(), imperial: state.imperial, laserOffset: state.laserOffset || null,
       zMacro: { spoil: offsetZParam(+$('mw-slot').value), thick: offsetZParam(+$('mw-thick').value) }, tloMm: state.tloMm
     };
   }
