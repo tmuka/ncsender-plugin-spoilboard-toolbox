@@ -226,7 +226,7 @@
   .mw-holebar-info .mw-hole-dist[hidden], .mw-btn.mw-hold-btn[hidden] { display: none !important; }
   .mw-holebar-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; max-width: 100%; }
   .mw-holebar-info { flex-basis: 150px; }
-  .mw-select.mw-hole-wcs { width: 8.5em !important; min-width: 0 !important; min-height: 0 !important; padding: 6px 8px !important; }
+  .mw-select.mw-hole-wcs { width: 10em !important; min-width: 0 !important; min-height: 0 !important; padding: 6px 8px !important; }
   /* QuickCut's drill origin picker: the hole inside its dashed box, with
      a dot on each corner, edge middle and the center. Spans, not buttons,
      so ncSender's button styles don't reach them. */
@@ -807,6 +807,7 @@
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-fit" title="Show the whole travel again.">Fit</button>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-follow" aria-pressed="false" title="While zoomed in, keep the spindle in the middle as you jog. Dragging the map turns it off.">Follow</button>
             </span>
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-dev-rotate" hidden aria-pressed="false" title="Development only (localStorage sbt-dev = 1): preview the machine turned a quarter, X and Y travel swapped. Commands, macros and programs are refused while it's on.">Rotate (dev)</button>
           </div>
         </div>
         <div class="mw-holebar" id="mw-holebar">
@@ -5300,7 +5301,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   // END pure
 
-  var state = { imperial: false, capturing: null, safeZMm: null, safeZCommand: false };
+  var state = { imperial: false, capturing: null, safeZMm: null, safeZCommand: false, devRotated: false };
+  // Development only: localStorage sbt-dev = 1 (or the local test page)
+  // shows Rotate (dev), which previews the travel with X and Y swapped,
+  // e.g. a landscape machine on a portrait one. Nothing is sent meanwhile.
+  var DEV = (function() { try { return localStorage.getItem('sbt-dev') === '1' || location.hostname === 'qc.test'; } catch (e) { return false; } })();
+  function devTravel(t) { return t && state.devRotated ? { xMm: t.yMm, yMm: t.xMm, dirX: t.dirY, dirY: t.dirX } : t; }
+  function devRefuse() { return state.devRotated ? 'Rotate (dev) is on: the map isn\u2019t this machine. Turn it off first.' : ''; }
   var EXTRAS = ['midX', 'midY', 'midXY', 'center', 'fixture', 'holes'];
 
   // Controller output reaches plugin dialogs as 'cnc-data' messages.
@@ -5317,6 +5324,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   window.addEventListener('message', onMessage);
 
   async function sendCommand(command) {
+    if (devRefuse()) { console.warn('[SBT dev] refused while rotated:', command); return { ok: false, body: { error: devRefuse() } }; }
     var res = await fetch(BASE_URL + '/api/send-command', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6087,6 +6095,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // Create the macros, or update the ones made before (found by name).
   async function saveMacros() {
     var status = $('mw-save-status'), btn = $('mw-save');
+    if (devRefuse()) { status.setAttribute('data-state', 'bad'); status.textContent = devRefuse(); return; }
     var s = readSettings();
     if (!s) { status.setAttribute('data-state', 'bad'); status.textContent = 'Fix the highlighted settings first.'; return; }
     if (s.extras.holes && !s.holes) { status.setAttribute('data-state', 'bad'); status.textContent = 'Nearest hole needs the XY0 Picker\u2019s grid set up first, or untick it.'; return; }
@@ -6519,6 +6528,15 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-zoom-in').addEventListener('click', function() { setZoom(holes.zoom.k * 2); });
     $('mw-zoom-out').addEventListener('click', function() { setZoom(holes.zoom.k / 2); });
     $('mw-zoom-fit').addEventListener('click', function() { holes.zoom.follow = false; setZoom(1); });
+    $('mw-dev-rotate').hidden = !DEV;
+    $('mw-dev-rotate').addEventListener('click', function() {
+      state.devRotated = !state.devRotated;
+      this.setAttribute('aria-pressed', state.devRotated ? 'true' : 'false');
+      this.textContent = state.devRotated ? 'Rotated (dev): no commands' : 'Rotate (dev)';
+      state.travel = devTravel(state.travelReal);
+      holes.picked = -1; holes.zoom.follow = false; holes.zoom.k = 1; holes.zoom.cx = holes.zoom.cy = null;
+      renderHoles();
+    });
     $('mw-zoom-follow').addEventListener('click', function() {
       holes.zoom.follow = !holes.zoom.follow;
       if (holes.zoom.follow && holes.zoom.k <= 1) setZoom(4); else renderHoles(true);
@@ -7171,7 +7189,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var tz = parseFloat(set['132'] && set['132'].value);
       state.zTravelMm = tz > 0 ? tz : null;
       var dirs = travelDirs(set);
-      state.travel = tx > 0 && ty > 0 && dirs ? { xMm: tx, yMm: ty, dirX: dirs.dirX, dirY: dirs.dirY } : null;
+      state.travelReal = tx > 0 && ty > 0 && dirs ? { xMm: tx, yMm: ty, dirX: dirs.dirX, dirY: dirs.dirY } : null;
+      state.travel = devTravel(state.travelReal);
       state.keepouts = keepoutZones(state.ncSettings, set);
       var rx = parseFloat(set['110'] && set['110'].value), ry = parseFloat(set['111'] && set['111'].value);
       state.rapidMmMin = rx > 0 && ry > 0 ? Math.min(rx, ry) : null;
@@ -9878,6 +9897,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
 
   // Loads a program into ncSender's visualizer and closes the dialog.
   async function loadProgram(name, lines, note, btn) {
+    if (devRefuse()) { note.setAttribute('data-state', 'bad'); note.textContent = devRefuse(); return; }
     btn.disabled = true;
     note.removeAttribute('data-state');
     note.textContent = 'Loading the program\u2026';

@@ -221,6 +221,9 @@ npm run build    # dist/com.tmuka.spoilboard-toolbox_v<version>.zip from the las
     in the holes: `crowdedPair` replaced an all-pairs check that was 680,000 pairs.
   - **Reviews** before a release: read-only agents as UI designer / beginner, machinist (simulate the
     G-code) and code reviewer, in parallel.
+- **Rotate (dev):** in a browser with `localStorage.setItem('sbt-dev', '1')` (and always on the local harness page),
+  the XY0 Picker's Map view has **Rotate (dev)**: the travel with X and Y swapped, to preview a landscape machine on a
+  portrait one (or the other way). While it's on, `sendCommand`, Create macros and loading programs are refused.
 - Install a build from ncSender's Plugin Manager. The wizard opens from **Spoilboard Toolbox** in the plugin tool menu.
 
 ## How it was built
