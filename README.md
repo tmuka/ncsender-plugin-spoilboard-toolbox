@@ -637,8 +637,8 @@ that doesn't follow the holes. Not sure of the power and speed? The **Laser test
   is left out ("on a dog hole" in the summary); when marks are on dog holes or T-tracks, the summary offers
   offsets that fit more of them: **Use These Offsets** puts them in. A mark right on a T-track may have no
   offset that saves it (moving an axis's marks moves them all): a smaller Text Height or another Spacing might. With a V-bit, a pen or a laser (grblHAL's
-  laser mode, `$32=1`, on; it stays at its height, lifting to Safe Z only to reach the first label and to pass
-  over a zone), so the spoilboard reads like the map.
+  laser mode, `$32=1`, on; it stays at its height, lifting to Safe Z only to reach the first label, to pass
+  over a zone and at the end), so the spoilboard reads like the map.
   Each goes toward the next column; the last column's goes on the hole's other side when the travel ends first,
   or is left out when it would touch the label already there (the summary counts what's left out).
 
