@@ -32,6 +32,26 @@
      and portrait (the dialog itself stops at 85vh). */
   .plugin-dialog-container:has(.mw-wrapper) { max-height: none !important; max-width: none !important; }
   .mw-wrapper { width: calc(100vw - 48px) !important; max-width: none !important; height: calc(100vh - 48px) !important; max-height: none !important; }
+  /* Wide landscape screens (1600 px on; ncSender has two columns from
+     1280, but its left one is too narrow for the map below 1600): on the
+     left, over the visualizer only, so ncSender's jog panel (Home, jog
+     buttons) stays in sight and usable. ncSender's right column is
+     max(550 px, 1 / 2.8 of the width less 48 px); 16 px margins as its
+     shell has. Nothing outside the dialog closes it there. */
+  @media (min-width: 1600px) and (orientation: landscape) {
+    .plugin-dialog-backdrop:has(.mw-wrapper:not(.mw-mini)) {
+      justify-content: flex-start !important; align-items: flex-start !important;
+      padding: 16px; box-sizing: border-box; background: transparent !important; pointer-events: none !important;
+    }
+    .plugin-dialog-container:has(.mw-wrapper:not(.mw-mini)) {
+      pointer-events: auto; min-width: 0 !important;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .45), 0 0 0 1px color-mix(in srgb, var(--color-text-secondary) 35%, transparent) !important;
+    }
+    .mw-wrapper:not(.mw-mini) {
+      --mw-left-col: min(calc(64.29vw - 31px), calc(100vw - 598px));
+      width: var(--mw-left-col) !important; height: calc(100vh - 32px) !important;
+    }
+  }
   .mw-container { display: flex; flex: 1; min-height: 0; }
   /* Probe Stock Top: Spoilboard Toolbox shrinks to a card in a corner and
      ncSender (its Probe dialog) stays usable behind it, as in CNC Tutor. */
@@ -569,14 +589,13 @@
   }
   .mw-move-label { display: inline-flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; }
   .mw-move-icon { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  /* Stock mode with X0 Y0 on its center: the one Go to button takes the row. */
+  /* Stock mode with X0 Y0 on its center: Go to Selected already goes there. */
   .mw-pick-card.mw-goto-one #mw-stock-gocenter { display: none !important; }
   /* The buttons side by side match: Pick Nearest Hole as tall as Go to. */
   .mw-holebar-actions > #mw-hole-nearest { min-height: 48px; }
   /* A 230 px column is too narrow for two named buttons: one per row. */
   .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-hole-goto,
-  .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-stock-gocenter { grid-column: 1 / -1; }
-  .mw-pick-card.mw-tall.mw-goto-one .mw-holebar-actions > #mw-hole-goto { grid-column: 1 / -1; }
+  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-stock-gocenter, .mw-pick-card.mw-tall .mw-holebar-actions > [data-probe-top] { grid-column: 1 / -1; }
   /* Set XY0 / Set Z0 when the work offset already has that zero. */
   .mw-set-done { display: none; }
   .mw-already .mw-set-done { display: inline; }
@@ -589,8 +608,8 @@
   }
   .mw-btn.mw-hold-btn.mw-blink { animation: mw-blink-border 0.4s ease-in-out; }
   .mw-btn.mw-btn-danger { background: var(--mw-danger-bg) !important; color: #fff !important; border-color: transparent !important; }
-  .mw-inline-row { display: flex; gap: 8px; min-width: 0; }
-  .mw-inline-row .mw-input { flex: 1 1 auto; min-width: 0; }
+  .mw-inline-row { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+  .mw-inline-row .mw-input { flex: 1 1 90px; min-width: 90px; }
   .mw-extras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
   @media (max-width: 640px) { .mw-extras { grid-template-columns: minmax(0, 1fr); } }
   .mw-extra { display: flex; gap: 8px; align-items: flex-start; line-height: 1.4; cursor: pointer; }
@@ -837,7 +856,6 @@
           <svg class="mw-zero-inset" id="mw-zero-inset" viewBox="0 0 150 112" role="img" aria-label="Zoomed in, to scale: where X0 Y0 goes" style="display: none"></svg>
           <div class="mw-holebar-actions">
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position. In Stock mode it does what tapping that hole does: Against Pins, a pin in it; Corner on X0 Y0, the stock's corner on it.">Pick Nearest Hole</button>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-only-stock" id="mw-stock-gocenter" disabled title="Hold to move the spindle over the stock's center, whichever dot X0 Y0 is on: first up to ncSender's Safe Z, then across. Nothing is set."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span>Go to Stock Center</span></span><span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span id="mw-hole-goto-text">Go to Selected</span></span><span class="mw-hold-hint">Hold</span></button>
             <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
               <option value="" selected>Active</option>
@@ -849,6 +867,7 @@
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> XY0<span class="mw-set-at" id="mw-hole-set-at"></span><span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset in the menu on the surface shown above it: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> Z0<span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" data-probe-top="picker" style="width: 100%" title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top in the work offset picked in the menu, and the card offers to store its height above the spoilboard as the stock thickness (T follows it). Only for stock lying on the spoilboard.">Probe Stock Top</button>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-only-stock" id="mw-stock-gocenter" disabled title="Hold to move the spindle over the stock's center, whichever dot X0 Y0 is on: first up to ncSender's Safe Z, then across. Nothing is set."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span>Go to Stock Center</span></span><span class="mw-hold-hint">Hold</span></button>
           </div>
           <div class="mw-maptools">
             <div class="mw-maptools-row">
@@ -8111,8 +8130,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     card.classList.toggle('mw-tall', tall);
     var two = tall && panel.clientWidth >= 1400;
     card.classList.toggle('mw-side-two', two);
-    card.style.setProperty('--mw-side', two ? '616px' : panel.clientWidth >= 1300 ? '300px' : '230px');
-    card.classList.toggle('mw-side-narrow', panel.clientWidth < 1300);
+    card.style.setProperty('--mw-side', two ? '616px' : panel.clientWidth >= 900 ? '300px' : '230px');
+    card.classList.toggle('mw-side-narrow', panel.clientWidth < 900);
     card.style.gridTemplateColumns = '';
     card.style.alignSelf = '';
     svg.style.width = '';
@@ -11219,7 +11238,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         '<li><strong>Hole:</strong> the dots pick where on the hole: its center, or an edge or corner of the hole one hole radius out in machine X and Y (back is +Y, right is +X). For a part on a pin, a flip pin, a jig&rsquo;s home hole, or moving around the bed.</li>' +
         '<li><strong>Stock:</strong> the dots pick a point on the stock. A placed stock stays put while you pick holes in Hole mode.</li></ul>' +
         '<p>Beside Set, one line says where X0 Y0 goes, with the numbers, and the next how far Set moves the work offset and from where (a hole&rsquo;s dot or the stock&rsquo;s, when it&rsquo;s on one). A move of exactly a hole or pin radius from an unnamed spot is flagged: the usual sign of the wrong dot. The small view beside it shows it zoomed in.</p>',
-      '<strong>Go to Selected</strong> (its label names the point, e.g. <strong>Go to B4 &middot; back right</strong> or <strong>Go to Stock Front Left</strong>; Set&rsquo;s does too) moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves. In <strong>Stock</strong> mode, <strong>Go to Stock Center</strong> beside it moves over the stock&rsquo;s center the same way, whichever dot X0 Y0 is on: handy for checking the stock, or for work from its center.',
+      '<strong>Go to Selected</strong> (its label names the point, e.g. <strong>Go to B4 &middot; back right</strong> or <strong>Go to Stock Front Left</strong>; Set&rsquo;s does too) moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves. In <strong>Stock</strong> mode, <strong>Go to Stock Center</strong> (under Probe Stock Top) moves over the stock&rsquo;s center the same way, whichever dot X0 Y0 is on: handy for checking the stock, or for work from its center.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the silver ring with a dot in it is the spindle, as ncSender&rsquo;s Top view shows it from above (the dot is the bit&rsquo;s center). The numbers along the bottom (X) and right (Y) are machine coordinates in ncSender&rsquo;s units.',
       'Keepout zones that are on (ncSender Pro&rsquo;s, every one that&rsquo;s on, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Pick Nearest Hole skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, pick any hole on the map, jog the bit over its real center and press <strong>Grab B3 Center</strong> (the button names the picked hole): the insets are set so that hole is under the bit, with a warning if that&rsquo;s more than half a spacing from where Setup had it. With no hole picked it&rsquo;s <strong>Grab First Hole Center</strong>: the bit over the first hole, or any hole when the first is less than one spacing from machine X0 Y0. The machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',

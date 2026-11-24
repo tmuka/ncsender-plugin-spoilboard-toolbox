@@ -16,7 +16,7 @@ and turns every one into a work zero you can hit again tomorrow.**
 - **Starting feeds by material** (MDF, plywood, woods, HDPE, polycarbonate, acrylic...), plus drill pecks and
   blind holes.
 - **Tool table menu:** M6 with a tool changer, and flutes from the tool table.
-- Nearly full-screen layout, live pictures, short help pages, and math in the boxes (`8mm*2`, `1in+4mm`).
+- A layout that leaves ncSender's jog panel in reach on wide screens (nearly full screen on smaller ones), live pictures, short help pages, and math in the boxes (`8mm*2`, `1in+4mm`).
 
 ## In more detail
 
@@ -490,7 +490,7 @@ or corner one hole radius out (back is +Y, right is +X), e.g. back right for a s
 Left**, and Set's does too) moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0
 when none is set; it never moves down, so a spindle already above Safe Z stays there). Like ncSender's
 XY0, hold it for a second, since it moves the machine. A side of a hole that would land in a keepout
-zone or outside the travel can't be used. In **Stock** mode, **Go to Stock Center** beside it moves over
+zone or outside the travel can't be used. In **Stock** mode, **Go to Stock Center** (under Probe Stock Top) moves over
 the stock's center the same way (hold it), whichever dot X0 Y0 is on.
 **Set G54 XY** (hold it for a second too, so a stray tap can't move your zero) sends
 `G21 G10 L2 P1 X… Y…`, which sets that work offset without moving anything. The
