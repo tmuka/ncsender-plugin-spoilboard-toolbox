@@ -836,7 +836,7 @@
           </div>
           <svg class="mw-zero-inset" id="mw-zero-inset" viewBox="0 0 150 112" role="img" aria-label="Zoomed in, to scale: where X0 Y0 goes" style="display: none"></svg>
           <div class="mw-holebar-actions">
-            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-only-hole" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position.">Pick Nearest Hole</button>
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position. In Stock mode it does what tapping that hole does: Against Pins, a pin in it; Corner on X0 Y0, the stock's corner on it.">Pick Nearest Hole</button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-only-stock" id="mw-stock-gocenter" disabled title="Hold to move the spindle over the stock's center, whichever dot X0 Y0 is on: first up to ncSender's Safe Z, then across. Nothing is set."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span>Go to Stock Center</span></span><span class="mw-hold-hint">Hold</span></button>
             <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span id="mw-hole-goto-text">Go to Selected</span></span><span class="mw-hold-hint">Hold</span></button>
             <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
@@ -8452,8 +8452,11 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     renderHoles();
     var here = xyOf((state.machine || {}).MPos);
-    var near = here && nearestHole(holes.grid.map(function(g) { return g.col != null && !gridNearest(g) ? Object.assign({}, g, { hidden: true }) : g; }), here.x, here.y);
+    // Stock mode, Against Pins: only grid holes take pins.
+    var stock = holes.zeroMode === 'stock', pins = stock && holes.stockBy === 'pins';
+    var near = here && nearestHole(holes.grid.map(function(g) { return (g.col != null && !gridNearest(g)) || (pins && g.col == null) ? Object.assign({}, g, { hidden: true }) : g; }), here.x, here.y);
     if (!near) { status.setAttribute('data-state', 'bad'); status.textContent = 'Needs the hole grid and the machine\u2019s position.'; return; }
+    if (stock) return stockNearest(near.index, near.distanceMm, pins);
     holes.picked = near.index;
     holes.nearMm = near.distanceMm;
     holes.refXY = here;
@@ -8473,6 +8476,25 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     status.setAttribute('data-state', far ? 'bad' : 'ok');
     status.textContent = far ? 'The spindle is ' + shown(near.distanceMm) + ' ' + unitName() + ' from the nearest hole: check it\u2019s the one you meant before setting X0 Y0.'
       : '';
+  }
+  // Pick Nearest Hole in Stock mode: what tapping the hole does there (a
+  // pin in it, Against Pins; the stock's corner on it, Corner on X0 Y0),
+  // but never taking a pin out.
+  function stockNearest(i, distMm, pins) {
+    var p = holes.grid[i], status = $('mw-hole-status'), h = readHoles(), far = h && distMm > holeSpacingMm(h) / 3;
+    var off = ': the spindle is ' + shown(distMm) + ' ' + unitName() + ' from it, so check it\u2019s the one you meant.';
+    status.textContent = '';
+    showOnMap(p);
+    if (pins && holes.pins.indexOf(holeKey(p)) >= 0) {
+      renderHoles();
+      status.setAttribute('data-state', far ? 'bad' : 'ok');
+      status.textContent = holeName(p) + ' already has a pin' + (far ? off : ' (tap it on the map to take it out).');
+      return;
+    }
+    if (pins) togglePin(i); else stockOnFavorite(p);
+    if (status.textContent) return;  // togglePin's own reason or note
+    status.setAttribute('data-state', far ? 'bad' : 'ok');
+    status.textContent = (pins ? 'A pin in ' + holeName(p) : 'The stock\u2019s corner on ' + holeName(p)) + (far ? off : '.');
   }
   // A length in ncSender's units, for the readouts (the rulers match).
   function shown(mm) { return state.imperial ? (mm / MM_PER_INCH).toFixed(4) : fmt(mm); }
@@ -8494,7 +8516,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   // Pin-placement problems, in words.
   var PIN_PROBLEMS = {
-    few: 'Tap the holes your pins are in: two along one edge of the stock, one along the other.',
+    few: 'Tap the holes your pins are in (or jog over one and press Pick Nearest Hole): two along one edge of the stock, one along the other.',
     list: 'Listed holes can’t be pins: tap grid holes, or use Corner on X0 Y0.',
     grids: 'The pins are in different grids: use holes of one grid.',
     oneLine: 'The pins are all in one line: add a pin along the stock’s other edge.',
@@ -11211,8 +11233,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag a box around several; a box around only suppressed holes restores them. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and shown as faint solid circles while it&rsquo;s unlocked; Pick Nearest Hole, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
       '<strong>Live position:</strong> while you jog, the spindle (the silver ring) moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
       '<p><strong>Stock</strong> mode places the stock, two ways:</p><ul>' +
-        '<li><strong>Against Pins:</strong> push it against pins in dog holes, two along one edge and one along the other (an L), and tap those holes. Each edge is a pin radius off its pins&rsquo; row or column (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Two pins on a diagonal can hold it either way: it asks. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
-        '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is.</li>' +
+        '<li><strong>Against Pins:</strong> push it against pins in dog holes, two along one edge and one along the other (an L), and tap those holes, or jog over each and press <strong>Pick Nearest Hole</strong>. Each edge is a pin radius off its pins&rsquo; row or column (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Two pins on a diagonal can hold it either way: it asks. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
+        '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is. Or jog over a hole and press <strong>Pick Nearest Hole</strong> (or tap a favorite): the stock&rsquo;s corner goes on that hole&rsquo;s point.</li>' +
         '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Here</strong>. The pinned corner needs no size; every other point does, and the line beside Set says so.</li>' +
         '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> beside T if you probe Z0 on the stock&rsquo;s top: T follows the Z0 of the work offset picked in the menu, as its height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness otherwise; the line under T says which. It&rsquo;s off each time Spoilboard Toolbox opens, and programs that cut through the stock wait for <strong>Store for Macros</strong> to confirm the thickness. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, T would be that height, so turn Follow Z0 off and type T. Typing T doesn&rsquo;t change the thickness the Z0 macros use: when they differ, <strong>Store for Macros</strong> appears beside it and stores T for SBT: Z0 on stock top.</li></ul>' +
         '<p>It stays where it is when you close and reopen the plugin, and Stock Holes and Cut Board&rsquo;s Into the stock on top option use it. The keyboard macros always use a hole.</p>',

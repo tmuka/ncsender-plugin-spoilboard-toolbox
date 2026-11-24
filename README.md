@@ -512,7 +512,8 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   dots pick the hole's center, a side or a corner. **Stock**: the stock is placed, and its dots pick its
   center, a corner or an edge. A placed stock stays put while you pick holes in Hole mode.
 - **Stock, Against Pins:** push the stock against pins in dog holes, two along one edge and one along
-  the other (an L), and tap those holes. Each edge is a pin radius off its pins' row or column
+  the other (an L), and tap those holes (or jog over each and press **Pick Nearest Hole**, which adds a
+  pin there and never takes one out). Each edge is a pin radius off its pins' row or column
   (Setup's **Pin Ø**, blank for the hole's), so the corner is exact, on a turned grid too. Two pins on
   a diagonal can hold the stock either way, so it asks which. A pin at the corner itself touches nothing
   and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused. The first time
@@ -520,8 +521,8 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   typed. With three or more pins down, tapping a hole that doesn't fit their L starts a new set of pins
   there, for stock moved somewhere else.
 - **Stock, Corner on X0 Y0:** zero on a corner by touch or probe, press **Use Current X0 Y0**, and pick
-  which corner it is. It stays put when X0 Y0 changes. Or tap a favorite hole (★) in Stock mode: the
-  stock's corner goes on that hole's point (the hole's back right takes the stock's front left).
+  which corner it is. It stays put when X0 Y0 changes. Or tap a favorite hole (★) in Stock mode, or jog
+  over a hole and press **Pick Nearest Hole**: the stock's corner goes on that hole's point (the hole's back right takes the stock's front left).
 - **Stock size:** type its width (X) and length (Y), or jog over the far corner and press **Far Corner
   Here**; its thickness fills in from **SBT: Measure stock thickness** until you type one.
 - **Before you Set:** one line says where X0 Y0 goes, with the numbers; the next how far Set moves the

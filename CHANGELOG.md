@@ -6,6 +6,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### 🔧 Better
+- **Pick Nearest Hole in Stock mode too:** jog over a pin's hole and press it to add that pin (Against Pins; it never takes one out), or, with Corner on X0 Y0, to put the stock's corner on the nearest hole, as a favorite does.
 - **Diagrams on every Cut Board page:** T-tracks, Grid lines, Fit test, Laser test, Chamfers, Labels (each label mode, and what the Inch / mm marks' offsets move) and Export each open with a picture of what they make, drawn from the fields as you type.
 - **Into the stock on top, pictured:** ticking it shows the stock over the spoilboard's holes from above (only the holes wholly on it are cut) and from the side (each hole straight over the spoilboard's, Z0 on the stock's top, never deeper than its thickness).
 
