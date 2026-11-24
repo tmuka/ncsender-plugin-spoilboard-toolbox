@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.5.14: Ruler marks and a Cut Board list
 
 ### 🔧 Better
 - **Lifts use ncSender's `$SAFEZ`:** on ncSender 2.0.228 or ncSender Pro 2.0.326 and later, the programs and the Midpoint macros lift with `$SAFEZ`, so they follow Safe Z as it's set when they run, without generating them again. Older versions (and **Use controller macros**) keep the `G53` move to the Safe Z read when they were made.
