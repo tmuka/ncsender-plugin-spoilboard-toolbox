@@ -1179,7 +1179,7 @@
           <label class="mw-extra"><input type="checkbox" id="mw-x-holes"><span><strong>Nearest hole</strong><span>Go to, or set X0 Y0 on, the XY0 Picker hole nearest the spindle, from a keyboard shortcut. Uses the grid and the side picked there; Create macros again after changing them.</span></span></label>
           <label class="mw-extra"><input type="checkbox" id="mw-x-fixture" checked><span><strong>Save / restore X/Y</strong><span>Keep the work offset's X/Y for a fixture or jig, and bring it back later. Uses the saved-Z0 slot's X/Y.</span></span></label>
         </div>
-        <p class="mw-hint" id="mw-safe-note">Midpoint moves first lift to ncSender&rsquo;s Safe Z. They use the active work offset.</p>
+        <p class="mw-hint" id="mw-safe-note">Midpoint and Go to nearest hole first lift to ncSender&rsquo;s Safe Z. They use the active work offset.</p>
       </section>
 
       <section class="mw-card" aria-labelledby="mw-macros-title">
@@ -2137,16 +2137,21 @@
       // divided by it, so even if a stop line were skipped (ncSender before
       // 2.0.161 kept sending after a rejected line) it's rejected too.
       var inUnits = function(v) { return '[' + v + ' / ' + MM_PER_UNIT + ' / #10]'; };
+      // With $SAFEZ (safeZCommand) the lift follows Safe Z as it's set when
+      // the macro runs; it goes to Safe Z even from above it. Without, the
+      // macro's own lift to the Safe Z read at Create macros, never down.
+      var goLift = o.safeZCommand ? ['$SAFEZ (Safe Z)'] : [
+        '#3=[#<_abs_z> * ' + MM_PER_UNIT + ']',
+        '#8=[[' + lift + '] + [#3 - [' + lift + ']] * [#3 GT [' + lift + ']]]',
+        'G53 G90 G0 Z' + inUnits('#8') + ' (Safe Z, never down)'
+      ];
       m.goHole = macro('Go to nearest hole', [
         '(SBT: lift, then move over the nearest hole\'s ' + side + ')',
         '(Grid from the XY0 Picker when created:)',
         '(Create macros again after changing it.)',
         needHomed,
         '#10=[#<_homed_state>]'
-      ].concat(calc.lines, [
-        '#3=[#<_abs_z> * ' + MM_PER_UNIT + ']',
-        '#8=[[' + lift + '] + [#3 - [' + lift + ']] * [#3 GT [' + lift + ']]]',
-        'G53 G90 G0 Z' + inUnits('#8') + ' (Safe Z, never down)',
+      ].concat(calc.lines, goLift, [
         'G53 G90 G0 X' + inUnits(calc.x) + ' Y' + inUnits(calc.y)
       ]));
       m.setHole = macro('Set XY0 at nearest hole (no move)', [
@@ -6264,7 +6269,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     return Promise.race([check, late]);
   }
   function showSafeNote() {
-    $('mw-safe-note').textContent = 'Midpoint moves first lift to ' + (state.safeZCommand && !(state.ncSettings && state.ncSettings.useControllerMacros)
+    $('mw-safe-note').textContent = 'Midpoint and Go to nearest hole first lift to ' + (state.safeZCommand && !(state.ncSettings && state.ncSettings.useControllerMacros)
       ? 'ncSender\'s Safe Z, as it\'s set when they run'
       : state.safeZMm != null
       ? 'ncSender\'s Safe Z (machine Z ' + fmt(state.safeZMm) + ' mm)'
@@ -10848,7 +10853,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Setup</strong> is locked once it&rsquo;s been saved, so a stray tap can&rsquo;t change the grid; tap <strong>Locked</strong> to unlock it for editing (changes save as you go), and tap it again to lock it.',
       '<strong>Profiles:</strong> the menu beside Setup&rsquo;s title keeps one per spoilboard, fixture plate or grid you use. <strong>New profile&hellip;</strong> saves what&rsquo;s in Setup under a name; pick another to load it. Change a number and the bar says it&rsquo;s changed: <strong>Save</strong> keeps it, <strong>Revert</strong> puts the profile back, so you can try other numbers safely. A profile holds the layout, numbers, T-tracks, list and suppressed holes (the dot is picked per job). Press Create macros after switching if you use the nearest-hole macros.',
       '<p><strong>From the keyboard:</strong> tick <strong>Nearest hole</strong> under Z0 macros &rsaquo; Extras and press Create macros. Then jog roughly and press a key:</p><ul>' +
-        '<li><strong>SBT: Go to nearest hole</strong> lifts to Safe Z (never down), then moves over it.</li>' +
+        '<li><strong>SBT: Go to nearest hole</strong> lifts to Safe Z, then moves over it. With <code>$SAFEZ</code> (ncSender 2.0.228 or Pro 2.0.326 and later) it follows Safe Z as it&rsquo;s set when it runs; on older versions it never moves down, and Safe Z is written in when the macros are made.</li>' +
         '<li><strong>SBT: Set XY0 at nearest hole (no move)</strong> sets the active work offset there. Nothing moves.</li></ul>' +
         '<p>The controller works out the nearest hole, from the grid, dots and keepout zones as they were when created: press Create macros again after changing them.</p>' +
         '<p><strong>They stop, changing nothing,</strong> if the machine isn&rsquo;t homed, the nearest hole is in a keepout zone or that side is off the travel, or (for Set) a G92 offset is active (G92.1 clears it). The Z0 macros tab&rsquo;s Help shows how to put them on keys.</p>',

@@ -340,7 +340,8 @@ use the nearest-hole macros.
 **Extras** and press **Create macros**. You get **SBT: Go to nearest hole** and **SBT: Set XY0 at nearest
 hole (no move)**: the controller works out the nearest hole to the spindle (grblHAL expressions with the grid
 built in), so you can jog roughly and press a key (see [Put them on keys](#put-them-on-keys)). Go to
-lifts to Safe Z first and never moves down; XY0 sets the active work offset on the side picked with the
+lifts to Safe Z first (with `$SAFEZ` where ncSender has it, as the Midpoint macros do, so it follows Safe Z
+as it's set when it runs; on older versions it never moves down and uses the Safe Z read at **Create macros**); XY0 sets the active work offset on the side picked with the
 dots. Suppressed holes are skipped, so the nearest real hole is used. Both stop without changing anything if
 the machine isn't homed and, on a grid, if the nearest hole is in a keepout zone or that side of it is outside the travel (with a list, such holes are left
 out when the macros are made, so the nearest usable one is used). They read and write in whatever
@@ -786,7 +787,7 @@ size and thickness; the holes come from the grid picked in Setup.
      (`G10 L20 P0 X[#<_x> / 2] Y[#<_y> / 2]`), e.g. zero on one corner, jog to the opposite corner,
      run it, and X0 Y0 is the stock's center.
    - **Nearest hole**: **Go to nearest hole** and **Set XY0 at nearest hole (no move)**, keyboard versions of the
-     XY0 Picker's buttons (see the XY0 Picker section above).
+     XY0 Picker's buttons (see the XY0 Picker section above). Go to lifts with `$SAFEZ` too where ncSender has it.
    - **Save / restore X/Y**: save the work offset's X and Y (e.g. a fixture or jig) and put them back
      later. They're kept in the saved-Z0 slot's X/Y, which that slot doesn't otherwise use; restore
      does nothing if nothing was saved.

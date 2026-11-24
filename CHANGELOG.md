@@ -3,6 +3,11 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### 🔧 Better
+- **Go to nearest hole lifts with `$SAFEZ`:** on ncSender 2.0.228 or ncSender Pro 2.0.326 and later (with **Use controller macros** off), the **SBT: Go to nearest hole** macro lifts with `$SAFEZ` like the Midpoint macros, so it follows Safe Z as it's set when it runs. Press **Create macros** once to update it.
+
 ## 0.5.15: Record Spoilboard Height
 
 ### ✨ New

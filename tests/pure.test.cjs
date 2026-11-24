@@ -2556,7 +2556,7 @@ test('labels: rulerFit finds offsets that keep the marks between the dog holes',
   assert.equal(rulerFit(Object.assign({}, o, { offXMm: fit.offXMm, offYMm: fit.offYMm, yOffXMm: fit.yOffXMm, yOffYMm: fit.yOffYMm }), 1, 50.8), null);
 });
 
-test('$SAFEZ: programs and Midpoint macros use it where ncSender knows it, else the G53 move as before', () => {
+test('$SAFEZ: programs, Midpoint and Go to nearest hole macros use it where ncSender knows it, else the G53 move as before', () => {
   const o = cutBase({ safeZMm: -5, tool: 3 });
   const old = holeCutProgram(o);
   assert.deepEqual(holeCutProgram(Object.assign({}, o, { safeZCommand: false })), old);
@@ -2576,8 +2576,17 @@ test('$SAFEZ: programs and Midpoint macros use it where ncSender knows it, else 
     assert.match(m[k].body, /^\$SAFEZ \(Safe Z\)$/m);
     assert.doesNotMatch(m[k].body, /G53/);
   }
-  // Only the Midpoint macros change.
-  for (const k of Object.keys(before).filter(k => !/^mid/.test(k))) assert.equal(m[k].body, before[k].body);
+  // Go to nearest hole lifts with it too, then the same XY move.
+  const sh = Object.assign({}, s, { extras: Object.assign({}, allExtras, { holes: true }), holes: macroGrid({ diaMm: 20, origin: 'center', sxMm: 96, syMm: 96, insetXMm: 48, insetYMm: 48, travelXMm: 812, travelYMm: 1230, dirX: 1, dirY: 1 }) });
+  const hb = buildMacros(sh), hm = buildMacros(Object.assign({}, sh, { safeZCommand: true }));
+  assert.match(hb.goHole.body, /never down/);
+  assert.match(hm.goHole.body, /^\$SAFEZ \(Safe Z\)$/m);
+  assert.doesNotMatch(hm.goHole.body, /G53 G90 G0 Z|#8=/);
+  const xy = (b) => b.split('\n').filter(l => /^G53 G90 G0 X/.test(l));
+  assert.deepEqual(xy(hm.goHole.body), xy(hb.goHole.body));
+  assert.ok(hm.goHole.body.indexOf('$SAFEZ') < hm.goHole.body.indexOf('G53 G90 G0 X'));
+  // Only the Midpoint macros and Go to nearest hole change.
+  for (const k of Object.keys(hb).filter(k => !/^mid|^goHole$/.test(k))) assert.equal(hm[k].body, hb[k].body);
 });
 
 test('programCuts: $SAFEZ lifts out of the stock like a G53 Z move', () => {

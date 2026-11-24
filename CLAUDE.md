@@ -164,7 +164,7 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 - **Lines stay short** for grblHAL, and comments aren't nested (a test checks both).
 - **Safe Z and block thickness are baked into the macros** when they're created, so changing either in
   ncSender means pressing **Create macros** again (the README says so). With `$SAFEZ` the midpoint
-  lift follows Safe Z without that. Programs' lifts (`cutSafe`) are `$SAFEZ` there too, and
+  and Go to nearest hole lifts follow Safe Z without that (Go to's older lift never moves down; `$SAFEZ` goes to Safe Z from above it too). Programs' lifts (`cutSafe`) are `$SAFEZ` there too, and
   `programCuts` takes a `$SAFEZ` line as a lift out of the stock.
 
 ## ncSender APIs used
