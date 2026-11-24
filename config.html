@@ -353,6 +353,16 @@
   .mw-intro { margin: 0; color: var(--color-text-secondary); line-height: 1.45; }
   .mw-intro[hidden] { display: none; }
   .mw-diagram { width: 100%; height: auto; display: block; flex: none; }
+  /* A click on a diagram shows it over the dialog, as QuickCut's previews
+     do (enlargeDiagram); a click or Esc puts it back. */
+  .mw-panel .mw-diagram { cursor: zoom-in; }
+  .mw-enlarged {
+    position: absolute; inset: 16px; z-index: 60; display: flex; flex-direction: column; gap: 8px;
+    padding: 12px 20px 20px; box-sizing: border-box; border-radius: 12px; cursor: zoom-out;
+    background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
+  }
+  .mw-enlarged-hint { text-align: center; font-size: 0.8rem; color: var(--color-text-secondary); }
+  .mw-enlarged > .mw-diagram { flex: 1 1 auto; min-height: 0; width: 100%; height: 100%; max-width: none; margin: 0; }
   .mw-diagram text { font-family: inherit; font-size: 12px; fill: var(--color-text-primary); }
   .mw-diagram .mw-d-note { font-size: 10.5px; fill: var(--color-text-secondary); }
   .mw-diagram .mw-d-z0 { fill: var(--mw-accent-text); font-weight: 600; }
@@ -5323,6 +5333,46 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   window.addEventListener('message', onMessage);
 
+  // A click on any diagram shows a copy of it over the dialog, as big as
+  // fits; a click on it, or Esc, closes it. Esc closes only the copy, not
+  // the dialog: ncSender closes the dialog from a window keydown listener
+  // (bubble phase), so this one runs first in the capture phase and stops it.
+  function enlargeDiagram(svg) {
+    closeDiagram();
+    var box = document.createElement('div');
+    box.className = 'mw-enlarged';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', 'Diagram, enlarged');
+    var hint = document.createElement('div');
+    hint.className = 'mw-enlarged-hint';
+    hint.textContent = 'Click or press Esc to return';
+    var copy = svg.cloneNode(true);
+    copy.removeAttribute('id');
+    copy.removeAttribute('hidden');
+    box.appendChild(hint);
+    box.appendChild(copy);
+    box.addEventListener('click', closeDiagram);
+    ROOT.appendChild(box);
+  }
+  function closeDiagram() {
+    var box = ROOT.querySelector('.mw-enlarged');
+    if (box) box.remove();
+    return !!box;
+  }
+  function wireDiagramEnlarge() {
+    ROOT.addEventListener('click', function(evt) {
+      var svg = evt.target.closest && evt.target.closest('.mw-panel .mw-diagram');
+      if (svg && !svg.closest('.mw-enlarged')) enlargeDiagram(svg);
+    });
+    function onEscape(evt) {
+      if (!rootAlive()) { window.removeEventListener('keydown', onEscape, true); return; }
+      if (evt.key !== 'Escape' || !closeDiagram()) return;
+      evt.preventDefault();
+      evt.stopPropagation();
+    }
+    window.addEventListener('keydown', onEscape, true);
+  }
+
   async function sendCommand(command) {
     if (devRefuse()) { console.warn('[SBT dev] refused while rotated:', command); return { ok: false, body: { error: devRefuse() } }; }
     var res = await fetch(BASE_URL + '/api/send-command', {
@@ -6528,6 +6578,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-zoom-in').addEventListener('click', function() { setZoom(holes.zoom.k * 2); });
     $('mw-zoom-out').addEventListener('click', function() { setZoom(holes.zoom.k / 2); });
     $('mw-zoom-fit').addEventListener('click', function() { holes.zoom.follow = false; setZoom(1); });
+    wireDiagramEnlarge();
     $('mw-dev-rotate').hidden = !DEV;
     $('mw-dev-rotate').addEventListener('click', function() {
       state.devRotated = !state.devRotated;
