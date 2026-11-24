@@ -1245,13 +1245,16 @@ test('engraving: V-bit strokes at depth, a laser at its own height', () => {
   assert.ok(v.some(l => /^M3 S18000/.test(l)));
   const laser = engraveProgram(Object.assign({}, base, { laser: true, power: 600 }));
   assert.ok(laser.includes('M4 S600'));
-  // Its only Z moves: up to Safe Z on the way to the first stroke, and back to the height it started at.
+  // Its only Z moves: up to Safe Z on the way to the first stroke, back to the height it started at, and up at the end.
+  const R = 'G0 Z[#30 / #31] (SBT stop: start the program from its top)';
   const zl = laser.filter(l => /Z/.test(l.replace(/\(.*\)/, '')) && !/^#1=/.test(l));
-  assert.deepEqual(zl, ['G53 G0 Z-5.000', 'G0 Z[#30]']);
+  assert.deepEqual(zl, ['G53 G0 Z-5.000', '%R%', 'G53 G0 Z-5.000'].map(l => l === '%R%' ? R : l));
+  // #31 marks #30 as this run's: set with it, cleared at the end, so a run that skips the start stops (error 72).
+  assert.equal(laser[laser.indexOf('#30=#<_z> (SBT: the laser height, to come back to after a lift)') + 1], '#31=1');
   assert.ok(laser.indexOf('#30=#<_z> (SBT: the laser height, to come back to after a lift)') < laser.indexOf('G53 G0 Z-5.000'));
-  assert.ok(laser.indexOf('G53 G0 Z-5.000') < laser.indexOf('G0 X10.000 Y20.000') && laser.indexOf('G0 Z[#30]') === laser.indexOf('G0 X10.000 Y20.000') + 1);
+  assert.ok(laser.indexOf('G53 G0 Z-5.000') < laser.indexOf('G0 X10.000 Y20.000') && laser.indexOf(R) === laser.indexOf('G0 X10.000 Y20.000') + 1);
   assert.ok(!laser.some(l => /^M3 /.test(l)));
-  assert.deepEqual(laser.slice(-2), ['M5', 'M30']);
+  assert.deepEqual(laser.slice(-4), ['G53 G0 Z-5.000', '#31=0', 'M5', 'M30']);
 });
 
 test('engraving and grid lines: a laser lifts to Safe Z over a keepout zone and comes back down; not between strokes clear of it', () => {
@@ -1259,16 +1262,17 @@ test('engraving and grid lines: a laser lifts to Safe Z over a keepout zone and 
   const base = { textMm: 6, feed: 800, power: 600, laser: true, wcs: { p: 1, x: 0, y: 0 }, safeZMm: -5, zones, imperial: false,
     labels: [{ text: 'A1', x: 20, y: 30 }, { text: 'A2', x: 40, y: 30 }, { text: 'Z9', x: 300, y: 30 }] };
   const L = engraveProgram(base);
-  // Once to start, once to pass over the zone between A2 and Z9.
-  assert.equal(L.filter(l => l === 'G53 G0 Z-5.000').length, 2);
-  assert.equal(L.filter(l => l === 'G0 Z[#30]').length, 2);
-  const over = L.lastIndexOf('G53 G0 Z-5.000');
+  // Once to start, once to pass over the zone between A2 and Z9, and at the end.
+  const R = 'G0 Z[#30 / #31] (SBT stop: start the program from its top)';
+  assert.equal(L.filter(l => l === 'G53 G0 Z-5.000').length, 3);
+  assert.equal(L.filter(l => l === R).length, 2);
+  const over = L.lastIndexOf('G53 G0 Z-5.000', L.lastIndexOf(R));
   assert.ok(over > L.findIndex(l => /label 2\/3/.test(l)) && over > L.findIndex(l => /label 3\/3/.test(l)));
-  assert.ok(/^G0 X300\.000/.test(L[over + 1]) && L[over + 2] === 'G0 Z[#30]');
+  assert.ok(/^G0 X300\.000/.test(L[over + 1]) && L[over + 2] === R);
   // Grid lines, through strokesProgram: two lines either side of the zone.
   const G = strokesProgram(Object.assign({}, base, { depthMm: 0 }), 'grid lines',
     [{ comment: '', strokes: [[{ x: 50, y: 10 }, { x: 50, y: 290 }], [{ x: 250, y: 290 }, { x: 250, y: 10 }]] }]);
-  assert.equal(G.filter(l => l === 'G53 G0 Z-5.000').length, 2);
+  assert.equal(G.filter(l => l === 'G53 G0 Z-5.000').length, 3);
 });
 
 test('chamfer: the V-bit’s flank on each hole’s edge', () => {

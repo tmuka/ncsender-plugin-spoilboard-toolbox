@@ -262,6 +262,7 @@
   .mw-stock .mw-stock-dots::before { display: none; }
   .mw-stock .mw-stock-dots .mw-dot::before { width: 24px; height: 24px; }
   /* Hole or Stock: the controls of the other mode are hidden. */
+  .mw-zmode { max-width: 360px; }
   .mw-pick-card[data-zmode="hole"] .mw-only-stock, .mw-pick-card[data-zmode="stock"] .mw-only-hole { display: none !important; }
   .mw-stock[data-by="pins"] .mw-by-zero { display: none !important; }
   /* Two-way toggles look like ncSender's Probe dialog "Set zero for": a
@@ -1477,7 +1478,7 @@
         <div class="mw-row mw-gl-place">
           <div class="mw-field">
             <label for="mw-gl-on">Lines</label>
-            <select class="mw-select" id="mw-gl-on" title="On the dog holes: a line along every row and column of Setup's grids. Own spacing: lines every Spacing through the work offset's X0 Y0, over the whole travel, for a board whose holes don't follow a grid you want to draw.">
+            <select class="mw-select" id="mw-gl-on" title="On the dog holes: a line along every row and column of Setup's grids. Own spacing: lines every Spacing through the work offset's X0 Y0, over the whole travel, not tied to the dog holes (e.g. a 1 in or 25 mm grid).">
               <option value="holes" selected>On the dog holes</option>
               <option value="spacing">Own spacing</option>
             </select>
@@ -3481,7 +3482,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // setting when the line runs, in the program's units.
   function cutSafe(o) { return o.safeZCommand ? '$SAFEZ' : 'G53 G0 Z' + fmt(o.safeZMm != null ? o.safeZMm : 0); }
   function cutEnd(o, L) {
-    if (!o.laser) L.push(cutSafe(o));
+    L.push(cutSafe(o));
+    if (o.laser) L.push('#31=0');
     if (o.mist || o.flood) L.push('M9');
     if (o.rpm > 0 || o.laser) L.push('M5');
     if (o.imperial) L.push('G20');
@@ -3757,7 +3759,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       : o.within && (box.minX < o.within.minX || box.maxX > o.within.maxX || box.minY < o.within.minY || box.maxY > o.within.maxY) ? 'off the stock'
       : (o.zones || []).some(function(z) { return z.minX < box.maxX && z.maxX > box.minX && z.minY < box.maxY && z.maxY > box.minY; }) ? 'in a keepout zone or Exclude Picks area'
       : (o.tracks || []).some(function(t) { return boxNearSegment(box, t.a, t.b, t.halfMm + gap / 2); }) ? 'over a T-track'
-      : (o.all || []).some(function(q) {
+      : (o.nearHoles ? o.nearHoles(box) : o.all || []).some(function(q) {
           if (q === p) return false;
           var dx = Math.max(box.minX - q.x, 0, q.x - box.maxX), dy = Math.max(box.minY - q.y, 0, q.y - box.maxY);
           return Math.hypot(dx, dy) < o.holeR(q) + gap / 2;
@@ -3800,19 +3802,37 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // other, twice over, starting with each (one order can get stuck where
   // the other doesn't). The most marks wins; between equals, the offsets
   // nearer those typed. Only the holes near the X0 row and column are
-  // checked, so each try stays quick on a big grid.
+  // checked (through a cell index), so each try stays quick on a big grid.
   // Returns { offXMm, offYMm, yOffXMm, yOffYMm, count, more } (more: marks gained).
   function rulerFit(o, stepMm, reachMm) {
-    var h = o.textMm, pad = reachMm + h + o.gapMm + 10, wide = pad + textWidth('00000', h);
-    var near = (o.all || []).filter(function(q) {
-      var r = o.holeR(q);
-      return (q.y > o.y0 - pad - r && q.y < o.y0 + pad + r) || (q.x > o.x0 - pad - r && q.x < o.x0 + wide + r);
-    });
-    var cur = Object.assign({}, o, { all: near, yOffXMm: o.yOffXMm != null ? o.yOffXMm : o.offXMm, yOffYMm: o.yOffYMm != null ? o.yOffYMm : o.offYMm });
+    var h = o.textMm, g = o.gapMm, wide = textWidth('00000', h), all = o.all || [];
+    var cur = Object.assign({}, o, { yOffXMm: o.yOffXMm != null ? o.yOffXMm : o.offXMm, yOffYMm: o.yOffYMm != null ? o.yOffYMm : o.offYMm });
+    // The holes a mark could touch, in 10 mm cells: those within the band
+    // (lo..hi along axis) that the searched and typed offsets reach.
+    var nearIndex = function(axis, lo, hi) {
+      var cells = {}, C = 10, maxR = 0;
+      all.forEach(function(q) {
+        var r = o.holeR(q), v = q[axis];
+        if (v + r + g < lo || v - r - g > hi) return;
+        if (r > maxR) maxR = r;
+        var k = Math.floor(q.x / C) + ',' + Math.floor(q.y / C);
+        (cells[k] || (cells[k] = [])).push(q);
+      });
+      return function(box) {
+        var m = maxR + g, out = [];
+        for (var i = Math.floor((box.minX - m) / C); i <= Math.floor((box.maxX + m) / C); i++)
+          for (var j = Math.floor((box.minY - m) / C); j <= Math.floor((box.maxY + m) / C); j++)
+            if (cells[i + ',' + j]) out.push.apply(out, cells[i + ',' + j]);
+        return out;
+      };
+    };
     var n = Math.floor(reachMm / stepMm + 1e-9);
     var fitAxis = function(only, kx, ky) {
-      var count = function(t) { var q = {}; q[kx] = t.x; q[ky] = t.y; return rulerPlacements(Object.assign({}, cur, q, { only: only })).labels.length; };
       var typed = { x: cur[kx], y: cur[ky] };
+      var near = only === 'X'
+        ? nearIndex('y', o.y0 + Math.min(-reachMm, typed.y) - 1, o.y0 + Math.max(reachMm, typed.y) + h + 1)
+        : nearIndex('x', o.x0 + Math.min(-reachMm, typed.x) - 1, o.x0 + Math.max(reachMm, typed.x) + wide + 1);
+      var count = function(t) { var q = { only: only, nearHoles: near }; q[kx] = t.x; q[ky] = t.y; return rulerPlacements(Object.assign({}, cur, q)).labels.length; };
       var far = function(b) { return Math.abs(b.x - typed.x) + Math.abs(b.y - typed.y); };
       var better = function(a, b) { return a.c > b.c || (a.c === b.c && far(a) < far(b)); };
       var start = { x: typed.x, y: typed.y }; start.c = count(start);
@@ -3831,6 +3851,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var a = search(['y', 'x', 'y', 'x']), b = search(['x', 'y', 'x', 'y']), best = better(b, a) ? b : a;
       cur[kx] = best.x; cur[ky] = best.y;
     };
+    // Counted with every hole, before and after.
     var start = rulerPlacements(cur).labels.length;
     fitAxis('X', 'offXMm', 'offYMm');
     fitAxis('Y', 'yOffXMm', 'yOffYMm');
@@ -4019,12 +4040,15 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // it, so on the way to the first stroke, from wherever it is, and over a
   // keepout zone or Exclude Picks area it lifts to Safe Z and comes back down
   // to that height, saved in #30 at the start (#<_z>: work Z, in G21 here).
-  function laserFocusLines() { return ['#30=#<_z> (SBT: the laser height, to come back to after a lift)']; }
+  // #31=1 says #30 is this run's: the end sets it back to 0, so a run that
+  // skips the start (or a stale #30) stops at the first G0 Z[#30 / #31]
+  // (error 72) instead of taking the laser down to an old height.
+  function laserFocusLines() { return ['#30=#<_z> (SBT: the laser height, to come back to after a lift)', '#31=1']; }
   function laserHop(o, at, to, L, xy) {
     var lift = !at || (o.zones || []).some(function(z) { return lineCrossesZone(at, to, z, 0.5); });
     if (lift) L.push(cutSafe(o));
     L.push(xy);
-    if (lift) L.push('G0 Z[#30]');
+    if (lift) L.push('G0 Z[#30 / #31] (SBT stop: start the program from its top)');
   }
   // Strokes (polylines, machine mm) engraved with a V-bit or a laser, in
   // groups that may each set their own power and feed (the laser test).
@@ -4057,7 +4081,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function engraveProgram(o) {
     var n = o.labels.length, c = gComment, f3 = function(v) { return gf(v, 3); };
-    var L = cutStart(o, 'engrave ' + n + ' fixture table label' + (n === 1 ? '' : 's') + ', ' + fmt(o.textMm) + ' mm tall, ' +
+    var L = cutStart(o, 'engrave ' + n + (o.ruler ? ' ruler mark' : ' fixture table label') + (n === 1 ? '' : 's') + ', ' + fmt(o.textMm) + ' mm tall, ' +
       (o.laser ? 'laser at S' + o.power : fmt(o.depthMm) + ' mm deep with a ' + (o.pen ? o.pen.kind : 'V-bit')));
     if (o.laser) L.push.apply(L, laserFocusLines().concat('M4 S' + Math.round(o.power)));
     var at = null;
@@ -9709,7 +9733,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var pl = { labels: [], skipped: [] }, ruler = $('mw-lab-mode').value === 'ruler', spaceMm = cutMm('mw-lab-space');
     var offMm = function(id) { var v = cutMm(id); return isFinite(v) ? v : 0; };
     var fit = null;
-    if (ruler && state.travel && o.wcs && spaceMm > 0 && textMm > 0) {
+    if (ruler && state.travel && o.wcs && spaceMm >= 3 && textMm > 0) {
       var ro = { textMm: textMm, gapMm: Math.max(1, textMm * 0.4), travel: state.travel, zones: uiZones(),
         all: hh ? holes.grid.filter(function(q) { return !q.hidden && !q.suppressed; }) : [], holeR: function(q) { return holeR(q, hh); }, tracks: hh ? labelTracks(hh) : [],
         within: o.plateOn && o.plate ? (function(r, m) { return { minX: r.minX + m, maxX: r.maxX - m, minY: r.minY + m, maxY: r.maxY - m }; })(o.plate, PLATE_EDGE_MM + (laser ? 0 : 1)) : null,
@@ -9717,7 +9741,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         yOffXMm: offMm('mw-lab-yoffx'), yOffYMm: offMm('mw-lab-yoffy') };
       pl = rulerPlacements(ro);
       // Marks on dog holes or T-tracks: look for offsets that fit more (1 mm or 1/32 in steps, within 2 in).
-      // The search takes ~0.1 s on a big grid, and every Cut Board field
+      // The search takes ~0.1 s on a 15,000-hole grid, and every Cut Board field
       // redraws this: it reruns only when what it reads has changed.
       if (pl.skipped.some(function(x) { return x.why === 'on a dog hole' || x.why === 'over a T-track'; })) {
         var key = JSON.stringify([textMm, spaceMm, ro.offXMm, ro.offYMm, ro.yOffXMm, ro.yOffYMm, ro.x0, ro.y0, ro.unitMm, ro.travel, ro.zones, ro.within,
@@ -9734,10 +9758,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
           holeR: function(q) { return holeR(q, hh); }, tracks: labelTracks(hh),
           within: o.plateOn && o.plate ? (function(r, m) { return { minX: r.minX + m, maxX: r.maxX - m, minY: r.minY + m, maxY: r.maxY - m }; })(o.plate, PLATE_EDGE_MM + (laser ? 0 : 1)) : null });
     }
-    Object.assign(o, { labels: pl.labels, textMm: textMm, laser: laser, power: parseFloat($('mw-lab-power').value), depthMm: cutMm('mw-lab-depth'),
+    Object.assign(o, { labels: pl.labels, ruler: ruler, textMm: textMm, laser: laser, power: parseFloat($('mw-lab-power').value), depthMm: cutMm('mw-lab-depth'),
       feed: Math.round(cutMm('mw-lab-feed')) });
     if (pen) { o = withPen(o, penPicked('mw-lab-pen'), state.atc); if (penProblem('mw-lab-pen')) probs.push(penProblem('mw-lab-pen')); }
-    if (ruler && !(spaceMm > 0)) probs.push('Spacing must be more than 0');
+    if (ruler && !(spaceMm >= 3)) probs.push('Spacing must be at least ' + shown(3) + ' ' + unitName());
     else if (ruler && !o.wcs) probs.push('The work offset’s X0 Y0 isn’t known yet: the marks measure from it');
     else if (!(textMm > 0)) probs.push('Text Height must be more than 0');
     else if (!pl.labels.length) probs.push('No labels fit: try a smaller Text Height');
@@ -9763,14 +9787,15 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     // Marks on dog holes or T-tracks: offer offsets that fit more of them.
     var ruler = $('mw-lab-mode').value === 'ruler', holed = ruler ? (why['on a dog hole'] || 0) + (why['over a T-track'] || 0) : 0, fit = l.fit;
     $('mw-lab-fit-text').textContent = !holed ? '' : fit
-      ? 'Offsets of X marks ' + +shown(fit.offXMm) + ', ' + +shown(fit.offYMm) + ' and Y marks ' + +shown(fit.yOffXMm) + ', ' + +shown(fit.yOffYMm) + ' ' + unitName() + ' (X, Y) fit ' + fit.more + ' more, clear of the holes and tracks.'
+      ? fit.more + ' more mark' + (fit.more === 1 ? '' : 's') + ' fit clear of the holes and tracks with X Marks Offset X ' + +shown(fit.offXMm) + ', Offset Y ' + +shown(fit.offYMm) +
+        ' and Y Marks Offset X ' + +shown(fit.yOffXMm) + ', Offset Y ' + +shown(fit.yOffYMm) + ' ' + unitName() + '.'
       : 'No offsets within ' + (state.imperial ? '2 in' : '50 mm') + ' fit more of them (moving an axis’s marks moves them all): a smaller Text Height or another Spacing might.';
     $('mw-lab-fit').hidden = !holed;
     $('mw-lab-fit-use').hidden = !fit;
     $('mw-lab-fit-use').onclick = fit ? function() {
-      [['mw-lab-offx', fit.offXMm], ['mw-lab-offy', fit.offYMm], ['mw-lab-yoffx', fit.yOffXMm], ['mw-lab-yoffy', fit.yOffYMm]].forEach(function(f) {
-        $(f[0]).value = shown(f[1]); $(f[0]).dispatchEvent(new Event('change', { bubbles: true }));
-      });
+      // All four first, then one change: one redraw and one save.
+      [['mw-lab-offx', fit.offXMm], ['mw-lab-offy', fit.offYMm], ['mw-lab-yoffx', fit.yOffXMm], ['mw-lab-yoffy', fit.yOffYMm]].forEach(function(f) { $(f[0]).value = shown(f[1]); });
+      $('mw-lab-yoffy').dispatchEvent(new Event('change', { bubbles: true }));
     } : null;
     showProblems($('mw-lab-note'), l.probs);
     $('mw-lab-generate').disabled = !!l.probs.length;
