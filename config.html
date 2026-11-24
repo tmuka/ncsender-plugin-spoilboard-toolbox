@@ -357,6 +357,25 @@
   .mw-diagram .mw-d-cut { fill: var(--color-surface); stroke: var(--color-text-primary); stroke-width: 1; }
   .mw-diagram .mw-d-hole { fill: var(--color-surface); stroke: var(--mw-line); stroke-width: 1; }
   .mw-diagram .mw-d-insert { fill: color-mix(in srgb, var(--mw-warn) 35%, var(--color-surface)); stroke: var(--mw-warn); stroke-width: 1; }
+  .mw-diagram[hidden] { display: none; }
+  .mw-diagram .mw-d-h { paint-order: stroke; stroke: var(--color-surface-muted); stroke-width: 4px; stroke-linejoin: round; }
+  #mw-plate-diagram .mw-d-h { stroke: var(--color-surface); }
+  .mw-diagram .mw-d-label { font-size: 11px; font-weight: 700; fill: var(--mw-accent-text); }
+  .mw-diagram .mw-d-mark { stroke: var(--mw-accent-text); stroke-width: 2; stroke-linecap: round; fill: none; }
+  .mw-diagram .mw-d-burn { stroke: color-mix(in srgb, var(--color-text-primary) 45%, transparent); stroke-width: 2; stroke-linecap: round; }
+  .mw-diagram .mw-d-ring { fill: none; stroke: var(--mw-ok); stroke-width: 1.5; }
+  .mw-diagram .mw-d-xing { fill: var(--mw-accent-text); }
+  .mw-diagram .mw-d-ghost { fill: none; stroke: var(--mw-line); stroke-width: 1; stroke-dasharray: 3 3; }
+  .mw-diagram .mw-d-cuthole { fill: var(--color-surface); stroke: var(--mw-accent-text); stroke-width: 1.5; }
+  .mw-diagram .mw-d-veil { fill-opacity: 0.85; }
+  .mw-diagram .mw-d-origin { fill: var(--color-success, #2e9e6b); stroke: var(--color-surface); stroke-width: 1.5; }
+  .mw-diagram .mw-d-head { fill: var(--color-text-secondary); }
+  .mw-diagram .mw-d-lower { fill: color-mix(in srgb, var(--color-text-secondary) 26%, var(--color-surface)); }
+  .mw-diagram .mw-d-side { fill: color-mix(in srgb, var(--color-text-secondary) 30%, var(--color-surface)); }
+  .mw-diagram .mw-d-track { fill: color-mix(in srgb, var(--color-text-primary) 28%, var(--color-surface)); stroke: var(--color-text-secondary); stroke-width: 1; }
+  .mw-diagram .mw-d-new { stroke-dasharray: 4 3; }
+  .mw-diagram .mw-d-trackline { stroke-width: 6; opacity: 0.5; }
+  .mw-diagram .mw-d-file { fill: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); stroke: var(--mw-accent-text); stroke-width: 1; rx: 4; }
   .mw-diagram .mw-d-pin { fill: color-mix(in srgb, var(--color-text-primary) 30%, transparent); stroke: var(--color-text-secondary); stroke-width: 1; }
   .mw-welcome { display: flex; flex-direction: column; gap: 14px; }
   .mw-welcome-title { margin: 0; font-size: 1.35rem; font-weight: 700; }
@@ -1245,6 +1264,7 @@
       <div class="mw-plate">
         <label class="mw-extra"><input type="checkbox" id="mw-cut-plate"><span><strong>Into the stock on top:</strong> the board&rsquo;s grid copied into stock laid on the
           spoilboard (a removable MDF sheet, say), only inside it, so its holes, slots or lines match the spoilboard&rsquo;s. Its size, place and thickness are the XY0 Picker&rsquo;s Stock; Z0 on its top.</span></label>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-plate-diagram" viewBox="0 0 700 218" role="img" aria-label="Top view: the stock over the spoilboard, only holes wholly on it cut. Side view: the stock's holes straight over the spoilboard's, Z0 on the stock's top." hidden></svg>
         <p class="mw-hint" id="mw-cut-plate-note" role="status" hidden></p>
       </div>
       <!-- The sections, picked in the sidebar under Cut Board (buildCutNav makes it from these). -->
@@ -1383,6 +1403,7 @@
       </section>
       <section class="mw-card" data-sec="tracks">
         <h3 class="mw-card-title">Cut the T-tracks</h3>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-trk-diagram" viewBox="0 0 700 180" role="img" aria-label="Side view: the slot through the top layer onto a T-track in the layer below, or a dado to set new track in."></svg>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-trk-width">Track Width (<span class="mw-unit">mm</span>)</label>
@@ -1399,6 +1420,7 @@
       </section>
       <section class="mw-card" data-sec="fit">
         <h3 class="mw-card-title">Dowel fit test</h3>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-fit-diagram" viewBox="0 0 700 160" role="img" aria-label="Top view of the scrap: the test holes, smallest on the left, from X0 Y0 on its front left corner."></svg>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-fit-size">Middle Size (<span class="mw-unit">mm</span>)</label>
@@ -1427,6 +1449,7 @@
       </section>
       <section class="mw-card" data-sec="chamfer">
         <h3 class="mw-card-title">Chamfer the holes</h3>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-chm-diagram" viewBox="0 0 700 175" role="img" aria-label="Side view of a hole's top edge: the bevel the V-bit cuts, its width and depth."></svg>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-chm-angle">V-bit Angle (&deg;)</label>
@@ -1486,6 +1509,7 @@
       </section>
       <section class="mw-card" data-sec="lines">
         <h3 class="mw-card-title">Grid lines</h3>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-gl-diagram" viewBox="0 0 700 180" role="img" aria-label="Top view: the lines through the holes or along the picked side, or at their own spacing from X0 Y0."></svg>
         <div class="mw-row mw-gl-place">
           <div class="mw-field">
             <label for="mw-gl-on">Lines</label>
@@ -1524,6 +1548,7 @@
       </section>
       <section class="mw-card" data-sec="lasertest">
         <h3 class="mw-card-title">Laser test</h3>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-lt-diagram" viewBox="0 0 700 192" role="img" aria-label="Top view: a cross for every power (across) and feed (up), from X0 Y0 on the scrap's front left corner."></svg>
         <div class="mw-row">
           <div class="mw-field">
             <label for="mw-lt-pmin">Power From (S)</label>
@@ -1556,6 +1581,7 @@
       </section>
       <section class="mw-card" data-sec="labels">
         <h3 class="mw-card-title">Engrave the labels</h3>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-lab-diagram" viewBox="0 0 700 180" role="img" aria-label="Top view: the labels beside the holes, or the inch / mm marks from X0 Y0 and what their offsets move."></svg>
         <div class="mw-row mw-row-5">
           <div class="mw-field mw-span-2">
             <label for="mw-lab-mode">Labels</label>
@@ -1610,6 +1636,7 @@
       </section>
       <section class="mw-card" data-sec="export">
         <h3 class="mw-card-title">Export for CAD</h3>
+        <svg class="mw-diagram mw-sh-diagram" id="mw-cad-diagram" viewBox="0 0 700 160" role="img" aria-label="The spoilboard as a solid, its top at Z0, out to STEP, DXF and STL files."></svg>
         <div class="mw-hint"><strong>STEP:</strong> the board as an exact solid, Spoilboard Thickness thick, holes Hole Depth deep and slots
           the T-tracks&rsquo; Depth: round holes and flat faces to sketch on, in mm (Fusion converts). Best for Fusion: open it, or Insert &rsaquo; Insert Derive / upload it.</div>
         <div class="mw-hint"><strong>DXF:</strong> the outline, every hole as a true circle (a layer per grid), the T-track slots and the zones,
@@ -9218,6 +9245,322 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     $('mw-cut-diagram').innerHTML = out.join('');
   }
+  // Cut Board's section diagrams and the stock-on-top picture: drawn as
+  // SVG text with the same classes as cutDiagram, live from the fields
+  // where a number helps, not to scale across.
+  function dgKit() {
+    var out = [], r = function(v) { return Math.round(v * 10) / 10; };
+    var esc = function(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var k = {
+      num: function(mm) { return isFinite(mm) ? +shown(mm) + ' ' + unitName() : '?'; },
+      line: function(cls, x0, y0, x1, y1) { out.push('<line class="' + cls + '" x1="' + r(x0) + '" y1="' + r(y0) + '" x2="' + r(x1) + '" y2="' + r(y1) + '"/>'); },
+      circ: function(cls, x, y, rr) { out.push('<circle class="' + cls + '" cx="' + r(x) + '" cy="' + r(y) + '" r="' + r(Math.max(0.5, rr)) + '"/>'); },
+      rect: function(cls, x0, y0, x1, y1) { out.push('<rect class="' + cls + '" x="' + r(Math.min(x0, x1)) + '" y="' + r(Math.min(y0, y1)) + '" width="' + r(Math.abs(x1 - x0)) + '" height="' + r(Math.abs(y1 - y0)) + '"/>'); },
+      path: function(cls, d) { out.push('<path class="' + cls + '" d="' + d + '"/>'); },
+      text: function(x, y, t, cls, anchor) { out.push('<text x="' + r(x) + '" y="' + r(y) + '"' + (cls ? ' class="' + cls + '"' : '') + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + esc(t) + '</text>'); },
+      // A line with a head at its end.
+      arrow: function(x0, y0, x1, y1) {
+        var a = Math.atan2(y1 - y0, x1 - x0), h = 6;
+        k.line('mw-d-dim', x0, y0, x1, y1);
+        out.push('<path class="mw-d-head" d="M' + r(x1) + ' ' + r(y1) + 'L' + r(x1 - h * Math.cos(a - 0.45)) + ' ' + r(y1 - h * Math.sin(a - 0.45)) +
+          'L' + r(x1 - h * Math.cos(a + 0.45)) + ' ' + r(y1 - h * Math.sin(a + 0.45)) + 'Z"/>');
+      },
+      // A dimension between two points, ticked at both ends.
+      dim: function(x0, y0, x1, y1) {
+        var a = Math.atan2(y1 - y0, x1 - x0) + Math.PI / 2, t = 4, dx = t * Math.cos(a), dy = t * Math.sin(a);
+        k.line('mw-d-dim', x0, y0, x1, y1);
+        k.line('mw-d-dim', x0 - dx, y0 - dy, x0 + dx, y0 + dy);
+        k.line('mw-d-dim', x1 - dx, y1 - dy, x1 + dx, y1 + dy);
+      },
+      // X0 Y0: the green dot the map uses.
+      origin: function(x, y, label, anchor) { k.circ('mw-d-origin', x, y, 4); if (label) k.text(x + (anchor === 'end' ? -8 : 8), y + 14, label, 'mw-d-note mw-d-h', anchor); },
+      put: function(id) { var el = $(id); if (el) el.innerHTML = out.join(''); }
+    };
+    return k;
+  }
+  // Into the stock on top: a top view of the spoilboard's grid with the
+  // stock over it (only holes wholly on it are cut), and a side view of
+  // the stock's holes over the spoilboard's, Z0 on the stock's top.
+  function plateDiagram(o) {
+    var d = dgKit(), r = o.plate, T = o.plateThickMm, depth = cutMm('mw-cut-depth');
+    // Top view.
+    d.text(20, 14, r ? 'Top view: stock ' + +shown(r.maxX - r.minX) + ' × ' + +shown(r.maxY - r.minY) + ' ' + unitName() + ' over the holes' : 'Top view: the spoilboard’s holes, the stock over them', 'mw-d-note');
+    d.rect('mw-d-spoil', 20, 24, 330, 190);
+    var S = { x0: 80, x1: 258, y0: 64, y1: 150 }, rr = 8, M = 3;
+    var xs = [45, 97, 149, 201, 253, 305], ys = [44, 86, 128, 170];
+    ys.forEach(function(y) { xs.forEach(function(x) { d.circ('mw-d-hole', x, y, rr); }); });
+    d.rect('mw-d-stock mw-d-veil', S.x0, S.y0, S.x1, S.y1);
+    d.text(S.x0 + 6, S.y0 + 13, 'Stock', 'mw-d-z0');
+    ys.forEach(function(y) {
+      xs.forEach(function(x) {
+        var onIt = x - rr >= S.x0 + M && x + rr <= S.x1 - M && y - rr >= S.y0 + M && y + rr <= S.y1 - M;
+        var over = !onIt && x + rr > S.x0 && x - rr < S.x1 && y + rr > S.y0 && y - rr < S.y1;
+        if (onIt) d.circ('mw-d-cuthole', x, y, rr);
+        else if (over) d.circ('mw-d-ghost', x, y, rr);
+      });
+    });
+    // Side view.
+    var L = 372, R = 690, ST = 104, SB = 146, BB = 190, hw = 14, cxs = [410, 470, 530, 590, 650];
+    d.text(L, 14, 'Side view', 'mw-d-note');
+    d.rect('mw-d-spoil', L, SB, R, BB);
+    d.text(R - 6, BB - 8, 'Spoilboard', 'mw-d-note', 'end');
+    cxs.forEach(function(x) { d.rect('mw-d-cut', x - hw / 2, SB, x + hw / 2, SB + 24); });
+    d.rect('mw-d-stock', 395, ST, 622, SB);
+    var frac = T > 0 && depth > 0 ? Math.min(1, depth / T) : 1, HB = ST + frac * (SB - ST);
+    cxs.slice(0, 4).forEach(function(x) {
+      d.rect('mw-d-cut', x - hw / 2, ST, x + hw / 2, HB);
+      d.line('mw-d-line', x, ST, x, SB + 24);
+    });
+    d.text(440, SB - 6, 'Stock', 'mw-d-note', 'middle');
+    d.line('mw-d-line', L - 4, ST, R, ST);
+    d.text(L, ST - 8, (o.wcsName || 'G54') + ' Z0: the stock’s top', 'mw-d-z0');
+    d.dim(632, ST, 632, SB);
+    d.text(638, (ST + SB) / 2 - 3, 'T', 'mw-d-val');
+    d.text(638, (ST + SB) / 2 + 11, d.num(T), 'mw-d-val');
+    d.text(L, 34, 'Each hole straight over the spoilboard’s', 'mw-d-val');
+    d.text(L, 50, 'Depth ' + (depth > 0 ? d.num(Math.min(depth, T > 0 ? T : depth)) : '?') + (T > 0 && depth >= T - 1e-9 ? ': through the stock' : '') + ', never past T', 'mw-d-note');
+    // Legend.
+    d.circ('mw-d-cuthole', 26, 206, 5); d.text(36, 210, 'cut into the stock', 'mw-d-note');
+    d.circ('mw-d-ghost', 146, 206, 5); d.text(156, 210, 'left out: would cross its edge (holes stay ' + +shown(PLATE_EDGE_MM) + ' ' + unitName() + ' clear)', 'mw-d-note');
+    d.put('mw-plate-diagram');
+  }
+  // T-tracks: a side view of the top layer over the one with the tracks
+  // and inserts; the slot through it onto a track, or a dado for new track.
+  function trackDiagram(o) {
+    var d = dgKit(), T = o.thickMm, depth = o.depthMm, w = o.widthMm, top = o.plateOn ? 'Stock' : 'Top layer';
+    var X0 = 30, X1 = 470, TT = 60, TB = 118, LB = 170, cx = 170, sw = 64;
+    var frac = T > 0 && depth > 0 ? Math.min(1, depth / T) : 1, through = o.through || frac >= 1 - 1e-9, SBm = TT + frac * (TB - TT);
+    d.rect(o.plateOn ? 'mw-d-stock' : 'mw-d-spoil', X0, TT, X1, TB);
+    d.rect('mw-d-spoil mw-d-lower', X0, TB, X1, LB);
+    d.text(X1 - 6, TB - 8, top + ' (' + d.num(T) + ')', 'mw-d-note', 'end');
+    d.text(X1 - 6, LB - 8, 'Lower layer: tracks and inserts stay', 'mw-d-note', 'end');
+    // The track in the lower layer (through), or the new one going in.
+    var trk = function(y, cls) {
+      d.rect(cls, cx - sw / 2, y, cx + sw / 2, y + 30);
+      d.rect('mw-d-cut', cx - 10, y, cx + 10, y + 10);
+      d.rect('mw-d-cut', cx - 22, y + 10, cx + 22, y + 24);
+    };
+    d.rect('mw-d-cut', cx - sw / 2, TT, cx + sw / 2, SBm);
+    if (through) trk(TB, 'mw-d-track');
+    else { trk(SBm, 'mw-d-track mw-d-new'); d.text(cx + sw / 2 + 8, SBm + 18, 'new track set in', 'mw-d-note'); }
+    // A dog hole over an insert beside it.
+    var hx = 330;
+    d.rect('mw-d-cut', hx - 9, TT, hx + 9, TB);
+    d.rect('mw-d-insert', hx - 11, TB, hx + 11, TB + 26);
+    d.text(hx + 16, TB + 22, 'insert', 'mw-d-note');
+    d.dim(cx - sw / 2, TT - 12, cx + sw / 2, TT - 12);
+    d.text(cx, TT - 18, 'Track Width ' + d.num(w), 'mw-d-val', 'middle');
+    d.dim(cx - sw / 2 - 12, TT, cx - sw / 2 - 12, SBm);
+    d.text(cx - sw / 2 - 16, (TT + SBm) / 2 + 4, d.num(depth), 'mw-d-val', 'end');
+    d.line('mw-d-line', 20, TT, X1 + 6, TT);
+    d.text(X1 + 4, TT - 6, 'Z0', 'mw-d-z0', 'end');
+    var X = 490, y = 26, say = function(t, cls) { d.text(X, y, t, cls); y += 15; };
+    say(through ? 'Through the ' + top.toLowerCase() : 'A dado ' + d.num(depth) + ' deep', 'mw-d-val');
+    say(through ? 'onto the tracks below (Depth blank)' : 'to set new track into', 'mw-d-note');
+    say('Z0 on the ' + top.toLowerCase() + '’s top', 'mw-d-note');
+    y += 6;
+    say('Then Dog holes: through the', 'mw-d-note');
+    say('same layer, over the inserts', 'mw-d-note');
+    d.put('mw-trk-diagram');
+  }
+  // Grid lines: a top view of a few holes with the lines through their
+  // centers or along the picked side, or lines at their own spacing.
+  function lineDiagram(o) {
+    var d = dgKit(), own = $('mw-gl-on').value === 'spacing', org = $('mw-gl-origin').value || 'center';
+    var tool = o.laser ? 'a laser' : o.pen ? 'a pen' : 'a V-bit', r = 15, cols = [90, 210, 330], rows = [130, 52];
+    cols.forEach(function(x) { rows.forEach(function(y) { d.circ(own ? 'mw-d-ghost' : 'mw-d-hole', x, y, r); }); });
+    if (own) {
+      var S = 48, ox = 114, oy = 110, sp = cutMm('mw-gl-space');
+      for (var x = ox - 2 * S; x <= 400; x += S) if (x >= 30) d.line('mw-d-mark', x, 14, x, 166);
+      for (var y = oy + S; y >= 14; y -= S) d.line('mw-d-mark', 30, y, 400, y);
+      d.line('mw-d-mark', 30, oy + S, 400, oy + S);
+      d.origin(ox, oy, (o.wcsName || 'G54') + ' X0 Y0');
+      d.dim(ox, oy - S / 2 + 8, ox + S, oy - S / 2 + 8);
+      d.text(ox + S / 2, oy - S / 2 + 2, 'Spacing ' + d.num(sp), 'mw-d-val mw-d-h', 'middle');
+    } else {
+      var dx = /left/.test(org) ? -r : /right/.test(org) ? r : 0, dy = /back/.test(org) ? -r : /front/.test(org) ? r : 0;
+      cols.forEach(function(x) { d.line('mw-d-mark', x + dx, 14, x + dx, 166); });
+      rows.forEach(function(y) { d.line('mw-d-mark', 30, y + dy, 400, y + dy); });
+      cols.forEach(function(x) { rows.forEach(function(y) { d.circ('mw-d-xing', x + dx, y + dy, 3); }); });
+    }
+    var X = 430, yy = 26, say = function(t, cls) { d.text(X, yy, t, cls); yy += 15; };
+    var dot = ROOT.querySelector('#mw-gl-dots .mw-dot[data-origin="' + org + '"]');
+    say(own ? 'Lines every Spacing' : 'On the dog holes', 'mw-d-val');
+    if (own) { say('through the work offset’s X0 Y0,', 'mw-d-note'); say('over the whole travel', 'mw-d-note'); }
+    else { var t = dot ? dot.getAttribute('title') : 'Through the holes’ centers'; say(t.replace(/\s*\(.*\)$/, ''), 'mw-d-note'); }
+    say('with ' + tool, 'mw-d-note');
+    yy += 6;
+    say('Breaks at T-tracks, stops short', 'mw-d-note');
+    say('of keepout zones', 'mw-d-note');
+    if (!own) { yy += 6; say('Zero on a crossing (●) with', 'mw-d-note'); say('Hole Diameter the line’s width', 'mw-d-note'); }
+    d.put('mw-gl-diagram');
+  }
+  // Fit test: the strip of scrap from the top, the holes at their sizes.
+  function fitDiagram(f) {
+    var d = dgKit(), h = f.local, X0 = 64, YB = 124;
+    if (!h.length) h = [0, 1, 2, 3, 4].map(function(i) { return { x: 20 + i * 16, y: 12, diaMm: 8 }; });
+    var wMm = h[h.length - 1].x + h[0].y, hMm = 2 * h[0].y, s = Math.min(380 / wMm, 100 / hMm);
+    d.rect('mw-d-spoil', X0, YB - hMm * s, X0 + wMm * s, YB);
+    d.text(X0 + 6, YB - hMm * s + 13, 'Scrap', 'mw-d-note');
+    h.forEach(function(q, i) {
+      d.circ('mw-d-cuthole', X0 + q.x * s, YB - q.y * s, q.diaMm / 2 * s);
+      if (f.local.length) d.text(X0 + q.x * s, YB + 14 + (i % 2) * 13, +shown(q.diaMm), i === Math.floor(h.length / 2) ? 'mw-d-val' : 'mw-d-note', 'middle');
+    });
+    d.origin(X0, YB);
+    d.text(X0 - 6, YB + 14, 'X0 Y0', 'mw-d-z0', 'end');
+    var e = cutMm('mw-fit-edge'), r0 = h[0].diaMm / 2 * s;
+    if (e > 0) {
+      d.dim(X0, YB - h[0].y * s - r0 - 8, X0 + h[0].x * s - r0, YB - h[0].y * s - r0 - 8);
+      d.text(X0 + 2, YB - h[0].y * s - r0 - 13, 'Edge ' + d.num(e), 'mw-d-note mw-d-h');
+    }
+    var X = Math.max(470, X0 + wMm * s + 24), y = 30, say = function(t, cls) { d.text(X, y, t, cls); y += 15; };
+    say('Smallest on the left, a Step bigger', 'mw-d-val');
+    say('each hole to the right', 'mw-d-val');
+    say('Middle Size in the middle', 'mw-d-note');
+    say('Z0 on the scrap’s top', 'mw-d-note');
+    y += 6;
+    say('Push a dowel in each: use the', 'mw-d-note');
+    say('first that holds it snugly', 'mw-d-note');
+    d.put('mw-fit-diagram');
+  }
+  // Laser test: the grid of crosses, powers across, feeds up.
+  function laserTestDiagram() {
+    var d = dgKit(), pn = Math.round(parseFloat($('mw-lt-pn').value)), fn = Math.round(parseFloat($('mw-lt-fn').value));
+    pn = pn >= 2 && pn <= 10 ? pn : 5; fn = fn >= 2 && fn <= 10 ? fn : 4;
+    var ps = spread(parseFloat($('mw-lt-pmin').value) || 0, parseFloat($('mw-lt-pmax').value) || 0, pn);
+    var fs = spread(unitVal($('mw-lt-fmin')) || 0, unitVal($('mw-lt-fmax')) || 0, fn);
+    var C = Math.min(36, 130 / fn, 300 / pn), X0 = 80, YB = 162, c = C * 0.3;
+    d.rect('mw-d-spoil', X0 - 36, YB - fn * C - 8, X0 + pn * C + 8, YB + 6);
+    for (var i = 0; i < pn; i++) {
+      for (var j = 0; j < fn; j++) {
+        var x = X0 + (i + 0.5) * C, y = YB - (j + 0.5) * C, best = i === Math.floor(pn * 0.6) && j === Math.floor(fn * 0.5);
+        d.line(best ? 'mw-d-mark' : 'mw-d-burn', x - c, y, x + c, y);
+        d.line(best ? 'mw-d-mark' : 'mw-d-burn', x, y - c, x, y + c);
+        if (best) d.circ('mw-d-ring', x, y, c + 5);
+      }
+    }
+    ps.forEach(function(p, i) { d.text(X0 + (i + 0.5) * C, YB - fn * C - 12, 'S' + p, 'mw-d-note', 'middle'); });
+    fs.forEach(function(f, j) { d.text(X0 - 8, YB - (j + 0.5) * C + 4, String(Math.round(f)), 'mw-d-note', 'end'); });
+    d.origin(X0 - 36, YB + 6);
+    d.text(X0 - 36, YB + 22, 'X0 Y0', 'mw-d-z0');
+    var X = Math.max(420, X0 + pn * C + 40), y = 30, say = function(t, cls) { d.text(X, y, t, cls); y += 15; };
+    say('Power (S) across: low to high', 'mw-d-val');
+    say('Feed (' + unitName() + '/min) up: slow to fast', 'mw-d-val');
+    say('The laser focused on the scrap', 'mw-d-note');
+    y += 6;
+    say('Pick the crispest cross (circled):', 'mw-d-note');
+    say('its column’s power and row’s feed', 'mw-d-note');
+    say('go into Grid lines and Labels', 'mw-d-note');
+    d.put('mw-lt-diagram');
+  }
+  // Chamfers: a side view of a hole's top edge and the V-bit's bevel.
+  function chamferDiagram(o) {
+    var d = dgKit(), ang = parseFloat($('mw-chm-angle').value), w = cutMm('mw-chm-width');
+    var half = (ang >= 10 && ang <= 170 ? ang : 90) / 2 * Math.PI / 180, depth = w > 0 ? w / Math.tan(half) : NaN;
+    var TOP = 70, BOT = 165, L = 170, R = 250, W = 26, H = Math.min(70, W / Math.tan(half));
+    d.rect(o.plateOn ? 'mw-d-stock' : 'mw-d-spoil', 30, TOP, 430, BOT);
+    d.text(36, BOT - 8, o.plateOn ? 'Stock' : 'Spoilboard', 'mw-d-note');
+    d.path('mw-d-cut', 'M' + (L - W) + ' ' + TOP + 'L' + L + ' ' + (TOP + H) + 'L' + L + ' ' + BOT + 'L' + R + ' ' + BOT + 'L' + R + ' ' + (TOP + H) + 'L' + (R + W) + ' ' + TOP + 'Z');
+    // The V-bit, its flank along the left bevel.
+    var tx = L + 14, ty = TOP + H + 14 / Math.tan(half), F = 64, sx = F * Math.tan(half);
+    d.path('mw-d-pin', 'M' + tx + ' ' + ty + 'L' + (tx + Math.min(sx, 40)) + ' ' + (ty - Math.min(F, 40 / Math.tan(half))) + 'L' + (tx - Math.min(sx, 40)) + ' ' + (ty - Math.min(F, 40 / Math.tan(half))) + 'Z');
+    var topY = ty - Math.min(F, 40 / Math.tan(half));
+    d.rect('mw-d-pin', tx - Math.min(sx, 40), topY - 40, tx + Math.min(sx, 40), topY);
+    d.text(tx - Math.min(sx, 40) - 6, topY - 24, 'V-bit ' + (ang > 0 ? ang : '?') + '°', 'mw-d-note', 'end');
+    d.line('mw-d-line', 20, TOP, 440, TOP);
+    d.text(440, TOP - 6, 'Z0', 'mw-d-z0', 'end');
+    d.dim(R, TOP - 12, R + W, TOP - 12);
+    d.text(R + W + 6, TOP - 8, 'Width ' + d.num(w), 'mw-d-val');
+    d.dim(R + W + 14, TOP, R + W + 14, TOP + H);
+    d.text(R + W + 20, TOP + H / 2 + 4, d.num(depth) + ' deep', 'mw-d-note');
+    var X = 460, y = 30, say = function(t, cls) { d.text(X, y, t, cls); y += 15; };
+    say('A bevel round each hole’s top edge', 'mw-d-val');
+    say('Width: how far out from the hole', 'mw-d-note');
+    say('Depth from the V-bit’s angle', 'mw-d-note');
+    say('After the holes are cut', 'mw-d-note');
+    d.put('mw-chm-diagram');
+  }
+  // Labels: a top view of the holes with their names, the first row and
+  // column's, or the inch / mm marks and what their offsets move.
+  function labelDiagram(o) {
+    var d = dgKit(), mode = $('mw-lab-mode').value, r = 13, cols = [110, 210, 310], rows = [140, 70];
+    var tool = o.laser ? 'a laser' : o.pen ? 'a pen' : 'a V-bit';
+    var X = 440, y = 26, say = function(t, cls) { d.text(X, y, t, cls); y += 15; };
+    if (mode !== 'ruler') {
+      cols.forEach(function(x, i) { rows.forEach(function(yy, j) {
+        d.circ('mw-d-hole', x, yy, r);
+        if (mode === 'every') d.text(x + r + 4, yy - r + 2, String.fromCharCode(65 + j) + (i + 1), 'mw-d-label');
+      }); });
+      if (mode === 'edges') {
+        cols.forEach(function(x, i) { d.text(x, rows[0] + r + 18, String(i + 1), 'mw-d-label', 'middle'); });
+        rows.forEach(function(yy, j) { d.text(cols[0] - r - 12, yy + 5, String.fromCharCode(65 + j), 'mw-d-label', 'end'); });
+      }
+      say(mode === 'every' ? 'Every hole’s name beside it' : 'Column numbers along the first row,', 'mw-d-val');
+      if (mode === 'edges') say('row letters up the first column', 'mw-d-val');
+      say('as the XY0 Picker’s map names them', 'mw-d-note');
+      say('with ' + tool + '; Z0 on the top', 'mw-d-note');
+      say('Labels over a hole or a track are left out', 'mw-d-note');
+    } else {
+      var sp = cutMm('mw-lab-space'), S = 80, ox = 60, oy = 150, k = sp > 0 ? S / sp : 1;
+      var clamp = function(v) { return Math.max(-30, Math.min(30, isFinite(v) ? v * k : 0)); };
+      var ax = clamp(cutMm('mw-lab-offx')), ay = clamp(cutMm('mw-lab-offy')), bx = clamp(cutMm('mw-lab-yoffx')), by = clamp(cutMm('mw-lab-yoffy'));
+      [0, 1, 2, 3, 4].forEach(function(i) { [0, 1].forEach(function(j) { d.circ('mw-d-ghost', ox + 40 + i * S, oy - 40 - j * S, 9); }); });
+      d.line('mw-d-dim', ox, oy, ox + 4.5 * S, oy); d.line('mw-d-dim', ox, oy, ox, oy - 1.8 * S);
+      d.origin(ox, oy);
+      d.text(ox - 6, oy + 16, 'X0 Y0', 'mw-d-z0 mw-d-h', 'end');
+      var n = function(i) { return sp > 0 ? String(+shown(i * sp)) : String(i); };
+      for (var i = 1; i <= 4; i++) {
+        var px = ox + i * S;
+        d.line('mw-d-dim', px, oy - 4, px, oy + 4);
+        d.text(px + ax, oy - ay + 4, n(i), 'mw-d-label mw-d-h', 'middle');
+        if (i === 2 && (ax || ay)) d.arrow(px, oy, px + ax * 0.8, oy - ay * 0.8 + (ay ? 4 : 0));
+      }
+      for (var j = 1; j <= 1; j++) {
+        var py = oy - j * S;
+        d.line('mw-d-dim', ox - 4, py, ox + 4, py);
+        d.text(ox + bx, py - by + 4, n(j), 'mw-d-label mw-d-h', 'middle');
+        if (bx || by) d.arrow(ox, py, ox + bx * 0.8, py - by * 0.8);
+      }
+      say('A mark every Spacing (' + d.num(sp) + ') from X0 Y0', 'mw-d-val');
+      say('along its row (X marks) and up', 'mw-d-note');
+      say('its column (Y marks)', 'mw-d-note');
+      say('Each axis’s Offset X / Y moves its marks', 'mw-d-note');
+      say('off the line (arrows), clear of the holes', 'mw-d-note');
+      say('X marks: ' + d.num(cutMm('mw-lab-offx')) + ', ' + d.num(cutMm('mw-lab-offy')), 'mw-d-note');
+      say('Y marks: ' + d.num(cutMm('mw-lab-yoffx')) + ', ' + d.num(cutMm('mw-lab-yoffy')), 'mw-d-note');
+    }
+    d.put('mw-lab-diagram');
+  }
+  // Export: the board as a solid, its top at Z0, out to the three files.
+  function cadDiagram() {
+    var d = dgKit(), corner = $('mw-cad-origin').value === 'corner';
+    var A = { x: 40, y: 116 }, W = 240, D = 66, sk = 50, T = 16;
+    var p = function(u, v) { return { x: A.x + u * W + v * sk, y: A.y - v * D }; };
+    var P = function(q) { return q.x + ' ' + q.y; };
+    var a = p(0, 0), b = p(1, 0), c = p(1, 1), e = p(0, 1);
+    d.path('mw-d-spoil mw-d-side', 'M' + P(a) + 'L' + P(b) + 'L' + b.x + ' ' + (b.y + T) + 'L' + a.x + ' ' + (a.y + T) + 'Z');
+    d.path('mw-d-spoil mw-d-side', 'M' + P(b) + 'L' + P(c) + 'L' + c.x + ' ' + (c.y + T) + 'L' + b.x + ' ' + (b.y + T) + 'Z');
+    d.path('mw-d-spoil', 'M' + P(a) + 'L' + P(b) + 'L' + P(c) + 'L' + P(e) + 'Z');
+    for (var i = 1; i <= 5; i++) for (var j = 1; j <= 2; j++) {
+      var q = p(i / 6, j / 3);
+      d.path('mw-d-hole', 'M' + (q.x - 7) + ' ' + q.y + 'a7 3.5 0 1 0 14 0a7 3.5 0 1 0 -14 0Z');
+    }
+    var t1 = p(0.08, 0.5), t2 = p(0.92, 0.5);
+    d.line('mw-d-mark mw-d-trackline', t1.x, t1.y, t2.x, t2.y);
+    d.origin(a.x, a.y);
+    d.text(a.x - 4, a.y + T + 15, corner ? '0, 0: the travel’s front left' : 'machine X0 Y0 (as the map)', 'mw-d-z0');
+    d.text(c.x + 8, c.y + 4, 'Top at Z0', 'mw-d-z0');
+    var F = [['STEP', 'a solid, in mm'], ['DXF', 'layers BOARD, HOLES, TRACKS'], ['STL', 'a closed mesh']];
+    F.forEach(function(f, i) {
+      var y = 30 + i * 44;
+      d.arrow(c.x + 30, Math.min(110, (c.y + b.y) / 2 + 10), 418, y + 10);
+      d.rect('mw-d-file', 424, y - 4, 486, y + 22);
+      d.text(455, y + 13, f[0], 'mw-d-val', 'middle');
+      d.text(496, y + 13, f[1], 'mw-d-note');
+    });
+    d.text(40, 22, 'The board is the travel; the holes and slots Dog holes and T-tracks would cut', 'mw-d-note');
+    d.put('mw-cad-diagram');
+  }
   // The Cut Board tab's fields, saved by id (less "mw-") in the machine's
   // units then (settings.units).
   var CUT_SAVED = {
@@ -9566,6 +9909,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function renderFit() {
     var f = fitSettings(), last = f.local[f.local.length - 1];
+    fitDiagram(f);
     $('mw-fit-sizes').textContent = f.local.length ? 'Left to right: ' + f.local.map(function(h) { return shown(h.diaMm); }).join(', ') + ' ' + unitName() +
       ', on a strip of scrap about ' + shown(last.x + f.local[0].y) + ' \u00d7 ' + shown(2 * f.local[0].y) + ' ' + unitName() + '.' + toolText(f.o) : '';
     showProblems($('mw-fit-note'), f.probs);
@@ -9596,6 +9940,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function renderChamfer() {
     var c = chamferSettings();
+    chamferDiagram(c.o);
     showProblems($('mw-chm-note'), c.probs);
     $('mw-chm-generate').disabled = !!c.probs.length;
   }
@@ -9760,6 +10105,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function renderGridLines() {
     var l = gridLineSettings(), laser = l.o.laser, own = $('mw-gl-on').value === 'spacing';
+    lineDiagram(l.o);
     $('mw-gl-space').closest('.mw-field').hidden = !own;
     ROOT.querySelector('.mw-gl-dots-field').hidden = own;
     ROOT.querySelectorAll('#mw-gl-dots .mw-dot').forEach(function(d) { d.setAttribute('aria-pressed', d.getAttribute('data-origin') === $('mw-gl-origin').value ? 'true' : 'false'); });
@@ -9813,6 +10159,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function renderLaserTest() {
     var l = laserTestSettings();
+    laserTestDiagram();
     $('mw-lt-summary').textContent = l.o.groups.length ? l.o.pn + ' powers × ' + l.o.fn + ' feeds, on scrap at least ' +
       shown(l.o.wMm) + ' × ' + shown(l.o.hMm) + ' ' + unitName() + '.' : '';
     showProblems($('mw-lt-note'), l.probs);
@@ -9876,6 +10223,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function renderLabels() {
     var l = labelSettings(), laser = l.o.laser;
+    labelDiagram(l.o);
     ROOT.querySelectorAll('.mw-lab-ruler').forEach(function(f) { f.hidden = $('mw-lab-mode').value !== 'ruler'; });
     $('mw-lab-depth').closest('.mw-field').hidden = laser;
     $('mw-lab-power').closest('.mw-field').hidden = !laser;
@@ -10235,6 +10583,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function renderTracks() {
     var tr = trackSettings(), o = tr.o, u = ' ' + unitName(), text = '';
+    trackDiagram(o);
     if (o.slots.length) {
       var lines = tr.probs.length ? null : trackProgram(o);
       text = o.slots.length + ' slot' + (o.slots.length === 1 ? '' : 's') + ', ' + shown(o.slots.reduce(function(a, sl) { return a + sl.lenMm; }, 0)) + u + ' in all, ' +
@@ -10276,6 +10625,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   }
   function renderCad() {
     var c = cadSettings(), u = ' ' + unitName(), text = '';
+    cadDiagram();
     var stlProbs = c.probs.slice();
     if (c.o && !(c.o.thickMm > 0)) stlProbs.push('Set the Spoilboard Thickness above for the STEP and STL');
     if (c.parts) {
@@ -10340,9 +10690,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // The plate tick's line: the plate's size and where, or why not.
   function renderPlate() {
     var on = $('mw-cut-plate').checked, note = $('mw-cut-plate-note');
-    note.hidden = !on;
+    note.hidden = !on; $('mw-plate-diagram').toggleAttribute('hidden', !on);  // an SVG has no .hidden
     if (!on) return;
     var o = cutSettings(), u = ' ' + unitName(), r = o.plate;
+    plateDiagram(o);
     note.textContent = !r ? 'No stock yet: place it in the XY0 Picker\u2019s Stock mode (Against Pins, or Corner on X0 Y0) and give its size.'
       : 'Stock ' + shown(r.maxX - r.minX) + ' \u00d7 ' + shown(r.maxY - r.minY) + (o.plateThickMm > 0 ? ' \u00d7 ' + shown(o.plateThickMm) : ', no thickness (T) yet,') + u +
         ', its front left corner at machine X ' + shown(r.minX) + ', Y ' + shown(r.minY) + u + '. ' + o.holes.length + ' hole' + (o.holes.length === 1 ? '' : 's') +
