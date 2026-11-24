@@ -490,7 +490,7 @@ or corner one hole radius out (back is +Y, right is +X), e.g. back right for a s
 Left**, and Set's does too) moves the spindle over that point, lifting to ncSender's Safe Z first (machine Z0
 when none is set; it never moves down, so a spindle already above Safe Z stays there). Like ncSender's
 XY0, hold it for a second, since it moves the machine. A side of a hole that would land in a keepout
-zone or outside the travel can't be used. In **Stock** mode, **Go to Stock Center** (under Probe Stock Top) moves over
+zone or outside the travel can't be used. In **Stock** mode, **Go to Stock Center** (beside Probe Stock Top) moves over
 the stock's center the same way (hold it), whichever dot X0 Y0 is on.
 **Set G54 XY** (hold it for a second too, so a stray tap can't move your zero) sends
 `G21 G10 L2 P1 X… Y…`, which sets that work offset without moving anything. The

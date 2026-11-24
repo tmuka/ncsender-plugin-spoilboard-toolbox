@@ -605,7 +605,11 @@
   .mw-holebar-actions > #mw-hole-nearest { min-height: 48px; }
   /* A 230 px column is too narrow for two named buttons: one per row. */
   .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-hole-goto,
-  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-stock-gocenter, .mw-pick-card.mw-tall .mw-holebar-actions > [data-probe-top] { grid-column: 1 / -1; }
+  .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-stock-gocenter,
+  .mw-pick-card.mw-tall .mw-holebar-actions > [data-probe-top] { grid-column: 1 / -1; }
+  /* Stock mode: Probe Stock Top and Go to Stock Center side by side, as
+     Pick Nearest Hole and Go to are (alone, Probe Stock Top takes the row). */
+  .mw-pick-card.mw-tall[data-zmode="stock"]:not(.mw-goto-one, .mw-side-narrow) .mw-holebar-actions > [data-probe-top] { grid-column: auto; width: auto !important; }
   /* Set XY0 / Set Z0 when the work offset already has that zero. */
   .mw-set-done { display: none; }
   .mw-already .mw-set-done { display: inline; }
@@ -685,7 +689,7 @@
   .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-wcs, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-set,
   .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-setz { grid-column: 1 / -1; }
   .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-goto,
-  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-stock-gocenter {
+  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-stock-gocenter, .mw-pick-card.mw-tall .mw-holebar-actions > [data-probe-top] {
     min-width: 0 !important; padding-left: 6px !important; padding-right: 6px !important; white-space: normal; line-height: 1.15;
   }
   .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
@@ -11309,7 +11313,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         '<li><strong>Hole:</strong> the dots pick where on the hole: its center, or an edge or corner of the hole one hole radius out in machine X and Y (back is +Y, right is +X). For a part on a pin, a flip pin, a jig&rsquo;s home hole, or moving around the bed.</li>' +
         '<li><strong>Stock:</strong> the dots pick a point on the stock. A placed stock stays put while you pick holes in Hole mode.</li></ul>' +
         '<p>Beside Set, one line says where X0 Y0 goes, with the numbers, and the next how far Set moves the work offset and from where (a hole&rsquo;s dot or the stock&rsquo;s, when it&rsquo;s on one). A move of exactly a hole or pin radius from an unnamed spot is flagged: the usual sign of the wrong dot. The small view beside it shows it zoomed in.</p>',
-      '<strong>Go to Selected</strong> (its label names the point, e.g. <strong>Go to B4 &middot; back right</strong> or <strong>Go to Stock Front Left</strong>; Set&rsquo;s does too) moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves. In <strong>Stock</strong> mode, <strong>Go to Stock Center</strong> (under Probe Stock Top) moves over the stock&rsquo;s center the same way, whichever dot X0 Y0 is on: handy for checking the stock, or for work from its center.',
+      '<strong>Go to Selected</strong> (its label names the point, e.g. <strong>Go to B4 &middot; back right</strong> or <strong>Go to Stock Front Left</strong>; Set&rsquo;s does too) moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves. In <strong>Stock</strong> mode, <strong>Go to Stock Center</strong> (beside Probe Stock Top) moves over the stock&rsquo;s center the same way, whichever dot X0 Y0 is on: handy for checking the stock, or for work from its center.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the silver ring with a dot in it is the spindle, as ncSender&rsquo;s Top view shows it from above (the dot is the bit&rsquo;s center). The numbers along the bottom (X) and right (Y) are machine coordinates in ncSender&rsquo;s units.',
       'Keepout zones that are on (ncSender Pro&rsquo;s, every one that&rsquo;s on, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Pick Nearest Hole skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, pick any hole on the map, jog the bit over its real center and press <strong>Grab B3 Center</strong> (the button names the picked hole): the insets are set so that hole is under the bit, with a warning if that&rsquo;s more than half a spacing from where Setup had it. With no hole picked it&rsquo;s <strong>Grab First Hole Center</strong>: the bit over the first hole, or any hole when the first is less than one spacing from machine X0 Y0. The machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',

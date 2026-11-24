@@ -7,7 +7,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ### 🔧 Better
 - **ncSender's jog panel stays in reach:** on screens 1600 px wide and up (landscape), Spoilboard Toolbox sits on the left over the visualizer, so ncSender's jog buttons, Home and position stay visible and usable beside it. Smaller screens keep the nearly full-screen dialog.
-- **XY0 Picker's buttons match in Hole and Stock:** Pick Nearest Hole and Go to Selected side by side in both, and Stock mode's Go to Stock Center moved under Probe Stock Top.
+- **XY0 Picker's buttons match in Hole and Stock:** Pick Nearest Hole and Go to Selected side by side in both, and in Stock mode Probe Stock Top and Go to Stock Center side by side under them.
 - **Pick Nearest Hole in Stock mode too:** jog over a pin's hole and press it to add that pin (Against Pins; it never takes one out), or, with Corner on X0 Y0, to put the stock's corner on the nearest hole, as a favorite does.
 - **Diagrams on every Cut Board page:** T-tracks, Grid lines, Fit test, Laser test, Chamfers, Labels (each label mode, and what the Inch / mm marks' offsets move) and Export each open with a picture of what they make, drawn from the fields as you type.
 - **Click a diagram to enlarge it:** any of the pictures opens over the dialog, as QuickCut's previews do; click it or press Esc to go back.
