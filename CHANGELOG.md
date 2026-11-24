@@ -3,6 +3,11 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### ✨ New
+- **Record Spoilboard Height** (top of the Z0 macros tab): re-record the spoilboard's height after surfacing it without running a macro. Put the probe block on the spoilboard, jog the bit above it and hold the button: it probes down, stores the height, backs off and says how much it changed. A height more than 2 mm from the one recorded (the block left off, say) isn't stored until you press **Store It Anyway**. The note that appears after a surfacing job has a **Record Height** button that takes you there.
+
 ## 0.5.14: Ruler marks and a Cut Board list
 
 ### 🔧 Better

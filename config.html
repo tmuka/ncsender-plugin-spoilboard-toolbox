@@ -749,6 +749,7 @@
     </div>
     <div class="mw-banner" id="mw-surface" hidden>
       <span id="mw-surface-text"></span>
+      <button type="button" class="mw-btn mw-btn-small" id="mw-surface-record">Record Height</button>
       <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-surface-ok">Done</button>
     </div>
     <div class="mw-tab" data-tab="holes">
@@ -1068,6 +1069,16 @@
       </svg>
       <p class="mw-d-refresh"><span id="mw-d-status">The numbers come from the controller ($#).</span> <a href="#" id="mw-d-refresh">Refresh</a></p>
 
+      <section class="mw-card" id="mw-spoil-card" aria-labelledby="mw-spoil-title">
+        <div class="mw-card-head">
+          <h3 class="mw-card-title" id="mw-spoil-title">Record the spoilboard height</h3>
+          <button type="button" class="mw-btn mw-hold-btn mw-hold-primary" id="mw-spoil-record" title="Hold to probe straight down onto the block, up to Max Probe Travel, store the spoilboard height and back off by Retract After: what SBT: Record spoilboard height does, without creating the macros first."><span class="mw-hold-fill"></span><span class="mw-hold-label">Record Spoilboard Height</span><span class="mw-hold-hint">Hold</span></button>
+        </div>
+        <p class="mw-hint">Once to start, and again after surfacing the spoilboard. Put the probe block on the spoilboard, load a tool whose length offset is measured, and jog the bit a few mm above the block. It probes straight down with the Probe Block Thickness, Probe Feed and Max Probe Travel in Settings, stores the height, and backs off. A height more than 2 mm from the one recorded isn&rsquo;t stored until you say so.</p>
+        <p class="mw-status" id="mw-spoil-status" role="status"></p>
+        <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-spoil-anyway" hidden>Store It Anyway</button>
+      </section>
+
       <section class="mw-card" aria-labelledby="mw-check-title">
         <div class="mw-card-head">
           <h3 class="mw-card-title" id="mw-check-title"><span class="mw-step">1</span>Check the controller</h3>
@@ -1190,7 +1201,7 @@
         <h3 class="mw-card-title" id="mw-test-title"><span class="mw-step">5</span>Try it once</h3>
         <ol class="mw-steps">
           <li>Set the probe block on the spoilboard and load a tool whose length offset is measured and active.</li>
-          <li>Jog the bit just above the block. In ncSender&rsquo;s Macros tab, run <strong data-name="record"></strong>. It probes down, stores the spoilboard height, and backs off.</li>
+          <li>Jog the bit just above the block. In ncSender&rsquo;s Macros tab, run <strong data-name="record"></strong> (or hold <strong>Record Spoilboard Height</strong> at the top of this tab). It probes down, stores the spoilboard height, and backs off.</li>
           <li>Without changing tools, run <strong data-name="set"></strong>. It saves your current Z0, then puts Z0 on the spoilboard.</li>
           <li>Jog down onto the block with a paper feeler. Work Z should read about the block thickness. Or check it against ncSender&rsquo;s own probe: run <strong>Probe &rarr; Standard Block &rarr; Z</strong> with the block still on the spoilboard, then <strong data-name="set"></strong> again; work Z shouldn&rsquo;t change by more than a few hundredths. If they don&rsquo;t agree, don&rsquo;t use the macros until they do.</li>
           <li>Run <strong data-name="restore"></strong>. Work Z0 goes back to where it was before step 3.</li>
@@ -1201,7 +1212,7 @@
         <p class="mw-hint">The macros <strong>stop without changing anything</strong> when the machine isn&rsquo;t homed, no tool
           length offset is active, or the spoilboard height (or stock thickness) hasn&rsquo;t been stored yet. ncSender&rsquo;s
           terminal shows <code class="mw-inline">error:72</code>; each stop line in the macro has a comment saying what it checks.</p>
-        <p class="mw-hint"><strong>Re-run the record macro</strong> after surfacing the spoilboard (e.g. QuickCut&rsquo;s Wasteboard
+        <p class="mw-hint"><strong>Record the height again</strong> (the button at the top of this tab, or the record macro) after surfacing the spoilboard (e.g. QuickCut&rsquo;s Wasteboard
           Surfacing), or if your reference tool changes: the stored height is only as current as the last recording.</p>
       </section>
     </div>
@@ -2214,6 +2225,15 @@
   // measured offset applied, so $G alone would say there's none.
   function tloInEffect(gc, hash) {
     return !!(gc && gc.tloActive) || !!(hash && isFinite(hash.TLO) && Math.abs(hash.TLO) > 0.0005);
+  }
+  // Record Spoilboard Height (Z0 macros tab), as the record macro stores it:
+  // spoilboard = trigger Z (machine, mm) - block thickness - TLO. prevMm:
+  // the height recorded before (0 or null: none). jump: it moved more than
+  // maxJumpMm, more than a surfacing pass takes, so it isn't stored without
+  // asking (a block left off, or a tool length offset that isn't measured).
+  function spoilFromProbe(zMm, blockMm, tloMm, prevMm, maxJumpMm) {
+    var mm = zMm - blockMm - tloMm, had = typeof prevMm === 'number' && isFinite(prevMm) && prevMm !== 0;
+    return { mm: mm, prevMm: had ? prevMm : null, deltaMm: had ? mm - prevMm : null, jump: had && Math.abs(mm - prevMm) > maxJumpMm };
   }
 
   // Spoilboard holes. A grid of holes (dog holes) at X / Y spacing, the
@@ -5642,6 +5662,77 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }).catch(function() {});
   }
 
+  // Record Spoilboard Height: the record macro's probe, run from here, so
+  // re-recording after surfacing needs no macros. Checks first (connected,
+  // idle, homed, a tool length offset, no G92 Z), probes down from where the
+  // bit is, backs off, and stores trigger Z - block - TLO (spoilFromProbe)
+  // in the height slot, unless it moved more than SPOIL_JUMP_MM: then Store
+  // It Anyway stores the number just measured.
+  var spoilPending = null;
+  async function recordSpoilHeight() {
+    var status = $('mw-spoil-status'), btn = $('mw-spoil-record'), anyway = $('mw-spoil-anyway');
+    anyway.hidden = true; spoilPending = null;
+    var s = readSettings();
+    if (!s) { status.setAttribute('data-state', 'bad'); status.textContent = 'Fix the settings marked in Settings first.'; return; }
+    btn.disabled = true;
+    status.removeAttribute('data-state');
+    status.textContent = 'Probing\u2026';
+    var gc = null;
+    try {
+      await noJobRunning();
+      await machineReady();
+      gc = parseGcState((await ask('$G', 500)).lines);
+      var hash = parseHashReport((await ask('$#', 900)).lines), k = state.reportInches ? MM_PER_INCH : 1;
+      if (!tloInEffect(gc, hash) || !isFinite(hash.TLO)) throw new Error('no tool length offset is active: load a tool whose length is measured (a tool setter or ncSender\u2019s tool table)');
+      if (hash.G92 && Math.abs(hash.G92[2] || 0) > 0.0005) throw new Error('a G92 Z offset is active (G92.1 clears it)');
+      var t;
+      try {
+        t = await probeTouch('Z', -s.travelMm, s.feedMm);
+        await sendCommand('G21 G91 G0 Z' + fmt(s.retractMm));
+      } finally {
+        await sendCommand('G90');
+        if (gc && gc.imperial) await sendCommand('G20');
+      }
+      if (!t || !t.ok) throw new Error('the probe didn\u2019t touch the block within the Max Probe Travel (' + shown(s.travelMm) + ' ' + unitName() + '), so nothing was stored');
+      var prevV = hash[WCS_NAMES[s.slot]];
+      var r = spoilFromProbe(t.z * k, s.blockMm, hash.TLO * k, prevV ? prevV[2] * k : null, SPOIL_JUMP_MM);
+      if (r.jump) {
+        spoilPending = { slot: s.slot, mm: r.mm, imperial: gc ? gc.imperial : null };
+        status.setAttribute('data-state', 'warn');
+        status.textContent = 'Not stored: the probe puts the spoilboard ' + shown(Math.abs(r.deltaMm)) + ' ' + unitName() + ' ' + (r.deltaMm < 0 ? 'lower' : 'higher') +
+          ' than the height recorded (' + shown(r.prevMm) + ' \u2192 ' + shown(r.mm) + ' ' + unitName() + '). Was the block under the bit, the right Probe Block Thickness, and the tool\u2019s length measured? If you surfaced off that much, store it.';
+        anyway.hidden = false;
+        return;
+      }
+      await storeSpoil(s.slot, r.mm, gc ? gc.imperial : null, r);
+    } catch (err) {
+      status.setAttribute('data-state', 'bad');
+      status.textContent = 'Couldn\u2019t record the spoilboard height: ' + err.message + '.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  async function storeSpoilAnyway() {
+    var p = spoilPending, status = $('mw-spoil-status');
+    if (!p) return;
+    $('mw-spoil-anyway').hidden = true; spoilPending = null;
+    try { await storeSpoil(p.slot, p.mm, p.imperial, { mm: p.mm }); }
+    catch (err) { status.setAttribute('data-state', 'bad'); status.textContent = 'Couldn\u2019t store the spoilboard height: ' + err.message + '.'; }
+  }
+  async function storeSpoil(slot, mm, imperial, r) {
+    await noJobRunning();
+    await sendHoleCommands(['G21', 'G10 L2 P' + slot + ' Z' + fmt(mm)], imperial);
+    state.spoilZ = mm;
+    var status = $('mw-spoil-status');
+    status.setAttribute('data-state', 'ok');
+    status.textContent = 'Stored: the spoilboard is at ' + shown(mm) + ' ' + unitName() + ' (' + WCS_NAMES[slot] + ' Z)' +
+      (r.deltaMm != null ? ', ' + shown(Math.abs(r.deltaMm)) + ' ' + unitName() + ' ' + (r.deltaMm < 0 ? 'lower' : 'higher') + ' than before' : '') +
+      '. Set Z0 again from it: a Z0 put down before still has the old height.';
+    // The surfacing note has had its answer.
+    if (holes.surfaceKey) { holes.surfaceAck = holes.surfaceKey; $('mw-surface').hidden = true; saveSettings(); }
+    readNumbers();
+  }
+
   // Write the typed stock thickness to the thickness slot now. Sent in mm
   // (G21) since that's how it's converted; inch users get G20 back.
   async function storeThickness() {
@@ -6278,6 +6369,11 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     wireUnitFields();
     wireErrorBubble();
     $('mw-store-stock').addEventListener('click', storeThickness);
+    $('mw-spoil-anyway').addEventListener('click', storeSpoilAnyway);
+    $('mw-surface-record').addEventListener('click', function() {
+      showTab('macros');
+      $('mw-spoil-card').scrollIntoView({ block: 'start' });
+    });
     ROOT.querySelectorAll('[data-probe-top]').forEach(function(b) { b.addEventListener('click', startProbeTop); });
     $('mw-mini-check').addEventListener('click', checkProbeTop);
     $('mw-mini-open').addEventListener('click', function() {
@@ -6326,7 +6422,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-ins-add').addEventListener('click', addInsertGrid);
     $('mw-ins-cancel').addEventListener('click', function() { $('mw-ins-panel').hidden = true; renderGridBar(); });
     $('mw-hole-nearest').addEventListener('click', pickNearestHole);
-    ['mw-hole-goto', 'mw-stock-gocenter', 'mw-hole-set', 'mw-hole-setz', 'mw-cal-goto', 'mw-cal-auto'].forEach(function(id) {
+    ['mw-hole-goto', 'mw-stock-gocenter', 'mw-hole-set', 'mw-hole-setz', 'mw-cal-goto', 'mw-cal-auto', 'mw-spoil-record'].forEach(function(id) {
       var btn = $(id);
       btn.addEventListener('pointerdown', function(evt) { if (evt.button === 0) startHold(btn, evt); });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(type) {
@@ -8635,7 +8731,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   var hold = { raf: null, start: 0, active: false, btn: null };
   // Hold buttons (Go to Selected, Set), like ncSender's XY0: fill over a
   // second, act at the end, blink when let go early. One at a time.
-  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : btn.id === 'mw-hole-setz' ? setZZero : btn.id === 'mw-cal-goto' ? calGoto : btn.id === 'mw-cal-auto' ? probeSuggested : btn.id === 'mw-stock-gocenter' ? goToStockCenter : goToHole; }
+  function holdAction(btn) { return btn.id === 'mw-hole-set' ? setHoleZero : btn.id === 'mw-hole-setz' ? setZZero : btn.id === 'mw-cal-goto' ? calGoto : btn.id === 'mw-cal-auto' ? probeSuggested : btn.id === 'mw-stock-gocenter' ? goToStockCenter : btn.id === 'mw-spoil-record' ? recordSpoilHeight : goToHole; }
   function holdFill(btn, pct) { btn.querySelector('.mw-hold-fill').style.width = pct + '%'; }
   function startHold(btn, evt) {
     if (btn.disabled || hold.active) return;
@@ -10739,7 +10835,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         '<p><em>The 3D probe steps haven&rsquo;t been tried on a real probe yet: stay by the stop button, and feedback is welcome on GitHub.</em></p>',
       '<strong>Turn</strong> is how far the spoilboard is turned from square to the machine, in degrees (counterclockwise seen from above), about the grid&rsquo;s first hole; Measure Holes finds it. The map, Pick Nearest Hole, Set, the keyboard macros and the Cut Board and Stock Holes programs all use the turned positions, and holes the turn takes outside the travel are left out. With a turn, pick the hole before grabbing; with none picked, Grab uses the hole Setup puts nearest the bit.',
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
-      'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Wasteboard Surfacing) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off.',
+      'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Wasteboard Surfacing) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off. Its <strong>Record Height</strong> button opens the Z0 macros tab&rsquo;s <strong>Record Spoilboard Height</strong>.',
       'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>, counted from machine zero&rsquo;s corner, so <strong>A1</strong> is the hole nearest machine X0 Y0 (front left on a machine that homes there). The column numbers run along the top of the map and the row letters down its left side.',
       '<p><strong>Hole or Stock</strong> at the top of the controls picks what X0 Y0 goes on.</p><ul>' +
         '<li><strong>Hole:</strong> the dots pick where on the hole: its center, or an edge or corner of the hole one hole radius out in machine X and Y (back is +Y, right is +X). For a part on a pin, a flip pin, a jig&rsquo;s home hole, or moving around the bed.</li>' +
@@ -10835,6 +10931,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       'Record the spoilboard height once with a probe block and a measured tool; then the <strong>SBT:</strong> macros put work Z0 on the spoilboard or the stock top for any measured tool, and put your old Z0 back.',
       '<strong>Run checks</strong> confirms the controller supports the parameters and expressions the macros use. Run it once, and again after a firmware change.',
       'The values are kept in spare work offsets (G59.1&ndash;G59.3 Z by default); pick ones you don&rsquo;t use. Re-record the spoilboard height after surfacing it.',
+      '<strong>Record Spoilboard Height</strong> (top of the Z0 macros tab) does what the record macro does, without creating the macros: with the block on the spoilboard, a measured tool and the bit a few mm above it, hold it to probe down (Probe Feed, Max Probe Travel), store trigger Z &minus; block &minus; tool length offset and back off. It stops unless the machine is homed and idle with a tool length offset active and no G92 Z. A height more than 2 mm from the one recorded isn&rsquo;t stored until you press <strong>Store It Anyway</strong>.',
       'Each macro stops without changing anything when the machine isn&rsquo;t homed, no tool length offset is active, a value it needs isn&rsquo;t stored, or another work offset is active (the macros are made for one, Work Offset to Set: select it, or change Work Offset to Set and press Create macros); ncSender&rsquo;s terminal shows <code>error:72</code>.',
       '<strong>Create macros</strong> writes or updates the macros, and removes any extras you&rsquo;ve unticked.',
       HELP_KEYS, HELP_NEEDS, HELP_UNITS,

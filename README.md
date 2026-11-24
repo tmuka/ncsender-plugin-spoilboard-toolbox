@@ -241,7 +241,8 @@ center of round or square stock), set X0 Y0 at that midpoint, and save / restore
 
 1. Open **Spoilboard Toolbox** from the plugin tool menu, run the check, and press **Create macros**.
 2. With a measured tool loaded, put your probe block (touch plate) on the spoilboard, jog the bit just above it,
-   and run **Record spoilboard height**. It probes straight down.
+   and run **Record spoilboard height**. It probes straight down. (Or hold **Record Spoilboard Height** at the
+   top of the Z0 macros tab, which does the same without the macros.)
 3. Check it once against ncSender's own probe. With the block still on the spoilboard, run ncSender's
    **Probe → Standard Block → Z**, which sets Z0 on the spoilboard by probing. Then run
    **Z0 on spoilboard**: work Z shouldn't change by more than a few hundredths of a mm. (After this,
@@ -794,7 +795,11 @@ size and thickness; the holes come from the grid picked in Setup.
    [Put them on keys](#put-them-on-keys)).
    Their names start with **SBT:**, and each description is the macro's first comment line (e.g.
    "record spoilboard height").
-   - **Record spoilboard height**: probes down onto the block and stores the height.
+   - **Record spoilboard height**: probes down onto the block and stores the height. The tab's
+     **Record Spoilboard Height** button (hold it) does the same from the plugin: it checks the machine is
+     homed and idle with a tool length offset and no G92 Z first, and a height more than 2 mm from the one
+     recorded waits for **Store It Anyway**. After a surfacing job, the note at the top has a **Record
+     Height** button that opens it.
    - **Measure stock thickness**: with the block on the stock, probes down and stores
      stock top minus the spoilboard height.
    - **G54 Z0 on spoilboard**: saves the current Z0, then sets Z0 on the spoilboard.
@@ -917,8 +922,9 @@ See [What you need](#what-you-need) for the rest of the plugin.
   travel or in a keepout zone or Exclude Picks area. The line beside Set says which.
 - **"Safe Z puts this tool's tip less than 5 mm above Z0"**: raise **Safe Z Height** in ncSender's
   Settings → General.
-- **Z0 is off after surfacing the spoilboard**: run **SBT: Record spoilboard height** again; every Z0
-  from the recorded height is off by what was surfaced.
+- **Z0 is off after surfacing the spoilboard**: record the height again (**Record Spoilboard Height** at the
+  top of the Z0 macros tab, or **SBT: Record spoilboard height**); every Z0 from the recorded height is off
+  by what was surfaced. Then set Z0 again: a Z0 set before still has the old height.
 
 ## The fine print
 
