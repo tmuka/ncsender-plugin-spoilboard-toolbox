@@ -7389,10 +7389,21 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (aim && aim.tg && WCS_NAMES[holeWcs()] === pl.wcs && (!off || Math.hypot(aim.tg.x - off.x, aim.tg.y - off.y) > 0.005)) {
       off = aim.tg; where = pl.wcs + ' X0 Y0 on ' + targetText(aim).replace(/ \(.*\)$/, '') + ', where Set puts it';
     }
-    var text, bad = false;
+    var text, bad = false, ghost = null;
     if (pl.why && !(off && pl.bitMm > 0 && p.cuts.segs.length)) text = name + ' can\u2019t be checked against the stock: ' + pl.why + '.';
     else if (!p.cuts.box) text = name + ' never cuts below Z0, so there\u2019s nothing to check against the stock.';
-    else if (!rect) text = name + ': give the stock\u2019s width and length to check that it fits.';
+    else if (!rect && !stockSize()) text = name + ': give the stock\u2019s width and length to check that it fits.';
+    else if (!rect) {
+      // Not placed yet (Against Pins short of pins, or Corner on X0 Y0 not
+      // taken): a dashed stock of the typed size round the cuts, at the
+      // work offset's X0 Y0, so it shows where the stock has to go.
+      var sz = stockSize(), b = p.cuts.box, gx = off ? off.x + (b.minX + b.maxX) / 2 : 0, gy = off ? off.y + (b.minY + b.maxY) / 2 : 0;
+      var which = (stockPlacement() || {}).problem === 'which';
+      if (off && !which) ghost = { minX: gx - sz.w / 2, maxX: gx + sz.w / 2, minY: gy - sz.l / 2, maxY: gy + sz.l / 2 };
+      text = name + ' isn\u2019t checked yet: the stock isn\u2019t placed' +
+        (which ? ' (pick which way the pins hold it)' : holes.stockBy === 'pins' ? ' (tap the holes your pins are in: two along one edge, one along the other)' : ' (press Use Current X0 Y0, or place it Against Pins)') + '.' +
+        (ghost ? ' Dashed on the map: the ' + shown(sz.w) + ' \u00d7 ' + shown(sz.l) + u + ' stock round its cuts, with ' + where + '. Put the stock there, or move X0 Y0 to where it is.' : '');
+    }
     else {
       var past = cutsPastStock(p.cuts, off, pl.bitMm, rect, margin), SIDES = ['left', 'right', 'front', 'back'];
       var off2 = SIDES.filter(function(sd) { return past[sd] - margin > 0.005; });
@@ -7416,7 +7427,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     txt.textContent = text;
     txt.classList.toggle('mw-warn-text', bad);
-    return off && p.cuts.box && pl.bitMm > 0 ? { p: p, pl: pl, off: off, bad: bad } : null;
+    return off && p.cuts.box && pl.bitMm > 0 ? { p: p, pl: pl, off: off, bad: bad, ghost: ghost } : null;
   }
   // The program's cuts (moves below Z0) as one path in its work offset's
   // mm, points closer than tol dropped. Kept per program.
@@ -8465,6 +8476,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     // The loaded program's cuts, the bit's width, where X0 Y0 is now.
     var fit = renderProgramFit();
+    if (fit && fit.ghost && holes.zeroMode === 'stock') {
+      var gr = fit.ghost, gx0 = Math.max(gr.minX, minX), gx1 = Math.min(gr.maxX, minX + t.xMm), gy0 = Math.max(gr.minY, minY), gy1 = Math.min(gr.maxY, minY + t.yMm);
+      if (gx1 > gx0 && gy1 > gy0) {
+        add('rect', { class: 'mw-h-stock-alt', x: X(gx0), y: Y(gy1), width: ((gx1 - gx0) * sc).toFixed(1), height: ((gy1 - gy0) * sc).toFixed(1) });
+        add('text', { class: 'mw-h-alt-label mw-h-ghost-label', x: X((gx0 + gx1) / 2), y: (+Y(gy1) + 14).toFixed(1), 'text-anchor': 'middle' }, 'Stock not placed');
+      }
+    }
     if (fit && holes.zeroMode === 'stock') {
       // In a group clipped to the bed: the path's own transform would scale the clip.
       var pg = add('g', { 'clip-path': 'url(#' + clipId + ')' }), pp = document.createElementNS(ns, 'path');
