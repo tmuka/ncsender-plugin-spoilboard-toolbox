@@ -727,7 +727,9 @@ size and thickness; the holes come from the grid picked in Setup.
   any spoilboard hole where its bit (its edge) would pass within 1 mm of the bolt head or pin is
   left out, the nearest clear hole used instead. Rapids count too: a bolt head is taken to stand
   about the bolt's width high, on the stock or in its counterbore. Unticked, the summary names the
-  holes the bit would hit. It goes by the work offset's X0 Y0 as it is now. Programs Spoilboard
+  holes the bit would hit. It checks the program where it will run: with X0 Y0 where the XY0 Picker's
+  Set will put it on the stock, when Set would set the program's work offset; otherwise with X0 Y0 as
+  it is now. Programs Spoilboard
   Toolbox made don't count: the part loaded before them is checked, read again from ncSender's
   files when it was one; otherwise the summary asks you to load the part again.
 - **Locating Pins + Bolts:** a plate that comes off and goes back exactly, in one program. Two pin

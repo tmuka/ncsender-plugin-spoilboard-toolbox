@@ -1779,7 +1779,7 @@
             <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-depth" value="" placeholder="through" title="Blank: the holes go through the stock and Break Through into the spoilboard. A number: blind holes that stop this far below Z0 (the stock's top), less than its thickness T.">
           </div>
         </div>
-        <label class="mw-check" title="Load the part's program first. Any spoilboard hole where its bit (its edge, rapids too) would pass within 1 mm of the bolt head or pin is left out, and the nearest clear hole used instead, with X0 Y0 where it is now. A bolt head is taken to stand about the bolt's width high, on the stock or in its counterbore."><input type="checkbox" id="mw-sh-avoid" checked> Clear of the loaded program</label>
+        <label class="mw-check" title="Load the part's program first. Any spoilboard hole where its bit (its edge, rapids too) would pass within 1 mm of the bolt head or pin is left out, and the nearest clear hole used instead, with X0 Y0 where the XY0 Picker's Set will put it on the stock (or where it is now). A bolt head is taken to stand about the bolt's width high, on the stock or in its counterbore."><input type="checkbox" id="mw-sh-avoid" checked> Clear of the loaded program</label>
         <svg class="mw-diagram mw-sh-diagram" id="mw-sh-diagram" viewBox="0 0 700 214" role="img" aria-label="Side view of the stock on the spoilboard: where Z0 is and how deep each hole goes."></svg>
         <p class="mw-hint" id="mw-sh-summary"></p>
         <div><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-sh-place" hidden title="Opens the XY0 Picker in Stock mode: tap the holes your pins are in, or use Current X0 Y0 on a corner, and give the stock's size and thickness.">Place the Stock in the XY0 Picker</button>
@@ -7367,6 +7367,16 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     return { wcs: w, off: off, bitMm: bit, bitFrom: from, why: why };
   }
   function programName(p) { return '\u201c' + p.name + '\u201d'; }
+  // Where the program's X0 Y0 will be: in Stock mode, the picked point on
+  // the stock when Set would set the program's work offset; otherwise its
+  // X0 Y0 where it is now. Shared by the fit line and Stock Holes, so both
+  // check the program where it will run.
+  function programAim(pl) {
+    var aim = holes.zeroMode === 'stock' ? pickTarget() : null, off = pl.off;
+    if (aim && aim.tg && WCS_NAMES[holeWcs()] === pl.wcs && (!off || Math.hypot(aim.tg.x - off.x, aim.tg.y - off.y) > 0.005))
+      return { off: aim.tg, set: true, where: pl.wcs + ' X0 Y0 on ' + targetText(aim).replace(/ \(.*\)$/, '') + ', where Set puts it' };
+    return { off: off, set: false, where: pl.wcs + ' X0 Y0 where it is now' };
+  }
   // The stock panel's line: whether the program's cuts fit the stock, clear
   // of the clamp margin, with X0 Y0 where Set will put it (when that's the
   // program's work offset) or where it is now. Returns what the map draws.
@@ -7385,10 +7395,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-stock-fit').hidden = !(p.cuts.box && pl.bitMm > 0);
     var name = programName(p) + (p === prog.now ? '' : ' (loaded before Spoilboard Toolbox\u2019s own program)');
     // Where X0 Y0 will be: the picked point, when Set would set this program's work offset.
-    var aim = pickTarget(), off = pl.off, where = pl.wcs + ' X0 Y0 where it is now';
-    if (aim && aim.tg && WCS_NAMES[holeWcs()] === pl.wcs && (!off || Math.hypot(aim.tg.x - off.x, aim.tg.y - off.y) > 0.005)) {
-      off = aim.tg; where = pl.wcs + ' X0 Y0 on ' + targetText(aim).replace(/ \(.*\)$/, '') + ', where Set puts it';
-    }
+    var at = programAim(pl), off = at.off, where = at.where;
     var text, bad = false, ghost = null;
     if (pl.why && !(off && pl.bitMm > 0 && p.cuts.segs.length)) text = name + ' can\u2019t be checked against the stock: ' + pl.why + '.';
     else if (!p.cuts.box) text = name + ' never cuts below Z0, so there\u2019s nothing to check against the stock.';
@@ -10414,13 +10421,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function holesInCuts(list, rMm, topZ) {
     var p = checkedProgram();
     if (!p || !list.length) return null;
-    var pl = programPlace(p);
-    if (pl.why) return null;
-    var key = [p.name, pl.off.x, pl.off.y, pl.bitMm].join('|');
+    var pl = programPlace(p), off = programAim(pl).off;
+    if (!off || !(pl.bitMm > 0) || !p.cuts.segs.length) return null;
+    var key = [p.name, off.x, off.y, pl.bitMm].join('|');
     if (inCutsKept.key !== key || inCutsKept.cuts !== p.cuts) inCutsKept = { key: key, cuts: p.cuts, map: new Map() };
     var kept = inCutsKept.map, id = function(q) { return q.x + ',' + q.y + ',' + rMm + ',' + topZ; };
     var ask = list.filter(function(q) { return !kept.has(id(q)); });
-    if (ask.length) cutsNear(p.cuts, pl.off, pl.bitMm, ask.map(function(q) { return { x: q.x, y: q.y, r: rMm, topZ: topZ }; }), 1, true)
+    if (ask.length) cutsNear(p.cuts, off, pl.bitMm, ask.map(function(q) { return { x: q.x, y: q.y, r: rMm, topZ: topZ }; }), 1, true)
       .forEach(function(g, i) { kept.set(id(ask[i]), g != null && g < 1); });
     return list.map(function(q) { return kept.get(id(q)); });
   }
@@ -10662,14 +10669,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         text += ' ' + shown(o.depthMm) + u + ' deep from the stock\u2019s top. About ' + Math.max(1, Math.round(programMinutes(lines, state.rapidMmMin || 3000))) + ' min.' + toolText(o);
       }
       var pg = s.prog ? programPlace(s.prog) : null, pname = s.prog ? programName(s.prog) : '';
-      var what = s.fix ? 'pins or bolts' : s.pins ? 'pins' : 'bolts';
-      if (pg && pg.why) text += ' ' + pname + ' can\u2019t be checked against the ' + what + ': ' + pg.why + '.';
+      var what = s.fix ? 'pins or bolts' : s.pins ? 'pins' : 'bolts', pw = pg ? programAim(pg) : null;
+      if (pg && !(pw.off && pg.bitMm > 0 && s.prog.cuts.segs.length)) text += ' ' + pname + ' can\u2019t be checked against the ' + what + ': ' + pg.why + '.';
       else if (pg) {
         var hit = s.inCuts.map(holeName);
         if (hit.length > 12) hit = hit.slice(0, 8).concat('\u2026', hit.slice(-2));
         if (s.inCuts.length) text += ' ' + pname + '\u2019s bit passes within 1 mm of the ' + what + ' in ' + (s.inCuts.length > 1 ? s.inCuts.length + ' holes (' + hit.join(', ') + ')' : hit[0]) +
-          ', rapids too (with ' + pg.wcs + ' X0 Y0 where it is now). Tick Clear of the loaded program, or move X0 Y0.';
-        else text += ' Clear of ' + pname + '\u2019s path, with ' + pg.wcs + ' X0 Y0 where it is now' + (s.skipped ? ' (' + s.skipped + ' of the holes under the stock are in its way and weren\u2019t used)' : '') + '.';
+          ', rapids too (with ' + pw.where + '). Tick Clear of the loaded program, or move X0 Y0.';
+        else text += ' Clear of ' + pname + '\u2019s path, with ' + pw.where + (s.skipped ? ' (' + s.skipped + ' of the holes under the stock are in its way and weren\u2019t used)' : '') + '.';
       } else if (!s.pins) text += ' Keep the bolts out of the part\u2019s toolpaths (load the part\u2019s program first to have it checked).';
       var hn = readHoles() || {}, turnNow = (holes.activeGrid ? (hn.grids || [])[holes.activeGrid - 1] || {} : hn).turnDeg;
       if (s.pins && turnNow) text += ' The grid is turned ' + turnNow + '\u00b0, so the pin line is too: the stock flips about that tilted line, so set the second side\u2019s X0 Y0 from the pins rather than mirroring across a straight line.';
@@ -11411,7 +11418,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         '<li><strong>Bolts:</strong> a clearance hole over the hole nearest each corner, or every hole under it, with an optional counterbore, to bolt into the threaded inserts. <strong>Bolt</strong> fills the sizes for M6, M8 or 1/4-20.</li>' +
         '<li><strong>Locating Pins + Bolts:</strong> a plate that comes off and goes back exactly. Two pin holes over dog holes, as far apart as fit (diagonally); the first round, the second a slot pointing at it (<strong>Slot +</strong> longer, half each way), so it can&rsquo;t bind when MDF moves. Bolt holes go in the other holes of the same grid (inserts behind the dog holes) or in an insert grid of their own.</li>' +
         '<li><strong>Flip Pins:</strong> two dowel holes on the row (or column) nearest its middle, the second slotted too; flipped over that line, it drops back exactly where it was. The summary gives the line to mirror side 2 across in your CAM, and <strong>Zero on the Flip Pin</strong> opens the XY0 Picker on the round pin (it stays put when the stock turns over): hold <strong>Set</strong> there.</li></ul>' +
-        '<p><strong>Clear of the loaded program</strong> (on by default): load the part&rsquo;s program first, and any hole where its bit would pass within 1 mm of the bolt head or pin is left out, the nearest clear hole used instead. Rapids count too: a bolt head is taken to stand about the bolt&rsquo;s width high, on the stock or in its counterbore. Unticked, the summary names the holes the bit would hit. It goes by the work offset&rsquo;s X0 Y0 as it is now.</p>' +
+        '<p><strong>Clear of the loaded program</strong> (on by default): load the part&rsquo;s program first, and any hole where its bit would pass within 1 mm of the bolt head or pin is left out, the nearest clear hole used instead. Rapids count too: a bolt head is taken to stand about the bolt&rsquo;s width high, on the stock or in its counterbore. Unticked, the summary names the holes the bit would hit. It checks the program where it will run: with X0 Y0 where the XY0 Picker&rsquo;s Set will put it on the stock, when Set would set the program&rsquo;s work offset; otherwise with X0 Y0 as it is now.</p>' +
         '<p><strong>Take the pins out</strong> of the holes under the stock first: the bit goes into them.</p>' +
         '<p><strong>The spoilboard is safe:</strong> each hole goes only Break Through into the spoilboard hole and is never bigger than it (inserts must sit that far down). It lifts to Safe Z over the clamps between holes, refuses when Z0 is on the spoilboard, and stops if Z0 changed since you generated it.</p>' +
         '<p>The stock is the XY0 Picker&rsquo;s; the holes are the grid picked in Setup.</p>',
