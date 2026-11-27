@@ -58,9 +58,9 @@ copy it into stock on top of the spoilboard), and **Stock Holes** the ones that 
 or flips, from the same grid.
 
 ![Spoilboard Toolbox's XY0 Picker in ncSender, in Stock mode: a map of the CNC bed's dog hole grid
-between T-tracks, a stock pushed against pins in M8, M10 and N7, X0 Y0 on its front left corner with
-the numbers beside Set and a zoomed view of the pins, and the Go to Stock Center, Go to Stock Front
-Left and Set G54 XY buttons](docs/xy0-picker.png)
+between T-tracks, a stock pushed against pins in M8, M10 and N7; beside it the stock's card (Against
+Pins, Width X, Length Y and Thick, the dots to tap where X0 Y0 goes, front left picked), the Z0 line, the
+work offset chips with G54 active, and Go to Stock Front Left and Set G54 XY0 at the bottom](docs/xy0-picker.png)
 
 ## Install
 
@@ -600,9 +600,10 @@ spoilboard's top (**SBT: Z0 on spoilboard** does it, or touch off), set the dept
 **Bit and depth** card, and press **Generate**: the program opens in ncSender's visualizer to check and
 run.
 
-![The Cut Board tab (before 0.5.14, with chips for the sections): Dog holes, T-tracks, Grid lines, Fit test, Laser test, Chamfers and
-Labels, the Bit and depth card with starting feeds for MDF, a side view of one hole's depth and passes,
-and 425 holes ready to generate, starting with a tool change to T18](docs/spoilboard-tab.png)
+![The Cut Board tab, its sections listed in the sidebar (Dog holes, T-tracks, Grid lines, Fit test,
+Laser test, Chamfers, Labels, Export): Dog holes, with the Bit and depth card taking the loaded tool's
+diameter and starting feeds for MDF, a side view of one hole's depth and passes, and 405 holes ready to
+generate, starting with a tool change to T2](docs/spoilboard-tab.png)
 
 **Surfacing isn't here, on purpose.** Flattening the spoilboard is left to the
 [QuickCut](https://github.com/siganberg/ncsender-plugin-quickcut) plugin's **Wasteboard Surfacing**, which
