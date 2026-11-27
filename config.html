@@ -681,10 +681,17 @@
   .mw-pick-card.mw-tall .mw-dock { margin-top: auto; flex: none; }
   .mw-pick-card.mw-tall .mw-target, .mw-pick-card.mw-tall .mw-zfold { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
   .mw-pick-card.mw-tall .mw-zfold:not([open]) { flex: none; }
-  .mw-pick-card.mw-side-two .mw-holebar, .mw-pick-card.mw-bar-two .mw-holebar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: start; }
+  .mw-pick-card.mw-side-two .mw-holebar, .mw-pick-card.mw-bar-two .mw-holebar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: 1fr auto; align-items: start; }
   .mw-pick-card.mw-side-two .mw-target, .mw-pick-card.mw-bar-two .mw-target { grid-column: 1; grid-row: 1 / span 2; }
   .mw-pick-card.mw-side-two .mw-zfold, .mw-pick-card.mw-bar-two .mw-zfold { grid-column: 2; grid-row: 1; }
   .mw-pick-card.mw-side-two .mw-dock, .mw-pick-card.mw-bar-two .mw-dock { grid-column: 2; grid-row: 2; align-self: end; }
+  /* The Z0 fold takes the height the target card leaves, its buttons at the bottom, so the two columns end together. */
+  .mw-pick-card.mw-side-two .mw-zfold[open], .mw-pick-card.mw-bar-two .mw-zfold[open] { align-self: stretch; display: flex; flex-direction: column; }
+  .mw-pick-card.mw-side-two .mw-zfold[open]::details-content, .mw-pick-card.mw-bar-two .mw-zfold[open]::details-content { flex: 1; display: flex; flex-direction: column; }
+  .mw-pick-card.mw-side-two .mw-zfold[open] .mw-zfold-body, .mw-pick-card.mw-bar-two .mw-zfold[open] .mw-zfold-body { flex: 1; }
+  .mw-pick-card.mw-side-two .mw-zfold[open] .mw-zfold-actions, .mw-pick-card.mw-bar-two .mw-zfold[open] .mw-zfold-actions { margin-top: auto; }
+  .mw-pick-card.mw-side-two .mw-zfold[open] .mw-zside, .mw-pick-card.mw-bar-two .mw-zfold[open] .mw-zside { margin-block: auto; }
+  .mw-pick-card.mw-side-two .mw-zfold[open] .mw-zfold-body > *, .mw-pick-card.mw-bar-two .mw-zfold[open] .mw-zfold-body > * { flex: none; }
   .mw-holebar > * { min-width: 0; max-width: 100%; }
   .mw-target, .mw-zfold, .mw-dock { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; padding: 12px; }
   .mw-zfold { display: block; box-sizing: border-box; align-self: stretch; }
@@ -5990,7 +5997,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'), stockM: fieldVal('mw-stock-m'),
-      stockZMode: $('mw-stock-zmode').value, zFoldOpen: $('mw-zfold').open,
+      stockZMode: $('mw-stock-zmode').value, zFoldOpen: $('mw-zfold').open, zFoldUser: !!holes.zFoldUser,
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
       stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
       stockPins: holes.pins.slice(), stockDotSet: !!holes.stockDotSet, stockAnchor: holes.stockAnchor,
@@ -6666,6 +6673,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-stock-on').checked = !!saved.stockOn;
     if (saved.stockZMode === 'top') $('mw-stock-zmode').value = 'top';
     holes.zFoldSaved = !!saved.zFoldOpen;
+    // Until the user opens or closes the Z0 fold themselves, a two-column layout opens it (its side view balances the columns).
+    holes.zFoldUser = saved.zFoldUser === true || saved.zFoldOpen === true;
     if (saved.zFoldOpen) $('mw-zfold').open = true;
     ['W', 'L', 'T'].forEach(function(k) {
       var v = parseFloat(saved['stock' + k]);
@@ -6846,6 +6855,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     ROOT.querySelectorAll('.mw-zon .mw-seg').forEach(function(b) {
       b.addEventListener('click', function() { $('mw-stock-zmode').value = b.getAttribute('data-zon'); stockSync(); });
     });
+    $('mw-zfold').querySelector('summary').addEventListener('click', function() { if (!holes.zFoldUser) { holes.zFoldUser = true; saveSettings(); } });
     $('mw-zfold').addEventListener('toggle', function() { var o = $('mw-zfold').open; if (holes.zFoldSaved !== o) { holes.zFoldSaved = o; saveSettings(); } });
     ['mw-stock-w', 'mw-stock-l', 'mw-stock-t', 'mw-stock-m'].forEach(function(id) {
       $(id).addEventListener('input', function() { renderHoles(); });
@@ -8485,6 +8495,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     card.style.setProperty('--mw-side', two ? '640px' : panel.clientWidth >= 900 ? '330px' : '250px');
     card.classList.toggle('mw-side-narrow', panel.clientWidth < 900);
     card.classList.toggle('mw-bar-two', !tall && panel.clientWidth >= 520);
+    if (!holes.zFoldUser) $('mw-zfold').open = two || (!tall && panel.clientWidth >= 520);
     card.style.gridTemplateColumns = '';
     card.style.alignSelf = '';
     svg.style.width = '';
@@ -8555,7 +8566,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     // The side column is as tall as the map, so the dock (Set) stays in
     // view: the target card and the Z0 fold scroll inside it instead.
-    $('mw-holebar').style.maxHeight = card.classList.contains('mw-tall') ? Math.max(560, card.querySelector('.mw-mapcol').offsetHeight) + 'px' : '';
+    $('mw-holebar').style.maxHeight = card.classList.contains('mw-tall') ? Math.max(560, card.querySelector('.mw-mapcol').offsetHeight + 60) + 'px' : '';
     // Zoomed in, the map shows part of the travel (vw) at k times the
     // scale, following the spindle when Follow is on.
     var zm = holes.zoom, ms0 = state.machine || {}, here0 = ms0.homed ? xyOf(ms0.MPos) : null;
