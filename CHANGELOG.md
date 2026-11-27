@@ -12,7 +12,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - Every length and feed box has - and + buttons for a touch screen, as ncSender's probe dialog (ncsender-unit-input 0.1.6). A press steps to the next whole step: 0.5 mm or 1/32 in, 0.1 mm or 0.005 in for depths and pitches, 50 mm/min or 5 in/min for feeds.
 
 ### 🔧 Better
-- **Width X is the side your CAM's X runs along:** at an angle the angle shown (and saved for QuickCut) is the Width X side's, so a 6 × 50 in board gave its short side's angle to a design laid out along X. The fields, the angle ("Width X side turned 63.42° CCW from X") and the note now say so, and to swap Width X and Length Y when the design runs the other way: the stock stays put and the angle moves 90°.
+- **Both sides' angles:** a stock at an angle shows its long and short sides' angles ("Long side 63.42° CCW · short side 26.58° CW from X"), whichever size was typed as Width X, and saves both for other plugins (`stockTurnLongDeg`, `stockTurnShortDeg`, beside `stockTurnDeg`, the Width X side's), so a design can be turned by the side it runs along.
 - **Stock that can't stay on the bed is drawn in red:** where the pins would put it, outlined red and dashed, running past the bed's edge as far as the map reaches, beside the note saying how far it must turn to fit.
 
 ## 0.5.19: A new icon

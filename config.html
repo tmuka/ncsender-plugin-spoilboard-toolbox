@@ -877,11 +877,11 @@
               <option value="back-left">Its back left corner</option><option value="back-right">Its back right corner</option>
             </select>
               <div class="mw-stock-fields">
-                <label class="mw-sfield"><span>Width X</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" aria-label="Stock width, the side your CAM's X runs along" title="The stock's side that your CAM's X runs along: along machine X for square stock. At an angle it can lie either way round, and the angle shown is this side's, so give the side your design's X follows here (a 50 x 6 in board with the design along its length: 50). Needed for any X0 Y0 other than the pinned corner, and for the Stock Holes tab."></label>
-                <label class="mw-sfield"><span>Length Y</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" aria-label="Stock length, the side your CAM's Y runs along" title="The stock's side that your CAM's Y runs along: along machine Y for square stock."></label>
+                <label class="mw-sfield"><span>Width X</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" aria-label="Stock width, along X" title="The stock's size along X. At an angle the stock lies whichever way round fits its pins, and the card gives its long and short sides' angles. Needed for any X0 Y0 other than the pinned corner, and for the Stock Holes tab."></label>
+                <label class="mw-sfield"><span>Length Y</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" aria-label="Stock length, along Y" title="The stock's size along Y."></label>
                 <label class="mw-sfield"><span>Thick</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0."></label>
               </div>
-              <div class="mw-stock-tilt" id="mw-stock-tilt" hidden title="The pins hold the stock at an angle: this is the Width X side's angle from machine X. X0 Y0 doesn't turn the toolpaths: in your CAM, keep X and Y square to the machine and turn the part by this angle about X0 Y0 (QuickCut's Stock button by Pattern Angle puts it in). If your design runs along the other side, swap Width X and Length Y: the stock stays put and the angle moves 90°."></div>
+              <div class="mw-stock-tilt" id="mw-stock-tilt" hidden title="The pins hold the stock at an angle: its long and short sides' angles from machine X. X0 Y0 doesn't turn the toolpaths: in your CAM, keep X and Y square to the machine and turn the part about X0 Y0 by the angle of the side its X runs along. QuickCut's Stock button by Pattern Angle offers both."></div>
               <div class="mw-stock-tbar"><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Follow Z0: Thick follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, Thick would be that height. Turn it off and type it then.">Follow Z0</button><button type="button" class="mw-btn mw-btn-small" id="mw-stock-tstore" hidden title="Thick differs from the stock thickness the Z0 macros use (stored in the controller): store it there, so SBT: Z0 on stock top puts Z0 this far above the spoilboard.">Store for Macros</button><span class="mw-hint mw-warn-text" id="mw-stock-tnote" hidden></span></div>
               <div class="mw-stock-tools"><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fit" hidden title="Make the stock's width and length the loaded program's cuts, the bit's width and the clamp margin on every side, rounded up: the stock to cut a QuickCut or Gears part from.">Use Program Size</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Is Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear Pins</button></div>
               <div class="mw-dots-wrap"><span class="mw-dots-cap">Tap where X0 Y0 goes on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></div>
@@ -4774,6 +4774,15 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var others = fits.filter(function(f) { return f !== fits[0] && !f.outside && (f.pair[0] !== fits[0].pair[0] || f.pair[1] !== fits[0].pair[1]); }).length;
     return { fit: fits[0], others: others };
   }
+  // A stock at deg (its Width X side's angle) as its long and short
+  // sides' angles from machine X, counterclockwise, each -90 to 90 (a side
+  // has no direction: +90 and -90 are the same, kept as 90). Width X and
+  // Length Y equal: the Width X side counts as the long one.
+  function sideTurns(deg, w, l) {
+    var norm = function(a) { a = ((a % 180) + 180) % 180; return a > 90 ? a - 180 : a; };
+    var wd = norm(deg), ld = norm(deg + 90);
+    return w >= l ? { long: wd, short: ld } : { long: ld, short: wd };
+  }
   // A stock as a box at any angle: center c, Width X along unit ex, Length
   // Y along ex turned 90° counterclockwise, deg = ex's angle from +X.
   function rectBox(r) {
@@ -6132,12 +6141,18 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // counterclockwise from machine X (seen from above), about X0 Y0, for
   // the part to be turned by; 0 when the stock is square, not placed or
   // off. Worked out again on every save, since it hangs on the pins and the grid.
-  function stockTurnDeg() {
+  // Also its long and short sides' angles (stockTurnLongDeg,
+  // stockTurnShortDeg), so a plugin can turn a design by the side it runs
+  // along, whichever was typed as Width X: all 0 unless the stock is at an angle.
+  function stockTurns() {
     try {
-      var sp = stockPlacement(), dg = sp && !sp.problem && sp.tilt ? sp.tilt.deg : 0;
-      return Math.abs(dg) >= 0.005 ? +dg.toFixed(4) : 0;
-    } catch (e) { return 0; }
+      var sp = stockPlacement(), dg = sp && !sp.problem && sp.tilt ? sp.tilt.deg : 0, sz = stockSize();
+      if (!(Math.abs(dg) >= 0.005)) return { w: 0, long: 0, short: 0 };
+      var t = sz ? sideTurns(dg, sz.w, sz.l) : { long: 0, short: 0 }, r = function(a) { return +a.toFixed(4); };
+      return { w: r(dg), long: r(t.long), short: r(t.short) };
+    } catch (e) { return { w: 0, long: 0, short: 0 }; }
   }
+  function stockTurnDeg() { return stockTurns().w; }
   function saveSettings() {
     var u = fieldVal;
     var body = Object.assign({
@@ -6151,7 +6166,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
       stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
       stockPins: holes.pins.slice(), stockDotSet: !!holes.stockDotSet, stockAnchor: holes.stockAnchor,
-      stockTurnDeg: stockTurnDeg(),
+      stockTurnDeg: stockTurns().w, stockTurnLongDeg: stockTurns().long, stockTurnShortDeg: stockTurns().short,
       cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed, cutNavFolded: !!state.cutNavFolded, partProgram: prog.partSaved || null
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
@@ -7232,7 +7247,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var dg = out.tilt.deg, dtext = (+Math.abs(dg).toFixed(2)) + '°';
       if (Math.abs(dg) >= 0.005) {
         var sz1 = stockSize();
-        out.notes.push('Your CAM\u2019s X runs along the Width X side' + (sz1 ? ' (' + shown(sz1.w) + ' ' + unitName() + ')' : '') + ': keep X and Y square to the machine and turn the part ' + dtext + ' ' + (dg > 0 ? 'counterclockwise' : 'clockwise') + ' about X0 Y0 (X0 Y0 doesn\u2019t turn the toolpaths). If your design runs along the other side, swap Width X and Length Y.');
+        var sz1 = stockSize(), st1 = sz1 ? sideTurns(dg, sz1.w, sz1.l) : null, wd = function(a) { return (+Math.abs(a).toFixed(2)) + '\u00b0 ' + (a > 0 ? 'counterclockwise' : 'clockwise'); };
+        out.notes.push('In your CAM, keep X and Y square to the machine and turn the part about X0 Y0 (X0 Y0 doesn\u2019t turn the toolpaths)' +
+          (st1 ? ' by the angle of the side its X runs along: the long side ' + wd(st1.long) + ', the short side ' + wd(st1.short) + ' from X.' : ' by ' + wd(dg) + '.'));
       }
       if (out.tilt.outside) out.notes.push('It reaches past the machine\u2019s travel: check the pins and the size.');
       if (out.tiltOthers) out.notes.push('These pins could also hold it at another angle: check the map matches.');
@@ -9190,7 +9207,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     // The stock's turn, beside its size, when it isn't square to the machine.
     var tiltEl = $('mw-stock-tilt'), dg = sp && !sp.problem && sp.tilt ? sp.tilt.deg : 0;
     tiltEl.hidden = !(Math.abs(dg) >= 0.005);
-    tiltEl.textContent = 'Width X side turned ' + (+Math.abs(dg).toFixed(2)) + '\u00b0 ' + (dg > 0 ? 'CCW' : 'CW') + ' from X';
+    var tw = function(a) { return (+Math.abs(a).toFixed(2)) + '\u00b0' + (Math.abs(a) >= 89.995 ? '' : ' ' + (a > 0 ? 'CCW' : 'CW')); };
+    var szt = stockSize(), st2 = szt && Math.abs(dg) >= 0.005 ? sideTurns(dg, szt.w, szt.l) : null;
+    tiltEl.textContent = st2 ? 'Long side ' + tw(st2.long) + ' \u00b7 short side ' + tw(st2.short) + ' from X' : 'Turned ' + tw(dg) + ' from X';
     $('mw-stock-clear').hidden = !sp || (sp.by === 'pins' ? !holes.pins.length : !holes.stockAnchor);
     $('mw-stock-clear').textContent = holes.stockBy === 'pins' ? 'Clear Pins' : 'Clear Corner';
     suppressButtons();
@@ -12013,7 +12032,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag a box around several; a box around only suppressed holes restores them. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and shown as faint solid circles while it&rsquo;s unlocked; Pick Nearest Hole, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
       '<strong>Live position:</strong> while you jog, the spindle (the silver ring) moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
       '<p><strong>Stock</strong> mode places the stock, two ways:</p><ul>' +
-        '<li><strong>Against Pins:</strong> push it against three pins in dog holes, two along one edge and one along the other, and tap those holes, or jog over each and press <strong>Pick Nearest Hole</strong>. Each edge is a pin radius off its pins (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Pins in one row and one column hold it square; any other three hold it <strong>at an angle</strong>, to fit longer stock across the bed: the card shows the angle of its <strong>Width X</strong> side. Width X is the side your CAM&rsquo;s X runs along (Length Y, its Y): give the side your design&rsquo;s X follows there, since at an angle the stock lies whichever way round fits the pins (inside the travel first), and swapping the two keeps the stock where it is but moves the angle 90&deg;. X0 Y0 doesn&rsquo;t turn the toolpaths, so in your CAM keep X and Y square to the machine and turn the part by that angle about X0 Y0 (QuickCut&rsquo;s Stock button by Pattern Angle puts it in). Stock Holes and Into the stock on top need square stock. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
+        '<li><strong>Against Pins:</strong> push it against three pins in dog holes, two along one edge and one along the other, and tap those holes, or jog over each and press <strong>Pick Nearest Hole</strong>. Each edge is a pin radius off its pins (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Pins in one row and one column hold it square; any other three hold it <strong>at an angle</strong>, to fit longer stock across the bed: the card shows its long and short sides&rsquo; angles from X (it lies whichever way round fits the pins, inside the travel first). X0 Y0 doesn&rsquo;t turn the toolpaths, so in your CAM keep X and Y square to the machine and turn the part about X0 Y0 by the angle of the side its X runs along (QuickCut&rsquo;s Stock button by Pattern Angle offers both). Stock Holes and Into the stock on top need square stock. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
         '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is. Or jog over a hole and press <strong>Pick Nearest Hole</strong> (or tap a favorite): the stock&rsquo;s corner goes on that hole&rsquo;s point.</li>' +
         '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Is Here</strong>. The pinned corner needs no size; every other point does, and the card says so. The dots are drawn at the stock&rsquo;s proportions.</li>' +
         '<li><strong>Thick</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> under it if you probe Z0 on the stock&rsquo;s top: Thick follows the Z0 of the work offset Set changes, as its height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness otherwise; the line beside it says which. It&rsquo;s off each time Spoilboard Toolbox opens, and programs that cut through the stock wait for <strong>Store for Macros</strong> to confirm the thickness. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, Thick would be that height, so turn Follow Z0 off and type it. Typing Thick doesn&rsquo;t change the thickness the Z0 macros use: when they differ, <strong>Store for Macros</strong> appears beside Follow Z0 and stores it for SBT: Z0 on stock top.</li></ul>' +
