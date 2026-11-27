@@ -549,8 +549,9 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   pin there and never takes one out). Each edge is a pin radius off its pins (Setup's **Pin Ø**, blank
   for the hole's), so the corner is exact, on a turned grid too. Pins in one row and one column hold
   the stock square. Any other three hold it **at an angle**, to fit longer stock diagonally while the
-  grid still locates it repeatably: the card shows the angle ("Turned 18.43° CCW from X"; Width X is
-  the edge within 45° of X). X0 Y0 doesn't turn the toolpaths, so in your CAM keep X and Y square to
+  grid still locates it repeatably: the card shows the angle of the Width X edge ("Turned 18.43° CCW from
+  X"; at an angle, Width X and Length Y are just the stock's two sizes, and it lies whichever way round
+  fits the pins, inside the travel first). X0 Y0 doesn't turn the toolpaths, so in your CAM keep X and Y square to
   the machine and turn the part by that angle about X0 Y0. The program check, Use Program Size and Far
   Corner Is Here work in the stock's own frame; Stock Holes and Into the stock on top need square
   stock. When three pins could hold the stock two ways, it's drawn the way squarest to the grid and the

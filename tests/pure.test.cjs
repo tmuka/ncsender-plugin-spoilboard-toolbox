@@ -1916,6 +1916,28 @@ test('stockOnTiltedPins: three pins at any angle give a corner a pin radius off 
   assert.ok(Math.abs(dist(P) - 3) < 1e-9 && Math.abs(dist(Q) - 4) < 1e-9);
 });
 
+test('stockOnTiltedPins: a long stock lies whichever way round fits its pins, inside the travel first', () => {
+  // The author's grid (inches) and a 40 x 4 in stock against 7,7, 6,4 and 4,4: its long edge runs up
+  // through 6,4 and 7,7 (about 72° from X), so Width X (40 in) lies near Y.
+  const k = 25.4, hole = (c, r) => ({ col: c, row: r, x: (0.2742 + (c - 1) * 1.9253) * k, y: (0.8608 + (r - 1) * 1.9241) * k, diaMm: 0.31 * k });
+  const pins = [hole(7, 7), hole(6, 4), hole(4, 4)], bounds = { minX: 0, maxX: 814, minY: 0, maxY: 1235 };
+  const r = stockOnTiltedPins(pins, { w: 40 * k, l: 4 * k }, 0, bounds);
+  assert.ok(r.fit, JSON.stringify(r));
+  const f = r.fit;
+  assert.ok(Math.abs(f.deg - Math.atan2(3 * 1.9241, 1.9253) * 180 / Math.PI) < 0.05, f.deg);
+  assert.ok(!f.outside);
+  assert.deepEqual(f.pair.map((p) => p.col + ',' + p.row).sort(), ['6,4', '7,7']);
+  // Every corner inside the travel, and no pin inside the stock.
+  boxCorners(f.box).forEach((q) => assert.ok(q.x >= -0.01 && q.x <= 814.01 && q.y >= -0.01 && q.y <= 1235.01, JSON.stringify(q)));
+  pins.forEach((p) => { const q = boxLocal(f.box, p); assert.ok(Math.abs(q.a) >= f.box.w / 2 - 1e-6 || Math.abs(q.b) >= f.box.l / 2 - 1e-6); });
+  // Its pinned corner is where the dots name it.
+  const c = boxPoint(f.box, f.cornerName);
+  assert.ok(Math.hypot(c.x - f.corner.x, c.y - f.corner.y) < 1e-6, f.cornerName);
+  // A way that runs off the travel loses to one inside it.
+  const off = stockOnTiltedPins(pins, { w: 40 * k, l: 4 * k }, 0, { minX: 0, maxX: 814, minY: 0, maxY: 900 });
+  assert.ok(off.fit.outside, 'the only way left runs past a 900 mm travel');
+});
+
 test('boxPoint and rectBox: a square box names its points like rectPoint', () => {
   const r = stockRect(10, 20, 300, 200, 'front-left'), b = rectBox(r);
   ['front-left', 'back-right', 'center', 'left-center', 'back-center'].forEach((n) => assert.deepEqual(boxPoint(b, n), rectPoint(r, n)));

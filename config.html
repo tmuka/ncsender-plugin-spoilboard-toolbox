@@ -888,7 +888,7 @@
                 <label class="mw-sfield"><span>Length Y</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" aria-label="Stock length, along Y" title="The stock's size along Y."></label>
                 <label class="mw-sfield"><span>Thick</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0."></label>
               </div>
-              <div class="mw-stock-tilt" id="mw-stock-tilt" hidden title="The pins hold the stock at an angle. X0 Y0 doesn't turn the toolpaths: in your CAM, keep X and Y square to the machine and turn the part by this angle about X0 Y0. Width X is the edge within 45° of X."></div>
+              <div class="mw-stock-tilt" id="mw-stock-tilt" hidden title="The pins hold the stock at an angle. X0 Y0 doesn't turn the toolpaths: in your CAM, keep X and Y square to the machine and turn the part by this angle about X0 Y0. The angle is the Width X edge's: at an angle, Width X and Length Y are just the stock's two sizes, and it lies whichever way round fits its pins (inside the travel first)."></div>
               <div class="mw-stock-tbar"><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Follow Z0: Thick follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, Thick would be that height. Turn it off and type it then.">Follow Z0</button><button type="button" class="mw-btn mw-btn-small" id="mw-stock-tstore" hidden title="Thick differs from the stock thickness the Z0 macros use (stored in the controller): store it there, so SBT: Z0 on stock top puts Z0 this far above the spoilboard.">Store for Macros</button><span class="mw-hint mw-warn-text" id="mw-stock-tnote" hidden></span></div>
               <div class="mw-stock-tools"><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fit" hidden title="Make the stock's width and length the loaded program's cuts, the bit's width and the clamp margin on every side, rounded up: the stock to cut a QuickCut or Gears part from.">Use Program Size</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Is Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear Pins</button></div>
               <div class="mw-dots-wrap"><span class="mw-dots-cap">Tap where X0 Y0 goes on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></div>
@@ -4558,20 +4558,29 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // Stock at any angle against three pins (in any holes): two touch one
   // edge, the third the edge square to it. Each way the three read like
   // that is tried; a way is out when the third pin isn't on the stock's
-  // side of the two-pin edge, sits between those two along it, or (with
-  // size { w, l }) touches past an edge's end. Width X runs along the edge
-  // within 45° of machine X. Of the ways left, the squarest to the grid
-  // (gridDeg, its row direction) wins, then the two pins farthest apart.
+  // side of the two-pin edge or sits between those two along it. With a
+  // size { w, l }, the stock may lie either way round on those edges (at
+  // an angle, Width X and Length Y are just its two sizes): a way round is
+  // out when a pin touches past an edge's end. Without a size, Width X is
+  // the edge within 45° of machine X. Of the ways left: inside bounds
+  // (the travel, { minX, maxX, minY, maxY }, when given) first, then the
+  // squarest to the grid (gridDeg, its row direction), then Width X
+  // nearer machine X, then the two pins farthest apart.
   // { fit: { corner, cornerName, deg (Width X's edge from machine +X,
-  // counterclockwise), u (along the two-pin edge, away from the third
-  // pin), n (into the stock across it), pair, lone, box (with a size) } }
-  // or { problem: 'few' | 'oneLine' | 'notL' }.
-  function stockOnTiltedPins(pins, size, gridDeg) {
+  // counterclockwise, -90 to 90), ex (along that edge), u (along the
+  // two-pin edge, away from the third pin), n (into the stock across it),
+  // pair, lone, box (with a size), outside (past bounds) }, others } or
+  // { problem: 'few' | 'oneLine' | 'notL' }.
+  function stockOnTiltedPins(pins, size, gridDeg, bounds) {
     if (pins.length < 3) return { problem: 'few' };
     if (pins.length > 3) return { problem: 'notL' };
     var rad = function(p) { return (p.pinMm > 0 ? p.pinMm : p.diaMm) / 2; };
     var dot = function(a, b) { return a.x * b.x + a.y * b.y; };
     var sub = function(a, b) { return { x: a.x - b.x, y: a.y - b.y }; };
+    var neg = function(v) { return { x: -v.x, y: -v.y }; };
+    var ang = function(v) { return Math.atan2(v.y, v.x) * 180 / Math.PI; };
+    // Of v and -v, the one pointing within 90° of +X (straight up counts).
+    var rightward = function(v) { var a = ang(v); return a > -90 + 1e-9 && a <= 90 + 1e-9 ? v : neg(v); };
     var gd = +gridDeg || 0, fits = [], line = true;
     [0, 1, 2].forEach(function(k) {
       var C = pins[k], AB = pins.filter(function(q, i) { return i !== k; }), A = AB[0], B = AB[1];
@@ -4580,7 +4589,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var dh = { x: d.x / D, y: d.y / D }, p0 = { x: -dh.y, y: dh.x }, side = dot(p0, sub(C, A));
       if (Math.abs(side) < 1e-6) return;
       line = false;
-      var n0 = side > 0 ? p0 : { x: -p0.x, y: -p0.y }, rA = rad(A), rB = rad(B), rC = rad(C);
+      var n0 = side > 0 ? p0 : neg(p0), rA = rad(A), rB = rad(B), rC = rad(C);
       // The edge touches both pins: tilted off their line when they differ in size.
       var sa = (rA - rB) / D;
       if (Math.abs(sa) >= 1) return;
@@ -4590,31 +4599,40 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var u = { x: n.y, y: -n.x };
       var ua = dot(u, sub(A, C)), ub = dot(u, sub(B, C));
       if (ua * ub <= 0) return;
-      if (ua < 0) u = { x: -u.x, y: -u.y };
+      if (ua < 0) u = neg(u);
       var e2 = dot(u, C) + rC, sA = dot(u, A) - e2, sB = dot(u, B) - e2;
       if (Math.min(sA, sB) <= 1e-6) return;
       var K = { x: lo * n.x + e2 * u.x, y: lo * n.y + e2 * u.y };
-      // Width X's edge: the one of ±u, ±n within 45° of +X.
-      var ex = [u, n, { x: -u.x, y: -u.y }, { x: -n.x, y: -n.y }].filter(function(v) {
-        var a = Math.atan2(v.y, v.x) * 180 / Math.PI;
-        return a > -45 - 1e-9 && a <= 45 + 1e-9;
-      })[0];
-      var alongU = Math.abs(dot(ex, u)) > 0.5, deg = Math.atan2(ex.y, ex.x) * 180 / Math.PI;
-      var dev = ((deg - gd) % 90 + 135) % 90 - 45;
-      var fit = { corner: K, deg: deg, dev: Math.abs(dev), u: u, n: n, pair: [A, B], lone: C, span: D, ex: ex,
-                  touch: { pair: [sA, sB], lone: tC } };
-      var dir = { x: u.x + n.x, y: u.y + n.y }, ey = { x: -ex.y, y: ex.x };
-      fit.cornerName = (dot(ey, dir) > 0 ? 'front' : 'back') + '-' + (dot(ex, dir) > 0 ? 'left' : 'right');
-      if (size) {
-        var lu = alongU ? size.w : size.l, ln = alongU ? size.l : size.w, eps = 0.01;
-        if (Math.max(sA, sB) > lu + eps || tC > ln + eps) return;
-        fit.box = { c: { x: K.x + lu / 2 * u.x + ln / 2 * n.x, y: K.y + lu / 2 * u.y + ln / 2 * n.y }, ex: ex, w: size.w, l: size.l, deg: deg };
-      }
-      fits.push(fit);
+      // Width X along u or along n: without a size, the edge within 45° of +X.
+      var natural = Math.abs(u.x) >= Math.abs(n.x) - 1e-9 ? 'u' : 'n';
+      (size ? ['u', 'n'] : [natural]).forEach(function(wAlong) {
+        var ex = rightward(wAlong === 'u' ? u : n), deg = ang(ex), ey = { x: -ex.y, y: ex.x };
+        var dev = Math.abs(((deg - gd) % 90 + 135) % 90 - 45);
+        var fit = { corner: K, deg: deg, dev: dev, u: u, n: n, ex: ex, pair: [A, B], lone: C, span: D, swapped: wAlong !== natural,
+                    touch: { pair: [sA, sB], lone: tC }, outside: false };
+        var dir = { x: u.x + n.x, y: u.y + n.y };
+        fit.cornerName = (dot(ey, dir) > 0 ? 'front' : 'back') + '-' + (dot(ex, dir) > 0 ? 'left' : 'right');
+        if (size) {
+          var lu = wAlong === 'u' ? size.w : size.l, ln = wAlong === 'u' ? size.l : size.w, eps = 0.01;
+          if (Math.max(sA, sB) > lu + eps || tC > ln + eps) return;
+          fit.box = { c: { x: K.x + lu / 2 * u.x + ln / 2 * n.x, y: K.y + lu / 2 * u.y + ln / 2 * n.y }, ex: ex, w: size.w, l: size.l, deg: deg };
+          if (bounds) fit.outside = boxCorners(fit.box).some(function(q) {
+            return q.x < bounds.minX - eps || q.x > bounds.maxX + eps || q.y < bounds.minY - eps || q.y > bounds.maxY + eps;
+          });
+        }
+        fits.push(fit);
+      });
     });
     if (!fits.length) return { problem: line ? 'oneLine' : 'notL' };
-    fits.sort(function(a, b) { return a.dev - b.dev > 1e-6 ? 1 : b.dev - a.dev > 1e-6 ? -1 : b.span - a.span; });
-    return { fit: fits[0], others: fits.length - 1 };
+    fits.sort(function(a, b) {
+      if (a.outside !== b.outside) return a.outside ? 1 : -1;
+      if (Math.abs(a.dev - b.dev) > 1e-6) return a.dev - b.dev;
+      if (a.swapped !== b.swapped) return a.swapped ? 1 : -1;
+      return b.span - a.span;
+    });
+    // Other ways the stock could sit (not the same one turned round).
+    var others = fits.filter(function(f) { return f !== fits[0] && !f.outside && (f.pair[0] !== fits[0].pair[0] || f.pair[1] !== fits[0].pair[1]); }).length;
+    return { fit: fits[0], others: others };
   }
   // A stock as a box at any angle: center c, Width X along unit ex, Length
   // Y along ex turned 90° counterclockwise, deg = ex's angle from +X.
@@ -6999,15 +7017,33 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       out.pins = pins;
       if (lost) out.notes.push(lost + ' pin hole' + (lost === 1 ? ' is' : 's are') + ' no longer on the map (Setup changed).');
       if (pins.length < 3) { out.problem = 'few'; return out; }
-      var ax0 = gridAxes(holes.grid, pins[0].layer || 0), r = stockOnPins(pins, ax0);
-      if (r.fits) {
+      var ax0 = gridAxes(holes.grid, pins[0].layer || 0), r = stockOnPins(pins, ax0), sz0 = stockSize();
+      // Inside the travel first, so a long stock isn't turned off the bed.
+      var tv = state.travel, bnd = tv ? { minX: tv.dirX > 0 ? 0 : -tv.xMm, minY: tv.dirY > 0 ? 0 : -tv.yMm } : null;
+      if (bnd) { bnd.maxX = bnd.minX + tv.xMm; bnd.maxY = bnd.minY + tv.yMm; }
+      var gdeg = Math.atan2(ax0.ux.y, ax0.ux.x) * 180 / Math.PI;
+      // An L along the grid, unless with this size a pin would touch
+      // nothing or the stock would leave the travel while three pins at an
+      // angle hold it inside, all touching (a long stock).
+      var useL = !!r.fits, t = null;
+      if (useL && pins.length === 3 && sz0) {
+        var f0 = r.fits[0], r0 = stockAt(f0.corner, f0.cornerName);
+        var lBad = f0.rowPins.some(function(q) { return q.x < r0.minX - pinR(q) || q.x > r0.maxX + pinR(q); }) ||
+          f0.colPins.some(function(q) { return q.y < r0.minY - pinR(q) || q.y > r0.maxY + pinR(q); }) ||
+          !!(bnd && (r0.minX < bnd.minX - 0.01 || r0.maxX > bnd.maxX + 0.01 || r0.minY < bnd.minY - 0.01 || r0.maxY > bnd.maxY + 0.01));
+        if (lBad) {
+          t = stockOnTiltedPins(pins, sz0, gdeg, bnd);
+          if (t.fit && !t.fit.outside && Math.abs(t.fit.deg) >= 0.005) useL = false;
+        }
+      }
+      if (useL) {
         var fit = r.fits[0];
         out.fit = fit; out.corner = fit.corner; out.cornerName = fit.cornerName;
       } else {
         // Not an L along the grid: three pins at any angle.
-        var gdeg = Math.atan2(ax0.ux.y, ax0.ux.x) * 180 / Math.PI, t = stockOnTiltedPins(pins, stockSize(), gdeg);
+        if (!t) t = stockOnTiltedPins(pins, sz0, gdeg, bnd);
         if (t.problem) {
-          var loose = pins.length === 3 && stockSize() ? stockOnTiltedPins(pins, null, gdeg) : null;
+          var loose = pins.length === 3 && sz0 ? stockOnTiltedPins(pins, null, gdeg, bnd) : null;
           out.problem = loose && loose.fit ? 'short' : pins.length > 3 ? (r.problem === 'sides' ? 'sides' : 'many') : t.problem;
           return out;
         }
@@ -7031,6 +7067,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (out.tilt) {
       var dg = out.tilt.deg, dtext = (+Math.abs(dg).toFixed(2)) + '°';
       if (Math.abs(dg) >= 0.005) out.notes.push('In your CAM, keep X and Y square to the machine and turn the part ' + dtext + ' ' + (dg > 0 ? 'counterclockwise' : 'clockwise') + ' about X0 Y0: X0 Y0 doesn\u2019t turn the toolpaths.');
+      if (out.tilt.outside) out.notes.push('It reaches past the machine\u2019s travel: check the pins and the size.');
       if (out.tiltOthers) out.notes.push('These pins could also hold it at another angle: check the map matches.');
     }
     if (f) {
@@ -11787,7 +11824,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Holes missing from the grid?</strong> Unlock Setup and press <strong>Edit Holes</strong>, then tap each missing hole on the map, or drag a box around several; a box around only suppressed holes restores them. <strong>Done</strong> when finished. Suppressed holes are hidden while Setup is locked and shown as faint solid circles while it&rsquo;s unlocked; Pick Nearest Hole, Go to, Set and the nearest-hole macros skip them. Keep using <strong>Grid</strong> for a regular spacing with gaps: it&rsquo;s quicker to set up than a list, and its macros are shorter and faster.',
       '<strong>Live position:</strong> while you jog, the spindle (the silver ring) moves and the hole nearest it gets a dashed ring, named under the map with its distance.',
       '<p><strong>Stock</strong> mode places the stock, two ways:</p><ul>' +
-        '<li><strong>Against Pins:</strong> push it against three pins in dog holes, two along one edge and one along the other, and tap those holes, or jog over each and press <strong>Pick Nearest Hole</strong>. Each edge is a pin radius off its pins (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Pins in one row and one column hold it square; any other three hold it <strong>at an angle</strong>, to fit longer stock across the bed: the card shows the angle (Width X is the edge within 45&deg; of X). X0 Y0 doesn&rsquo;t turn the toolpaths, so in your CAM keep X and Y square to the machine and turn the part by that angle about X0 Y0. Stock Holes and Into the stock on top need square stock. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
+        '<li><strong>Against Pins:</strong> push it against three pins in dog holes, two along one edge and one along the other, and tap those holes, or jog over each and press <strong>Pick Nearest Hole</strong>. Each edge is a pin radius off its pins (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Pins in one row and one column hold it square; any other three hold it <strong>at an angle</strong>, to fit longer stock across the bed: the card shows the angle of the Width X edge (at an angle, Width X and Length Y are just its two sizes, and it lies whichever way round fits the pins, inside the travel first). X0 Y0 doesn&rsquo;t turn the toolpaths, so in your CAM keep X and Y square to the machine and turn the part by that angle about X0 Y0. Stock Holes and Into the stock on top need square stock. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
         '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is. Or jog over a hole and press <strong>Pick Nearest Hole</strong> (or tap a favorite): the stock&rsquo;s corner goes on that hole&rsquo;s point.</li>' +
         '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Is Here</strong>. The pinned corner needs no size; every other point does, and the card says so. The dots are drawn at the stock&rsquo;s proportions.</li>' +
         '<li><strong>Thick</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> under it if you probe Z0 on the stock&rsquo;s top: Thick follows the Z0 of the work offset Set changes, as its height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness otherwise; the line beside it says which. It&rsquo;s off each time Spoilboard Toolbox opens, and programs that cut through the stock wait for <strong>Store for Macros</strong> to confirm the thickness. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, Thick would be that height, so turn Follow Z0 off and type it. Typing Thick doesn&rsquo;t change the thickness the Z0 macros use: when they differ, <strong>Store for Macros</strong> appears beside Follow Z0 and stores it for SBT: Z0 on stock top.</li></ul>' +
