@@ -3,7 +3,7 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
-## Unreleased
+## 0.5.17: A calmer XY0 Picker and stock at any angle
 
 ### ✨ New
 - **A calmer XY0 Picker:** the side column has a fixed shape, so **Set** is always in the same place, at the bottom, in Hole and Stock mode alike (in Stock mode it used to be below the screen's edge).
