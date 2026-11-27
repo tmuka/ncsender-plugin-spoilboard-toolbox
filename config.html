@@ -280,6 +280,7 @@
     stroke: var(--color-text-primary); stroke-opacity: 0.7; stroke-width: 1.5; stroke-dasharray: 5 3;
   }
   .mw-hole-map:not([data-mode="block"]) .mw-h-block { pointer-events: none; }
+  .mw-hole-map .mw-h-stock-off { fill: color-mix(in srgb, var(--mw-danger) 12%, transparent); stroke: var(--mw-danger); stroke-width: 2; stroke-dasharray: 6 4; pointer-events: none; }
   .mw-hole-map .mw-h-stock { fill: color-mix(in srgb, var(--color-accent) 10%, transparent); stroke: var(--mw-accent-text); stroke-width: 1.5; pointer-events: none; }
   .mw-hole-map .mw-h-spot.mw-h-fav .mw-h-hole { stroke: var(--mw-warn); stroke-width: 2; }
   .mw-hole-map .mw-h-spot.mw-h-near .mw-h-halo { stroke: var(--mw-accent-text); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0.8; }
@@ -7195,7 +7196,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
           t = stockOnTiltedPins(pins, sz0, gdeg, bnd);
           if (t.fit && !t.fit.outside && Math.abs(t.fit.deg) >= 0.005) useL = false;
           // Off the bed as an L, and no angle these pins allow keeps it on: say so, rather than draw it there.
-          else if (lOff) { out.problem = 'offBed'; out.travel = tv; out.size = sz0; return out; }
+          else if (lOff) { out.problem = 'offBed'; out.travel = tv; out.size = sz0; out.offBox = rectBox(r0); return out; }
         }
       }
       if (useL) {
@@ -7206,7 +7207,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         if (!t) t = stockOnTiltedPins(pins, sz0, gdeg, bnd);
         if (t.problem) {
           var loose = pins.length === 3 && sz0 ? stockOnTiltedPins(pins, null, gdeg, bnd) : null;
-          if (t.fit && t.fit.outside) { out.problem = 'offBed'; out.travel = tv; out.size = sz0; return out; }
+          if (t.fit && t.fit.outside) { out.problem = 'offBed'; out.travel = tv; out.size = sz0; out.offBox = t.fit.box; return out; }
           out.problem = loose && loose.fit ? 'short' : pins.length > 3 ? (r.problem === 'sides' ? 'sides' : 'many') : t.problem;
           return out;
         }
@@ -8907,6 +8908,20 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         var pg = document.createElementNS(ns, 'polygon');
         pg.setAttribute('class', 'mw-h-stock');
         pg.setAttribute('points', boxCorners(tiltBox).map(function(q) { return X(q.x) + ',' + Y(q.y); }).join(' '));
+        return pg;
+      })());
+    }
+    // Stock the pins can't keep on the bed: where they'd put it, outlined
+    // red, past the bed's edge as far as the map reaches.
+    if (tiltSp && tiltSp.problem === 'offBed' && tiltSp.offBox) {
+      var mapClip = 'mw-map-clip-' + holes.clipSeq, mcp = document.createElementNS(ns, 'clipPath'), mcr = document.createElementNS(ns, 'rect');
+      mcp.setAttribute('id', mapClip);
+      [['x', 0], ['y', 0], ['width', w], ['height', ht]].forEach(function(a) { mcr.setAttribute(a[0], a[1]); });
+      mcp.appendChild(mcr); defs.appendChild(mcp);
+      add('g', { 'clip-path': 'url(#' + mapClip + ')' }).appendChild((function() {
+        var pg = document.createElementNS(ns, 'polygon');
+        pg.setAttribute('class', 'mw-h-stock-off');
+        pg.setAttribute('points', boxCorners(tiltSp.offBox).map(function(q) { return X(q.x) + ',' + Y(q.y); }).join(' '));
         return pg;
       })());
     }
