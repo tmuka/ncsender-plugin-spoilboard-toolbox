@@ -6,6 +6,11 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 ## Unreleased
 
 ### ✨ New
+- **A calmer XY0 Picker:** the side column has a fixed shape, so **Set** is always in the same place, at the bottom, in Hole and Stock mode alike (in Stock mode it used to be below the screen's edge).
+  - **Above and below the map:** Hole / Stock and the zoom buttons above it; Pick Nearest Hole, favorites and Exclude Picks below it.
+  - **The card beside it:** what's picked, bigger dots (each a full finger's width), and in Stock mode the pins, the size in one row (W, L and **Thick**, renamed from T, which is the tool number in G-code), the stock's dots drawn at its proportions, and a chip saying whether the loaded program fits (tap it for the details and the Clamp margin). The small zoomed view is gone: the dots and the numbers say the same.
+  - **A Z0 fold:** one line saying where Set Z0 puts Z0; open it for Stock top or Spoilboard, a side view (the spoilboard, the stock, both offsets' Z0 when paired, the tool's tip) and Set Z0 and Probe Stock Top.
+  - **Work offset chips** in place of the menu: G54 to G57 and More, each saying **active**, **setting** or **paired** in words. The offsets the Z0 macros store values in can't be picked. Set turns amber and says so when it changes an offset that isn't the active one, and says under its name how far it moves X0 Y0. Go to says it lifts to Safe Z first.
 - **Stock top and bottom offsets (paired):** **Stock Bottom Offset** (Z0 macros tab, Settings) pairs a second work offset with the Z0 macros' one: G55, say, keeps G54's X0 Y0 with its Z0 on the stock's bottom (the spoilboard). Carve from the stock top in G54 and cut profiles to the bottom in G55, from two CAM setups; on another thickness, only G54's Z0 needs setting. Set XY0 in the XY0 Picker sets both, recording the spoilboard height moves G55's Z0 with it, **Pair G55** (XY0 Picker) and the new **SBT: Pair G55 to G54** macro copy X0 Y0 after zeroing some other way, and the XY0 Picker warns when a loaded program uses both and they don't match.
 
 ### 🐛 Fixed
@@ -14,7 +19,6 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ### 🔧 Better
 - **ncSender's jog panel stays in reach:** on screens 1600 px wide and up (landscape), Spoilboard Toolbox sits on the left over the visualizer, so ncSender's jog buttons, Home and position stay visible and usable beside it. Smaller screens keep the nearly full-screen dialog.
-- **XY0 Picker's buttons match in Hole and Stock:** Pick Nearest Hole and Go to Selected side by side in both, and in Stock mode Probe Stock Top and Go to Stock Center side by side under them.
 - **Pick Nearest Hole in Stock mode too:** jog over a pin's hole and press it to add that pin (Against Pins; it never takes one out), or, with Corner on X0 Y0, to put the stock's corner on the nearest hole, as a favorite does.
 - **Diagrams on every Cut Board page:** T-tracks, Grid lines, Fit test, Laser test, Chamfers, Labels (each label mode, and what the Inch / mm marks' offsets move) and Export each open with a picture of what they make, drawn from the fields as you type.
 - **Size to Program before the stock is placed:** with too few pins (or Corner on X0 Y0 not taken yet), Stock mode now draws a dashed stock of the typed size round the loaded program's cuts at the work offset's X0 Y0 as it is now, and says the stock isn't placed, instead of asking for a size that's already there.

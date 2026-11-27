@@ -214,19 +214,6 @@
   .mw-help-step:last-child { text-align: right !important; }
   .mw-help-step span { font-size: 0.75rem; color: var(--color-text-secondary); }
   .mw-help-title { margin: 0; font-size: 1.1rem; font-weight: 600; }
-  .mw-holebar {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
-    padding: 10px 12px; border-radius: 10px; background: var(--color-surface-muted);
-  }
-  .mw-holebar-info { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-  .mw-holebar-title { font-weight: 600; }
-  .mw-holebar-info .mw-hint { font-variant-numeric: tabular-nums; }
-  .mw-holebar-info .mw-hint.mw-coords { font-size: 0.85rem; white-space: nowrap; }
-  .mw-holebar-info .mw-hole-dist { font-size: 0.85rem; }
-  .mw-holebar-info .mw-hole-dist[hidden], .mw-btn.mw-hold-btn[hidden] { display: none !important; }
-  .mw-holebar-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; max-width: 100%; }
-  .mw-holebar-info { flex-basis: 150px; }
-  .mw-select.mw-hole-wcs { width: 10em !important; min-width: 0 !important; min-height: 0 !important; padding: 6px 8px !important; }
   /* QuickCut's drill origin picker: the hole inside its dashed box, with
      a dot on each corner, edge middle and the center. Spans, not buttons,
      so ncSender's button styles don't reach them. */
@@ -266,21 +253,9 @@
   @media (prefers-reduced-motion: reduce) { .mw-btn.mw-nudge { animation: none; } }
   .mw-dots-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
   .mw-dots-cap { font-size: 0.78rem; color: var(--color-text-secondary); white-space: nowrap; }
-  .mw-dots-wrap .mw-hole-origin { margin: 8px 10px; }
   #mw-hole-dots.mw-has-hole::before { border: 2px solid var(--mw-accent-text); background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
-  .mw-stock { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); }
-  .mw-stock .mw-dots-wrap .mw-hole-origin { margin: 6px 8px; }
-  .mw-stock-from { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-  .mw-stock-from .mw-btn, .mw-stock-wl .mw-btn { min-height: 0 !important; padding: 3px 10px !important; }
-  .mw-maptools { flex: 1 1 100%; display: flex; flex-direction: column; gap: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
-  .mw-maptools-row, .mw-stock { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
   .mw-stock-on { align-items: center; }
   .mw-stock-on input { margin-top: 0; }
-  .mw-stock .mw-input.mw-stock-size { width: 72px !important; min-width: 0 !important; min-height: 0 !important; padding: 4px 6px !important; }
-  .mw-stock .mw-select.mw-stock-corner { width: auto !important; min-height: 0 !important; padding: 4px 6px !important; }
-  .mw-stock .mw-stock-dots { width: 64px; height: 48px; margin: 10px 12px; border-style: solid; border-radius: 2px; }
-  .mw-stock .mw-stock-dots::before { display: none; }
-  .mw-stock .mw-stock-dots .mw-dot::before { width: 24px; height: 24px; }
   /* Hole or Stock: the controls of the other mode are hidden. */
   .mw-zmode { max-width: 360px; }
   .mw-pick-card[data-zmode="hole"] .mw-only-stock, .mw-pick-card[data-zmode="stock"] .mw-only-hole { display: none !important; }
@@ -306,41 +281,22 @@
   .mw-stock-which:empty { display: none; }
   .mw-stock-which .mw-btn { min-height: 0 !important; padding: 3px 10px !important; }
   .mw-hole-move { font-variant-numeric: tabular-nums; }
-  .mw-zero-inset { flex: none; width: 150px; height: 112px; align-self: center; overflow: hidden; border-radius: 8px; background: var(--color-surface); }
-  .mw-zero-inset text { font-size: 9px; fill: var(--color-text-secondary); font-family: inherit; }
-  .mw-zero-inset .mw-i-hole { fill: var(--color-surface); stroke: var(--mw-line); stroke-width: 1; }
-  .mw-zero-inset .mw-i-pin { fill: color-mix(in srgb, var(--color-text-primary) 35%, transparent); stroke: var(--color-text-secondary); stroke-width: 1; }
-  .mw-zero-inset .mw-i-stock { fill: color-mix(in srgb, var(--color-accent) 14%, transparent); stroke: var(--mw-accent-text); stroke-width: 1.2; }
-  .mw-zero-inset .mw-i-line { stroke: var(--mw-line); stroke-width: 1; stroke-dasharray: 3 3; }
-  .mw-zero-inset .mw-i-dim { stroke: var(--color-text-secondary); stroke-width: 0.8; }
-  .mw-zero-inset .mw-i-target { stroke: var(--mw-warn); stroke-width: 1.6; fill: none; }
-  .mw-zero-inset .mw-i-val { fill: var(--mw-accent-text); font-weight: 700; }
   .mw-hole-map .mw-h-pin { fill: var(--mw-accent-text); stroke: var(--color-surface); stroke-width: 1.5; pointer-events: none; }
   .mw-hole-map .mw-h-stock-alt { fill: color-mix(in srgb, var(--color-accent) 6%, transparent); stroke: var(--mw-accent-text); stroke-width: 1; stroke-dasharray: 5 4; pointer-events: none; }
   .mw-hole-map .mw-h-alt-label { fill: var(--mw-accent-text); font-size: 11px; font-weight: 700; pointer-events: none; }
-  .mw-stock-wl { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   #mw-stock-tauto[aria-pressed="true"] { border-color: var(--mw-accent) !important; color: var(--mw-accent) !important; }
-  .mw-maptools-row .mw-btn { min-height: 0 !important; padding: 4px 10px !important; }
   .mw-btn.mw-btn-quiet[aria-pressed="true"] { background: color-mix(in srgb, var(--color-accent) 32%, transparent) !important; border-color: var(--color-accent) !important; }
-  .mw-favs { display: flex; flex-wrap: wrap; gap: 6px; }
   .mw-fav-chip { cursor: pointer; font-size: 0.8rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-border); color: var(--color-text-primary); }
   .mw-fav-chip:hover, .mw-fav-chip:focus-visible { border-color: var(--mw-warn); outline: none; }
   .mw-fav-chip::before { content: '\2605  '; color: var(--mw-warn); }
   .mw-fav { cursor: pointer; margin-left: 8px; color: var(--color-text-secondary); opacity: 0.75; outline: none; }
   .mw-fav:hover, .mw-fav:focus-visible { opacity: 1; }
   .mw-fav[aria-pressed="true"] { color: var(--mw-warn); opacity: 1; }
-  .mw-pick-card.mw-tall .mw-maptools-row, .mw-pick-card.mw-tall .mw-stock { justify-content: center; }
   .mw-hole-map.mw-editing { touch-action: none; cursor: crosshair; }
   .mw-hole-map { touch-action: pan-x pan-y; }
   .mw-hole-map.mw-zoomed { touch-action: none; cursor: grab; }
   .mw-hole-map.mw-zoomed.mw-editing { cursor: crosshair; }
-  .mw-zoom { display: inline-flex; align-items: center; gap: 4px; }
   /* Under the map: what only changes the view, never the machine or the pick. */
-  .mw-mapview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
-  .mw-mapview-cap { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-secondary); }
-  .mw-mapview .mw-btn { min-height: 36px !important; padding: 4px 12px !important; }
-  .mw-zoom .mw-btn { min-width: 44px; }
-  .mw-zoom-level { min-width: 2.6em; text-align: center; }
   .mw-hole-map.mw-editing .mw-h-spot { cursor: crosshair; }
   .mw-hole-map .mw-h-block {
     fill: color-mix(in srgb, var(--color-text-secondary) 28%, transparent);
@@ -452,7 +408,7 @@
   .mw-eye[aria-pressed="false"] { opacity: 0.75; }
   .mw-eye[aria-pressed="false"] .mw-eye-open, .mw-eye[aria-pressed="true"] .mw-eye-shut { display: none; }
   .mw-grid-meta { align-items: end; }
-  .mw-grid-meta[hidden], .mw-stock-from [hidden] { display: none !important; }
+  .mw-grid-meta[hidden] { display: none !important; }
   .mw-grid-meta .mw-input#mw-grid-name { text-align: left; font-family: inherit; }
   .mw-grid-meta .mw-extra { align-self: center; }
   #mw-setup-card.mw-layout-list .mw-grab-btn { flex: none; padding: 8px 10px !important; }
@@ -461,8 +417,6 @@
   .mw-select.mw-layout { width: auto !important; min-height: 0 !important; padding: 4px 8px !important; margin: -4px 0 -4px auto; }
   .mw-bad-text { color: var(--mw-danger) !important; }
   .mw-warn-text { color: var(--mw-warn) !important; }
-  .mw-stock-prog { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-  .mw-stock-prog[hidden] { display: none; }
   .mw-hole-map .mw-h-prog { fill: none; stroke: #8fa8ff; stroke-opacity: 0.5; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
   .mw-hole-map .mw-h-prog.mw-h-prog-bad { stroke: var(--mw-warn); stroke-opacity: 0.6; }
   .mw-input:disabled { opacity: 0.65; cursor: not-allowed; }
@@ -599,17 +553,6 @@
   }
   .mw-move-label { display: inline-flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; }
   .mw-move-icon { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  /* Stock mode with X0 Y0 on its center: Go to Selected already goes there. */
-  .mw-pick-card.mw-goto-one #mw-stock-gocenter { display: none !important; }
-  /* The buttons side by side match: Pick Nearest Hole as tall as Go to. */
-  .mw-holebar-actions > #mw-hole-nearest { min-height: 48px; }
-  /* A 230 px column is too narrow for two named buttons: one per row. */
-  .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-hole-goto,
-  .mw-pick-card.mw-tall.mw-side-narrow .mw-holebar-actions > #mw-stock-gocenter,
-  .mw-pick-card.mw-tall .mw-holebar-actions > [data-probe-top] { grid-column: 1 / -1; }
-  /* Stock mode: Probe Stock Top and Go to Stock Center side by side, as
-     Pick Nearest Hole and Go to are (alone, Probe Stock Top takes the row). */
-  .mw-pick-card.mw-tall[data-zmode="stock"]:not(.mw-goto-one, .mw-side-narrow) .mw-holebar-actions > [data-probe-top] { grid-column: auto; width: auto !important; }
   /* Set XY0 / Set Z0 when the work offset already has that zero. */
   .mw-set-done { display: none; }
   .mw-already .mw-set-done { display: inline; }
@@ -673,38 +616,6 @@
      A machine deeper (Y) than it is wide puts the controls in a column on
      the right, unless the panel is portrait; otherwise they sit below the map. */
   .mw-hole-map { width: 100%; max-width: 100%; height: 300px; display: block; flex: none; overflow: visible; }
-  .mw-pick-card.mw-tall {
-    display: grid; grid-template-columns: minmax(0, 1fr) var(--mw-side, 230px); grid-template-rows: auto 1fr;
-    gap: 10px 16px; align-items: start;
-  }
-  .mw-pick-card.mw-tall .mw-mapcol { grid-row: 1 / span 2; }
-  /* Nothing in the narrow column may push it wider than its 230 px (300 on wide screens). */
-  .mw-pick-card.mw-tall > *, .mw-pick-card.mw-tall .mw-holebar > *, .mw-maptools > * { min-width: 0; max-width: 100%; }
-  .mw-pick-card.mw-tall .mw-holebar { flex-direction: column; align-items: stretch; }
-  .mw-pick-card.mw-tall .mw-dots-wrap { align-self: center; }
-  .mw-pick-card.mw-tall .mw-holebar-info { flex: none; text-align: left; }
-  /* The narrow column: Pick Nearest Hole and Go to side by side, then the
-     work offset menu and Set full width. */
-  .mw-pick-card.mw-tall .mw-holebar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 0; align-items: stretch; }
-  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-wcs, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-set,
-  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-setz { grid-column: 1 / -1; }
-  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-nearest, .mw-pick-card.mw-tall .mw-holebar-actions > #mw-hole-goto,
-  .mw-pick-card.mw-tall .mw-holebar-actions > #mw-stock-gocenter, .mw-pick-card.mw-tall .mw-holebar-actions > [data-probe-top] {
-    min-width: 0 !important; padding-left: 6px !important; padding-right: 6px !important; white-space: normal; line-height: 1.15;
-  }
-  .mw-pick-card.mw-tall .mw-select.mw-hole-wcs { width: 100% !important; }
-  /* Wide screens: the side splits in two, the hole or stock on the left,
-     the picked point and Go to / Set on the right, so Set sits near the
-     top instead of under the stock's fields. */
-  .mw-holebar-side { display: contents; }
-  .mw-pick-card.mw-tall .mw-holebar-side > * { min-width: 0; max-width: 100%; }
-  .mw-pick-card.mw-tall.mw-side-two .mw-holebar {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 10px 16px; align-items: start;
-  }
-  .mw-pick-card.mw-side-two .mw-holebar > .mw-zmode { grid-column: 1; grid-row: 1; }
-  .mw-pick-card.mw-side-two .mw-holebar > .mw-stock, .mw-pick-card.mw-side-two .mw-holebar > .mw-dots-wrap { grid-column: 1; grid-row: 2; }
-  .mw-pick-card.mw-side-two .mw-holebar-side { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 10px; }
-  .mw-pick-card.mw-side-two .mw-zero-inset { align-self: center; }
   .mw-hole-map .mw-h-area { fill: color-mix(in srgb, var(--color-text-secondary) 6%, transparent); stroke: var(--mw-line); }
   .mw-hole-map .mw-h-spot { cursor: pointer; }
   .mw-hole-map .mw-h-tick { stroke: var(--mw-accent-text); stroke-width: 1.5; }
@@ -740,9 +651,6 @@
   .mw-status[data-state="ok"] { color: var(--mw-ok); }
   .mw-status[data-state="bad"] { color: var(--mw-danger); }
   .mw-status[data-state="warn"] { color: var(--mw-warn); }
-  .mw-holebar-actions > .mw-pair-row { flex-basis: 100%; grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
-  .mw-pair-row[hidden] { display: none !important; }
-  .mw-pair-row > .mw-btn { width: 100%; }
   #mw-pair-text[data-state="ok"] { color: var(--mw-ok); }
   #mw-pair-text[data-state="warn"] { color: var(--mw-warn); }
   #mw-pair-text[data-state="bad"] { color: var(--mw-danger); }
@@ -751,6 +659,129 @@
   /* A visible keyboard focus on every control (WCAG 2.4.7, 1.4.11). */
   .mw-wrapper :focus-visible { outline: 2px solid var(--mw-accent-text) !important; outline-offset: 2px; }
 
+  /* ---- XY0 Picker (0.5.17): the map with its view tools above and pick
+     tools below; beside it (mw-tall) or under it, the target card (what's
+     picked and where X0 Y0 goes on it), the Z0 fold, and the dock (which
+     offset, Go to, Set), pinned to the bottom so Set never moves. ---- */
+  .mw-pick-card { display: flex; flex-direction: column; gap: 12px; }
+  .mw-pick-card.mw-tall { display: grid; grid-template-columns: minmax(0, 1fr) var(--mw-side, 320px); gap: 12px 16px; align-items: stretch; }
+  .mw-pick-card.mw-tall > * { min-width: 0; max-width: 100%; }
+  .mw-mapcol { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .mw-maptop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .mw-maptop .mw-zmode { flex: 0 1 200px; max-width: 200px; }
+  .mw-mapview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .mw-mapview .mw-btn { min-height: 40px !important; padding: 4px 10px !important; }
+  .mw-zoom { display: inline-flex; align-items: center; gap: 4px; }
+  .mw-zoom .mw-btn { min-width: 40px; }
+  .mw-zoom-level { min-width: 2.6em; text-align: center; }
+  .mw-mapstrip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+  .mw-mapstrip .mw-btn { min-height: 44px !important; padding: 6px 14px !important; }
+  .mw-mapstrip-end { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+  .mw-mapstrip .mw-fav-chip { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 8px; font-size: 0.85rem; }
+  .mw-favs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mw-holebar { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; align-items: start; min-width: 0; }
+  .mw-pick-card.mw-tall .mw-holebar { display: flex; flex-direction: column; gap: 12px; }
+  .mw-pick-card.mw-tall .mw-dock { margin-top: auto; flex: none; }
+  .mw-pick-card.mw-tall .mw-target, .mw-pick-card.mw-tall .mw-zfold { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+  .mw-pick-card.mw-tall .mw-zfold:not([open]) { flex: none; }
+  .mw-pick-card.mw-side-two .mw-holebar, .mw-pick-card.mw-bar-two .mw-holebar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: start; }
+  .mw-pick-card.mw-side-two .mw-target, .mw-pick-card.mw-bar-two .mw-target { grid-column: 1; grid-row: 1 / span 2; }
+  .mw-pick-card.mw-side-two .mw-zfold, .mw-pick-card.mw-bar-two .mw-zfold { grid-column: 2; grid-row: 1; }
+  .mw-pick-card.mw-side-two .mw-dock, .mw-pick-card.mw-bar-two .mw-dock { grid-column: 2; grid-row: 2; align-self: end; }
+  .mw-holebar > * { min-width: 0; max-width: 100%; }
+  .mw-target, .mw-zfold, .mw-dock { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; padding: 12px; }
+  .mw-zfold { display: block; box-sizing: border-box; align-self: stretch; }
+  .mw-target { display: flex; flex-direction: column; gap: 10px; }
+  .mw-target-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+  .mw-target-mode { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); }
+  .mw-holebar-title { font-weight: 600; font-size: 1rem; }
+  .mw-holebar-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .mw-holebar-info .mw-hint { font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .mw-holebar-info [hidden], .mw-btn.mw-hold-btn[hidden], .mw-target [hidden], .mw-dock [hidden], .mw-zfold [hidden] { display: none !important; }
+  .mw-dots-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .mw-dots-cap { font-size: 0.8rem; color: var(--color-text-secondary); }
+  /* The 9-point pickers, big enough for a finger: each dot has a 44 px target. */
+  #mw-hole-dots { width: 112px; height: 112px; margin: 14px; }
+  #mw-hole-dots.mw-has-hole::before { border: 2px solid var(--mw-accent-text); background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+  #mw-hole-dots .mw-dot.mw-corner, #mw-stock-dots .mw-dot.mw-corner { width: 20px; height: 20px; }
+  #mw-hole-dots .mw-dot.mw-edge, #mw-stock-dots .mw-dot.mw-edge { width: 16px; height: 16px; }
+  #mw-hole-dots .mw-dot::before, #mw-stock-dots .mw-dot::before { width: 44px; height: 44px; }
+  #mw-stock-dots { width: 180px; height: 70px; margin: 14px; border-style: solid; border-radius: 3px; background: color-mix(in srgb, #d9b07a 14%, transparent); border-color: color-mix(in srgb, #d9b07a 70%, var(--color-text-secondary)); }
+  #mw-stock-dots::before { display: none; }
+  .mw-stock { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .mw-stock[data-by="pins"] .mw-by-zero { display: none !important; }
+  .mw-stock-note:empty { display: none; }
+  .mw-stock .mw-select.mw-stock-corner { width: 100% !important; min-height: 40px !important; }
+  .mw-stock-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .mw-sfield { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 0.75rem; color: var(--color-text-secondary); }
+  .mw-sfield .mw-input { width: 100% !important; min-width: 0 !important; min-height: 40px !important; padding: 4px 8px !important; }
+  .mw-stock-tbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .mw-stock-tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; }
+  .mw-stock-tools .mw-btn, .mw-stock-tbar .mw-btn { min-height: 40px !important; padding: 4px 8px !important; white-space: normal; line-height: 1.15; min-width: 0 !important; }
+  .mw-stock-tools [hidden], .mw-stock-tbar [hidden] { display: none !important; }
+  #mw-stock-tauto[aria-pressed="true"] { border-color: var(--mw-accent) !important; color: var(--mw-accent) !important; }
+  .mw-stock-prog[hidden] { display: none; }
+  .mw-stock-prog summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600; background: color-mix(in srgb, var(--color-text-secondary) 16%, transparent); color: var(--color-text-primary); }
+  .mw-stock-prog summary::-webkit-details-marker { display: none; }
+  .mw-stock-prog summary::after { content: '\25BE'; opacity: 0.7; }
+  .mw-stock-prog[open] summary::after { content: '\25B4'; }
+  .mw-stock-prog summary[data-state="ok"] { background: color-mix(in srgb, var(--color-accent) 18%, transparent); color: var(--mw-ok); }
+  .mw-stock-prog summary[data-state="warn"] { background: color-mix(in srgb, var(--mw-warn) 18%, transparent); color: var(--mw-warn); }
+  .mw-stock-prog summary[data-state="bad"] { background: color-mix(in srgb, var(--mw-danger) 18%, transparent); color: var(--mw-danger); }
+  .mw-stock-prog > .mw-hint { display: block; margin-top: 8px; font-size: 0.85rem; line-height: 1.4; }
+  .mw-stock-wl { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .mw-stock-wl .mw-input { width: 80px !important; min-width: 0 !important; min-height: 36px !important; padding: 4px 6px !important; }
+  /* The Z0 fold: one line, open for the side view and Set Z0. */
+  .mw-zfold summary { cursor: pointer; list-style: none; display: flex; width: 100%; box-sizing: border-box; align-items: center; gap: 10px; min-height: 32px; font-size: 0.9rem; }
+  .mw-zfold summary::-webkit-details-marker { display: none; }
+  .mw-zfold summary::after { content: '\25BE'; margin-left: auto; color: var(--mw-accent-text); }
+  .mw-zfold[open] summary::after { content: '\25B4'; }
+  .mw-zfold-cap { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--color-text-secondary); }
+  #mw-zfold-text[data-state="warn"] { color: var(--mw-warn); }
+  .mw-zfold-body { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+  .mw-zside { width: 100%; height: auto; display: block; border-radius: 8px; background: var(--color-surface); }
+  .mw-zside text { font-family: inherit; font-size: 10px; fill: var(--color-text-secondary); }
+  .mw-zside .mw-z-board { fill: color-mix(in srgb, #b08a55 40%, var(--color-surface)); }
+  .mw-zside .mw-z-stock { fill: color-mix(in srgb, #d9b07a 24%, transparent); stroke: #d9b07a; stroke-width: 1.2; }
+  .mw-zside .mw-z-lead { stroke: var(--color-accent); stroke-width: 2.5; }
+  .mw-zside text.mw-z-lead { fill: var(--mw-accent-text); stroke: none; font-weight: 700; }
+  .mw-zside .mw-z-pair { stroke: #8fb3ff; stroke-width: 2; }
+  .mw-zside .mw-z-pair.mw-z-off { stroke-dasharray: 4 3; }
+  .mw-zside text.mw-z-pair { fill: #8fb3ff; stroke: none; font-weight: 600; }
+  .mw-zside .mw-z-dim { stroke: #d9b07a; stroke-width: 1; }
+  .mw-zside text.mw-z-val { fill: var(--color-text-primary); font-weight: 600; }
+  .mw-zside .mw-z-tool { fill: color-mix(in srgb, var(--color-text-secondary) 45%, var(--color-surface)); }
+  .mw-zside .mw-z-tip { fill: var(--color-text-secondary); }
+  .mw-zside .mw-z-gap { stroke: var(--color-text-secondary); stroke-dasharray: 2 3; }
+  .mw-zfold-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .mw-zfold-actions .mw-btn { min-height: 52px; white-space: normal; line-height: 1.15; min-width: 0 !important; }
+  /* The dock. */
+  .mw-dock { display: flex; flex-direction: column; gap: 10px; }
+  .mw-wcs-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.7fr); gap: 4px; }
+  .mw-wcs-chip { min-height: 48px !important; margin: 0 !important; padding: 4px 2px !important; border: 0 !important; border-radius: 8px !important; cursor: pointer;
+    background: var(--color-surface) !important; color: var(--color-text-secondary) !important; font: inherit !important; opacity: 1 !important;
+    display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0 !important; }
+  .mw-wcs-chip b { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; }
+  .mw-wcs-chip em { font-style: normal; font-size: 0.66rem; line-height: 1.1; letter-spacing: 0.01em; }
+  .mw-wcs-chip.mw-act { box-shadow: inset 0 0 0 2px var(--mw-accent-text); color: var(--mw-accent-text) !important; }
+  .mw-wcs-chip.mw-paired { box-shadow: inset 0 0 0 1.5px #8fb3ff; color: #8fb3ff !important; }
+  .mw-wcs-chip[aria-pressed="true"] { background: var(--color-accent) !important; color: #06231d !important; box-shadow: none; }
+  .mw-wcs-chip.mw-other[aria-pressed="true"] { background: var(--mw-warn-bg) !important; color: #fff !important; }
+  .mw-wcs-chip:focus-visible { outline: 2px solid var(--mw-accent-text) !important; outline-offset: 2px; }
+  .mw-select.mw-wcs-more { width: 100% !important; min-width: 0 !important; min-height: 48px !important; padding: 4px 18px 4px 6px !important; font-size: 0.85rem !important; text-align: center; font-weight: 700; border-radius: 8px !important; }
+  .mw-select.mw-wcs-more.mw-on { background: var(--color-accent) !important; color: #06231d !important; }
+  .mw-dock .mw-activate { min-height: 40px !important; width: 100%; }
+  .mw-pair-row { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; }
+  .mw-pair-row[hidden] { display: none !important; }
+  .mw-pair-row > .mw-btn { width: 100%; }
+  .mw-dock-go { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; }
+  .mw-pick-card.mw-side-narrow .mw-dock-go { grid-template-columns: minmax(0, 1fr); }
+  .mw-dock-go .mw-btn, #mw-stock-gocenter { min-height: 62px; white-space: normal; line-height: 1.2; min-width: 0 !important; padding: 6px 8px !important; }
+  #mw-stock-gocenter { min-height: 48px; width: 100%; }
+  .mw-pick-card.mw-goto-one #mw-stock-gocenter { display: none !important; }
+  .mw-btn.mw-hold-btn.mw-hold-primary.mw-set-other { background: var(--mw-warn-bg) !important; border-color: var(--mw-warn-bg) !important; }
+  #mw-hole-status:empty { display: none; }
 </style>
 
 <div class="mw-wrapper">
@@ -811,96 +842,103 @@
       <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-surface-ok">Done</button>
     </div>
     <div class="mw-tab" data-tab="holes">
-      <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a dog hole, or on stock against pins in them.</strong>
-        <strong>Hole</strong>: tap a hole, and the dots pick its center, a side or a corner. <strong>Stock</strong>: tap the holes your pins are in,
-        and the dots pick a point on the stock. The line beside <strong>Set</strong> says where, with the numbers. Hold <strong>Go to Selected</strong> to move there at Safe Z;
-        hold <strong>Set</strong> to make it X0 Y0 without moving.</p>
+      <p class="mw-intro"><strong>Put <span data-hole-wcs>G54</span> X0 Y0 on a dog hole, or on stock against pins in them.</strong> Pick on the map, tap where X0 Y0 goes, then hold <strong>Set</strong>.</p>
       <section class="mw-card mw-pick-card" id="mw-pick-card" data-zmode="hole" aria-label="Pick a hole or place the stock">
         <div class="mw-mapcol">
-          <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
-          <div class="mw-mapview" role="group" aria-labelledby="mw-mapview-cap">
-            <span class="mw-mapview-cap" id="mw-mapview-cap">Map view</span>
-            <span class="mw-zoom">
+          <div class="mw-maptop">
+            <div class="mw-seg-group mw-zmode" role="group" aria-label="What X0 Y0 goes on">
+            <button type="button" class="mw-seg" data-zmode="hole" aria-pressed="true" title="X0 Y0 on a hole: its center, a side or a corner of the hole itself. Tap a hole or press Pick Nearest Hole. The stock, if placed, stays put.">Hole</button>
+            <button type="button" class="mw-seg" data-zmode="stock" aria-pressed="false" title="X0 Y0 on the stock: placed against pins in dog holes, or by its corner on X0 Y0. Then pick its corner, an edge or its center.">Stock</button>
+          </div>
+            <div class="mw-mapview" role="group" aria-label="Map view">
+              <span class="mw-zoom">
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-out" aria-label="Zoom out" title="Zoom out (or the mouse wheel, or pinch).">&minus;</button>
               <span class="mw-hint mw-zoom-level" id="mw-zoom-level">1&times;</span>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-in" aria-label="Zoom in" title="Zoom in on the spindle, or on the middle when it isn't homed (or the mouse wheel over a spot, or pinch). Drag the map to look around.">+</button>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-fit" title="Show the whole travel again.">Fit</button>
               <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-zoom-follow" aria-pressed="false" title="While zoomed in, keep the spindle in the middle as you jog. Dragging the map turns it off.">Follow</button>
             </span>
-            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-dev-rotate" hidden aria-pressed="false" title="Development only (localStorage sbt-dev = 1): preview the machine turned a quarter, X and Y travel swapped. Commands, macros and programs are refused while it's on.">Rotate (dev)</button>
+              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-dev-rotate" hidden aria-pressed="false" title="Development only (localStorage sbt-dev = 1): preview the machine turned a quarter, X and Y travel swapped. Commands, macros and programs are refused while it's on.">Rotate (dev)</button>
+            </div>
+          </div>
+          <svg class="mw-hole-map" id="mw-hole-map" role="img" aria-label="The machine's travel with the spoilboard's dog holes or grid crossings; click one to pick it."></svg>
+          <div class="mw-mapstrip" id="mw-mapstrip">
+            <button type="button" class="mw-btn mw-btn-small" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position. In Stock mode it does what tapping that hole does: Against Pins, a pin in it; Corner on X0 Y0, the stock's corner on it.">Pick Nearest Hole</button>
+            <span class="mw-favs" id="mw-favs"></span>
+            <span class="mw-mapstrip-end"><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-area" aria-pressed="false" title="Mark a clamp or fixture on the map for this job: drag a rectangle. This map then won't pick its holes, and Go to and Set won't target a point inside it. It's only a reminder for this picker: jogging, jobs and the keyboard macros don't know about it. Tap an excluded area to remove it.">Exclude Picks</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-clear" hidden title="Remove every excluded area.">Clear Exclusions</button></span>
           </div>
         </div>
         <div class="mw-holebar" id="mw-holebar">
-          <div class="mw-seg-group mw-zmode" role="group" aria-label="What X0 Y0 goes on">
-            <button type="button" class="mw-seg" data-zmode="hole" aria-pressed="true" title="X0 Y0 on a hole: its center, a side or a corner of the hole itself. Tap a hole or press Pick Nearest Hole. The stock, if placed, stays put.">Hole</button>
-            <button type="button" class="mw-seg" data-zmode="stock" aria-pressed="false" title="X0 Y0 on the stock: placed against pins in dog holes, or by its corner on X0 Y0. Then pick its corner, an edge or its center.">Stock</button>
-          </div>
-          <div class="mw-stock mw-only-stock" id="mw-stock-panel" data-by="pins">
-            <input type="checkbox" id="mw-stock-on" hidden>
-            <div class="mw-seg-group mw-stockby" role="group" aria-label="How the stock is placed">
+          <div class="mw-target" id="mw-target">
+            <div class="mw-target-head">
+              <span class="mw-target-mode" id="mw-target-mode">Hole</span>
+              <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" aria-label="Favorite" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
+            </div>
+            <div class="mw-stock mw-only-stock" id="mw-stock-panel" data-by="pins">
+              <input type="checkbox" id="mw-stock-on" hidden>
+              <div class="mw-seg-group mw-stockby" role="group" aria-label="How the stock is placed">
               <button type="button" class="mw-seg" data-by="pins" aria-pressed="true" title="The stock is pushed against pins in dog holes: tap the holes the pins are in (two along one edge, one along the other). Its corner is worked out from them, a pin radius off each line.">Against Pins</button>
               <button type="button" class="mw-seg" data-by="zero" aria-pressed="false" title="A corner of the stock is on the work offset's X0 Y0 as it is when you press Use Current X0 Y0 (zero on the corner first, by touch or probe). It stays put when X0 Y0 changes.">Corner on X0 Y0</button>
             </div>
-            <span class="mw-stock-wl"><span class="mw-hint">W</span>
-            <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" placeholder="Width" aria-label="Stock width, along X" title="The stock's size along X. Needed for any X0 Y0 other than the pinned corner, and for the Stock Holes tab.">
-            <span class="mw-hint">&times; L</span>
-            <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" placeholder="Length" aria-label="Stock length, along Y" title="The stock's size along Y.">
-            <span class="mw-hint mw-unit">mm</span></span>
-            <span class="mw-stock-wl"><span class="mw-hint">T</span>
-            <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" placeholder="Thick" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0.">
-            <span class="mw-hint mw-unit">mm</span><span class="mw-hint mw-warn-text" id="mw-stock-tnote" hidden style="flex-basis: 100%"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Follow Z0: T follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, T would be that height. Turn it off and type T then.">Follow Z0</button><button type="button" class="mw-btn mw-btn-small" id="mw-stock-tstore" hidden title="T differs from the stock thickness the Z0 macros use (stored in the controller): store T there, so SBT: Z0 on stock top puts Z0 this far above the spoilboard.">Store for Macros</button></span>
-            <span class="mw-stock-wl"><span class="mw-hint">Clamp margin</span>
-            <input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-m" aria-label="Clamp margin" title="Room to leave along every edge of the stock for clamps or screws: the loaded program's cuts, the bit's width included, should stay this far inside the stock. 0 or blank: right up to the edge.">
-            <span class="mw-hint mw-unit">mm</span></span>
-            <select class="mw-select mw-stock-corner" id="mw-stock-zmode" aria-label="Where Set Z0 puts Z0" title="Where Set Z0 puts Z0: on the spoilboard the stock sits on, or on the stock's top (that plus its thickness).">
-              <option value="bottom">Z0: spoilboard</option>
-              <option value="top">Z0: stock top</option>
-            </select>
-            <select class="mw-select mw-stock-corner mw-by-zero" id="mw-stock-corner" aria-label="Which stock corner is on X0 Y0" title="Which corner of the stock is on X0 Y0 as it was when you pressed Use Current X0 Y0: the stock runs away from it.">
+              <span class="mw-hint mw-stock-note" id="mw-stock-note"></span>
+              <span class="mw-stock-which" id="mw-stock-which"></span>
+              <select class="mw-select mw-stock-corner mw-by-zero" id="mw-stock-corner" aria-label="Which stock corner is on X0 Y0" title="Which corner of the stock is on X0 Y0 as it was when you pressed Use Current X0 Y0: the stock runs away from it.">
               <option value="front-left">Its front left corner</option><option value="front-right">Its front right corner</option>
               <option value="back-left">Its back left corner</option><option value="back-right">Its back right corner</option>
             </select>
-            <span class="mw-dots-wrap"><span class="mw-dots-cap">New X0 Y0 on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></span>
-            <span class="mw-stock-from"><span class="mw-hint" id="mw-stock-note"></span><span class="mw-stock-which" id="mw-stock-which"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear</button></span>
-            <span class="mw-stock-prog" id="mw-stock-prog" hidden><span class="mw-hint" id="mw-stock-prog-text" role="status"></span><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fit" hidden title="Make the stock's width and length the loaded program's cuts, the bit's width and the clamp margin on every side, rounded up: the stock to cut a QuickCut or Gears part from.">Size to Program</button></span>
+              <div class="mw-stock-fields">
+                <label class="mw-sfield"><span>Width X</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-w" aria-label="Stock width, along X" title="The stock's size along X. Needed for any X0 Y0 other than the pinned corner, and for the Stock Holes tab."></label>
+                <label class="mw-sfield"><span>Length Y</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-l" aria-label="Stock length, along Y" title="The stock's size along Y."></label>
+                <label class="mw-sfield"><span>Thick</span><input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-t" aria-label="Stock thickness, along Z" title="The stock's thickness, for Set Z0 on the stock top. Not needed for X0 Y0."></label>
+              </div>
+              <div class="mw-stock-tbar"><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-tauto" aria-pressed="false" title="Follow Z0: Thick follows the active work offset's Z0, as its height above the recorded spoilboard, whenever Z0 is more than 1 mm above it (probed on the stock's top, say); with Z0 on the spoilboard, the stored thickness. Only for stock lying on the spoilboard: with Z0 on a vise jaw, a fixture or a riser, Thick would be that height. Turn it off and type it then.">Follow Z0</button><button type="button" class="mw-btn mw-btn-small" id="mw-stock-tstore" hidden title="Thick differs from the stock thickness the Z0 macros use (stored in the controller): store it there, so SBT: Z0 on stock top puts Z0 this far above the spoilboard.">Store for Macros</button><span class="mw-hint mw-warn-text" id="mw-stock-tnote" hidden></span></div>
+              <div class="mw-stock-tools"><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-fit" hidden title="Make the stock's width and length the loaded program's cuts, the bit's width and the clamp margin on every side, rounded up: the stock to cut a QuickCut or Gears part from.">Use Program Size</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-far" title="Measure the stock without a tape: jog the bit over the stock's opposite corner (a pointed bit lines up best) and press this. Width and length become the distance from the placed corner to the spindle.">Far Corner Is Here</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-by-zero" id="mw-stock-anchor" title="Take the work offset's X0 Y0 as it is now as the stock's corner (zero on the corner first). Setting X0 Y0 elsewhere on the stock afterwards doesn't move the stock.">Use Current X0 Y0</button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-stock-clear" title="Forget the stock's pins and corner, to place it again.">Clear Pins</button></div>
+              <div class="mw-dots-wrap"><span class="mw-dots-cap">Tap where X0 Y0 goes on the stock</span><span class="mw-hole-origin mw-stock-dots" id="mw-stock-dots" role="group" aria-label="Where X0 Y0 goes on the stock"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="X0 Y0 on the stock’s back left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="X0 Y0 on the stock’s back edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="X0 Y0 on the stock’s back right corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="X0 Y0 on the stock’s left edge middle"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="X0 Y0 on the stock’s center"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="X0 Y0 on the stock’s right edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="X0 Y0 on the stock’s front left corner"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="X0 Y0 on the stock’s front edge middle"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="X0 Y0 on the stock’s front right corner"></span></span></div>
+              <details class="mw-stock-prog" id="mw-stock-prog" hidden>
+                <summary id="mw-stock-prog-chip"></summary>
+                <span class="mw-hint" id="mw-stock-prog-text" role="status"></span>
+                <span class="mw-stock-wl"><span class="mw-hint">Clamp margin</span><input class="mw-input mw-stock-size" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-stock-m" aria-label="Clamp margin" title="Room to leave along every edge of the stock for clamps or screws: the loaded program's cuts, the bit's width included, should stay this far inside the stock. 0 or blank: right up to the edge."><span class="mw-hint mw-unit">mm</span></span>
+              </details>
+            </div>
+            <div class="mw-dots-wrap mw-only-hole"><span class="mw-dots-cap" id="mw-dots-cap">Tap where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
+            <div class="mw-holebar-info">
+              <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Pick Nearest Hole.</span>
+              <span class="mw-hint mw-coords" id="mw-hole-coords" hidden></span>
+              <span class="mw-hint mw-hole-move" id="mw-hole-move" hidden></span>
+              <span class="mw-hint mw-hole-dist" id="mw-hole-dist" hidden></span>
+            </div>
           </div>
-          <div class="mw-dots-wrap mw-only-hole"><span class="mw-dots-cap" id="mw-dots-cap">Where X0 Y0 goes on the hole</span><div class="mw-hole-origin" id="mw-hole-dots" role="group" aria-label="Where X0 Y0 goes on the picked hole, shown zoomed in"><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-left" title="−X +Y side (back left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="back-center" title="+Y side (back)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="back-right" title="+X +Y side (back right)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="left-center" title="−X side (left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="center" title="Center of the hole"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="right-center" title="+X side (right)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-left" title="−X −Y side (front left)"></span><span class="mw-dot mw-edge" role="button" tabindex="0" data-origin="front-center" title="−Y side (front)"></span><span class="mw-dot mw-corner" role="button" tabindex="0" data-origin="front-right" title="+X −Y side (front right)"></span></div></div>
-          <div class="mw-holebar-side">
-          <div class="mw-holebar-info">
-            <span class="mw-holebar-title"><span id="mw-hole-picked">No hole picked</span><span class="mw-fav" id="mw-hole-fav" role="button" tabindex="0" aria-pressed="false" aria-label="Favorite" hidden title="Favorite: star the holes you use most. They're marked on the map and listed below it, one tap to pick.">★</span></span>
-            <span class="mw-hint" id="mw-hole-pos">Click a hole, or jog near one and press Pick Nearest Hole.</span>
-            <span class="mw-hint mw-coords" id="mw-hole-coords" hidden></span>
-            <span class="mw-hint mw-hole-move" id="mw-hole-move" hidden></span>
-            <span class="mw-hint mw-hole-dist" id="mw-hole-dist" hidden></span>
-            <span class="mw-hint mw-hole-dist" id="mw-hole-z" hidden></span>
-          </div>
-          <svg class="mw-zero-inset" id="mw-zero-inset" viewBox="0 0 150 112" role="img" aria-label="Zoomed in, to scale: where X0 Y0 goes" style="display: none"></svg>
-          <div class="mw-holebar-actions">
-            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-nearest" title="Pick the hole nearest the spindle: jog roughly over a hole, then use the grid's exact position. In Stock mode it does what tapping that hole does: Against Pins, a pin in it; Corner on X0 Y0, the stock's corner on it.">Pick Nearest Hole</button>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span id="mw-hole-goto-text">Go to Selected</span></span><span class="mw-hold-hint">Hold</span></button>
-            <select class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
+          <details class="mw-zfold" id="mw-zfold">
+            <summary><span class="mw-zfold-cap">Z0</span><span id="mw-zfold-text">stays where it is</span></summary>
+            <div class="mw-zfold-body">
+              <div class="mw-seg-group mw-zon mw-only-stock" role="group" aria-label="Where Set Z0 puts Z0">
+                <button type="button" class="mw-seg" data-zon="top" aria-pressed="false" title="Set Z0 puts Z0 on the stock's top: the recorded spoilboard height plus Thick.">Stock top</button>
+                <button type="button" class="mw-seg" data-zon="bottom" aria-pressed="true" title="Set Z0 puts Z0 under the stock: the recorded spoilboard height (plus the point's height, for stock placed on a raised point).">Spoilboard</button>
+              </div>
+              <select hidden class="mw-select" id="mw-stock-zmode" aria-label="Where Set Z0 puts Z0" title="Where Set Z0 puts Z0: on the spoilboard the stock sits on, or on the stock's top (that plus its thickness).">
+              <option value="bottom">Z0: spoilboard</option>
+              <option value="top">Z0: stock top</option>
+            </select>
+              <svg class="mw-zside" id="mw-zside" viewBox="0 0 280 150" role="img" aria-label="Side view, not to scale: the spoilboard, the stock, and where Z0 goes"></svg>
+              <span class="mw-hint mw-hole-dist" id="mw-hole-z" hidden></span>
+              <div class="mw-zfold-actions"><button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset Set changes (the chips below) on the surface this fold names: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> Z0<span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button><button type="button" class="mw-btn mw-btn-small mw-btn-quiet" data-probe-top="picker" title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top in the work offset Set changes, and the card offers to store its height above the spoilboard as the stock thickness (Thick follows it). Only for stock lying on the spoilboard.">Probe Stock Top</button></div>
+            </div>
+          </details>
+          <div class="mw-dock" id="mw-dock">
+            <div class="mw-wcs-chips" id="mw-wcs-chips" role="group" aria-label="The work offset Set changes"></div>
+            <select hidden class="mw-select mw-hole-wcs" id="mw-hole-wcs" aria-label="Work offset to set" title="The work offset Set changes: the one active in ncSender, or any other.">
               <option value="" selected>Active</option>
               <option value="1">G54</option><option value="2">G55</option><option value="3">G56</option>
               <option value="4">G57</option><option value="5">G58</option><option value="6">G59</option>
               <option value="7">G59.1</option><option value="8">G59.2</option><option value="9">G59.3</option>
             </select>
-            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-hole-activate" hidden style="width: 100%" title="Make the work offset picked in the menu the active one in ncSender (sends e.g. G55), so jogging, ncSender's position and programs without their own G54-G59 line use it. Only when the machine is idle and no job is running.">Make Active</button>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the menu: Active (the one in use, asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> XY0<span class="mw-set-at" id="mw-hole-set-at"></span><span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-setz" hidden disabled title="Hold to put Z0 of the work offset in the menu on the surface shown above it: the spoilboard height the Z0 macros recorded, plus a fixture point's height and/or the stock's thickness. For any measured tool; needs the spoilboard height recorded and a tool length offset active. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> Z0<span class="mw-set-done"> already set</span></span><span class="mw-hold-hint">Hold</span></button>
-            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" data-probe-top="picker" style="width: 100%" title="Shrinks Spoilboard Toolbox to a corner card and opens ncSender's Probe dialog: probe Z on the stock's top in the work offset picked in the menu, and the card offers to store its height above the spoilboard as the stock thickness (T follows it). Only for stock lying on the spoilboard.">Probe Stock Top</button>
+            <button type="button" class="mw-btn mw-btn-small mw-btn-quiet mw-activate" id="mw-hole-activate" hidden title="Make the work offset picked in the chips the active one in ncSender (sends e.g. G55), so jogging, ncSender's position and programs without their own G54-G59 line use it. Only when the machine is idle and no job is running.">Make Active</button>
             <div class="mw-pair-row" id="mw-pair-row" hidden><span class="mw-hint" id="mw-pair-text"></span><button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-pair-now" title="Hold to copy the Z0 macros' work offset's X0 Y0 to the stock bottom offset (Z0 macros tab, Settings), with its Z0 on the stock's bottom: the recorded spoilboard height, plus the height the stock sits on when it's placed on a fixture point. Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label">Pair <span id="mw-pair-name">G55</span></span><span class="mw-hold-hint">Hold</span></button></div>
-            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-only-stock" id="mw-stock-gocenter" disabled title="Hold to move the spindle over the stock's center, whichever dot X0 Y0 is on: first up to ncSender's Safe Z, then across. Nothing is set."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span>Go to Stock Center</span></span><span class="mw-hold-hint">Hold</span></button>
-          </div>
-          <div class="mw-maptools">
-            <div class="mw-maptools-row">
-              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-area" aria-pressed="false" title="Mark a clamp or fixture on the map for this job: drag a rectangle. This map then won't pick its holes, and Go to and Set won't target a point inside it. It's only a reminder for this picker: jogging, jobs and the keyboard macros don't know about it. Tap an excluded area to remove it.">Exclude Picks</button>
-              <button type="button" class="mw-btn mw-btn-small mw-btn-quiet" id="mw-block-clear" hidden title="Remove every excluded area.">Clear Exclusions</button>
-              <span class="mw-favs" id="mw-favs"></span>
-            </div>
-          </div>
+            <div class="mw-dock-go"><button type="button" class="mw-btn mw-btn-small mw-hold-btn" id="mw-hole-goto" disabled title="Hold to move the spindle over the picked point: first up to ncSender's Safe Z, then across."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span id="mw-hole-goto-text">Go to Selected</span></span><span class="mw-hold-hint">Hold · lifts to Safe Z first</span></button><button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-hold-primary" id="mw-hole-set" disabled title="Hold to make the picked point X0 Y0 of the work offset picked in the chips: the active one (asked of the controller) or the one chosen (G10 L2). Nothing moves."><span class="mw-hold-fill"></span><span class="mw-hold-label"><span class="mw-set-verb">Set </span><span data-hole-wcs>G54</span> XY0<span class="mw-set-at" id="mw-hole-set-at"></span><span class="mw-set-done"> already set</span></span><span class="mw-hold-hint" id="mw-hole-set-hint">Hold</span></button></div>
+            <button type="button" class="mw-btn mw-btn-small mw-hold-btn mw-only-stock" id="mw-stock-gocenter" disabled title="Hold to move the spindle over the stock's center, whichever dot X0 Y0 is on: first up to ncSender's Safe Z, then across. Nothing is set."><span class="mw-hold-fill"></span><span class="mw-hold-label mw-move-label"><svg class="mw-move-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span>Go to Stock Center</span></span><span class="mw-hold-hint">Hold · lifts to Safe Z first</span></button>
+            <p class="mw-status" id="mw-hole-status" role="status"></p>
           </div>
         </div>
-        <p class="mw-status" id="mw-hole-status" role="status"></p>
       </section>
       <section class="mw-card" id="mw-setup-card" aria-labelledby="mw-holes-title">
         <p class="mw-status" id="mw-setup-guide" data-state="ok" hidden></p>
@@ -1794,7 +1832,7 @@
           </div>
           <div class="mw-field">
             <label for="mw-sh-depth">Depth (<span class="mw-unit">mm</span>)</label>
-            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-depth" value="" placeholder="through" title="Blank: the holes go through the stock and Break Through into the spoilboard. A number: blind holes that stop this far below Z0 (the stock's top), less than its thickness T.">
+            <input class="mw-input" type="text" autocomplete="off" spellcheck="false" data-unit="length" id="mw-sh-depth" value="" placeholder="through" title="Blank: the holes go through the stock and Break Through into the spoilboard. A number: blind holes that stop this far below Z0 (the stock's top), less than its thickness (Thick).">
           </div>
         </div>
         <label class="mw-check" title="Load the part's program first. Any spoilboard hole where its bit (its edge, rapids too) would pass within 1 mm of the bolt head or pin is left out, and the nearest clear hole used instead, with X0 Y0 where the XY0 Picker's Set will put it on the stock (or where it is now). A bolt head is taken to stand about the bolt's width high, on the stock or in its counterbore."><input type="checkbox" id="mw-sh-avoid" checked> Clear of the loaded program</label>
@@ -5820,7 +5858,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       extras: EXTRAS.filter(function(k) { return $('mw-x-' + k).checked; }),
       holeOrigin: holes.origin, holeProfiles: holes.profiles, holeProfile: holes.profile, holeBlocks: holes.blocks, holeHidden: holes.hidden,
       stockOn: $('mw-stock-on').checked, stockW: fieldVal('mw-stock-w'), stockL: fieldVal('mw-stock-l'), stockT: fieldVal('mw-stock-t'), stockM: fieldVal('mw-stock-m'),
-      stockZMode: $('mw-stock-zmode').value,
+      stockZMode: $('mw-stock-zmode').value, zFoldOpen: $('mw-zfold').open,
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
       stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
       stockPins: holes.pins.slice(), stockPinSide: holes.pinSide, stockDotSet: !!holes.stockDotSet, stockAnchor: holes.stockAnchor,
@@ -6494,6 +6532,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }).map(function(z) { return { block: true, name: 'Blocked', minX: z.minX, maxX: z.maxX, minY: z.minY, maxY: z.maxY }; }) : [];
     $('mw-stock-on').checked = !!saved.stockOn;
     if (saved.stockZMode === 'top') $('mw-stock-zmode').value = 'top';
+    holes.zFoldSaved = !!saved.zFoldOpen;
+    if (saved.zFoldOpen) $('mw-zfold').open = true;
     ['W', 'L', 'T'].forEach(function(k) {
       var v = parseFloat(saved['stock' + k]);
       if (isFinite(v) && v > 0) $('mw-stock-' + k.toLowerCase()).value = +(v * conv).toFixed(4);
@@ -6671,6 +6711,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-stock-t').addEventListener('input', function() { holes.thickFrom = 'typed'; showTStore(); });
     $('mw-stock-tauto').addEventListener('click', function() { setThickAuto(!holes.thickAuto); stockSync(); saveSettings(); });
     ['mw-stock-corner', 'mw-stock-zmode'].forEach(function(id) { $(id).addEventListener('change', stockSync); });
+    ROOT.querySelectorAll('.mw-zon .mw-seg').forEach(function(b) {
+      b.addEventListener('click', function() { $('mw-stock-zmode').value = b.getAttribute('data-zon'); stockSync(); });
+    });
+    $('mw-zfold').addEventListener('toggle', function() { var o = $('mw-zfold').open; if (holes.zFoldSaved !== o) { holes.zFoldSaved = o; saveSettings(); } });
     ['mw-stock-w', 'mw-stock-l', 'mw-stock-t', 'mw-stock-m'].forEach(function(id) {
       $(id).addEventListener('input', function() { renderHoles(); });
       $(id).addEventListener('change', stockSync);
@@ -6961,8 +7005,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var r = isFinite(z0) && state.spoilZ && !onPoint && tlo ? z0StockTop({ cur: z0, spoil: state.spoilZ, mark: state.markMm }) : {};
     var mm = r.hMm != null ? r.hMm : state.storedThickMm, from = r.hMm != null ? 'z0' : 'measured';
     note.hidden = false;
-    note.textContent = from === 'z0' ? 'T is ' + w + ' Z0\u2019s height above the spoilboard. Only right for stock lying on the spoilboard, not a vise or fixture.'
-      : 'T is the stored thickness: ' + (w ? w + ' Z0' : 'Z0') + ' isn\u2019t a stock top here' + (!tlo ? ' (no tool length offset)' : onPoint ? ' (the stock is on a point)' : '') + '.';
+    note.textContent = from === 'z0' ? 'Thick is ' + w + ' Z0\u2019s height above the spoilboard. Only right for stock lying on the spoilboard, not a vise or fixture.'
+      : 'Thick is the stored thickness: ' + (w ? w + ' Z0' : 'Z0') + ' isn\u2019t a stock top here' + (!tlo ? ' (no tool length offset)' : onPoint ? ' (the stock is on a point)' : '') + '.';
     if (!(mm > 0)) return;
     holes.thickFrom = from;
     var el = $('mw-stock-t'), v = +(mm / (state.imperial ? MM_PER_INCH : 1)).toFixed(state.imperial ? 4 : 3);
@@ -6977,7 +7021,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function thickFromZ0Unconfirmed(tMm) {
     return holes.thickFrom === 'z0' && !(state.storedThickMm > 0 && Math.abs(state.storedThickMm - tMm) <= 0.002);
   }
-  var Z0_T_CONFIRM = 'T follows Z0 (Follow Z0): press Store for Macros beside T to confirm it\u2019s this stock\u2019s thickness, lying on the spoilboard (not a vise or fixture), or type T';
+  var Z0_T_CONFIRM = 'Thick follows Z0 (Follow Z0): press Store for Macros beside Follow Z0 to confirm it\u2019s this stock\u2019s thickness, lying on the spoilboard (not a vise or fixture), or type Thick';
   // Make Active beside the XY0 Picker's menu: shown when the picked work
   // offset isn't the active one. ncSender's state doesn't follow
   // G59.1-G59.3, so one just made active is remembered until it changes.
@@ -7059,7 +7103,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var sp = stockPlacement();
     if (!sp || !sp.corner) return bad(holes.stockBy === 'pins' ? 'Place the stock against its pins first (tap the holes they’re in): the size is measured from that corner.' : 'Zero on the stock’s corner and press Use Current X0 Y0 first.');
     var dx = here.x - sp.corner.x, dy = here.y - sp.corner.y;
-    if (Math.abs(dx) < 1 || Math.abs(dy) < 1) return bad('Jog the bit over the stock’s opposite corner first, then press Far Corner Here.');
+    if (Math.abs(dx) < 1 || Math.abs(dy) < 1) return bad('Jog the bit over the stock’s opposite corner first, then press Far Corner Is Here.');
     var corner = (dy > 0 ? 'front' : 'back') + '-' + (dx > 0 ? 'left' : 'right');
     if (holes.stockBy === 'pins' && corner !== sp.cornerName) return bad('The spindle is on the pins’ side of the stock’s corner: jog over its far corner.');
     if (holes.stockBy === 'zero') { $('mw-stock-corner').value = corner; if (!holes.stockDotSet) setStockZero(corner); }
@@ -7070,7 +7114,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     status.setAttribute('data-state', 'ok');
     status.textContent = 'Stock size from the spindle: ' + shown(Math.abs(dx)) + ' × ' + shown(Math.abs(dy)) + ' ' + unitName() + ', from its ' + stockPointName(corner) + '.';
   }
-  // Size to Program: the stock the loaded program needs, its cuts (as wide
+  // Use Program Size: the stock the loaded program needs, its cuts (as wide
   // as the bit) and the clamp margin on every side, rounded up (to a whole
   // mm, or an eighth of an inch), and where the program's X0 Y0 is on it.
   function stockFromProgram() {
@@ -7224,9 +7268,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var cur = xyOf(ms[w.toLowerCase()]);
     if (!cur) return null;
     var dx = tg.x - cur.x, dy = tg.y - cur.y;
-    if (Math.abs(dx) < 0.0005 && Math.abs(dy) < 0.0005) return { text: 'Set changes nothing: ' + w + ' X0 Y0 is there already.' };
+    if (Math.abs(dx) < 0.0005 && Math.abs(dy) < 0.0005) return { text: 'Set changes nothing: ' + w + ' X0 Y0 is there already.', dx: 0, dy: 0 };
     var from = pointName(cur), text = 'Set moves ' + w + ' X0 Y0 ' + moveWords(dx, dy) + (from ? ', from ' + from : '') + '.';
-    if (from) return { text: text };
+    if (from) return { text: text, dx: dx, dy: dy };
     var h = readHoles(), sizes = [];
     holes.grid.slice(0, 1).concat((stockPlacement() || {}).pins || []).forEach(function(p) {
       if (!h) return;
@@ -7235,48 +7279,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     });
     var hit = null;
     [dx, dy].some(function(d) { return sizes.some(function(z) { if (z[0] > 0.05 && Math.abs(Math.abs(d) - z[0]) < 0.01) { hit = [Math.abs(d), z[1]]; return true; } return false; }); });
-    return hit ? { text: text + ' ' + shown(hit[0]) + ' ' + unitName() + ' is exactly ' + hit[1] + ': if X0 Y0 is already where you want it, don’t Set.', warn: true } : { text: text };
-  }
-  // The zoomed-in view beside Set: the hole and where X0 Y0 goes on it,
-  // to scale; or how the stock's corner sits against its pins (a detail:
-  // the pins drawn closer than they are, at their real size).
-  function drawZeroInset(t) {
-    var svg = $('mw-zero-inset'), ns = 'http://www.w3.org/2000/svg', u = ' ' + unitName();
-    svg.textContent = '';
-    var add = function(tag, at, text) { var el = document.createElementNS(ns, tag); Object.keys(at).forEach(function(k) { el.setAttribute(k, at[k]); }); if (text != null) el.textContent = text; svg.appendChild(el); return el; };
-    var cross = function(x, y) { add('path', { class: 'mw-i-target', d: 'M' + (x - 6) + ' ' + y + 'H' + (x + 6) + 'M' + x + ' ' + (y - 6) + 'V' + (y + 6) }); add('circle', { class: 'mw-i-target', cx: x, cy: y, r: 3 }); };
-    var h = readHoles();
-    var off = !t || !h || (t.stock && t.stock.by !== 'pins');
-    svg.style.display = off ? 'none' : '';
-    if (off) return;
-    if (!t.stock) {
-      var r = holeR(t.p, h), o = holeOriginOffset(holes.origin, r), k = 34 / r, cx = 75, cy = 52;
-      add('circle', { class: 'mw-i-hole', cx: cx, cy: cy, r: 34 });
-      add('path', { class: 'mw-i-dim', d: 'M' + (cx - 3) + ' ' + cy + 'H' + (cx + 3) + 'M' + cx + ' ' + (cy - 3) + 'V' + (cy + 3) });
-      var tx = cx + o.dx * k, ty = cy - o.dy * k;
-      if (o.dx) { add('path', { class: 'mw-i-dim', d: 'M' + cx + ' 98V94M' + cx + ' 96H' + tx + 'M' + tx + ' 98V94' }); add('text', { x: (cx + tx) / 2, y: 108, 'text-anchor': 'middle', class: 'mw-i-val' }, shown(Math.abs(o.dx))); }
-      if (o.dy) { add('path', { class: 'mw-i-dim', d: 'M114 ' + cy + 'H118M116 ' + cy + 'V' + ty + 'M114 ' + ty + 'H118' }); add('text', { x: 121, y: (cy + ty) / 2 + 3, 'text-anchor': 'start', class: 'mw-i-val' }, shown(Math.abs(o.dy))); }
-      add('text', { x: 4, y: 10 }, 'hole Ø ' + shown(2 * r) + u);
-      cross(tx, ty);
-      return;
-    }
-    var f = t.stock.fit;
-    // In the view right is machine +X and up is machine +Y (back); a pin
-    // radius is 11 px, the pins drawn closer than they are.
-    var dxm = t.stock.corner.x - f.H.x, dym = t.stock.corner.y - f.H.y, sgx = dxm >= 0 ? 1 : -1, sgy = dym >= 0 ? 1 : -1;
-    var kk = 11 / Math.max(f.rpRow, f.rpCol, 0.01), Hx = 75 - sgx * 30, Hy = 56 + sgy * 24;
-    var Cx = Hx + sgx * f.rpCol * kk, Cy = Hy - sgy * f.rpRow * kk;
-    add('path', { class: 'mw-i-line', d: 'M' + Hx + ' 0V112M0 ' + Hy + 'H150' });
-    add('rect', { class: 'mw-i-stock', x: sgx > 0 ? Cx : Cx - 200, y: sgy > 0 ? Cy - 200 : Cy, width: 200, height: 200 });
-    add('circle', { class: 'mw-i-pin', cx: Hx, cy: Hy - sgy * 46, r: f.rpCol * kk });
-    add('circle', { class: 'mw-i-pin', cx: Hx + sgx * 46, cy: Hy, r: f.rpRow * kk });
-    add('path', { class: 'mw-i-dim', d: 'M' + Hx + ' ' + (Hy + sgy * 9) + 'H' + Cx });
-    add('text', { x: (Hx + Cx) / 2, y: Hy + sgy * 9 + (sgy > 0 ? 10 : -3), 'text-anchor': 'middle', class: 'mw-i-val' }, shown(f.rpCol));
-    add('path', { class: 'mw-i-dim', d: 'M' + (Hx - sgx * 9) + ' ' + Hy + 'V' + Cy });
-    add('text', { x: Hx - sgx * 12, y: (Hy + Cy) / 2 + 3, 'text-anchor': sgx > 0 ? 'end' : 'start', class: 'mw-i-val' }, shown(f.rpRow));
-    add('text', { x: 4, y: 10 }, 'pins Ø ' + shown(2 * f.rpCol) + u);
-    if (holes.stockZero === t.stock.cornerName) cross(Cx, Cy);
-    else add('text', { x: Cx + sgx * 6, y: Cy - sgy * 12, 'text-anchor': sgx > 0 ? 'start' : 'end', class: 'mw-i-val' }, '→ ' + stockPointName(holes.stockZero));
+    return hit ? { text: text + ' ' + shown(hit[0]) + ' ' + unitName() + ' is exactly ' + hit[1] + ': if X0 Y0 is already where you want it, don’t Set.', warn: true, dx: dx, dy: dy } : { text: text, dx: dx, dy: dy };
   }
   function setStockZero(name) {
     holes.stockZero = HOLE_ORIGINS.indexOf(name) >= 0 ? name : 'center';
@@ -7449,8 +7452,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var k = state.imperial ? MM_PER_INCH : 1, mt = String($('mw-stock-m').value).trim(), mv = mt === '' ? 0 : unitVal($('mw-stock-m')) * k;
     flagField($('mw-stock-m'), !(mv >= 0), fieldName($('mw-stock-m')) + ' must be 0 or more');
     $('mw-stock-fit').hidden = true;
+    var chipEl = $('mw-stock-prog-chip'), chip = function(words, st) { chipEl.textContent = words; chipEl.setAttribute('data-state', st || ''); };
     if (!p) {
-      if (prog.partLost) txt.textContent = 'The loaded program is Spoilboard Toolbox\u2019s own: load ' + programName(prog.partSaved) + ' again to check it against the stock.';
+      if (prog.partLost) { txt.textContent = 'The loaded program is Spoilboard Toolbox\u2019s own: load ' + programName(prog.partSaved) + ' again to check it against the stock.'; chip('Program: load it again', 'warn'); }
       return null;
     }
     var pl = programPlace(p), rect = stockShown(), u = ' ' + unitName(), margin = mv >= 0 ? mv : 0;
@@ -7496,6 +7500,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     txt.textContent = text;
     txt.classList.toggle('mw-warn-text', bad);
+    var pn = p.name.length > 22 ? p.name.slice(0, 20) + '\u2026' : p.name;
+    if (pl.why && !(off && pl.bitMm > 0 && p.cuts.segs.length)) chip(pn + ': can\u2019t check', 'warn');
+    else if (!p.cuts.box) chip(pn + ': nothing to check');
+    else if (!rect) chip(pn + ': not checked yet', 'warn');
+    else if (off2 && off2.length) chip('\u2717 ' + pn + ' cuts past the stock', 'bad');
+    else if (close && close.length) chip(pn + ' cuts into the clamp margin', 'warn');
+    else chip('\u2713 ' + pn + ' fits', 'ok');
     return off && p.cuts.box && pl.bitMm > 0 ? { p: p, pl: pl, off: off, bad: bad, ghost: ghost } : null;
   }
   // The program's cuts (moves below Z0) as one path in its work offset's
@@ -8284,8 +8295,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     card.classList.toggle('mw-tall', tall);
     var two = tall && panel.clientWidth >= 1400;
     card.classList.toggle('mw-side-two', two);
-    card.style.setProperty('--mw-side', two ? '616px' : panel.clientWidth >= 900 ? '300px' : '230px');
+    card.style.setProperty('--mw-side', two ? '640px' : panel.clientWidth >= 900 ? '330px' : '250px');
     card.classList.toggle('mw-side-narrow', panel.clientWidth < 900);
+    card.classList.toggle('mw-bar-two', !tall && panel.clientWidth >= 520);
     card.style.gridTemplateColumns = '';
     card.style.alignSelf = '';
     svg.style.width = '';
@@ -8293,7 +8305,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (!w) return { w: 700, h: 400 };
     var top = svg.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
     var below = 20 + 13 + $('mw-hole-map').nextElementSibling.offsetHeight + 8;
-    if (!tall) below += $('mw-holebar').offsetHeight + Math.max($('mw-hole-status').offsetHeight, 18) + 20;
+    if (!tall) below += $('mw-holebar').offsetHeight + 20;
     return { w: w, h: Math.max(260, panel.clientHeight - top - below) };
   }
   // live: only the machine moved (the position poll), so Setup's
@@ -8354,6 +8366,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       card.style.gridTemplateColumns = w.toFixed(0) + 'px var(--mw-side, 230px)';
       card.style.alignSelf = 'flex-start';
     }
+    // The side column is as tall as the map, so the dock (Set) stays in
+    // view: the target card and the Z0 fold scroll inside it instead.
+    $('mw-holebar').style.maxHeight = card.classList.contains('mw-tall') ? Math.max(560, card.querySelector('.mw-mapcol').offsetHeight) + 'px' : '';
     // Zoomed in, the map shows part of the travel (vw) at k times the
     // scale, following the spindle when Follow is on.
     var zm = holes.zoom, ms0 = state.machine || {}, here0 = ms0.homed ? xyOf(ms0.MPos) : null;
@@ -8718,7 +8733,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-hole-here').textContent = grabbable ? 'Grab ' + holeLabel(hp) + ' Center' : 'Grab First Hole Center';
     var live = holes.liveNear && holes.grid[holes.liveNear.index], sp = stockPlacement();
     var placedNow = sp && !sp.problem && sp.corner;
-    $('mw-hole-picked').textContent = stockMode ? (placedNow ? 'Stock · ' + stockPointName(holes.stockZero) + (holes.stockBy === 'pins' ? ' · against pins' : ' · corner on X0 Y0') : 'Stock · not placed yet')
+    $('mw-target-mode').textContent = stockMode ? 'Stock' : 'Hole';
+    $('mw-hole-picked').textContent = stockMode ? (placedNow ? stockPointName(holes.stockZero).replace(/^./, function(c) { return c.toUpperCase(); }) : 'Not placed yet')
       : p ? holeName(p) + ' · ' + ORIGIN_NOTES[holes.origin] + (holes.origin === 'center' ? '' : ' (not its center)') : 'No hole picked';
     $('mw-hole-picked').classList.toggle('mw-warn-text', !stockMode && !!p && holes.origin !== 'center');
     $('mw-hole-dots').classList.toggle('mw-has-hole', !!p);
@@ -8735,7 +8751,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       : 'Click a hole, or jog near one and press Pick Nearest Hole.';
     pos.classList.toggle('mw-bad-text', !!problem);
     $('mw-hole-coords').hidden = !aim || !!problem;
-    $('mw-hole-coords').textContent = aim ? 'Machine X ' + shown(tg.x) + '  Y ' + shown(tg.y) + ' ' + unitName() : '';
+    $('mw-hole-coords').textContent = aim ? 'Target, machine X ' + shown(tg.x) + '  Y ' + shown(tg.y) + ' ' + unitName() : '';
     var mv = aim && !problem ? zeroMove(tg) : null;
     $('mw-hole-move').hidden = !mv;
     $('mw-hole-move').textContent = mv ? mv.text : '';
@@ -8747,7 +8763,6 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-hole-dist').textContent = away != null ? 'Jogged since picking: Set uses the picked point, not the spindle (' + shown(away) + ' ' + unitName() + ' away). To zero where the spindle is, use ncSender’s XY0.'
       : dist ? shown(holes.nearMm) + ' ' + unitName() + ' from the spindle' : '';
     $('mw-hole-dist').classList.toggle('mw-bad-text', away != null);
-    drawZeroInset(aim && !problem ? aim : null);
     // Already that zero: the work offset (G54-G59, as ncSender's state
     // has them) is within 0.005 mm of it.
     var wName = (WCS_NAMES[holeWcs()] || '').toLowerCase(), ms0 = state.machine || {};
@@ -8756,6 +8771,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     $('mw-hole-set').classList.toggle('mw-already', xyDone);
     showMakeActive();
     renderPair();
+    renderWcsChips();
+    // Under Set: how far it moves X0 Y0, or that it sets an offset that isn't the active one.
+    var other = holeWcs() !== activeWcs() && !!(state.machine || {}).connected;
+    $('mw-hole-set').classList.toggle('mw-set-other', other);
+    var sgn = function(ax, d) { return (d >= 0 ? '+' : '\u2212') + ax + ' ' + shown(Math.abs(d)); };
+    $('mw-hole-set-hint').textContent = 'Hold' + (other ? ' \u00b7 ' + WCS_NAMES[holeWcs()] + ' isn\u2019t the active offset'
+      : mv && (Math.abs(mv.dx) >= 0.0005 || Math.abs(mv.dy) >= 0.0005) ? ' \u00b7 ' + [Math.abs(mv.dx) >= 0.0005 ? sgn('X', mv.dx) : '', Math.abs(mv.dy) >= 0.0005 ? sgn('Y', mv.dy) : ''].filter(Boolean).join(', ') : '');
     $('mw-hole-set').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto').disabled = !aim || !!problem || holes.busy;
     $('mw-hole-goto-text').textContent = aim ? 'Go to ' + targetShort(aim) : 'Go to Selected';
@@ -8768,6 +8790,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var zbad = zt && zProblem(zt.hMm);
     $('mw-hole-z').textContent = zt ? 'Z0 option: ' + zt.what + ', spoilboard + ' + shown(zt.hMm) + ' ' + unitName() + (zbad ? ': ' + zbad : '') : '';
     $('mw-hole-z').classList.toggle('mw-bad-text', !!zbad);
+    renderZFold(zt, zbad);
+    $('mw-hole-z').hidden = !zbad;
+    stockDotsShape();
     var zDone = !!(zt && !zbad && state.spoilZ && isFinite(curZ) && Math.abs(curZ - (state.spoilZ + zt.hMm)) < 0.005);
     $('mw-hole-setz').classList.toggle('mw-already', zDone);
     $('mw-hole-setz').disabled = !zt || !!zbad || holes.busy;
@@ -8798,6 +8823,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     note.classList.toggle('mw-warn-text', !!(sp && ((sp.problem && sp.problem !== 'which') || sp.pinUnset)) || (!sp && stockMode && holes.stockBy === 'zero'));
     $('mw-stock-far').hidden = !!(sp && sp.problem === 'which');
     $('mw-stock-clear').hidden = !sp || (sp.by === 'pins' ? !holes.pins.length : !holes.stockAnchor);
+    $('mw-stock-clear').textContent = holes.stockBy === 'pins' ? 'Clear Pins' : 'Clear Corner';
     suppressButtons();
   }
   // One hole action at a time (Go, Set, Pick Nearest Hole, Grab), so their
@@ -9136,6 +9162,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function renderPair() {
     var s = readSettings(), row = $('mw-pair-row');
     row.hidden = !(s && s.pair);
+    holes.pairOk = false;
     if (row.hidden) return;
     var lead = WCS_NAMES[s.wcs], part = WCS_NAMES[s.pair], ms = state.machine || {}, text = $('mw-pair-text');
     $('mw-pair-name').textContent = part;
@@ -9147,7 +9174,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var msg, st;
     if (!state.spoilZ) { msg = part + ' is paired with ' + lead + ', but the spoilboard height isn\u2019t recorded yet: record it (Z0 macros tab) for ' + part + '\u2019s Z0.'; st = 'warn'; }
     else if (!known) { msg = part + ' is paired with ' + lead + ' (couldn\u2019t read their offsets from ncSender yet).'; st = ''; }
-    else if (xyOk && zOk) { msg = part + ' is paired with ' + lead + ': the same X0 Y0, Z0 on ' + bottom + '.' + (both ? ' The loaded program uses both.' : ''); st = 'ok'; }
+    else if (xyOk && zOk) { msg = part + ' is paired with ' + lead + ': the same X0 Y0, Z0 on ' + bottom + '. Set on ' + lead + ' moves both.' + (both ? ' The loaded program uses both.' : ''); st = 'ok'; }
     else {
       msg = part + ' isn\u2019t paired with ' + lead + ' now: ' + (!xyOk ? 'its X0 Y0 differs' : '') + (!xyOk && !zOk ? ', and ' : '') + (!zOk ? 'its Z0 isn\u2019t on ' + bottom : '') +
         '. Hold Pair ' + part + ' to fix it.' + (both ? ' The loaded program uses both: don\u2019t run it until they\u2019re paired.' : '');
@@ -9155,7 +9182,131 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     }
     text.textContent = msg;
     text.setAttribute('data-state', st);
-    $('mw-pair-now').disabled = !state.spoilZ || holes.busy || (known && xyOk && zOk);
+    holes.pairOk = known && xyOk && zOk;
+    $('mw-pair-now').disabled = !state.spoilZ || holes.busy || holes.pairOk;
+    $('mw-pair-now').hidden = holes.pairOk;
+  }
+  // The dock's work offset chips: G54-G57 and More (G58 on). Each says
+  // in words whether it's active, the one Set changes, or paired. Tapping
+  // the active one follows the controller (the menu's Active), as before.
+  function buildWcsChips() {
+    var box = $('mw-wcs-chips');
+    [1, 2, 3, 4].forEach(function(n) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'mw-wcs-chip'; b.setAttribute('data-wcs', n);
+      b.innerHTML = '<b>' + WCS_NAMES[n] + '</b><em>&nbsp;</em>';
+      b.title = 'Set changes ' + WCS_NAMES[n] + '. Tapping the active offset follows whichever is active in ncSender.';
+      b.addEventListener('click', function() { pickWcs(n); });
+      box.appendChild(b);
+    });
+    var more = document.createElement('select');
+    more.className = 'mw-select mw-wcs-more'; more.id = 'mw-wcs-more';
+    more.setAttribute('aria-label', 'Other work offsets');
+    more.title = 'G58, G59 and G59.1 to G59.3. The ones the Z0 macros store values in can’t be picked.';
+    more.innerHTML = '<option value="">More</option>' + [5, 6, 7, 8, 9].map(function(n) { return '<option value="' + n + '">' + WCS_NAMES[n] + '</option>'; }).join('');
+    more.addEventListener('change', function() { if (more.value) pickWcs(+more.value); });
+    box.appendChild(more);
+  }
+  function pickWcs(n) {
+    var ms = state.machine || {}, sel = $('mw-hole-wcs');
+    sel.value = ms.workspace && n === activeWcs() ? '' : String(n);
+    if (sel.selectedOptions[0] && sel.selectedOptions[0].disabled) sel.value = '';
+    sel.dispatchEvent(new Event('change'));
+  }
+  function renderWcsChips() {
+    var box = $('mw-wcs-chips'), s = readSettings(), ms = state.machine || {};
+    if (!box.firstChild) buildWcsChips();
+    var setting = holeWcs(), active = ms.workspace ? activeWcs() : 0, pair = s && s.pair && s.wcs === setting ? s.pair : 0;
+    box.querySelectorAll('.mw-wcs-chip').forEach(function(b) {
+      var n = +b.getAttribute('data-wcs'), words = [];
+      if (n === active) words.push('active');
+      if (n === setting) words.push('setting');
+      if (n === pair) words.push('paired');
+      b.querySelector('em').textContent = words.join(' · ') || ' ';
+      b.setAttribute('aria-pressed', n === setting ? 'true' : 'false');
+      b.classList.toggle('mw-act', n === active && n !== setting);
+      b.classList.toggle('mw-other', n === setting && !!active && n !== active);
+      b.classList.toggle('mw-paired', n === pair && n !== setting && n !== active);
+    });
+    var more = $('mw-wcs-more'), main = $('mw-hole-wcs');
+    Array.prototype.forEach.call(more.options, function(o) {
+      if (!o.value) return;
+      var m = main.querySelector('option[value="' + o.value + '"]'), n = +o.value;
+      o.disabled = !!(m && m.disabled);
+      o.textContent = WCS_NAMES[n] + (o.disabled ? ' (storage)' : n === active ? ' (active)' : n === pair ? ' (paired)' : '');
+    });
+    more.value = setting > 4 ? String(setting) : '';
+    more.classList.toggle('mw-on', setting > 4);
+  }
+  // The stock's dots at its proportions (W along X, L along Y), so the
+  // picked corner or edge reads at a glance.
+  function stockDotsShape() {
+    var sz = stockSize(), d = $('mw-stock-dots'), w = 180, h = 70;
+    if (sz) {
+      var r = sz.l / sz.w;
+      h = w * r;
+      if (h > 140) { h = 140; w = Math.max(48, 140 / r); }
+      h = Math.max(36, h);
+    }
+    d.style.width = Math.round(w) + 'px'; d.style.height = Math.round(h) + 'px';
+  }
+  // The Z0 fold: its one-line summary, the Stock top / Spoilboard choice
+  // and a side view (not to scale) of the spoilboard, the stock, where Set
+  // Z0 puts Z0, the paired offset's Z0, and the tool's tip.
+  function renderZFold(zt, zbad) {
+    var stockMode = holes.zeroMode === 'stock', top = $('mw-stock-zmode').value === 'top', u = ' ' + unitName();
+    var an = stockMode && holes.stockBy === 'zero' ? holes.stockAnchor : null, base = an && an.zMm != null ? an.zMm : 0;
+    ROOT.querySelectorAll('.mw-zon .mw-seg').forEach(function(b) {
+      b.setAttribute('aria-pressed', (b.getAttribute('data-zon') === 'top') === top ? 'true' : 'false');
+      if (b.getAttribute('data-zon') === 'bottom') b.textContent = base ? 'Stock bottom' : 'Spoilboard';
+    });
+    var lead = WCS_NAMES[holeWcs()], txt = $('mw-zfold-text'), t = unitVal($('mw-stock-t')) * (state.imperial ? MM_PER_INCH : 1);
+    var surf = stockMode ? (top ? 'the stock top' : base ? 'the stock bottom' : 'the spoilboard') : zt ? zt.what : '';
+    var msg, warn = false;
+    if (zt && zbad) { msg = 'can’t go on ' + surf + ': ' + zbad; warn = true; }
+    else if (zt) msg = 'Set Z0 puts ' + lead + ' Z0 on ' + surf + (zt.hMm ? ', ' + shown(zt.hMm) + u + ' above the spoilboard' : '');
+    else if (stockMode && top) { msg = 'give the stock’s thickness for Z0 on its top'; warn = true; }
+    else msg = 'stays where it is';
+    if (zt && !state.spoilZ) { msg += ' (record the spoilboard height first)'; warn = true; }
+    txt.textContent = msg;
+    txt.setAttribute('data-state', warn ? 'warn' : '');
+    var svg = $('mw-zside'), ns = 'http://www.w3.org/2000/svg';
+    svg.textContent = '';
+    svg.hidden = !stockMode && !zt;
+    if (svg.hidden) return;
+    var add = function(tag, at, text) { var e = document.createElementNS(ns, tag); Object.keys(at).forEach(function(k) { e.setAttribute(k, at[k]); }); if (text != null) e.textContent = text; svg.appendChild(e); return e; };
+    var floor = 126, sh = t > 0 ? Math.max(20, Math.min(54, t * 2)) : 30, riser = base ? 14 : 0, sTop = floor - riser - sh;
+    add('rect', { class: 'mw-z-board', x: 8, y: floor, width: 264, height: 18 });
+    add('text', { x: 14, y: floor + 13 }, 'spoilboard' + (state.spoilZ ? '' : ' (height not recorded)'));
+    if (riser) { add('rect', { class: 'mw-z-tool', x: 50, y: floor - riser, width: 130, height: riser }); add('text', { x: 186, y: floor - 3 }, 'point +' + shown(base)); }
+    var stock = stockMode;
+    if (stock) {
+      add('rect', { class: 'mw-z-stock', x: 40, y: sTop, width: 150, height: sh });
+      add('path', { class: 'mw-z-dim', d: 'M196 ' + sTop + 'h12M196 ' + (sTop + sh) + 'h12M202 ' + sTop + 'V' + (sTop + sh) });
+      add('text', { class: 'mw-z-val', x: 212, y: sTop + sh / 2 + 4 }, t > 0 ? 'Thick ' + shown(t) : 'Thick ?');
+    }
+    var zy = stock ? (top ? sTop : sTop + sh) : floor - riser;
+    add('path', { class: 'mw-z-lead', d: 'M12 ' + zy + 'H196' });
+    add('text', { class: 'mw-z-lead', x: 12, y: zy - 5 }, lead + ' Z0' + (stock ? ' · ' + (top ? 'stock top' : base ? 'stock bottom' : 'spoilboard') : ''));
+    var pr = pairFor(holeWcs());
+    if (pr && stock) {
+      var py = sTop + sh - 1, pn = WCS_NAMES[pr.s.pair];
+      add('path', { class: 'mw-z-pair' + (holes.pairOk ? '' : ' mw-z-off'), d: 'M12 ' + py + 'H196' });
+      if (top) add('text', { class: 'mw-z-pair', x: 46, y: py - 5 }, pn + ' Z0' + (holes.pairOk ? ' \u00b7 bottom' : ' \u00b7 not paired'));
+    }
+    // The tip, from the machine's Z and the tool length offset.
+    var ms = state.machine || {}, mz = ms.homed && ms.MPos ? stateMm(ms.MPos)[2] : NaN;
+    var tool = !!(state.spoilZ && state.tloMm != null && Math.abs(state.tloMm) > 0.0005 && isFinite(mz));
+    var y0 = tool ? 0 : Math.max(0, Math.min(sTop, zy) - 26);
+    svg.setAttribute('viewBox', '0 ' + y0 + ' 280 ' + (150 - y0));
+    if (tool) {
+      var above = mz - (state.spoilZ + state.tloMm) - (stock ? base + (t > 0 ? t : 0) : base);
+      add('rect', { class: 'mw-z-tool', x: 104, y: 6, width: 22, height: 22, rx: 3 });
+      add('path', { class: 'mw-z-tip', d: 'M108 28L115 40L122 28Z' });
+      add('path', { class: 'mw-z-gap', d: 'M115 44V' + (sTop - 8 > 52 ? 52 : sTop - 8) });
+      add('text', { x: 132, y: 18 }, 'tip, TLO applied');
+      add('text', { class: 'mw-z-val', x: 132, y: 31 }, shown(above) + u + (stock ? ' above the stock' : ' above it'));
+    }
   }
   async function pairNow() {
     var status = $('mw-hole-status');
@@ -9340,7 +9491,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (!o.wcs) out.push(ms.connected ? o.wcsName + ' is active, and ncSender only reports G54\u2013G59\u2019s X0 Y0: switch to one of those' : 'Connect to the controller first');
     if (o.plateOn) {
       if (!o.plate) out.push('Stock on top: place the stock in the XY0 Picker\u2019s Stock mode (Against Pins, or Corner on X0 Y0) and give its width and length');
-      if (!(o.plateThickMm > 0)) out.push('Stock on top: give the stock a thickness (T) in the XY0 Picker, so nothing cuts deeper than the stock');
+      if (!(o.plateThickMm > 0)) out.push('Stock on top: give the stock a thickness (Thick) in the XY0 Picker, so nothing cuts deeper than the stock');
       else if (thickFromZ0Unconfirmed(o.plateThickMm)) out.push('Stock on top: ' + Z0_T_CONFIRM);
       // Z0 must be on the plate's top, checked against the recorded spoilboard height.
       else if (o.zWcs != null && state.spoilZ) {
@@ -10571,7 +10722,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     if (!placed || (placed.problem && placed.problem !== 'under')) probs.push('Place the stock in the XY0 Picker\u2019s Stock mode: Against Pins, or Corner on X0 Y0');
     else if (placed.problem === 'under') probs.push('A pin is under the stock in the XY0 Picker: check the pins and the size');
     else if (!rect) probs.push('Give the stock\u2019s width and length in the XY0 Picker\u2019s Stock mode');
-    if (!(thick > 0)) probs.push('Give the stock a thickness (T) in the XY0 Picker');
+    if (!(thick > 0)) probs.push('Give the stock a thickness (Thick) in the XY0 Picker');
     if (!(size > 0)) probs.push((pins ? 'Pin Hole Ø' : 'Hole Size') + ' must be more than 0');
     if (fix && !(pinSize > 0)) probs.push('Pin Hole Ø must be more than 0');
     if (!(slot >= 0) || slot > 10) probs.push('Slot + must be 0 to ' + shown(10) + ' ' + unitName() + ' (0: both pin holes round)');
@@ -10755,7 +10906,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var off = isFinite(thick) && Math.abs(s.above - thick) > 0.5;
       say(wcs + ' Z0 now: ' + num(s.above), off ? 'mw-d-warn' : 'mw-d-ok');
       say('above the recorded spoilboard', off ? 'mw-d-warn' : 'mw-d-note');
-      say(off ? 'Expected about T, ' + num(thick) : 'Matches T', off ? 'mw-d-warn' : 'mw-d-note');
+      say(off ? 'Expected about Thick, ' + num(thick) : 'Matches Thick', off ? 'mw-d-warn' : 'mw-d-note');
     } else say('Z0\u2019s height can\u2019t be checked yet', 'mw-d-note');
     $('mw-sh-diagram').innerHTML = out.join('');
   }
@@ -10831,9 +10982,9 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var depth = typed ? cutMm('mw-trk-depth') : o.thickMm;
     if (!(width > 0)) probs.push('Track Width must be more than 0');
     else if (o.bitMm > 0 && o.bitMm > width + 0.05) probs.push('The bit is wider than the track');
-    if (!(depth > 0)) probs.push(typed ? 'Depth must be more than 0' : o.plateOn ? 'Give the stock a thickness (T) in the XY0 Picker, or a Depth' : 'Set the Spoilboard Thickness above (the top layer\u2019s), or a Depth');
+    if (!(depth > 0)) probs.push(typed ? 'Depth must be more than 0' : o.plateOn ? 'Give the stock a thickness (Thick) in the XY0 Picker, or a Depth' : 'Set the Spoilboard Thickness above (the top layer\u2019s), or a Depth');
     else if (o.thickMm > 0 && depth > o.thickMm + 1e-9) probs.push(o.plateOn ? 'Depth is more than the stock\u2019s thickness' : 'Depth is more than the Spoilboard Thickness: it would cut the layer below and its inserts');
-    else if (!(o.thickMm > 0)) probs.push(o.plateOn ? 'Give the stock a thickness (T) in the XY0 Picker' : 'Set the Spoilboard Thickness above (the top layer\u2019s), so the slots can\u2019t go deeper');
+    else if (!(o.thickMm > 0)) probs.push(o.plateOn ? 'Give the stock a thickness (Thick) in the XY0 Picker' : 'Set the Spoilboard Thickness above (the top layer\u2019s), so the slots can\u2019t go deeper');
     if (!(o.bitMm > 0)) probs.push('Bit Diameter must be more than 0');
     if (!(o.stepMm > 0)) probs.push('Depth per Pass must be more than 0');
     if (!(o.feed > 0) || !(o.plunge > 0)) probs.push('Feed and Plunge must be more than 0');
@@ -10961,7 +11112,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     var o = cutSettings(), u = ' ' + unitName(), r = o.plate;
     plateDiagram(o);
     note.textContent = !r ? 'No stock yet: place it in the XY0 Picker\u2019s Stock mode (Against Pins, or Corner on X0 Y0) and give its size.'
-      : 'Stock ' + shown(r.maxX - r.minX) + ' \u00d7 ' + shown(r.maxY - r.minY) + (o.plateThickMm > 0 ? ' \u00d7 ' + shown(o.plateThickMm) : ', no thickness (T) yet,') + u +
+      : 'Stock ' + shown(r.maxX - r.minX) + ' \u00d7 ' + shown(r.maxY - r.minY) + (o.plateThickMm > 0 ? ' \u00d7 ' + shown(o.plateThickMm) : ', no thickness (Thick) yet,') + u +
         ', its front left corner at machine X ' + shown(r.minX) + ', Y ' + shown(r.minY) + u + '. ' + o.holes.length + ' hole' + (o.holes.length === 1 ? '' : 's') +
         ' wholly on it, ' + shown(PLATE_EDGE_MM) + u + ' from its edges; depth never past its thickness; Z0 on its top.' +
         (state.spoilZ ? '' : ' Couldn\u2019t check that Z0 is on its top (record the spoilboard height with the Z0 macros to have it checked): make sure it is.');
@@ -11445,8 +11596,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     holes: { name: 'XY0 Picker', notes: [
       '<strong>Two ways to start.</strong> <strong>No holes yet:</strong> home the machine, surface the board, describe the grid you want in Setup (or load a preset), cut a fit test in scrap to choose the hole size (X0 Y0 and Z0 on the scrap), put Z0 on the board&rsquo;s top, then Cut Board &rsaquo; Dog holes &rsaquo; Generate; the board and the map come from the same numbers, so they agree. <strong>Holes already there:</strong> type the grid&rsquo;s size and spacing in Setup, pick a hole, jog over its real center and press <strong>Grab First Hole Center</strong> (it names the hole you picked, e.g. Grab B3 Center); then Measure Holes on the three it suggests and <strong>Apply to Setup</strong>, suppress missing holes with Edit Holes, and check with Go to Selected over a far hole. Save Setup as a profile either way.',
       '<strong>Your spoilboard&rsquo;s holes are a precision fixture; this turns them into work zero.</strong> Jog roughly near a hole, tap <strong>Pick Nearest Hole</strong>, hold <strong>Set</strong>, and X0 Y0 is exactly on its center or edge: no edge finder, no XY probe, nothing typed, and the same zero next time. Or switch to <strong>Stock</strong>, tap the holes your pins are in, and zero on the stock pushed against them: its corner, an edge or its center, worked out from the pins. <strong>Measure Holes</strong> fits the grid to your real board, with a 3D probe or a pin centered by eye. Missing holes, T-tracks, several grids, custom pins and a profile per board each have a Help page of their own.',
-      '<strong>For example:</strong> push the stock against pins in B4, B6 (its front edge) and C3 (its left edge). In <strong>Stock</strong>, tap those three holes: the stock\u2019s front left corner is a pin radius right of column 3 and behind row B, and the line beside Set says so with the numbers. Hold <strong>Set</strong>: no edge finder, no XY probe, nothing typed. Pick its center (or any other dot) and it also needs the stock&rsquo;s size: type it, or jog over the far corner and press <strong>Far Corner Here</strong>.',
-      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sets the work offset there, without moving (G10 L2). The menu beside it picks the work offset: <strong>Active</strong> (the default) is whichever ncSender is using now, or pick any of G54&ndash;G59.3. Picking one doesn&rsquo;t switch ncSender to it; when it isn&rsquo;t the active one, <strong>Make G55 Active</strong> (say) appears under the menu and does, while the machine is idle. When the work offset already has the zero Set would put down, the button reads <strong>already set</strong>. The machine has to be homed and idle, since the holes are machine positions.',
+      '<strong>For example:</strong> push the stock against pins in B4, B6 (its front edge) and C3 (its left edge). In <strong>Stock</strong>, tap those three holes: the stock\u2019s front left corner is a pin radius right of column 3 and behind row B, and the card above Set says so with the numbers. Hold <strong>Set</strong>: no edge finder, no XY probe, nothing typed. Pick its center (or any other dot) and it also needs the stock&rsquo;s size: type it, or jog over the far corner and press <strong>Far Corner Is Here</strong>.',
+      'Puts a work offset&rsquo;s X0 Y0 on a spoilboard hole (a dog hole, say), or on a crossing of a grid lasered or engraved on the spoilboard, without moving the machine: hold <strong>Set</strong> for a second (like Go to, so a stray tap can&rsquo;t change your zero) and it sets the work offset there, without moving (G10 L2). The chips above it pick the work offset Set changes, and say so in words: <strong>active</strong> is the one ncSender is using, <strong>setting</strong> the one Set changes, <strong>paired</strong> the stock bottom offset. Tap the active one to follow whichever is active; tap another, or one under <strong>More</strong> (G58 to G59.3; the ones the Z0 macros store values in can&rsquo;t be picked), to set that one. Picking one doesn&rsquo;t switch ncSender to it: Set turns amber and says it isn&rsquo;t the active offset, and <strong>Make G55 Active</strong> (say) appears and does, while the machine is idle. Under Set&rsquo;s name, how far it moves X0 Y0. When the work offset already has the zero Set would put down, the button reads <strong>already set</strong>. The machine has to be homed and idle, since the holes are machine positions.',
       'Click a hole on the map, or jog roughly over one and press <strong>Pick Nearest Hole</strong> to take the grid&rsquo;s exact position for the hole nearest the spindle. It warns when the spindle is more than a third of the spacing away.',
       '<p><strong>Measure Holes</strong> (Setup unlocked) fits Setup&rsquo;s spacing, insets and Turn to your real holes. Measure two or more far apart, then <strong>Apply to Setup</strong>.</p>' +
         '<p><strong>Measure with</strong> picks how; only that way&rsquo;s buttons show, and it opens on by eye, so a pin is never sent probing.</p><ul>' +
@@ -11459,11 +11610,11 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>Presets:</strong> the Profiles menu can load a shared layout (an Onefinity QCW, say) into the grid: everything but the insets, which depend on your bed, so grab or measure those after.',
       'After a <strong>wasteboard surfacing</strong> job (QuickCut&rsquo;s Wasteboard Surfacing) finishes, a note at the top says the spoilboard is thinner, until you press Done: re-record its height, since every Z0 from it would be off by what was surfaced off. Its <strong>Record Height</strong> button opens the Z0 macros tab&rsquo;s <strong>Record Spoilboard Height</strong>.',
       'Grid holes are named like a fixture table: a row letter and a column number, e.g. <strong>B3</strong>, counted from machine zero&rsquo;s corner, so <strong>A1</strong> is the hole nearest machine X0 Y0 (front left on a machine that homes there). The column numbers run along the top of the map and the row letters down its left side.',
-      '<p><strong>Hole or Stock</strong> at the top of the controls picks what X0 Y0 goes on.</p><ul>' +
+      '<p><strong>Hole or Stock</strong>, above the map, picks what X0 Y0 goes on.</p><ul>' +
         '<li><strong>Hole:</strong> the dots pick where on the hole: its center, or an edge or corner of the hole one hole radius out in machine X and Y (back is +Y, right is +X). For a part on a pin, a flip pin, a jig&rsquo;s home hole, or moving around the bed.</li>' +
         '<li><strong>Stock:</strong> the dots pick a point on the stock. A placed stock stays put while you pick holes in Hole mode.</li></ul>' +
-        '<p>Beside Set, one line says where X0 Y0 goes, with the numbers, and the next how far Set moves the work offset and from where (a hole&rsquo;s dot or the stock&rsquo;s, when it&rsquo;s on one). A move of exactly a hole or pin radius from an unnamed spot is flagged: the usual sign of the wrong dot. The small view beside it shows it zoomed in.</p>',
-      '<strong>Go to Selected</strong> (its label names the point, e.g. <strong>Go to B4 &middot; back right</strong> or <strong>Go to Stock Front Left</strong>; Set&rsquo;s does too) moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves. In <strong>Stock</strong> mode, <strong>Go to Stock Center</strong> (beside Probe Stock Top) moves over the stock&rsquo;s center the same way, whichever dot X0 Y0 is on: handy for checking the stock, or for work from its center.',
+        '<p>Beside the map, the card with the dots says where X0 Y0 goes, with the numbers, and how far Set moves the work offset and from where (a hole&rsquo;s dot or the stock&rsquo;s, when it&rsquo;s on one). A move of exactly a hole or pin radius from an unnamed spot is flagged: the usual sign of the wrong dot. Go to and Set stay at the bottom, in the same place in both modes.</p>',
+      '<strong>Go to Selected</strong> (its label names the point, e.g. <strong>Go to B4 &middot; back right</strong> or <strong>Go to Stock Front Left</strong>; Set&rsquo;s does too) moves the spindle over that point: up to ncSender&rsquo;s Safe Z first (machine Z0 when none is set; never down, so above it the spindle stays at its height), then across, in machine coordinates. A side of a hole that would land in a keepout zone or outside the travel can&rsquo;t be used. Like ncSender&rsquo;s XY0, hold it for a second; let go early and nothing moves. In <strong>Stock</strong> mode, <strong>Go to Stock Center</strong> (under Go to and Set) moves over the stock&rsquo;s center the same way, whichever dot X0 Y0 is on: handy for checking the stock, or for work from its center.',
       'On the map, the cross is the work offset&rsquo;s X0 Y0 now and the silver ring with a dot in it is the spindle, as ncSender&rsquo;s Top view shows it from above (the dot is the bit&rsquo;s center). The numbers along the bottom (X) and right (Y) are machine coordinates in ncSender&rsquo;s units.',
       'Keepout zones that are on (ncSender Pro&rsquo;s, every one that&rsquo;s on, and the ATCi tool rack&rsquo;s, $684&ndash;$687) show in red, as in QuickCut&rsquo;s Wasteboard Surfacing. Holes that reach into one are dimmed and can&rsquo;t be picked, and Pick Nearest Hole skips them.',
       '<strong>Setup</strong>: the hole diameter, the center-to-center spacing along X and Y, and the insets from machine X0 Y0 to the first hole&rsquo;s center. To find the insets, pick any hole on the map, jog the bit over its real center and press <strong>Grab B3 Center</strong> (the button names the picked hole): the insets are set so that hole is under the bit, with a warning if that&rsquo;s more than half a spacing from where Setup had it. With no hole picked it&rsquo;s <strong>Grab First Hole Center</strong>: the bit over the first hole, or any hole when the first is less than one spacing from machine X0 Y0. The machine must be connected and homed. The machine&rsquo;s travel and which way it runs come from grblHAL ($130 / $131, $22 / $23).',
@@ -11479,16 +11630,16 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<p><strong>Stock</strong> mode places the stock, two ways:</p><ul>' +
         '<li><strong>Against Pins:</strong> push it against pins in dog holes, two along one edge and one along the other (an L), and tap those holes, or jog over each and press <strong>Pick Nearest Hole</strong>. Each edge is a pin radius off its pins&rsquo; row or column (Setup&rsquo;s <strong>Pin &Oslash;</strong>; blank is the hole&rsquo;s), so the corner is exact, on a turned grid too. Two pins on a diagonal can hold it either way: it asks. A pin at the corner itself touches nothing and is ignored; a pin under the stock (a wrong tap, or the size too big) is refused.</li>' +
         '<li><strong>Corner on X0 Y0:</strong> zero on a corner by touch or probe, then <strong>Use Current X0 Y0</strong>, and pick which corner it is. Or jog over a hole and press <strong>Pick Nearest Hole</strong> (or tap a favorite): the stock&rsquo;s corner goes on that hole&rsquo;s point.</li>' +
-        '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Here</strong>. The pinned corner needs no size; every other point does, and the line beside Set says so.</li>' +
-        '<li><strong>Thickness</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> beside T if you probe Z0 on the stock&rsquo;s top: T follows the Z0 of the work offset picked in the menu, as its height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness otherwise; the line under T says which. It&rsquo;s off each time Spoilboard Toolbox opens, and programs that cut through the stock wait for <strong>Store for Macros</strong> to confirm the thickness. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, T would be that height, so turn Follow Z0 off and type T. Typing T doesn&rsquo;t change the thickness the Z0 macros use: when they differ, <strong>Store for Macros</strong> appears beside it and stores T for SBT: Z0 on stock top.</li></ul>' +
+        '<li><strong>Size:</strong> type its width (X) and length (Y), or jog over the far corner and press <strong>Far Corner Is Here</strong>. The pinned corner needs no size; every other point does, and the card says so. The dots are drawn at the stock&rsquo;s proportions.</li>' +
+        '<li><strong>Thick</strong> (for Z0 on its top) fills in from SBT: Measure stock thickness until you type one. Or press <strong>Follow Z0</strong> under it if you probe Z0 on the stock&rsquo;s top: Thick follows the Z0 of the work offset Set changes, as its height above the recorded spoilboard (when it&rsquo;s more than 1 mm above it), and the stored thickness otherwise; the line beside it says which. It&rsquo;s off each time Spoilboard Toolbox opens, and programs that cut through the stock wait for <strong>Store for Macros</strong> to confirm the thickness. <strong>Only for stock lying on the spoilboard:</strong> with Z0 on a vise jaw, a fixture or a riser, Thick would be that height, so turn Follow Z0 off and type it. Typing Thick doesn&rsquo;t change the thickness the Z0 macros use: when they differ, <strong>Store for Macros</strong> appears beside Follow Z0 and stores it for SBT: Z0 on stock top.</li></ul>' +
         '<p>It stays where it is when you close and reopen the plugin, and Stock Holes and Cut Board&rsquo;s Into the stock on top option use it. The keyboard macros always use a hole.</p>',
-      '<strong>Zoom</strong> for a big bed, with <strong>Map view</strong> under the map: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
+      '<strong>Zoom</strong> for a big bed, with the buttons above the map: <strong>+</strong> zooms in on the spindle, the mouse wheel on the spot under it, or pinch; drag the zoomed map to look around, and <strong>Fit</strong> shows the whole travel. <strong>Follow</strong> keeps the spindle in the middle while you jog. Pick Nearest Hole and favorites bring the hole they pick into view.',
       '<strong>Exclude Picks:</strong> drag a rectangle over a clamp or fixture that&rsquo;s in the way for this job. This map then won&rsquo;t pick its holes, and Go to and Set won&rsquo;t target a point inside it. That&rsquo;s all it does: it&rsquo;s a note for this picker, not a keepout zone. You can still jog there, jobs still run there, the keyboard macros don&rsquo;t know about it, and Go to only checks where it ends up, not what it passes over at Safe Z. Tap an excluded area to remove it, or Clear Exclusions. Excluded areas aren&rsquo;t part of a profile.',
       '<strong>Favorites:</strong> the star beside the picked hole&rsquo;s name keeps it as a favorite (a jig&rsquo;s home hole, say): ringed on the map and listed under it, one tap to pick. They&rsquo;re kept in the board&rsquo;s profile.',
       '<strong>More than one grid</strong> (large dog holes and a small pin grid, say): press <strong>+ Grid</strong> under Setup&rsquo;s heading (Setup unlocked) to add one, starting as a copy of the grid you&rsquo;re on, and press a grid&rsquo;s chip to edit it below. Each has its own name, diameter, spacing, insets, T-tracks and suppressed holes. <strong>Use for Nearest</strong> decides whether Pick Nearest Hole and the keyboard macros snap to it; <strong>Remove Grid</strong> deletes it. The eye on a chip shows or hides its holes on the map, for picking or suppressing where grids overlap. Hidden holes can&rsquo;t be picked on the map or by Pick Nearest Hole, but the keyboard macros still use them (untick Use for Nearest to leave a grid out of those too). <strong>+ Inserts</strong> is for a board whose threaded inserts are a grid of their own, halfway between the dog holes (along X or Y): it adds that grid at the insert&rsquo;s hole size. Cut Board’s Dog holes drills it, Stock Holes can bolt to it, and Pick Nearest Hole skips it. Inserts behind the dog holes themselves need no extra grid.',
       '<strong>Grid + List</strong> adds extra holes to a grid, one per line, measured from the first grid&rsquo;s first hole. A third value is that hole&rsquo;s own diameter, e.g. <kbd>pin: 130, 40, 6mm</kbd>; the map draws it at that size, and the dots put X0 Y0 on its own edge.',
       '<p><strong>Fixtures with a height</strong> (a vise, a jig): give a listed point a fourth value, its surface&rsquo;s height above the spoilboard: <kbd>vise: 400, 250, , 63.5mm</kbd> (blank third value: Hole Diameter).</p>' +
-        '<p>Pick it and hold <strong>Set Z0</strong>: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. In <strong>Stock</strong> mode, the <strong>Z0</strong> menu puts Z0 on the spoilboard under the stock or on the stock&rsquo;s top instead.</p><ul>' +
+        '<p>Pick it and hold <strong>Set Z0</strong>: Z0 goes on that surface for any measured tool, from the spoilboard height the Z0 macros recorded. In <strong>Stock</strong> mode, <strong>Stock top</strong> or <strong>Spoilboard</strong> in the <strong>Z0</strong> fold (between the card and Set) puts Z0 on the stock&rsquo;s top or on the spoilboard under it instead. Open the fold for a side view: the spoilboard, the stock and its thickness, where Z0 goes, the stock bottom offset&rsquo;s Z0 when paired (dashed when it doesn&rsquo;t match), and the tool&rsquo;s tip with its length offset. It isn&rsquo;t to scale.</p><ul>' +
         '<li>Needs the spoilboard height recorded and a tool length offset active; stops with a G92 Z offset.</li>' +
         '<li>On the Z0 macros&rsquo; work offset it keeps a probed Z0 for <strong>SBT: Z0 back to saved</strong>.</li>' +
         '<li>A height below the spoilboard or past the Z travel (a unit typo, say) is flagged and refused.</li></ul>',
@@ -11496,7 +11647,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       '<strong>T-tracks</strong> that split the spoilboard into panels: pick <strong>Along X</strong> (tracks between rows) or <strong>Along Y</strong> (between columns), and <strong>Holes per Panel</strong>. Leave <strong>Panel Pitch</strong> blank when the spacing carries straight on across a track (it&rsquo;s then Holes per Panel &times; the spacing); otherwise measure from the first hole of one panel to the first of the next. The tracks show as gray bands, and the holes move with each panel. Grab First Hole Center then wants the first hole of a panel.',
       '<strong>Lasered or engraved grid, no holes?</strong> Treat each line crossing as a hole: set <strong>Hole Diameter</strong> to the line&rsquo;s width (the laser line&rsquo;s width, or a V-bit&rsquo;s kerf width at the surface), and the spacings and insets to the lines&rsquo; centers. The center dot then puts X0 Y0 on the middle of the crossing, and a corner dot on the edges of the two lines, e.g. back right for the +X +Y edges, where a square stop would sit. 0 treats the lines as hairlines. No grid on the board yet? <strong>Cut Board &rsaquo; Grid lines</strong> lasers or engraves it from Setup.',
       HELP_NEEDS, HELP_UNITS,
-      '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and says whether they stay inside the stock and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Size to Program</strong> (beside that line) makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all around, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
+      '<strong>Does the program fit the stock?</strong> With a program loaded in ncSender and the stock placed, Stock mode shades the program&rsquo;s cuts (its moves below Z0) on the map, as wide as the bit, and a chip says whether they stay inside the stock (tap it for the whole sentence and the Clamp margin) and clear of the <strong>Clamp margin</strong> (room for clamps or screws along every edge; 10 mm or 0.4 in by default), or how far past which edge they go. It places them with X0 Y0 where <strong>Set</strong> would put it (the dot picked), or where it is now. The bit comes from the program&rsquo;s header when it says (QuickCut, Gears, a CAM&rsquo;s D=), else Cut Board&rsquo;s Bit Diameter. A program Spoilboard Toolbox made doesn&rsquo;t count: the part loaded before it is checked instead, read again from ncSender&rsquo;s files when it was one; otherwise load the part again. <strong>Use Program Size</strong> makes the stock&rsquo;s width and length what the program needs: its cuts as wide as the bit, the Clamp margin all around, rounded up; when the program is centered on its X0 Y0 (as QuickCut and Gears make them), the stock&rsquo;s center is picked for X0 Y0, ready to Set.' ] },
     cut: { name: 'Cut Board', notes: [
       'Pick what to cut in the sidebar, under <strong>Cut Board</strong>: <strong>Dog holes</strong>, <strong>T-tracks</strong>, <strong>Grid lines</strong>, a <strong>Fit test</strong> or <strong>Laser test</strong>, <strong>Chamfers</strong> or <strong>Labels</strong>, or <strong>Export</strong> the board for CAD. The <strong>Bit and depth</strong> card is shared by all of them (and by Stock Holes). <strong>Starting feeds for</strong>: picking a material, a flute count or how hard to push (<strong>Conservative</strong>, <strong>Average</strong>, <strong>Aggressive</strong>, as in QuickCut) puts starting numbers in RPM, Feed, Plunge, Depth per Pass and Stepover, within the machine&rsquo;s max feed, Z rate and spindle range. A new Bit Diameter updates them too, unless you&rsquo;ve typed your own. A start, to adjust by ear and chip.',
       '<strong>A whole spoilboard from one Generate.</strong> Every dog hole you set up in the XY0 Picker, each at its own size, in one program you check in ncSender&rsquo;s 3D visualizer before it cuts; then chamfer them and engrave their labels. The spoilboard and the map come from the same numbers, so they agree. Load the bit, put Z0 on the spoilboard&rsquo;s top (touch off, or <strong>SBT: Z0 on spoilboard</strong> once the Z0 macros have recorded its height), and press <strong>Generate</strong>: the program opens in ncSender&rsquo;s visualizer to check and run.',
@@ -11522,7 +11673,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         '<li>Then set Hole Diameter to the line&rsquo;s width and zero on the crossings, as for any lasered grid.</li></ul>',
       '<p><strong>Laser test:</strong> a small cross, a grid crossing&rsquo;s shape, for every pair of powers (columns) and feeds (rows), labeled, on scrap of the same material with X0 Y0 on its front left corner and the laser focused on its top.</p>' +
         '<p>Pick the crispest cross and use its power and feed for Grid lines and Labels. The summary gives the scrap size it needs.</p>',
-      '<p><strong>Into the stock on top:</strong> tick it to cut stock on top of the spoilboard (a removable MDF sheet, say) with a copy of the spoilboard&rsquo;s grid, instead of cutting the spoilboard itself. It&rsquo;s the XY0 Picker&rsquo;s <strong>Stock</strong>: where it&rsquo;s placed (<strong>Against Pins</strong> or <strong>Corner on X0 Y0</strong>), its size and its thickness (T).</p><ul>' +
+      '<p><strong>Into the stock on top:</strong> tick it to cut stock on top of the spoilboard (a removable MDF sheet, say) with a copy of the spoilboard&rsquo;s grid, instead of cutting the spoilboard itself. It&rsquo;s the XY0 Picker&rsquo;s <strong>Stock</strong>: where it&rsquo;s placed (<strong>Against Pins</strong> or <strong>Corner on X0 Y0</strong>), its size and its thickness (Thick).</p><ul>' +
         '<li>Dog holes, Chamfers and Labels use only the holes wholly on it, 3 mm in from its edges.</li>' +
         '<li>T-track slots, Grid lines, chamfers and labels stay at least 3 mm in from its edges (more for a slot&rsquo;s width or a V-bit).</li>' +
         '<li>Nothing cuts deeper than its thickness; Z0 on its top. With the spoilboard height recorded, Generate refuses unless Z0 is the stock&rsquo;s thickness above it; the program stops if Z0 moves afterwards, and lifts to Safe Z between holes, over the clamps.</li></ul>' +

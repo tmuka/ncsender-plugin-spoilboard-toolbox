@@ -10,7 +10,7 @@ and turns every one into a work zero you can hit again tomorrow.**
 - **XY0 Picker:** zero on a hole's center, side or corner, or on **stock pushed against pins** in the dog holes.
 - **Stock Holes:** drill bolt holes through the stock right over your spoilboard holes, keeping the bolts clear
   of the loaded program.
-- **Fits the program:** see whether the loaded program fits your stock, or let **Size to Program** set the stock
+- **Fits the program:** see whether the loaded program fits your stock, or let **Use Program Size** set the stock
   size it needs.
 - **Fixture plates** that match your spoilboard and go back square.
 - **Starting feeds by material** (MDF, plywood, woods, HDPE, polycarbonate, acrylic...), plus drill pecks and
@@ -86,7 +86,7 @@ row B cross, pins Ø 8.000"). Hold **Set**: no edge finder, no XY probe, nothing
 holes next time and you get the same zero back.
 
 **Zero anywhere on the stock, no measuring.** Type its size (or jog over the far corner and press
-**Far Corner Here**), and the stock's dots put X0 Y0 on its center or any corner or edge. Or, at the
+**Far Corner Is Here**), and the stock's dots put X0 Y0 on its center or any corner or edge. Or, at the
 machine: with X0 Y0 on one corner, jog roughly to the opposite corner and run **Set XY0 to Midpoint**
 for the exact center (**Midpoint XY** moves the spindle there first, at Safe Z).
 
@@ -195,8 +195,8 @@ Either way, the Z0 macros are a separate, optional step for machines with measur
 
 The sidebar shows ncSender's work and machine position live, above Help, so you can jog from the
 keyboard with Spoilboard Toolbox open and follow the spindle. On the XY0 Picker, the work position is in
-the work offset picked in its menu (G54–G59; its heading turns amber when that isn't the active one, and
-**Make G55 Active**, say, under the menu switches ncSender to it).
+the work offset Set changes (G54–G59, picked with the chips above Set; its heading turns amber when that
+isn't the active one, and **Make G55 Active**, say, switches ncSender to it).
 
 **XY0 Picker:** repeatable XY zero from your spoilboard grid. Use it for bench-dog stops and fences,
 fixtures and jigs that register in the holes, or to get back to the same work origin job after job,
@@ -425,7 +425,7 @@ the bed. Give a listed point a fourth value, its reference surface's height abov
 `vise: 400, 250, , 63.5mm` (a blank third value keeps Hole Diameter). Pick it, hold **Set** for X0 Y0,
 and hold **Set Z0**: Z0 lands on the vise jaw for any measured tool, from the spoilboard height the Z0
 macros recorded, with no probing at the fixture. With a stock placed (the picker's **Stock** mode), its thickness fills in from **SBT: Measure stock
-thickness** (or type it), and **Z0: spoilboard** or **Z0: stock top** puts Z0 on the stock's bottom or top (on the fixture,
+thickness** (or type it), and **Spoilboard** or **Stock top** in the picker's **Z0** fold puts Z0 on the stock's bottom or top (on the fixture,
 or on the spoilboard when no fixture is picked). Set Z0 needs the spoilboard height recorded
 (**SBT: Record spoilboard height**) and a tool length offset active, stops while a G92 Z offset is
 active, and, on the Z0 macros' work offset, keeps a probed Z0 for **SBT: Z0 back to saved** (holding it
@@ -535,13 +535,13 @@ direction come from grblHAL's `$130`/`$131` and homing settings
 
 ### Map tools
 
-- **Zoom** for a big bed, with **Map view** under the map (an 8 × 5 ft machine's holes are a few pixels apart on a small screen): **+**
+- **Zoom** for a big bed, with the buttons above the map (an 8 × 5 ft machine's holes are a few pixels apart on a small screen): **+**
   zooms in on the spindle, the mouse wheel on the spot under it, or pinch with two fingers. Drag the
   zoomed map to look around, and **Fit** shows the whole travel again. **Follow** keeps the spindle in
   the middle as you jog. Pick Nearest Hole and favorites bring the hole they pick into view.
 - **Live position:** while you jog, the spindle (a silver ring, as ncSender's Top view shows it) moves and the hole nearest it gets a dashed ring,
   with its name and distance under the map, so you can see which hole Pick Nearest Hole will take.
-- **Hole or Stock:** the switch at the top of the controls picks what X0 Y0 goes on. **Hole**: the
+- **Hole or Stock:** the switch above the map picks what X0 Y0 goes on. **Hole**: the
   dots pick the hole's center, a side or a corner. **Stock**: the stock is placed, and its dots pick its
   center, a corner or an edge. A placed stock stays put while you pick holes in Hole mode.
 - **Stock, Against Pins:** push the stock against pins in dog holes, two along one edge and one along
@@ -557,12 +557,22 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   which corner it is. It stays put when X0 Y0 changes. Or tap a favorite hole (★) in Stock mode, or jog
   over a hole and press **Pick Nearest Hole**: the stock's corner goes on that hole's point (the hole's back right takes the stock's front left).
 - **Stock size:** type its width (X) and length (Y), or jog over the far corner and press **Far Corner
-  Here**; its thickness fills in from **SBT: Measure stock thickness** until you type one.
-- **Before you Set:** one line says where X0 Y0 goes, with the numbers; the next how far Set moves the
-  work offset and from where (a hole's dot or the stock's, when it's on one). A move of exactly a hole
-  or pin radius or diameter from somewhere unnamed is flagged. A small view beside it shows the hole,
-  or the pins and the stock's corner, zoomed in. Reopening the plugin keeps the mode and the stock. The
-  keyboard macros always use a hole.
+  Is Here** (the dots are drawn at the stock's proportions); its thickness (**Thick**) fills in from **SBT: Measure stock thickness** until you type one.
+- **Beside the map**, three parts, top to bottom (under the map on a portrait screen):
+  - **The card:** what's picked (a hole, or the stock with its pins, size and thickness), the dots, and
+    in words where X0 Y0 goes, with the numbers, and how far Set moves the work offset and from where (a
+    hole's dot or the stock's, when it's on one). A move of exactly a hole or pin radius or diameter from
+    somewhere unnamed is flagged. In Stock mode a chip says whether the loaded program fits; tap it for
+    the details and the Clamp margin.
+  - **Z0**, one line that opens: Stock top or Spoilboard for Set Z0, a side view (not to scale) of the
+    spoilboard, the stock, where Z0 goes, the stock bottom offset's Z0 when paired, and the tool's tip,
+    then **Set Z0** and **Probe Stock Top**.
+  - **The dock**, always at the bottom: chips for the work offset Set changes (G54 to G57, More for
+    G58 on; each says **active**, **setting** or **paired** in words), the pairing, **Go to** and
+    **Set**. Under Set's name, how far it moves X0 Y0; Set turns amber when the offset it changes isn't
+    the active one.
+
+  Reopening the plugin keeps the mode and the stock. The keyboard macros always use a hole.
 - **Exclude Picks:** a clamp or fixture in the way for this job? Press **Exclude Picks** and drag a
   rectangle over it. This map then won't pick its holes, Pick Nearest Hole skips them, and Go to and Set
   won't target a point inside it. **That's all it does: it's a note for the picker, not a keepout
@@ -642,9 +652,9 @@ the plugin reminds you to re-record the spoilboard height.
 tests aside) is confined to the XY0 Picker's **Stock** laid on the spoilboard, so you can make a sheet
 (MDF, say) whose holes, slots or lines copy the spoilboard's and lift it off when you're done. Dog
 holes, chamfers and labels use only the holes wholly on it, 3 mm in from its edges; slots, grid lines,
-chamfers and labels stay at least 3 mm in too; nothing cuts deeper than its thickness (T), and Z0 goes
+chamfers and labels stay at least 3 mm in too; nothing cuts deeper than its thickness (Thick), and Z0 goes
 on its top. Once the spoilboard height is recorded, Generate refuses unless Z0 is T above it (so a
-stale T is caught), and the program stops if Z0 moves after Generate; it lifts to Safe Z between
+stale Thick is caught), and the program stops if Z0 moves after Generate; it lifts to Safe Z between
 holes, over the clamps. For through holes, put a sacrificial sheet under the stock, or line its holes
 up over the spoilboard's and keep them no bigger.
 
@@ -752,7 +762,7 @@ size and thickness; the holes come from the grid picked in Setup.
   **Bolt** fills the clearance hole for M6 (6.6 mm), M8 (9) or 1/4-20 (6.9), and, when a counterbore
   is set, room for a socket head (11, 14 or 10.5 mm; no washer). Bolt the stock to
   threaded inserts in the spoilboard.
-- **Size to Program** (Stock mode, beside the line saying whether the loaded program fits): the stock's width and
+- **Use Program Size** (Stock mode, beside Far Corner Is Here): the stock's width and
   length become what the program needs, its cuts as wide as the bit plus the Clamp margin on every side, rounded up
   (whole mm, or eighths of an inch). For a part from QuickCut or Gears, centered on X0 Y0, it also picks the stock's
   center for X0 Y0, so Set puts it there. Handy when you don't know what size of stock a part needs.
@@ -783,16 +793,16 @@ size and thickness; the holes come from the grid picked in Setup.
   below Z0 (the stock's top), so it must be less than the stock's thickness, and Break Through doesn't
   apply. A diagram above the summary shows the depths with your numbers, and Z0's height as measured
   against the recorded spoilboard.
-- **T** follows the thickness the Z0 macros stored (Measure stock thickness or Store) until you type
+- **Thick** follows the thickness the Z0 macros stored (Measure stock thickness or Store) until you type
   one; type the stock's real thickness if it differs. Or press **Follow Z0** beside it, if you probe Z0 on
-  the stock's top first (ncSender's Probe dialog, any time, even with the plugin open): T then follows
+  the stock's top first (ncSender's Probe dialog, any time, even with the plugin open): Thick then follows
   the active work offset's Z0 height above the recorded spoilboard whenever Z0 is more than 1 mm above
   it, and the stored thickness when Z0 is on the spoilboard. Only for stock lying on the spoilboard: with
-  Z0 on a vise jaw, a fixture or a riser, T would be that height and through holes would go that deep, so
-  turn Follow Z0 off and type T for those. Stock Holes reminds you while T follows Z0. Follow Z0 is off
-  until you press it, so typing T or measuring it with the macros works as before.
-- Typing T (or Follow Z0, or Size to Program) doesn't change the thickness the Z0 macros use. When they
-  differ, **Store for Macros** appears beside T: one press stores T for **Z0 on stock top**. The Z0 macros
+  Z0 on a vise jaw, a fixture or a riser, Thick would be that height and through holes would go that deep, so
+  turn Follow Z0 off and type it for those. Stock Holes reminds you while Thick follows Z0. Follow Z0 is off
+  until you press it, so typing Thick or measuring it with the macros works as before.
+- Typing Thick (or Follow Z0, or Use Program Size) doesn't change the thickness the Z0 macros use. When they
+  differ, **Store for Macros** appears beside Follow Z0: one press stores it for **Z0 on stock top**. The Z0 macros
   tab's Stock Thickness box shows the stored thickness too, until you type in it.
 - It lifts to Safe Z between holes, over the clamps. Generate refuses when Z0 is on the spoilboard
   rather than the stock top (once the Z0 macros have recorded the spoilboard height), and the program

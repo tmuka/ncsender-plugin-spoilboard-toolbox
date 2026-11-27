@@ -92,6 +92,11 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
     file are saved (`partProgram`) and read again on reopen, else `prog.partLost` makes Stock Holes
     refuse while its box is ticked. Stock mode checks at `pickTarget()` (where Set will put X0 Y0)
     when Set would set the program's work offset.
+  - XY0 Picker layout (0.5.17): Hole / Stock and zoom above the map, Pick Nearest Hole / favorites / Exclude below
+    it; beside it (`mw-tall`, the side column capped at the map's height so the dock stays in view) or under it in
+    two columns (`mw-bar-two`): the target card, the Z0 fold (`renderZFold`: summary, Stock top / Spoilboard, a side
+    view) and the dock (`renderWcsChips`: G54-G57 + More over the hidden `#mw-hole-wcs` menu, which stays the source
+    of truth; pair line, Go to, Set). The stock's dots take its proportions (`stockDotsShape`).
   - Profiles (`holeProfiles`, `holeProfile`): `setupBody` is what one holds (not the origin dot);
     `sameSetup` ignores favorites; `showProfile` draws the menu and the changes bar.
 - **Layout** follows QuickCut's: the dialog header is hidden, and a sidebar has the tabs (**XY0 Picker**, first;
