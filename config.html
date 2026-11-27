@@ -5953,6 +5953,16 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   function saveNow() {
     if (saveSoon) { clearTimeout(saveSoon); saveSoon = null; saveSettings(); }
   }
+  // For other plugins (QuickCut): the placed stock's angle, degrees
+  // counterclockwise from machine X (seen from above), about X0 Y0, for
+  // the part to be turned by; 0 when the stock is square, not placed or
+  // off. Worked out again on every save, since it hangs on the pins and the grid.
+  function stockTurnDeg() {
+    try {
+      var sp = stockPlacement(), dg = sp && !sp.problem && sp.tilt ? sp.tilt.deg : 0;
+      return Math.abs(dg) >= 0.005 ? +dg.toFixed(4) : 0;
+    } catch (e) { return 0; }
+  }
   function saveSettings() {
     var u = fieldVal;
     var body = Object.assign({
@@ -5966,6 +5976,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       stockCorner: $('mw-stock-corner').value, stockZero: holes.stockZero, zeroMode: holes.migrate ? undefined : holes.zeroMode, stockBy: holes.stockBy,
       stockPoint: holes.migrate ? holes.migrate.stockPoint : undefined,
       stockPins: holes.pins.slice(), stockDotSet: !!holes.stockDotSet, stockAnchor: holes.stockAnchor,
+      stockTurnDeg: stockTurnDeg(),
       cut: cutBody(), surfaceAck: holes.surfaceAck || '', welcomed: !!state.welcomed, cutNavFolded: !!state.cutNavFolded, partProgram: prog.partSaved || null
     }, setupBody());
     fetch(BASE_URL + '/api/plugins/' + PLUGIN_ID + '/settings', {
