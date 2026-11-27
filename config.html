@@ -703,7 +703,7 @@
   #mw-hole-dots .mw-dot.mw-corner, #mw-stock-dots .mw-dot.mw-corner { width: 20px; height: 20px; }
   #mw-hole-dots .mw-dot.mw-edge, #mw-stock-dots .mw-dot.mw-edge { width: 16px; height: 16px; }
   #mw-hole-dots .mw-dot::before, #mw-stock-dots .mw-dot::before { width: 44px; height: 44px; }
-  #mw-stock-dots { width: 180px; height: 70px; margin: 14px; border-style: solid; border-radius: 3px; background: color-mix(in srgb, #d9b07a 14%, transparent); border-color: color-mix(in srgb, #d9b07a 70%, var(--color-text-secondary)); }
+  #mw-stock-dots { width: 180px; height: 88px; margin: 14px; border-style: solid; border-radius: 3px; background: color-mix(in srgb, #d9b07a 14%, transparent); border-color: color-mix(in srgb, #d9b07a 70%, var(--color-text-secondary)); }
   #mw-stock-dots::before { display: none; }
   .mw-stock { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
   .mw-stock[data-by="pins"] .mw-by-zero { display: none !important; }
@@ -9384,21 +9384,27 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // The stock's dots at its proportions (W along X, L along Y), so the
   // picked corner or edge reads at a glance.
   function stockDotsShape() {
-    var sz = stockSize(), d = $('mw-stock-dots'), w = 180, h = 70;
+    // The stock's proportions, but never so thin that the dots' 44 px
+    // targets crowd: every dot at least 44 px from the center one (88 px
+    // across), so a long, narrow stock is drawn less narrow than it is.
+    var MIN = 88, sz = stockSize(), d = $('mw-stock-dots'), w = 180, h = 88;
     if (sz) {
       var r = sz.l / sz.w;
       h = w * r;
-      if (h > 140) { h = 140; w = Math.max(48, 140 / r); }
-      h = Math.max(36, h);
+      if (h > 140) { h = 140; w = Math.max(MIN, 140 / r); }
+      h = Math.max(MIN, h);
     }
     // A stock at an angle: the dots turned with it (the screen's Y is down),
-    // shrunk so the turned box takes no more room, its margin the difference.
+    // shrunk to keep the turned box within 200 px across but not below the
+    // minimum; the margin makes room for the corners that swing out.
     var sp = holes.zeroMode === 'stock' ? stockPlacement() : null, dg = sp && !sp.problem && sp.tilt ? sp.tilt.deg : 0;
-    var a = Math.abs(dg) * Math.PI / 180, bw = w * Math.cos(a) + h * Math.sin(a), bh = w * Math.sin(a) + h * Math.cos(a), k = Math.min(1, 180 / bw, Math.max(70, h) / bh);
-    w *= k; h *= k;
+    var a = Math.abs(dg) * Math.PI / 180, bw = w * Math.cos(a) + h * Math.sin(a), bh = w * Math.sin(a) + h * Math.cos(a);
+    var k = Math.max(Math.min(1, 200 / bw), MIN / Math.min(w, h));
+    k = Math.min(k, 1);
+    w *= k; h *= k; bw *= k; bh *= k;
     d.style.width = Math.round(w) + 'px'; d.style.height = Math.round(h) + 'px';
     d.style.transform = Math.abs(dg) >= 0.005 ? 'rotate(' + (-dg).toFixed(2) + 'deg)' : '';
-    d.style.margin = Math.abs(dg) >= 0.005 ? Math.round(14 + (bh * k - h) / 2) + 'px ' + Math.round(14 + (bw * k - w) / 2) + 'px' : '';
+    d.style.margin = Math.abs(dg) >= 0.005 ? Math.round(14 + (bh - h) / 2) + 'px ' + Math.round(14 + (bw - w) / 2) + 'px' : '';
   }
   // The Z0 fold: its one-line summary, the Stock top / Spoilboard choice
   // and a side view (not to scale) of the spoilboard, the stock, where Set
