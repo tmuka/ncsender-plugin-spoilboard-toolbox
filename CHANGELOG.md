@@ -7,6 +7,7 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ### 🐛 Fixed
 - **Long stock at an angle stays on the bed:** three pins that also read as an L along the grid (D4, D6 and G7, say) were always taken as that L, even when the stock's size made it run off the machine's travel with a pin touching nothing. Now, when the L doesn't fit the size or the travel and the same three pins hold the stock at an angle inside the travel with all three touching, that's what's placed. At an angle, Width X and Length Y are just the stock's two sizes: it lies whichever way round fits the pins (a 40 × 4 in board along a steep line, its 40 in edge nearer Y), and the angle shown is the Width X edge's.
+- **Stock that can't stay on the bed says so:** when no way the three pins hold the stock keeps it inside the travel (a 40 in board against pins along X on a 32 in wide machine), Stock mode says so and how far it must turn from X to fit, instead of drawing it off the bed.
 
 ## 0.5.17: A calmer XY0 Picker and stock at any angle
 

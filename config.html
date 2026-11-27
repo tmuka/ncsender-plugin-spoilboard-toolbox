@@ -7028,12 +7028,14 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       var useL = !!r.fits, t = null;
       if (useL && pins.length === 3 && sz0) {
         var f0 = r.fits[0], r0 = stockAt(f0.corner, f0.cornerName);
-        var lBad = f0.rowPins.some(function(q) { return q.x < r0.minX - pinR(q) || q.x > r0.maxX + pinR(q); }) ||
-          f0.colPins.some(function(q) { return q.y < r0.minY - pinR(q) || q.y > r0.maxY + pinR(q); }) ||
-          !!(bnd && (r0.minX < bnd.minX - 0.01 || r0.maxX > bnd.maxX + 0.01 || r0.minY < bnd.minY - 0.01 || r0.maxY > bnd.maxY + 0.01));
+        var lOff = !!(bnd && (r0.minX < bnd.minX - 0.01 || r0.maxX > bnd.maxX + 0.01 || r0.minY < bnd.minY - 0.01 || r0.maxY > bnd.maxY + 0.01));
+        var lBad = lOff || f0.rowPins.some(function(q) { return q.x < r0.minX - pinR(q) || q.x > r0.maxX + pinR(q); }) ||
+          f0.colPins.some(function(q) { return q.y < r0.minY - pinR(q) || q.y > r0.maxY + pinR(q); });
         if (lBad) {
           t = stockOnTiltedPins(pins, sz0, gdeg, bnd);
           if (t.fit && !t.fit.outside && Math.abs(t.fit.deg) >= 0.005) useL = false;
+          // Off the bed as an L, and no angle these pins allow keeps it on: say so, rather than draw it there.
+          else if (lOff) { out.problem = 'offBed'; out.travel = tv; out.size = sz0; return out; }
         }
       }
       if (useL) {
@@ -7044,6 +7046,7 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
         if (!t) t = stockOnTiltedPins(pins, sz0, gdeg, bnd);
         if (t.problem) {
           var loose = pins.length === 3 && sz0 ? stockOnTiltedPins(pins, null, gdeg, bnd) : null;
+          if (t.fit && t.fit.outside) { out.problem = 'offBed'; out.travel = tv; out.size = sz0; return out; }
           out.problem = loose && loose.fit ? 'short' : pins.length > 3 ? (r.problem === 'sides' ? 'sides' : 'many') : t.problem;
           return out;
         }
@@ -8990,6 +8993,13 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
     else if (sp.problem === 'few' && sp.pins.length === 1) msg = 'One pin so far: tap the other two (two along one edge, one along the other, at any angle).';
     else if (sp.problem === 'few' && sp.pins.length === 2) msg = 'Two pins so far: tap the third (two along one edge, one along the other, at any angle).';
     else if (sp.problem === 'sides') msg = 'Pins ' + pinList(sp.pins) + ' sit on both sides of the corner along one edge: the stock touches one side only. Take out the one on the wrong side.';
+    else if (sp.problem === 'offBed') {
+      // The longest the stock can lie along X (or Y) is the travel: past that it has to turn toward the other axis.
+      var tvl = sp.travel, uu = ' ' + unitName(), longer = tvl.yMm >= tvl.xMm ? 'Y' : 'X', reach = Math.max(sp.size.w, sp.size.l);
+      var minTurn = reach > Math.min(tvl.xMm, tvl.yMm) ? Math.acos(Math.min(1, Math.min(tvl.xMm, tvl.yMm) / reach)) * 180 / Math.PI : 0;
+      msg = 'These pins can\u2019t hold the ' + shown(sp.size.w) + ' \u00d7 ' + shown(sp.size.l) + uu + ' stock on the bed: it runs past the machine\u2019s ' + shown(tvl.xMm) + ' \u00d7 ' + shown(tvl.yMm) + uu + ' travel, and no angle they allow keeps it on.' +
+        (minTurn ? ' Its ' + shown(reach) + uu + ' length fits only turned at least ' + Math.ceil(minTurn) + '\u00b0 from ' + (longer === 'Y' ? 'X' : 'Y') + ': put the two pins of its long edge on a line running more along ' + longer + '.' : ' Move a pin, or check the size.');
+    }
     else if (sp.problem) msg = PIN_PROBLEMS[sp.problem] || '';
     else if (sp.by === 'zero') msg = 'Its ' + stockPointName(sp.cornerName) + ' is ' + (holes.stockAnchor.at ? 'on ' + holes.stockAnchor.at : 'where ' + holes.stockAnchor.wcs + ' X0 Y0 was when the stock was placed') + ' (machine X ' + shown(sp.corner.x) + ', Y ' + shown(sp.corner.y) + ' ' + unitName() + '); it stays put when X0 Y0 changes.';
     else if (sp.tilt) msg = 'Along ' + pinList(sp.tilt.pair) + ' on one edge and ' + holeName(sp.tilt.lone) + ' on the other; its ' + stockPointName(sp.cornerName) + ' is at the pins.';
