@@ -3,6 +3,12 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### ✨ Changed
+
+- New icon: a spoilboard half surfaced, with its T-nut holes and the surfacing bit.
+
 ## 0.5.18: Long stock at an angle stays on the bed
 
 ### 🐛 Fixed
