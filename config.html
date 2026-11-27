@@ -7275,6 +7275,10 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   async function readTlo() {
     try {
       var gc = parseGcState((await ask('$G', 500)).lines), hash = parseHashReport((await ask('$#', 900)).lines);
+      // The controller's own work offset wins over ncSender's workspace, which
+      // can lag (a fit test came out in G54 with the machine in G55). Every
+      // Generate reads the machine state, then this, so programs use it.
+      if (gc && gc.wcs && state.machine) state.machine = Object.assign({}, state.machine, { workspace: gc.wcs });
       // null: an offset is (or may be) active but its size didn't come back.
       // $#'s TLO is the offset applied, even in G49 after a soft reset.
       state.tloMm = isFinite(hash.TLO) ? hash.TLO * (state.reportInches ? MM_PER_INCH : 1) : gc && !gc.tloActive ? 0 : null;

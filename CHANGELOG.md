@@ -5,6 +5,9 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ## Unreleased
 
+### 🐛 Fixed
+- **Cut Board programs use the controller's work offset:** Generate now asks the controller (`$G`) which work offset is active, instead of trusting ncSender's WS menu, which can lag. A fit test made with the machine in G55 had come out in G54.
+
 ### 🔧 Better
 - **ncSender's jog panel stays in reach:** on screens 1600 px wide and up (landscape), Spoilboard Toolbox sits on the left over the visualizer, so ncSender's jog buttons, Home and position stay visible and usable beside it. Smaller screens keep the nearly full-screen dialog.
 - **XY0 Picker's buttons match in Hole and Stock:** Pick Nearest Hole and Go to Selected side by side in both, and in Stock mode Probe Stock Top and Go to Stock Center side by side under them.
