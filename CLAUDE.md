@@ -54,6 +54,9 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
     STEP is mm. The tests check the mesh's volume, top and bottom areas, and that every edge is used once each way.
   - Turned grids: `turnHoles` (holeGrid turns a grid's holes about its first hole by `turnDeg`) and `turnLines` (the macros
     turn the spindle position into the grid's square frame in #22 / #23, run the grid math, and turn #6 / #7 back).
+  - Paired offsets: `pairLines(lead, partner, slot, baseMm)` (partner = lead's X0 Y0, Z0 on the spoilboard + base;
+    `#4` guards a recorded height), used by the `pair` macro, the record macro, Record Spoilboard Height, Set XY0
+    on the lead and Pair (XY0 Picker, `renderPair` / `pairNow`); `programWcs` (the G54-G59 a program selects).
   - `storeThicknessCommand`, `MACRO_PREFIX` (`SBT: `), `OLD_PREFIXES` (`ZS: `, `MW: `, `Macro Wiz: `, the names earlier versions used; Create macros renames them in place by ID, so ncSender's `Macro:<id>` shortcuts survive).
   - Spoilboard holes: `holeGrid`, `travelDirs`, `insetFromPosition`, `nearestHole`, `holeOriginOffset` (where X0 Y0
     goes on a hole, one radius out in machine X / Y), `holeCommands`; and `parseUnitValue`.
@@ -112,6 +115,7 @@ Default storage (all three must be different, and not the work offset being set)
 | Last height the XY0 Picker's Set Z0 put down (so the Z0 macros and Set Z0 don't save it over a probed Z0) | G59.1 X | #5341 |
 | Saved (probed) Z0, and saved X/Y for the fixture extra | G59.2 Z, X, Y | #5363, #5361, #5362 |
 | Stock thickness | G59.1 Z | #5343 |
+| Stock bottom (paired offset, optional: Stock Bottom Offset, e.g. G55) | G55 X, Y, Z | lead's X/Y, #5383 |
 
 Work offsets are kept in grblHAL's non-volatile storage, so the values survive power cycles.
 

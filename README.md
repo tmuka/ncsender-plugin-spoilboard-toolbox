@@ -269,6 +269,39 @@ Re-record after surfacing the spoilboard.
     vise.
 - **Zeroing from the bottom** (set the job's Z origin to the bottom of the stock in your CAM): run
   **Z0 on spoilboard**. No stock probing at all, and through-cuts come out exact.
+- **Both: carve from the top, cut out to the bottom** (paired work offsets): see below.
+
+### Stock top and bottom offsets (paired)
+
+**Stock Bottom Offset** (Z0 macros tab, Settings) pairs a second work offset with **Work Offset to Set**.
+With G54 and G55, G55 keeps G54's X0 Y0, and its Z0 sits on the stock's bottom: the recorded spoilboard
+height. In your CAM, make two setups on the same stock with the same X/Y origin:
+
+- **G54, origin on the stock top:** V-carves, pockets, engraving, anything whose depth is from the top.
+- **G55, origin on the stock bottom:** profiles and cutouts that should stop at the bottom (or a set
+  depth into the spoilboard), whatever the board's thickness.
+
+On a board of another thickness, set only G54's Z0 on its top (probe it, or **Z0 on stock top**). G55 is
+already right, since the stock's bottom is still the spoilboard.
+
+What keeps them paired:
+
+- **Set XY0** in the XY0 Picker, on G54, sets G55's X0 Y0 too, with its Z0 on the stock's bottom.
+- **Record spoilboard height** (the macro or the button) moves G55's Z0 with the new height.
+- Zeroed X0 Y0 some other way (ncSender's XY0, a corner probe)? Hold **Pair G55** in the XY0 Picker, or run
+  **SBT: Pair G55 to G54**: `G10 L2 P2 X[#5221] Y[#5222] Z[#5383]`, stopping first if the spoilboard height
+  isn't recorded.
+- The XY0 Picker says whether they match, and warns in red when the loaded program uses both and they
+  don't.
+
+**Heights in the G55 setup.** There, CAM measures from the stock's bottom, and its stock top is the
+modeled one. On a thicker board, a retract or clearance height "from stock top" can end up inside the
+wood, and the first pass takes more than planned. Model that setup's stock at the thickest board you'll
+use, or give heights from the bottom with room above it.
+
+Only for stock lying on the spoilboard. Stock placed in the XY0 Picker's Stock mode on a fixture point with
+a height (a riser) gets that height added when Set XY0 or Pair G55 sets G55; the macros assume the
+spoilboard.
 
 **Probed the stock some other way?** ncSender's Probe dialog puts Z0 on the stock but doesn't tell the
 macros the new thickness. Two ways to give it to them:

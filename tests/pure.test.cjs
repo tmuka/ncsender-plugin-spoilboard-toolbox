@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, spoilFromProbe, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit } =
-  new Function(block + '\nreturn { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, spoilFromProbe, offsetZParam, storeThicknessCommand, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit };')();
+const { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, spoilFromProbe, offsetZParam, storeThicknessCommand, pairLines, programWcs, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit } =
+  new Function(block + '\nreturn { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, spoilFromProbe, offsetZParam, storeThicknessCommand, pairLines, programWcs, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -221,6 +221,34 @@ test('save and restore X/Y: kept in the saved-Z0 slot, Z untouched, nothing save
   p[5221] = 300; p[5222] = 200;
   run(m.restoreXY.body, p);
   assert.deepEqual([p[5221], p[5222], p[5223]], [100, 50, -80], 'restored, Z untouched');
+});
+
+test('paired offset: the partner gets the lead\'s X0 Y0 and Z0 on the spoilboard', () => {
+  assert.equal(buildMacros(base).pair, undefined, 'no pair macro unless paired');
+  assert.ok(!/P2/.test(buildMacros(base).record.body), 'record leaves G55 alone unless paired');
+  const m = buildMacros(Object.assign({}, base, { pair: 2 }));
+  assert.equal(m.pair.name, 'SBT: Pair G55 to G54');
+  assert.equal(m.pair.description, 'G55 X0 Y0 from G54, Z0 on spoilboard');
+  assert.ok(code(m.pair.body).every((l) => l.length <= 79), 'short lines');
+  // G54 Z0 probed on a stock top: G55 takes X0 Y0 and the spoilboard, whatever G54's Z.
+  const p = { 5221: 100, 5222: 50, 5223: -40, 5241: 7, 5242: 8, 5243: 9, 5383: -95 };
+  run(m.pair.body, p);
+  assert.deepEqual([p[5241], p[5242], p[5243], p._error], [100, 50, -95, undefined]);
+  // No spoilboard height recorded: it stops, and G55 isn't touched.
+  const q = { 5221: 100, 5222: 50, 5241: 7, 5242: 8, 5243: 9, 5383: 0 };
+  run(m.pair.body, q);
+  assert.deepEqual([q[5241], q[5242], q[5243]], [7, 8, 9]);
+  assert.ok(q._error);
+  // Old ncSender kept sending after a stop: the G10 is rejected too.
+  const r = runAll(m.pair.body, { 5221: 100, 5222: 50, 5241: 7, 5242: 8, 5243: 9, 5383: 0 });
+  assert.deepEqual([r[5241], r[5242], r[5243]], [7, 8, 9]);
+  // Recording the spoilboard again moves the partner's Z0 with it.
+  const rec = run(m.record.body, Object.assign({ 5063: -50, 5221: 100, 5222: 50, 5223: -40, 5403: -30, 5383: -95 }, ready));
+  assert.deepEqual([rec[5383], rec[5241], rec[5242], rec[5243], rec._error], [-75, 100, 50, -75, undefined]);
+  assert.deepEqual(programWcs('(G55 in a comment)\nG54\nG0 X1 ; G56\ng55 G1 Z-1\nG54.1 P2\nG59.3'), [1, 2]);
+  // Stock on a riser: its height above the spoilboard is added.
+  const lines = pairLines(1, 3, 9, 12.7);
+  assert.deepEqual(lines, ['#4=[#5383 NE 0]', 'G10 L2 P3 X[#5221 / #4] Y[#5222 / #4] Z[[#5383 + 12.700] / #4]']);
 });
 
 test('typed thickness is stored with one G10 line', () => {

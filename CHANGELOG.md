@@ -5,7 +5,11 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 
 ## Unreleased
 
+### ✨ New
+- **Stock top and bottom offsets (paired):** **Stock Bottom Offset** (Z0 macros tab, Settings) pairs a second work offset with the Z0 macros' one: G55, say, keeps G54's X0 Y0 with its Z0 on the stock's bottom (the spoilboard). Carve from the stock top in G54 and cut profiles to the bottom in G55, from two CAM setups; on another thickness, only G54's Z0 needs setting. Set XY0 in the XY0 Picker sets both, recording the spoilboard height moves G55's Z0 with it, **Pair G55** (XY0 Picker) and the new **SBT: Pair G55 to G54** macro copy X0 Y0 after zeroing some other way, and the XY0 Picker warns when a loaded program uses both and they don't match.
+
 ### 🐛 Fixed
+- **Z0 macros Help pages show the right notes again:** since 0.5.15, Safety stops, Put them on keys, What you need and the pages after them showed the note before their own. Record Spoilboard Height has its own page now.
 - **Cut Board programs use the controller's work offset:** Generate now asks the controller (`$G`) which work offset is active, instead of trusting ncSender's WS menu, which can lag. A fit test made with the machine in G55 had come out in G54.
 
 ### 🔧 Better
