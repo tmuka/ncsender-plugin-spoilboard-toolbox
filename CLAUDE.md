@@ -44,7 +44,7 @@ Stock top is `spoilboard + thickness`, with the thickness typed or measured by p
   - Cut Holes: `holeCutMethod`, `holesToCut`, `cutOrder`, `holeCutProblems`, `cutStart` / `cutEnd`, `holeCutProgram`
     (each hole may carry its own `depthMm`; `safeEach` lifts to Safe Z between hole centers; `zStop` adds a stop
     line for the work offset's Z0), `engraveProgram`, `chamferProgram`, `fitTestHoles`, `fitGrid`. Stock holes:
-    `stockHoleCandidates`, `stockBoltHoles`, `flipPins`, `flipRect`. T-track slots: `clipToRect`, `trackSlots`, `trackProgram`. Map zoom: `zoomWindow`, `labelEvery`.
+    `stockHoleCandidates`, `stockBoltHoles`, `flipPins`, `flipRect`. Stock against pins: `stockOnPins` (an L along the grid), `stockOnTiltedPins` (any three pins, at any angle; the UI needs three), and a stock at an angle as a box (`rectBox`, `boxPoint`, `boxLocal`, `boxCorners`; `turnCuts` turns a program back into the box's frame for `cutsPastStock`). T-track slots: `clipToRect`, `trackSlots`, `trackProgram`. Map zoom: `zoomWindow`, `labelEvery`.
   - CAD export (Cut Board › Export): `cadParts` (holes and slots as convex polygons, ones that overlap or reach the
     edge marked `out`), `boardDxf` (R12, a layer per grid), `boardMesh` (a closed STL solid: top and bottom split into
     tiles and bands of trapezoids, `clipPoly` working crossings from the original edge so neighbouring tiles agree,

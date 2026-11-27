@@ -8,8 +8,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'config.html'), 'utf8');
 const after = html.split('// BEGIN pure')[1];
 const block = after.slice(after.indexOf('\n') + 1).split('// END pure')[0];
-const { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, spoilFromProbe, offsetZParam, storeThicknessCommand, pairLines, programWcs, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit } =
-  new Function(block + '\nreturn { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, spoilFromProbe, offsetZParam, storeThicknessCommand, pairLines, programWcs, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit };')();
+const { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, spoilFromProbe, offsetZParam, storeThicknessCommand, pairLines, programWcs, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, stockOnTiltedPins, rectBox, boxPoint, boxLocal, boxCorners, turnCuts, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit } =
+  new Function(block + '\nreturn { buildMacros, safeZVersionOk, parseHashReport, parseGcState, tloInEffect, spoilFromProbe, offsetZParam, storeThicknessCommand, pairLines, programWcs, z0StockTop, holeGrid, travelDirs, insetFromPosition, holeCommands, holeGotoCommands, keepoutZones, holeKeepout, targetProblem, trackBands, holeOriginOffset, parseHoleList, formatHoleList, convertHoleList, remapListKeys, holeLabel, axisTicks, nearestHole, parseUnitValue, setupFields, putProfile, stockRect, rectPoint, stockCornerFor, allHoles, zAboveSpoilLines, holeCutMethod, startingFeeds, holesToCut, cutOrder, lineCrossesZone, holeCutProblems, holeCutProgram, programMinutes, textStrokes, textWidth, labelPlacements, engraveProgram, chamferProgram, fitTestHoles, fitGrid, probedCenter, surfacingDone, zoomWindow, labelEvery, trackSlots, trackProgram, stockHoleCandidates, stockBoltHoles, holeSpan, gridAxes, stockOnPins, stockOnTiltedPins, rectBox, boxPoint, boxLocal, boxCorners, turnCuts, flipPins, flipRect, fixturePins, insertGridRaw, calPlan, surfaceSpot, gridLineSegments, laserTestPattern, strokesProgram, clipToPlate, crowdedPair, programCuts, programCutsSource, cutsPastStock, cutsNear, STROKE_FONT, threadMillProgram, threadProblems, THREADS, drillTipMm, noSpinType, withPen, cadParts, boardDxf, boardMesh, stlBytes, circleSides, boardStep, spacedLinePoints, holesAtOrigin, rulerPlacements, rulerFit };')();
 
 const base = { blockMm: 15, feedMm: 100, travelMm: 30, retractMm: 5, wcs: 1, slot: 9, backup: 8, thick: 7, extras: {}, imperial: false };
 const allExtras = { midX: true, midY: true, midXY: true, center: true, fixture: true };
@@ -1879,6 +1879,57 @@ test('stockOnPins: an L of pins gives the stock corner a pin radius off each lin
   assert.equal(stockOnPins([hole(4, 3), hole(5, 4), hole(6, 6)], ax).problem, 'notL');
   assert.equal(stockOnPins([hole(4, 3), Object.assign(hole(3, 4), { layer: 1 })], ax).problem, 'grids');
   assert.equal(stockOnPins([hole(4, 3), { x: 0, y: 0, diaMm: 8 }], ax).problem, 'list');
+});
+
+test('stockOnTiltedPins: three pins at any angle give a corner a pin radius off each edge', () => {
+  const hole = (col, row) => ({ col, row, x: 48 + (col - 1) * 96, y: 48 + (row - 1) * 96, diaMm: 8 });
+  // Two pins on a diagonal edge (columns 2 to 5, rows 2 to 3: about 18.4°), the third past the first.
+  const A = hole(2, 2), B = hole(5, 3), C = hole(1, 3);
+  const r = stockOnTiltedPins([A, B, C], { w: 600, l: 300 }, 0);
+  assert.ok(r.fit, JSON.stringify(r));
+  const f = r.fit, deg = Math.atan2(96, 288) * 180 / Math.PI;
+  assert.ok(Math.abs(f.deg - deg) < 1e-9, f.deg);
+  // Every pin touches its edge: the center a radius off the line, on the outside.
+  const off = (p, o, d) => (p.x - o.x) * -d.y + (p.y - o.y) * d.x;
+  assert.ok(Math.abs(Math.abs(off(A, f.corner, f.u)) - 4) < 1e-9);
+  assert.ok(Math.abs(Math.abs(off(B, f.corner, f.u)) - 4) < 1e-9);
+  assert.ok(Math.abs(Math.abs(off(C, f.corner, f.n)) - 4) < 1e-9);
+  assert.equal(f.lone, C);
+  // The box: the pinned corner is the named one, and no pin is inside it.
+  const b = f.box, k = boxPoint(b, f.cornerName);
+  assert.ok(Math.hypot(k.x - f.corner.x, k.y - f.corner.y) < 1e-9, f.cornerName);
+  [A, B, C].forEach((p) => { const q = boxLocal(b, p); assert.ok(Math.abs(q.a) >= b.w / 2 - 1e-6 || Math.abs(q.b) >= b.l / 2 - 1e-6); });
+  assert.equal(boxCorners(b).length, 4);
+  // Pins in an L along the grid read square, the way stockOnPins does.
+  const sq = stockOnTiltedPins([hole(4, 3), hole(7, 3), hole(3, 4)], { w: 400, l: 300 }, 0).fit;
+  assert.ok(Math.abs(sq.deg) < 1e-9);
+  assert.deepEqual({ x: +sq.corner.x.toFixed(9), y: +sq.corner.y.toFixed(9) }, { x: 244, y: 244 });
+  assert.equal(sq.cornerName, 'front-left');
+  // A too-small stock can't reach its pins; three in a line hold nothing; two is too few.
+  assert.equal(stockOnTiltedPins([A, B, C], { w: 100, l: 100 }, 0).problem, 'notL');
+  assert.equal(stockOnTiltedPins([hole(1, 1), hole(2, 2), hole(3, 3)], null, 0).problem, 'oneLine');
+  assert.equal(stockOnTiltedPins([A, B], null, 0).problem, 'few');
+  assert.equal(stockOnTiltedPins([A, B, C, hole(8, 8)], null, 0).problem, 'notL');
+  // Pins of two sizes: the edge touches both.
+  const P = Object.assign(hole(2, 2), { pinMm: 6 }), Q = hole(5, 3), g = stockOnTiltedPins([P, Q, C], null, 0).fit;
+  const dist = (p) => Math.abs((p.x - g.corner.x) * g.n.x + (p.y - g.corner.y) * g.n.y);
+  assert.ok(Math.abs(dist(P) - 3) < 1e-9 && Math.abs(dist(Q) - 4) < 1e-9);
+});
+
+test('boxPoint and rectBox: a square box names its points like rectPoint', () => {
+  const r = stockRect(10, 20, 300, 200, 'front-left'), b = rectBox(r);
+  ['front-left', 'back-right', 'center', 'left-center', 'back-center'].forEach((n) => assert.deepEqual(boxPoint(b, n), rectPoint(r, n)));
+  const t = { c: { x: 0, y: 0 }, ex: { x: Math.cos(Math.PI / 6), y: Math.sin(Math.PI / 6) }, w: 200, l: 100, deg: 30 };
+  const p = boxPoint(t, 'back-right'), q = boxLocal(t, p);
+  assert.ok(Math.abs(q.a - 100) < 1e-9 && Math.abs(q.b - 50) < 1e-9);
+});
+
+test('turnCuts: the cuts turned back by the stock angle, box of what cuts below Z0', () => {
+  const cuts = { segs: [0, 0, 5, 0, 0, -1, 0, 0, -1, 100, 0, -1], box: { minX: 0, maxX: 100, minY: 0, maxY: 0 } };
+  const t = turnCuts(cuts, 90);
+  assert.ok(Math.abs(t.segs[9]) < 1e-9 && Math.abs(t.segs[10] + 100) < 1e-9);
+  assert.ok(Math.abs(t.box.minY + 100) < 1e-9 && Math.abs(t.box.maxY) < 1e-9 && Math.abs(t.box.maxX) < 1e-9);
+  assert.equal(turnCuts(cuts, 0), cuts);
 });
 
 test('stockOnPins: a turned grid keeps the corner a pin radius off each line', () => {
