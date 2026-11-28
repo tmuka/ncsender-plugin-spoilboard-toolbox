@@ -3,6 +3,14 @@
 What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). Install or update from
 [Releases](https://github.com/tmuka/ncsender-plugin-spoilboard-toolbox/releases).
 
+## Unreleased
+
+### ✨ Changed
+
+- The dialog fills the screen again in landscape (the left-column layout from 0.5.17 is gone).
+- XY0 Picker: in two-column layouts the Z0 fold opens until you open or close it yourself, and the target card, Z0 fold and dock end level. Stock Width, Length and Thick stack one under another.
+- Every length and feed box has - and + buttons for a touch screen, as ncSender's probe dialog (ncsender-unit-input 0.1.6). A press steps to the next whole step: 0.5 mm or 1/32 in, 0.1 mm or 0.005 in for depths and pitches, 50 mm/min or 5 in/min for feeds.
+
 ## 0.5.19: A new icon
 
 ### ✨ Changed
