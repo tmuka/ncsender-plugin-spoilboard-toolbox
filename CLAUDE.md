@@ -192,8 +192,10 @@ Work offsets are kept in grblHAL's non-volatile storage, so the values survive p
 - Plugin settings: `/api/plugins/com.tmuka.spoilboard-toolbox/settings` (the old ID's at `/api/plugins/com.tmuka.zeroswapper/settings` stay on disk).
   Other plugins read two of its values: `stockT` (Thick, in `units`; QuickCut's Stock button by Total Depth) and
   `stockTurnDeg` (the placed stock's Width X side's angle, degrees counterclockwise from machine X about X0 Y0, 0 when
-  square or not placed), `stockTurnLongDeg` and `stockTurnShortDeg` (its long and short sides' angles, -90 to 90,
-  `sideTurns`); all worked out on every save by `stockTurns()`. Keep the names and meanings stable.
+  square or not placed), `stockTurnLongDeg` and `stockTurnShortDeg` (the turn, -180 to 180, that lays a part's X along the long / short
+  side and keeps it on the stock) with `stockTurnLongAt` / `stockTurnShortAt` (where X0 Y0 then is on the part, a dot
+  name such as 'back-left'; of the two turns 180° apart, the one nearest the part's front-left, `sideTurns`), null
+  while the size isn't known; all worked out on every save by `stockTurns()`. Keep the names and meanings stable.
 - `GET /api/server-state`: `machineState` (`MPos`, `g54`…`g59`, `workspace`, `homed`, `status`, `connected`).
 - `GET /api/firmware`: grblHAL settings (`$130`/`$131` travel, `$22`/`$23` homing, `$683`-`$687` ATCi keepout).
 - **Keyboard shortcuts:** every macro is registered as shortcut action `Macro:<id>`; plugins can't register

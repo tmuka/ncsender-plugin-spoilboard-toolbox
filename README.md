@@ -549,12 +549,15 @@ direction come from grblHAL's `$130`/`$131` and homing settings
   pin there and never takes one out). Each edge is a pin radius off its pins (Setup's **Pin Ø**, blank
   for the hole's), so the corner is exact, on a turned grid too. Pins in one row and one column hold
   the stock square. Any other three hold it **at an angle**, to fit longer stock diagonally while the
-  grid still locates it repeatably: the card shows its long and short sides' angles from X ("Long
-  side 63.42° CCW · short side 26.58° CW from X"; it lies whichever way round fits the pins, inside the
-  travel first). X0 Y0 doesn't turn the toolpaths, so in your CAM keep X and Y square to the machine and
-  turn the part about X0 Y0 by the angle of the side its X runs along. Both are saved for other plugins
-  (`stockTurnLongDeg`, `stockTurnShortDeg`; `stockTurnDeg` is the Width X side's), and QuickCut's Stock
-  button by Pattern Angle offers them. The program check, Use Program Size and Far
+  grid still locates it repeatably: the card shows how to turn a part to lie along its long side and along its
+  short side, and where the part's origin then goes ("Long side on X: turn 67.15° CCW, X0 Y0 at the
+  part's back left"; it lies whichever way round fits the pins, inside the travel first). X0 Y0 doesn't
+  turn the toolpaths, so in your CAM keep X and Y square to the machine and turn the part about X0 Y0 by
+  the turn for the side its X runs along, with the part's origin at the point the card names: a side
+  can lie along X two ways, 180° apart, and only one puts the part on the stock from a given X0 Y0 dot.
+  Both are saved for other plugins (`stockTurnLongDeg` / `stockTurnLongAt`, `stockTurnShortDeg` /
+  `stockTurnShortAt`; `stockTurnDeg` is the Width X side's), and QuickCut's Stock button by Pattern
+  Angle offers them. The program check, Use Program Size and Far
   Corner Is Here work in the stock's own frame; Stock Holes and Into the stock on top need square
   stock. When three pins could hold the stock two ways, it's drawn the way squarest to the grid and the
   note says so. A pin at the corner itself touches nothing

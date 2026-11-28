@@ -1946,11 +1946,35 @@ test('sideTurns: the long and short sides\' angles, whichever size is Width X', 
   // The same board typed 50 x 6: the same answer.
   t = sideTurns(63.42, 50, 6);
   assert.ok(near(t.long, 63.42) && near(t.short, -26.58), JSON.stringify(t));
-  // Sides have no direction: kept within -90 to 90.
+  // X0 Y0 at the center: the smaller turn of the two.
   t = sideTurns(80, 10, 50);
   assert.ok(near(t.long, -10) && near(t.short, 80), JSON.stringify(t));
   t = sideTurns(90, 50, 10);
   assert.ok(near(t.long, 90) && near(t.short, 0), JSON.stringify(t));
+});
+
+test('sideTurns: each turn lands the part on the stock, with X0 Y0 where it says', () => {
+  // Pins hold a 600 x 150 stock at -26.57 with X0 Y0 on its front-left: a part
+  // with X along the long side turns -26.57 from its front-left; along the short
+  // side, 63.43 from its back-left (from its front-left it would land off the stock).
+  let t = sideTurns(-26.57, 600, 150, 'front-left');
+  assert.deepEqual([+t.long.toFixed(2), t.longAt, +t.short.toFixed(2), t.shortAt], [-26.57, 'front-left', 63.43, 'back-left']);
+  // Over 90 when that keeps the part's origin at its front-left.
+  t = sideTurns(63.42, 50, 6, 'back-right');
+  assert.deepEqual([+t.long.toFixed(2), t.longAt, +t.short.toFixed(2), t.shortAt], [-116.58, 'front-left', -26.58, 'back-left']);
+  // Every dot, every angle, either way round: the part's corners stay on the stock.
+  ['front-left', 'front-center', 'front-right', 'left-center', 'center', 'right-center', 'back-left', 'back-center', 'back-right'].forEach((dot) => [-80, -26.57, 0.5, 45, 89].forEach((deg) => [[600, 150], [150, 600]].forEach(([W, L]) => {
+    const r = deg * Math.PI / 180, box = { c: { x: 0, y: 0 }, ex: { x: Math.cos(r), y: Math.sin(r) }, w: W, l: L }, o = boxPoint(box, dot), s = sideTurns(deg, W, L, dot);
+    ['long', 'short'].forEach((side) => {
+      const th = s[side] * Math.PI / 180, along = side === 'long' ? 600 : 150, across = 750 - along, at = s[side + 'At'];
+      const fx = /right/.test(at) ? 1 : /left/.test(at) ? 0 : 0.5, fy = /^back/.test(at) ? 1 : /^front/.test(at) ? 0 : 0.5;
+      assert.ok(s[side] > -180 && s[side] <= 180);
+      [[0, 0], [1, 0], [1, 1], [0, 1]].forEach(([u, v]) => {
+        const px = (u - fx) * along, py = (v - fy) * across, q = boxLocal(box, { x: o.x + px * Math.cos(th) - py * Math.sin(th), y: o.y + px * Math.sin(th) + py * Math.cos(th) });
+        assert.ok(Math.abs(q.a) <= W / 2 + 1e-6 && Math.abs(q.b) <= L / 2 + 1e-6, [dot, deg, W, side].join(' '));
+      });
+    });
+  })));
 });
 
 test('boxPoint and rectBox: a square box names its points like rectPoint', () => {

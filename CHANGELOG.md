@@ -12,11 +12,13 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - Every length and feed box has - and + buttons for a touch screen, as ncSender's probe dialog (ncsender-unit-input 0.1.6). A press steps to the next whole step: 0.5 mm or 1/32 in, 0.1 mm or 0.005 in for depths and pitches, 50 mm/min or 5 in/min for feeds.
 
 ### 🔧 Better
-- **Both sides' angles:** a stock at an angle shows its long and short sides' angles ("Long side 63.42° CCW · short side 26.58° CW from X"), whichever size was typed as Width X, and saves both for other plugins (`stockTurnLongDeg`, `stockTurnShortDeg`, beside `stockTurnDeg`, the Width X side's), so a design can be turned by the side it runs along.
+- **Both sides' turns:** a stock at an angle shows how to turn a part to lie along its long side and along its short side, and where the part's origin goes for it to land on the stock ("Long side on X: turn 67.15° CCW, X0 Y0 at the part's back left"), whichever size was typed as Width X. A side lies along X two ways, 180° apart, and only one puts the part on the stock from the X0 Y0 dot you picked. Both are saved for other plugins (`stockTurnLongDeg` / `stockTurnLongAt`, `stockTurnShortDeg` / `stockTurnShortAt`, beside `stockTurnDeg`, the Width X side's).
+- **Safer - and + buttons:** measured values (probe block thickness, spoilboard thickness, hole and pin sizes, spacing, insets, bit sizes) have none, so a stray tap can't change them; - on a blank field leaves it blank; feeds never step to 0, and the probe feed steps by 10 mm/min or 1 in/min up to 500 mm/min or 20 in/min.
 - **Stock that can't stay on the bed is drawn in red:** where the pins would put it, outlined red and dashed, running past the bed's edge as far as the map reaches, beside the note saying how far it must turn to fit.
 
 ### 🐛 Fixed
-- **G58 and on in the XY0 Picker:** the More menu shows just the offset's name (it was cut off as "G58 (a"), the paired-offset line only shows while Set changes the lead offset (it showed for G58 too, though Set there doesn't move the pair), and Go to and Set share the row evenly, so Go to Stock Center isn't squeezed to three lines.
+- **G58 and on in the XY0 Picker:** the More menu shows just the offset's name (it was cut off as "G58 (a"), the paired-offset line only shows while Set changes the lead offset (it showed for G58 too, though Set there doesn't move the pair), and Go to and Set share the row evenly, so Go to Stock Center isn't squeezed to three lines. The line still shows, whatever Set changes, when a loaded program uses both offsets and they aren't paired.
+- **XY0 Picker side column:** on a shorter screen a long stock note no longer cuts off the buttons under it (the column grows and the page scrolls). The Z0 fold opening itself in a two-column layout no longer counts as your choice, so it keeps following the layout. Its summary reads "not changed by Set" in place of "stays where it is".
 
 ## 0.5.19: A new icon
 
