@@ -766,7 +766,7 @@
   .mw-pair-row { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; }
   .mw-pair-row[hidden] { display: none !important; }
   .mw-pair-row > .mw-btn { width: 100%; }
-  .mw-dock-go { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; }
+  .mw-dock-go { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
   .mw-pick-card.mw-side-narrow .mw-dock-go { grid-template-columns: minmax(0, 1fr); }
   .mw-dock-go .mw-btn, #mw-stock-gocenter { min-height: 62px; white-space: normal; line-height: 1.2; min-width: 0 !important; padding: 6px 8px !important; }
   #mw-stock-gocenter { min-height: 48px; width: 100%; }
@@ -9549,7 +9549,8 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
   // loaded program, when it uses both, refused in words while it doesn't.
   function renderPair() {
     var s = readSettings(), row = $('mw-pair-row');
-    row.hidden = !(s && s.pair);
+    // Only while Set changes the lead: Set on any other offset doesn't move the pair.
+    row.hidden = !(s && s.pair && holeWcs() === s.wcs);
     holes.pairOk = false;
     if (row.hidden) return;
     var lead = WCS_NAMES[s.wcs], part = WCS_NAMES[s.pair], ms = state.machine || {}, text = $('mw-pair-text');
@@ -9621,9 +9622,12 @@ if (typeof window !== 'undefined') window.NcUnitInput = NcUnitInput;
       if (!o.value) return;
       var m = main.querySelector('option[value="' + o.value + '"]'), n = +o.value;
       o.disabled = !!(m && m.disabled);
-      o.textContent = WCS_NAMES[n] + (o.disabled ? ' (storage)' : n === active ? ' (active)' : n === pair ? ' (paired)' : '');
+      // The chosen one shows its name alone: the closed menu has room for little more.
+      o.textContent = WCS_NAMES[n] + (n === setting ? '' : o.disabled ? ' (storage)' : n === active ? ' (active)' : n === pair ? ' (paired)' : '');
     });
     more.value = setting > 4 ? String(setting) : '';
+    more.title = (setting > 4 ? 'Set changes ' + WCS_NAMES[setting] + (setting === active ? ', the active offset. ' : '. ') : '') +
+      'G58, G59 and G59.1 to G59.3. The ones the Z0 macros store values in can\u2019t be picked.';
     more.classList.toggle('mw-on', setting > 4);
   }
   // The stock's dots at its proportions (W along X, L along Y), so the

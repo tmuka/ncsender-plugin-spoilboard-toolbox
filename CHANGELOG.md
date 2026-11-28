@@ -15,6 +15,9 @@ What's new in each release of Spoilboard Toolbox (Zero Swapper before 0.3.36). I
 - **Both sides' angles:** a stock at an angle shows its long and short sides' angles ("Long side 63.42° CCW · short side 26.58° CW from X"), whichever size was typed as Width X, and saves both for other plugins (`stockTurnLongDeg`, `stockTurnShortDeg`, beside `stockTurnDeg`, the Width X side's), so a design can be turned by the side it runs along.
 - **Stock that can't stay on the bed is drawn in red:** where the pins would put it, outlined red and dashed, running past the bed's edge as far as the map reaches, beside the note saying how far it must turn to fit.
 
+### 🐛 Fixed
+- **G58 and on in the XY0 Picker:** the More menu shows just the offset's name (it was cut off as "G58 (a"), the paired-offset line only shows while Set changes the lead offset (it showed for G58 too, though Set there doesn't move the pair), and Go to and Set share the row evenly, so Go to Stock Center isn't squeezed to three lines.
+
 ## 0.5.19: A new icon
 
 ### ✨ Changed
